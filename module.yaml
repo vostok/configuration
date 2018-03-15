@@ -1,0 +1,21 @@
+default:
+  build:
+    target: Vostok.Configuration.sln
+    configuration: Release
+    tool:
+      name: dotnet
+
+  install:
+    - Vostok.Configuration/bin/Release/netstandard2.0/Vostok.Configuration.dll
+    - module vostok.commons
+
+  deps:
+    - vostok.commons@dev
+
+notests *default:
+  build:
+    configuration: NoTests
+
+full-build:
+  build:
+    configuration: Release
