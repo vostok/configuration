@@ -7,9 +7,9 @@ using System.Reflection;
 using Newtonsoft.Json.Linq;
 using Vostok.Commons.ThreadManagment;
 
-namespace Vostok.Configuration
+namespace Vostok.Configuration.Sources
 {
-    public class JsonConfigurationSource: IConfigurationSource
+    public class JsonFileSource : IConfigurationSource
     {
         private readonly string filePath;
         private readonly FileSystemWatcher watcher;
@@ -17,7 +17,7 @@ namespace Vostok.Configuration
         private readonly object sync;
         private RawSettings current;
 
-        public JsonConfigurationSource(string filePath)
+        public JsonFileSource(string filePath)
         {
             this.filePath = filePath;
             var path = Path.GetDirectoryName(filePath);
@@ -27,7 +27,7 @@ namespace Vostok.Configuration
             observers = new List<IObserver<RawSettings>>();
             sync = new object();
             
-            ThreadRunner.Run(WatchFile, null);
+            ThreadRunner.Run(WatchFile);
         }
 
         public RawSettings Get()

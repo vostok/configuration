@@ -4,11 +4,12 @@ using System.IO;
 using System.Threading;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests
 {
     [TestFixture]
-    public class JsonConfigurationSource_Tests
+    public class JsonFileSource_Tests
     {
         private const string TestFileName = "test.json";
 
@@ -23,7 +24,7 @@ namespace Vostok.Configuration.Tests
             File.Delete(TestFileName);
         }
 
-        private void CreateTextFile(string text)
+        private static void CreateTextFile(string text)
         {
             using (var file = new StreamWriter(TestFileName, false))
                 file.WriteLine(text);
@@ -34,7 +35,7 @@ namespace Vostok.Configuration.Tests
         {
             CreateTextFile("{ \"StringValue\": \"string\" }");
 
-            new JsonConfigurationSource(TestFileName).Get()
+            new JsonFileSource(TestFileName).Get()
                 .Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
@@ -48,7 +49,7 @@ namespace Vostok.Configuration.Tests
         {
             CreateTextFile("{ \"IntValue\": 123 }");
 
-            new JsonConfigurationSource(TestFileName).Get()
+            new JsonFileSource(TestFileName).Get()
                 .Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
@@ -62,7 +63,7 @@ namespace Vostok.Configuration.Tests
         {
             CreateTextFile("{ \"DoubleValue\": 123.321 }");
 
-            new JsonConfigurationSource(TestFileName).Get()
+            new JsonFileSource(TestFileName).Get()
                 .Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
@@ -76,7 +77,7 @@ namespace Vostok.Configuration.Tests
         {
             CreateTextFile("{ \"BooleanValue\": true }");
 
-            new JsonConfigurationSource(TestFileName).Get()
+            new JsonFileSource(TestFileName).Get()
                 .Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
@@ -90,7 +91,7 @@ namespace Vostok.Configuration.Tests
         {
             CreateTextFile("{ \"NullValue\": null }");
 
-            new JsonConfigurationSource(TestFileName).Get()
+            new JsonFileSource(TestFileName).Get()
                 .Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
@@ -104,7 +105,7 @@ namespace Vostok.Configuration.Tests
         {
             CreateTextFile("{ \"IntArray\": [1, 2, 3] }");
 
-            new JsonConfigurationSource(TestFileName).Get()
+            new JsonFileSource(TestFileName).Get()
                 .Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
@@ -123,7 +124,7 @@ namespace Vostok.Configuration.Tests
         {
             CreateTextFile("{ \"Object\": { \"StringValue\": \"str\" } }");
 
-            new JsonConfigurationSource(TestFileName).Get()
+            new JsonFileSource(TestFileName).Get()
                 .Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
@@ -141,7 +142,7 @@ namespace Vostok.Configuration.Tests
         {
             CreateTextFile("{ \"Array\": [{ \"StringValue\": \"str\" }, { \"IntValue\": 123 }] }");
 
-            new JsonConfigurationSource(TestFileName).Get()
+            new JsonFileSource(TestFileName).Get()
                 .Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
@@ -166,7 +167,7 @@ namespace Vostok.Configuration.Tests
         {
             CreateTextFile("{ \"Array\": [null, null] }");
 
-            new JsonConfigurationSource(TestFileName).Get()
+            new JsonFileSource(TestFileName).Get()
                 .Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
@@ -185,7 +186,7 @@ namespace Vostok.Configuration.Tests
         {
             CreateTextFile("{ \"Array\": [[\"s\", \"t\"], [\"r\"]] }");
 
-            new JsonConfigurationSource(TestFileName).Get()
+            new JsonFileSource(TestFileName).Get()
                 .Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
@@ -212,7 +213,7 @@ namespace Vostok.Configuration.Tests
             CreateTextFile("{ \"Param1\": \"set1\" }");
 
             var val = 0;
-            var jcs = new JsonConfigurationSource(TestFileName);
+            var jcs = new JsonFileSource(TestFileName);
             jcs.Observe().Subscribe(settings =>
             {
                 val++;

@@ -9,7 +9,7 @@ using UriParser = Vostok.Commons.Parsers.UriParser;
 
 namespace Vostok.Configuration
 {
-    public class DefaultSettingsBinder: ISettingsBinder
+    public class DefaultSettingsBinder : ISettingsBinder
     {
         private const string ParameterIsNull = "Settings parameter is null";
         private const string ValueIsNull = "Settings value is empty";

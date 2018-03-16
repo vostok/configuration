@@ -1,43 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Vostok.Configuration
 {
-    // TODO(krait): ICP decides whether to throw on invalid configs or ignore errors
-    /// <summary>
-    /// In tests you substitute this one.
-    /// Using a per-project extension method you can get rid of generic type on Get.
-    /// </summary>
-    public interface IConfigurationProvider
-    {
-        TSettings Get<TSettings>();
-
-        // TODO(krait): take ISettings?
-        TSettings Get<TSettings>(IConfigurationSource source);
-
-        IObservable<TSettings> Observe<TSettings>();
-
-        IObservable<TSettings> Observe<TSettings>(IConfigurationSource source);
-    }
-    
-    public interface IConfigurationSource
-    {
-        RawSettings Get();
-
-        IObservable<RawSettings> Observe();
-    }
-
-    /// <summary>
-    /// Not static to be configured with custom type parsers.
-    /// </summary>
-    public interface ISettingsBinder
-    {
-        // TODO(krait): throws on error
-        TSettings Bind<TSettings>(RawSettings rawSettings);
-
-        //RawSettings Unbind<TSettings>(TSettings settings);
-    }
-
     public sealed class RawSettings
     {
         public RawSettings() {}

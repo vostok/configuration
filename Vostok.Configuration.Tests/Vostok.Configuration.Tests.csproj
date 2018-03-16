@@ -97,7 +97,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="JsonConfigurationSource_Tests.cs" />
+    <Compile Include="JsonFileSource_Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DefaultSettingsBinder_Tests.cs" />
   </ItemGroup>
