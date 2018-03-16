@@ -9,6 +9,7 @@ using UriParser = Vostok.Commons.Parsers.UriParser;
 
 namespace Vostok.Configuration
 {
+    // CR(krait): Need to add a possibility to expand it with custom type parsers. Could be a method like .WithCustomParser<T>(ITypeParser) or .WithCustomParser<T>(TryParse<T>). 
     public class DefaultSettingsBinder : ISettingsBinder
     {
         private const string ParameterIsNull = "Settings parameter is null";
@@ -40,11 +41,14 @@ namespace Vostok.Configuration
                 return result;
             }
         }
-        
+
+        // CR(krait): This method is way too monstrous. Please cut it up into pieces so that it could be read by an unprepared person.
+        // CR(krait): Also let's not leave commented out lines of code. Relates to other places as well.
         public TSettings Bind<TSettings>(RawSettings settings)
         {
             CheckArgumentIsNull(settings, ParameterIsNull);
 
+            // CR(krait): Why not make this initialization block static?
             var primitiveParsers = new Dictionary<Type, ITypeParser>
             {
                 {typeof(bool), new InlineTypeParser<bool>(bool.TryParse)},
@@ -192,7 +196,8 @@ namespace Vostok.Configuration
 
             throw new InvalidCastException("Unknown data type. Ask developers to add it.");
         }
-        private void CheckArgumentIsNull(object obj, string message)
+
+        private static void CheckArgumentIsNull(object obj, string message)
         {
             if (obj == null)
                 throw new ArgumentNullException(message);
@@ -255,7 +260,7 @@ namespace Vostok.Configuration
             return generic.Invoke(this, new object[] { settings });
         }
 
-        private bool IsPrimitiveOrSimple(Type type) => 
+        private static bool IsPrimitiveOrSimple(Type type) => 
             type.IsValueType && type.IsPrimitive
             || type == typeof(string)
             || type == typeof(decimal)

@@ -4,7 +4,7 @@ namespace Vostok.Configuration
 {
     public sealed class RawSettings
     {
-        public RawSettings() {}
+        public RawSettings() { }
 
         public RawSettings(string value)
         {

@@ -238,6 +238,8 @@ namespace Vostok.Configuration.Tests
                         }));
             });
 
+            // CR(krait): It's not a very good idea to add such long pauses in tests. When there are a plenty of such tests running them becomes painful.
+            // CR(krait): Also, it's not good to rely on exact delays: if a test agent is very slow and the file watching thread gets stuck, or whatever else could happen, the test might fail. The more reliable way is to check for a condition in a loop with timeout. See: https://git.skbkontur.ru/ke/core-infra-testing/blob/master/Kontur.Core.Infra.Testing/AssertionAssertions.cs
             Thread.Sleep(TimeSpan.FromSeconds(11));
             val.Should().Be(2);
         }

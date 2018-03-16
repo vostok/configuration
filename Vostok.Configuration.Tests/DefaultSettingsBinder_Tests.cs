@@ -47,6 +47,7 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_TimeSpan()
         {
+            // CR(krait): Maybe it would be better to delegate all the special cases to the tests for TimeSpanParser? The same applies to other types.
             var res = new TimeSpan(1, 0, 0, 0);
             var settings = new RawSettings("1d");
             binder.Bind<TimeSpan>(settings).Should().Be(res);

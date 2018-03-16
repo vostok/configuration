@@ -3,6 +3,7 @@ using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration
 {
+    // TODO(krait): Add proper xml docs everywhere.
     /// <summary>
     /// In tests you substitute this one.
     /// Using a per-project extension method you can get rid of generic type on Get.
