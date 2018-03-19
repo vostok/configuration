@@ -4,9 +4,11 @@ using System.IO;
 using System.Threading;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.Commons.Convertions;
+using Vostok.Commons.Testing;
 using Vostok.Configuration.Sources;
 
-namespace Vostok.Configuration.Tests
+namespace Vostok.Configuration.Tests.Sources
 {
     [TestFixture]
     public class JsonFileSource_Tests
@@ -31,7 +33,7 @@ namespace Vostok.Configuration.Tests
         }
         
         [Test]
-        public void Should_parse_String__value()
+        public void Should_parse_String_value()
         {
             CreateTextFile("{ \"StringValue\": \"string\" }");
 
@@ -45,7 +47,7 @@ namespace Vostok.Configuration.Tests
         }
 
         [Test]
-        public void Should_parse_Integer__value()
+        public void Should_parse_Integer_value()
         {
             CreateTextFile("{ \"IntValue\": 123 }");
 
@@ -210,10 +212,14 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_Observe_file()
         {
-            CreateTextFile("{ \"Param1\": \"set1\" }");
+            var sec = 2;
+            new Action(() => Should_Observe_file_test(sec).Should().Be(2)).ShouldPassIn(sec.Seconds());
+        }
 
+        private int Should_Observe_file_test(int sec)
+        {
             var val = 0;
-            var jcs = new JsonFileSource(TestFileName);
+            var jcs = new JsonFileSource(TestFileName, 1000);
             jcs.Observe().Subscribe(settings =>
             {
                 val++;
@@ -238,10 +244,39 @@ namespace Vostok.Configuration.Tests
                         }));
             });
 
-            // CR(krait): It's not a very good idea to add such long pauses in tests. When there are a plenty of such tests running them becomes painful.
-            // CR(krait): Also, it's not good to rely on exact delays: if a test agent is very slow and the file watching thread gets stuck, or whatever else could happen, the test might fail. The more reliable way is to check for a condition in a loop with timeout. See: https://git.skbkontur.ru/ke/core-infra-testing/blob/master/Kontur.Core.Infra.Testing/AssertionAssertions.cs
-            Thread.Sleep(TimeSpan.FromSeconds(11));
-            val.Should().Be(2);
+            Thread.Sleep(TimeSpan.FromSeconds(sec));
+            return val;
+        }
+
+        [Test]
+        public void Should_not_Observe_file_twice()
+        {
+            var sec = 1;
+            new Action(() => Should_not_Observe_file_twice_test(sec).Should().Be(1)).ShouldPassIn((sec*3).Seconds());
+        }
+
+        public int Should_not_Observe_file_twice_test(int sec)
+        {
+            var val = 0;
+            var jcs = new JsonFileSource(TestFileName, 300);
+            jcs.Observe().Subscribe(settings =>
+            {
+                val++;
+                settings.Should().BeEquivalentTo(
+                    new RawSettings(
+                        new Dictionary<string, RawSettings>
+                        {
+                            {"Param1", new RawSettings("set1")}
+                        }));
+            });
+
+            CreateTextFile("{ \"Param1\": \"set1\" }");
+            Thread.Sleep(TimeSpan.FromSeconds(sec));
+
+            CreateTextFile("{ \"Param1\": \"set1\" }");
+            Thread.Sleep(TimeSpan.FromSeconds(sec));
+
+            return val;
         }
     }
 }

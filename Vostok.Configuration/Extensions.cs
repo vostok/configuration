@@ -1,5 +1,4 @@
 using System.Linq;
-using Vostok.Configuration;
 using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration

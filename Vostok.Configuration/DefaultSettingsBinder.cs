@@ -9,7 +9,12 @@ using UriParser = Vostok.Commons.Parsers.UriParser;
 
 namespace Vostok.Configuration
 {
-    // CR(krait): Need to add a possibility to expand it with custom type parsers. Could be a method like .WithCustomParser<T>(ITypeParser) or .WithCustomParser<T>(TryParse<T>). 
+    public delegate bool TryParse<T>(string s, out T value);
+
+    /// <inheritdoc />
+    /// <summary>
+    /// Default binder
+    /// </summary>
     public class DefaultSettingsBinder : ISettingsBinder
     {
         private const string ParameterIsNull = "Settings parameter is null";
@@ -19,12 +24,8 @@ namespace Vostok.Configuration
         private const string ListIsEmpty = "Settings list is empty";
         private const string ListItemIsEmpty = "Settings list item is empty";
 
-        private interface ITypeParser
-        {
-            bool TryParse(string s, out object value);
-        }
+        private readonly Dictionary<Type, ITypeParser> primitiveAndSimpleParsers;
 
-        private delegate bool TryParse<T>(string s, out T value);
         private class InlineTypeParser<T> : ITypeParser
         {
             private readonly TryParse<T> parseMethod;
@@ -42,14 +43,9 @@ namespace Vostok.Configuration
             }
         }
 
-        // CR(krait): This method is way too monstrous. Please cut it up into pieces so that it could be read by an unprepared person.
-        // CR(krait): Also let's not leave commented out lines of code. Relates to other places as well.
-        public TSettings Bind<TSettings>(RawSettings settings)
+        public DefaultSettingsBinder()
         {
-            CheckArgumentIsNull(settings, ParameterIsNull);
-
-            // CR(krait): Why not make this initialization block static?
-            var primitiveParsers = new Dictionary<Type, ITypeParser>
+            primitiveAndSimpleParsers = new Dictionary<Type, ITypeParser>
             {
                 {typeof(bool), new InlineTypeParser<bool>(bool.TryParse)},
                 {typeof(byte), new InlineTypeParser<byte>(byte.TryParse)},
@@ -72,48 +68,136 @@ namespace Vostok.Configuration
                 {typeof(Uri), new InlineTypeParser<Uri>(UriParser.TryParse)},
                 {typeof(DataSize), new InlineTypeParser<DataSize>(DataSizeParser.TryParse)},
                 {typeof(DataRate), new InlineTypeParser<DataRate>(DataRateParser.TryParse)},
-             };
+            };
+        }
+
+        public TSettings Bind<TSettings>(RawSettings settings)
+        {
+            CheckArgumentIsNull(settings, ParameterIsNull);
+
+            // (Mansiper): The order is important!
+            if (TryBindToPrimitiveOrSimple(settings, out TSettings mainRes)
+             || TryBindToEnum(settings, out mainRes)
+             || TryBindToNullable(settings, out mainRes)
+             || TryBindToStruct(settings, out mainRes)
+             || TryBindToArray(settings, out mainRes)
+             || TryBindToList(settings, out mainRes)
+             || TryBindToDictionary(settings, out mainRes)
+             || TryBindToClass(settings, out mainRes))
+                return mainRes;
+
+            throw new InvalidCastException("Unknown data type. If it is primitive ask developers to add it.");
+        }
+
+        /// <summary>
+        /// Adds custom parser which can parse from string value to specified type
+        /// </summary>
+        /// <typeparam name="T">Type of in which you need to parse</typeparam>
+        /// <param name="parser">Class with method implemented TryParse_T_ delegate</param>
+        /// <returns>This binder with new parser</returns>
+        public DefaultSettingsBinder WithCustomParser<T>(ITypeParser parser)
+        {
+            primitiveAndSimpleParsers.Add(typeof(T), parser);
+            return this;
+        }
+
+        /// <summary>
+        /// Adds custom parser which can parse from string value to specified type
+        /// </summary>
+        /// <typeparam name="T">Type of in which you need to parse</typeparam>
+        /// <param name="parseMmethod">Method implemented TryParse_T_ delegate</param>
+        /// <returns>This binder with new parser</returns>
+        public DefaultSettingsBinder WithCustomParser<T>(TryParse<T> parseMmethod)
+        {
+            primitiveAndSimpleParsers.Add(typeof(T), new InlineTypeParser<T>(parseMmethod));
+            return this;
+        }
+
+        private bool TryBindToPrimitiveOrSimple<TSettings>(RawSettings settings, out TSettings result)
+        {
             var bindType = typeof (TSettings);
-            var bindGtd = bindType.IsGenericType ? bindType.GetGenericTypeDefinition() : null;
-            
+            result = default;
+
             if (IsPrimitiveOrSimple(bindType))
             {
                 if (bindType == typeof(string))
-                    return (TSettings)(object) settings.Value;
+                {
+                    result = (TSettings)(object)settings.Value;
+                    return true;
+                }
 
                 if (string.IsNullOrWhiteSpace(settings.Value))
                     CheckArgumentIsNull(null, ValueIsNull);
 
-                if (primitiveParsers[bindType].TryParse(settings.Value, out var res))
-                    return (TSettings) res;
-                else throw new InvalidCastException($"{settings.Value} to {bindType.Name}");    //Wow! New primitive?
+                if (primitiveAndSimpleParsers[bindType].TryParse(settings.Value, out var res))
+                {
+                    result = (TSettings) res;
+                    return true;
+                }
+
+                //Must throw only if get new primitive like int128
+                throw new InvalidCastException($"{settings.Value} to {bindType.Name}");
             }
-            else if (bindType.IsEnum)
+
+            return false;
+        }
+
+        private bool TryBindToEnum<TSettings>(RawSettings settings, out TSettings result)
+        {
+            var bindType = typeof(TSettings);
+            result = default;
+
+            if (bindType.IsEnum)
             {
                 if (string.IsNullOrWhiteSpace(settings.Value))
                     CheckArgumentIsNull(null, ValueIsNull);
 
                 foreach (var name in Enum.GetNames(typeof (TSettings)).Where(n => n.ToLower() == settings.Value.ToLower()))
-                    return (TSettings) Enum.Parse(typeof (TSettings), name, true);
+                {
+                    result = (TSettings)Enum.Parse(typeof(TSettings), name, true);
+                    return true;
+                }
                 if (int.TryParse(settings.Value, out var intVal))
                     foreach (var value in Enum.GetValues(typeof(TSettings)))
                         if ((int) value == intVal)
-                            return (TSettings)(object) intVal;
+                        {
+                            result = (TSettings)(object)intVal;
+                            return true;
+                        }
+
                 throw new InvalidCastException("Value for enum was not found.");
             }
-            else if (bindType.IsValueType && bindType.IsGenericType) //before IsValueType - Nullable<T>
+
+            return false;
+        }
+
+        private bool TryBindToNullable<TSettings>(RawSettings settings, out TSettings result)
+        {
+            var bindType = typeof(TSettings);
+            result = default;
+
+            if (bindType.IsValueType && bindType.IsGenericType)
             {
                 if (settings.Value == null)
-                    return default;
+                    return true;
 
                 var res = BindInvokeSettings(new RawSettings(settings.Value), bindType.GenericTypeArguments[0]);
-                return (TSettings) res;
+                result = (TSettings)res;
+                return true;
             }
-            else if (bindType.IsValueType) //structs only
+
+            return false;
+        }
+
+        private bool TryBindToStruct<TSettings>(RawSettings settings, out TSettings result)
+        {
+            var bindType = typeof (TSettings);
+            result = default;
+
+            if (bindType.IsValueType)
             {
                 CheckArgumentIsNull(settings.ChildrenByKey, DictIsEmpty);
-                var inst = default(TSettings);
-                var boxedInst = (object) inst;
+                var boxedInst = (object) default(TSettings);
 
                 foreach (var field in bindType.GetFields())
                 {
@@ -125,9 +209,19 @@ namespace Vostok.Configuration
                     var res = BindInvoke(prop.Name, prop.PropertyType, settings);
                     prop.SetValue(boxedInst, res);
                 }
-                return (TSettings) boxedInst;
+                result = (TSettings)boxedInst;
+                return true;
             }
-            else if (bindType.IsArray)  //before IsClass
+
+            return false;
+        }
+
+        private bool TryBindToArray<TSettings>(RawSettings settings, out TSettings result)
+        {
+            var bindType = typeof (TSettings);
+            result = default;
+
+            if (bindType.IsArray)
             {
                 CheckArgumentIsNull(settings.Children, ListIsEmpty);
                 var elType = bindType.GetElementType();
@@ -139,28 +233,47 @@ namespace Vostok.Configuration
                     var val = BindInvokeList(i, elType, settings);
                     inst.SetValue(val, i++);
                 }
-                return (TSettings)(object) inst;
+                result = (TSettings)(object)inst;
+                return true;
             }
-            else if (bindType.IsGenericType && (bindGtd == typeof(List<>) || bindGtd == typeof(IEnumerable<>))) //before IsClass
+
+            return false;
+        }
+
+        private bool TryBindToList<TSettings>(RawSettings settings, out TSettings result)
+        {
+            var bindType = typeof(TSettings);
+            var bindGtd = bindType.IsGenericType ? bindType.GetGenericTypeDefinition() : null;
+            result = default;
+
+            if (bindType.IsGenericType && (bindGtd == typeof(List<>) || bindGtd == typeof(IEnumerable<>)))
             {
                 CheckArgumentIsNull(settings.Children, ListIsEmpty);
-//                var inst = Activator.CreateInstance(typeof(List<>).MakeGenericType(bindGtd.GetGenericArguments()));
                 var listType = typeof(List<>);
                 var genType = listType.MakeGenericType(bindType.GetGenericArguments());
                 var inst = Activator.CreateInstance(genType);
-                //var addMethod = inst.GetType().GetMethod(nameof(List<int>.Add));
                 var i = 0;
                 foreach (var item in settings.Children)
                 {
                     CheckArgumentIsNull(item, ListItemIsEmpty);
                     var val = BindInvokeList(i, genType.GenericTypeArguments[0], settings);
-                    ((IList) inst).Add(val);
-                    //addMethod.Invoke(inst, new[] {val});
+                    ((IList)inst).Add(val);
                     i++;
                 }
-                return (TSettings) inst;
+                result = (TSettings) inst;
+                return true;
             }
-            else if (bindType.IsGenericType && bindGtd == typeof(Dictionary<,>))    //before IsClass
+
+            return false;
+        }
+
+        private bool TryBindToDictionary<TSettings>(RawSettings settings, out TSettings result)
+        {
+            var bindType = typeof(TSettings);
+            var bindGtd = bindType.IsGenericType ? bindType.GetGenericTypeDefinition() : null;
+            result = default;
+
+            if (bindType.IsGenericType && bindGtd == typeof(Dictionary<,>))
             {
                 CheckArgumentIsNull(settings.ChildrenByKey, DictIsEmpty);
                 var dictType = typeof(Dictionary<,>);
@@ -175,9 +288,19 @@ namespace Vostok.Configuration
                     ((IDictionary)inst).Add(key, val);
                     i++;
                 }
-                return (TSettings)inst;
+                result = (TSettings) inst;
+                return true;
             }
-            else if (bindType.IsClass)  //generic classes also here
+
+            return false;
+        }
+
+        private bool TryBindToClass<TSettings>(RawSettings settings, out TSettings result)
+        {
+            var bindType = typeof (TSettings);
+            result = default;
+
+            if (bindType.IsClass)
             {
                 CheckArgumentIsNull(settings.ChildrenByKey, DictIsEmpty);
                 var inst = Activator.CreateInstance<TSettings>();
@@ -191,10 +314,11 @@ namespace Vostok.Configuration
                     var res = BindInvoke(prop.Name, prop.PropertyType, settings);
                     prop.SetValue(inst, res);
                 }
-                return inst;
+                result = inst;
+                return true;
             }
 
-            throw new InvalidCastException("Unknown data type. Ask developers to add it.");
+            return false;
         }
 
         private static void CheckArgumentIsNull(object obj, string message)
@@ -207,24 +331,25 @@ namespace Vostok.Configuration
         {
             var method = typeof(DefaultSettingsBinder).GetMethod(nameof(Bind));
             var generic = method.MakeGenericMethod(fieldOrPropertyType);
+
             if (!fieldOrPropertyType.IsClass)
             {
                 if (!settings.ChildrenByKey.ContainsKey(fieldOrPropertyName))
                     throw new InvalidCastException($"Key is absent: {fieldOrPropertyName}");
-                var rs = settings.ChildrenByKey[fieldOrPropertyName];
-                CheckArgumentIsNull(rs, $"Value of field/property '{fieldOrPropertyName}' is null");
-                return generic.Invoke(this, new object[] { rs });
+                return InvokeBind();
             }
             else
             {
                 if (!settings.ChildrenByKey.ContainsKey(fieldOrPropertyName))
                     return null;
-                else
-                {
-                    var rs = settings.ChildrenByKey[fieldOrPropertyName];
-                    CheckArgumentIsNull(rs, $"Value of field/property '{fieldOrPropertyName}' is null");
-                    return generic.Invoke(this, new object[] { rs });
-                }
+                else return InvokeBind();
+            }
+
+            object InvokeBind()
+            {
+                var rs = settings.ChildrenByKey[fieldOrPropertyName];
+                CheckArgumentIsNull(rs, $"Value of field/property '{fieldOrPropertyName}' is null");
+                return generic.Invoke(this, new object[] { rs });
             }
         }
 
@@ -232,24 +357,27 @@ namespace Vostok.Configuration
         {
             var method = typeof(DefaultSettingsBinder).GetMethod(nameof(Bind));
             var generic = method.MakeGenericMethod(listType);
+
             if (!listType.IsClass)
             {
                 if (settings.Children.Count() <= index)
-                    throw new InvalidCastException($"Key is absent by index: {index}"); //it must never be thrown
-                var rs = settings.Children.ElementAt(index);
-                CheckArgumentIsNull(rs, $"Value of list on index '{index}' is null");
-                return generic.Invoke(this, new object[] { rs });
+                    //it must never be thrown
+                    throw new InvalidCastException($"Key is absent by index: {index}");
+                return InvokeBind();
             }
             else
             {
                 if (settings.Children.Count() <= index)
                     return null;
                 else
-                {
-                    var rs = settings.Children.ElementAt(index);
-                    CheckArgumentIsNull(rs, $"Value of list on index '{index}' is null");
-                    return generic.Invoke(this, new object[] { rs });
-                }
+                    return InvokeBind();
+            }
+
+            object InvokeBind()
+            {
+                var rs = settings.Children.ElementAt(index);
+                CheckArgumentIsNull(rs, $"Value of list on index '{index}' is null");
+                return generic.Invoke(this, new object[] { rs });
             }
         }
 
@@ -260,17 +388,9 @@ namespace Vostok.Configuration
             return generic.Invoke(this, new object[] { settings });
         }
 
-        private static bool IsPrimitiveOrSimple(Type type) => 
+        private bool IsPrimitiveOrSimple(Type type) =>
             type.IsValueType && type.IsPrimitive
             || type == typeof(string)
-            || type == typeof(decimal)
-            || type == typeof(DateTime)
-            || type == typeof(TimeSpan)
-            || type == typeof(IPAddress)
-            || type == typeof(IPEndPoint)
-            || type == typeof(Guid)
-            || type == typeof(Uri)
-            || type == typeof(DataSize)
-            || type == typeof(DataRate);
+            || primitiveAndSimpleParsers.ContainsKey(type);
     }
 }

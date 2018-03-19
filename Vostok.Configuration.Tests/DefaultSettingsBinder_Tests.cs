@@ -4,6 +4,7 @@ using System.Net;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons;
+using Vostok.Commons.Parsers;
 
 namespace Vostok.Configuration.Tests
 {
@@ -11,6 +12,41 @@ namespace Vostok.Configuration.Tests
     public class DefaultSettingsBinder_Tests
     {
         private DefaultSettingsBinder binder;
+
+        internal class CST
+        {
+            public string[] Strings { get; set; }
+        }
+        internal class CommaSeparatedTextParser: ITypeParser
+        {
+            public bool TryParse(string s, out object value)
+            {
+                if (string.IsNullOrEmpty(s))
+                {
+                    value = null;
+                    return false;
+                }
+
+                value = new CST { Strings = s.Split(',') };
+                return true;
+            }
+        }
+
+        internal class SST
+        {
+            public string[] Strings { get; set; }
+        }
+        private bool TryParseSemicolonSeparatedText(string s, out SST value)
+        {
+            if (string.IsNullOrEmpty(s))
+            {
+                value = default;
+                return false;
+            }
+
+            value = new SST {Strings = s.Split(';')};
+            return true;
+        }
 
         [SetUp]
         public void SetUp()
@@ -47,52 +83,8 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_TimeSpan()
         {
-            // CR(krait): Maybe it would be better to delegate all the special cases to the tests for TimeSpanParser? The same applies to other types.
-            var res = new TimeSpan(1, 0, 0, 0);
-            var settings = new RawSettings("1d");
-            binder.Bind<TimeSpan>(settings).Should().Be(res);
-            settings = new RawSettings("1 day");
-            binder.Bind<TimeSpan>(settings).Should().Be(res);
-            settings = new RawSettings("1   days");
-            binder.Bind<TimeSpan>(settings).Should().Be(res);
-
-            res = new TimeSpan(0, 1, 0, 0);
-            settings = new RawSettings("1h");
-            binder.Bind<TimeSpan>(settings).Should().Be(res);
-            settings = new RawSettings("1 hour");
-            binder.Bind<TimeSpan>(settings).Should().Be(res);
-            settings = new RawSettings("1   hours");
-            binder.Bind<TimeSpan>(settings).Should().Be(res);
-
-            res = new TimeSpan(0, 0, 1, 0);
-            settings = new RawSettings("1m");
-            binder.Bind<TimeSpan>(settings).Should().Be(res);
-            settings = new RawSettings("1 min");
-            binder.Bind<TimeSpan>(settings).Should().Be(res);
-            settings = new RawSettings("1 minute");
-            binder.Bind<TimeSpan>(settings).Should().Be(res);
-            settings = new RawSettings("1   minutes");
-            binder.Bind<TimeSpan>(settings).Should().Be(res);
-
-            res = new TimeSpan(0, 0, 0, 1);
-            settings = new RawSettings("1s");
-            binder.Bind<TimeSpan>(settings).Should().Be(res);
-            settings = new RawSettings("1 sec");
-            binder.Bind<TimeSpan>(settings).Should().Be(res);
-            settings = new RawSettings("1 second");
-            binder.Bind<TimeSpan>(settings).Should().Be(res);
-            settings = new RawSettings("1   seconds");
-            binder.Bind<TimeSpan>(settings).Should().Be(res);
-
-            res = new TimeSpan(0, 0, 0, 0, 1);
-            settings = new RawSettings("1ms");
-            binder.Bind<TimeSpan>(settings).Should().Be(res);
-            settings = new RawSettings("1 msec");
-            binder.Bind<TimeSpan>(settings).Should().Be(res);
-            settings = new RawSettings("1 millisecond");
-            binder.Bind<TimeSpan>(settings).Should().Be(res);
-            settings = new RawSettings("1   milliseconds");
-            binder.Bind<TimeSpan>(settings).Should().Be(res);
+            var settings = new RawSettings("1 second");
+            binder.Bind<TimeSpan>(settings).Should().Be(new TimeSpan(0, 0, 0, 1, 0));
         }
 
         [Test]
@@ -110,72 +102,24 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_IPEndPoint()
         {
-            var settings = new RawSettings("127.0.0.1");
-            binder.Bind<IPEndPoint>(settings).Should().Be(
-                new IPEndPoint(new IPAddress(new byte[] {127, 0, 0, 1}), 0));
-
-            settings = new RawSettings("192.168.1.10:80");
+            var settings = new RawSettings("192.168.1.10:80");
             binder.Bind<IPEndPoint>(settings).Should().Be(
                 new IPEndPoint(new IPAddress(new byte[] {192, 168, 1, 10}), 80));
-
-            var ipV6 = "2001:0db8:11a3:09d7:1f34:8a2e:07a0:765d";
-            var ipV6Bytes = new byte[] { 32, 1, 13, 184, 17, 163, 9, 215, 31, 52, 138, 46, 7, 160, 118, 93 };
-
-            settings = new RawSettings(ipV6);
-            binder.Bind<IPEndPoint>(settings).Should().Be(
-                new IPEndPoint(new IPAddress(ipV6Bytes), 0));
-
-            settings = new RawSettings($"[{ipV6}]");
-            binder.Bind<IPEndPoint>(settings).Should().Be(
-                new IPEndPoint(new IPAddress(ipV6Bytes), 0));
-
-            settings = new RawSettings($"[{ipV6}]:80");
-            binder.Bind<IPEndPoint>(settings).Should().Be(
-                new IPEndPoint(new IPAddress(ipV6Bytes), 80));
         }
 
-        [TestCase("10 /s", 10)]
-        [TestCase("10/sec", 10)]
-        [TestCase("10 /second", 10)]
-        public void Should_bind_to_DataRate(string input, int seconds)
+        [Test]
+        public void Should_bind_to_DataRate()
         {
-            var settings = new RawSettings(input);
+            var settings = new RawSettings("10/sec");
             binder.Bind<DataRate>(settings).Should().Be(
-                DataRate.FromBytesPerSecond(seconds));
+                DataRate.FromBytesPerSecond(10));
         }
 
         [Test]
         public void Should_bind_to_DataSize()
         {
-            var settings = new RawSettings("1b");
-            binder.Bind<DataSize>(settings).Should().Be(DataSize.FromBytes(1));
-            settings = new RawSettings("10 bytes");
+            var settings = new RawSettings("10 bytes");
             binder.Bind<DataSize>(settings).Should().Be(DataSize.FromBytes(10));
-
-            settings = new RawSettings("1KB");
-            binder.Bind<DataSize>(settings).Should().Be(DataSize.FromKilobytes(1));
-            settings = new RawSettings("10 KiLoByTeS");
-            binder.Bind<DataSize>(settings).Should().Be(DataSize.FromKilobytes(10));
-
-            settings = new RawSettings("1Mb");
-            binder.Bind<DataSize>(settings).Should().Be(DataSize.FromMegabytes(1));
-            settings = new RawSettings("1030   megabytes");
-            binder.Bind<DataSize>(settings).Should().Be(DataSize.FromMegabytes(1030));
-
-            settings = new RawSettings("1gb");
-            binder.Bind<DataSize>(settings).Should().Be(DataSize.FromGigabytes(1));
-            settings = new RawSettings("10gigabytes");
-            binder.Bind<DataSize>(settings).Should().Be(DataSize.FromGigabytes(10));
-
-            settings = new RawSettings("1tb");
-            binder.Bind<DataSize>(settings).Should().Be(DataSize.FromTerabytes(1));
-            settings = new RawSettings("10terabytes");
-            binder.Bind<DataSize>(settings).Should().Be(DataSize.FromTerabytes(10));
-
-            settings = new RawSettings("1pb");
-            binder.Bind<DataSize>(settings).Should().Be(DataSize.FromPetabytes(1));
-            settings = new RawSettings("10petabytes");
-            binder.Bind<DataSize>(settings).Should().Be(DataSize.FromPetabytes(10));
         }
 
         [Test]
@@ -186,13 +130,11 @@ namespace Vostok.Configuration.Tests
             binder.Bind<Guid>(settings).Should().Be(new Guid(guid));
         }
 
-        [TestCase("http://example.com", UriKind.Absolute)]
-        [TestCase("example.com/some", UriKind.RelativeOrAbsolute)]
-        [TestCase("/part/of/path", UriKind.Relative)]
-        public void Should_bind_to_Uri(string uri, UriKind kind)
+        [Test]
+        public void Should_bind_to_Uri()
         {
-            var settings = new RawSettings(uri);
-            binder.Bind<Uri>(settings).Should().Be(new Uri(uri, kind));
+            var settings = new RawSettings("http://example.com");
+            binder.Bind<Uri>(settings).Should().Be(new Uri("http://example.com", UriKind.Absolute));
         }
 
         [Test]
@@ -200,6 +142,24 @@ namespace Vostok.Configuration.Tests
         {
             var settings = new RawSettings("somestring");
             binder.Bind<string>(settings).Should().Be("somestring");
+        }
+
+        [Test]
+        public void Should_bind_with_custom_CSTParser()
+        {
+            var settings = new RawSettings("some,string");
+            binder.WithCustomParser<CST>(new CommaSeparatedTextParser())
+                .Bind<CST>(settings).Should().BeEquivalentTo(
+                    new CST{ Strings = new [] {"some", "string"} });
+        }
+
+        [Test]
+        public void Should_bind_with_custom_SSTParser()
+        {
+            var settings = new RawSettings("some;string");
+            binder.WithCustomParser<SST>(TryParseSemicolonSeparatedText)
+                .Bind<SST>(settings).Should().BeEquivalentTo(
+                    new SST{ Strings = new [] {"some", "string"} });
         }
 
         [Test]
@@ -222,26 +182,11 @@ namespace Vostok.Configuration.Tests
             binder.Bind<ConsoleColor>(settings).Should().Be(ConsoleColor.Green);
         }
 
-        [TestCase("2018-03-14 15:09:26.535", 2018, 3, 14, 15, 9, 26, 535)]   //for Stephen Hawking in a day of Pi
-        [TestCase("2018-03-14T15:09:26.535", 2018, 3, 14, 15, 9, 26, 535)]
-        [TestCase("20050809T181142+0330", 2005, 8, 9, 18 + 3 - 1/*?*/, 11 + 30, 42, 0)]
-        [TestCase("20050809T181142", 2005, 8, 9, 18, 11, 42, 0)]
-        [TestCase("20050809", 2005, 8, 9, 0, 0, 0, 0)]
-        [TestCase("2005/08/09", 2005, 8, 9, 0, 0, 0, 0)]
-        [TestCase("2005.08.09", 2005, 8, 9, 0, 0, 0, 0)]
-        [TestCase("11:22:33", 0, 0, 0, 11, 22, 33, 0)]
-        [TestCase("11:22:33.044", 0, 0, 0, 11, 22, 33, 44)]
-        [TestCase("112233", 0, 0, 0, 11, 22, 33, 0)]
-        public void Should_bind_to_DateTime(string value, int y, int m, int d, int h, int min, int s, int ms)
+        [Test]
+        public void Should_bind_to_DateTime()
         {
-            var settings = new RawSettings(value);
-            if (y == 0 && m == 0 && d == 0)
-            {
-                y = DateTime.Now.Year;
-                m = DateTime.Now.Month;
-                d = DateTime.Now.Day;
-            }
-            binder.Bind<DateTime>(settings).Should().Be(new DateTime(y, m, d, h, min, s, ms));
+            var settings = new RawSettings("2018-03-14T15:09:26.535");
+            binder.Bind<DateTime>(settings).Should().Be(new DateTime(2018, 3, 14, 15, 9, 26, 535));
         }
 
         internal struct Struct1
@@ -563,52 +508,58 @@ namespace Vostok.Configuration.Tests
         // === ArgumentNullException
 
         [Test]
-        public void Throw_ArgumentNullException_Main()
+        public void Should_throw_ArgumentNullException_Main()
         {
             new Action(() => binder.Bind<int>(null)).Should().Throw<ArgumentNullException>();
         }
 
         [Test]
-        public void Throw_ArgumentNullException_Dictionary()
+        public void Should_throw_ArgumentNullException_Dictionary()
         {
             new Action(() => binder.Bind<Struct1>(new RawSettings(null))).Should().Throw<ArgumentNullException>();
         }
 
         [Test]
-        public void Throw_ArgumentNullException_Array()
+        public void Should_throw_ArgumentNullException_Array()
         {
             new Action(() => binder.Bind<int[]>(new RawSettings(null))).Should().Throw<ArgumentNullException>();
         }
 
         [Test]
-        public void Throw_ArgumentNullException_List()
+        public void Should_throw_ArgumentNullException_List()
         {
             new Action(() => binder.Bind<List<int>>(new RawSettings(null))).Should().Throw<ArgumentNullException>();
         }
 
         [Test]
-        public void Throw_ArgumentNullException_Class()
+        public void Should_throw_ArgumentNullException_Class()
         {
             new Action(() => binder.Bind<MyClass2>(new RawSettings(null))).Should().Throw<ArgumentNullException>();
         }
 
         [Test]
-        public void Throw_ArgumentNullException_Struct()
+        public void Should_throw_ArgumentNullException_Struct()
         {
             new Action(() => binder.Bind<Struct1>(new RawSettings(null))).Should().Throw<ArgumentNullException>();
+        }
+
+        [Test]
+        public void Should_throw_ArgumentNullException_on_unknown_data_type()
+        {
+            new Action(() => binder.Bind<CST>(new RawSettings("a,b,c"))).Should().Throw<ArgumentNullException>();
         }
 
         // === InvalidCastException
 
         [Test]
-        public void Throw_InvalidCastException_Primitive_if_wrong_type()
+        public void Should_throw_InvalidCastException_Primitive_if_wrong_type()
         {
             var settings = new RawSettings("str");
             new Action(() => binder.Bind<int>(settings)).Should().Throw<InvalidCastException>();
         }
         
         [Test]
-        public void Throw_InvalidCastException_Enum_if_wrong_value()
+        public void Should_throw_InvalidCastException_Enum_if_wrong_value()
         {
             var settings = new RawSettings("SeroBuroMalinovy");
             new Action(() => binder.Bind<ConsoleColor>(settings)).Should().Throw<InvalidCastException>();
@@ -618,7 +569,7 @@ namespace Vostok.Configuration.Tests
         }
         
         [Test]
-        public void Throw_InvalidCastException_struct_field_or_prop_is_absent()
+        public void Should_throw_InvalidCastException_struct_field_or_prop_is_absent()
         {
             var settings = new RawSettings(new Dictionary<string, RawSettings>
             {
@@ -629,7 +580,7 @@ namespace Vostok.Configuration.Tests
         }
         
         [Test]
-        public void Throw_InvalidCastException_class_field_or_prop_is_absent()
+        public void Should_throw_InvalidCastException_class_field_or_prop_is_absent()
         {
             var settings = new RawSettings(new Dictionary<string, RawSettings>
             {

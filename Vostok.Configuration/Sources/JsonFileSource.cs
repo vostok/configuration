@@ -1,39 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Reflection;
 using Newtonsoft.Json.Linq;
-using Vostok.Commons.ThreadManagment;
 
 namespace Vostok.Configuration.Sources
 {
+    /// <inheritdoc />
+    /// <summary>
+    /// Json converter to RawSettings tree
+    /// </summary>
     public class JsonFileSource : IConfigurationSource
     {
         private readonly string filePath;
-        private readonly FileSystemWatcher watcher;
-        private readonly List<IObserver<RawSettings>> observers;
-        private readonly object sync;
-        private RawSettings current;
+        private readonly SettingsFileWatcher fileWatcher;
 
-        public JsonFileSource(string filePath)
+        /// <summary>
+        /// Creating json converter
+        /// </summary>
+        /// <param name="filePath">File name with settings</param>
+        /// <param name="observePeriod">Observe period in ms (min 100)</param>
+        public JsonFileSource(string filePath, int observePeriod = 10000)
         {
             this.filePath = filePath;
-            var path = Path.GetDirectoryName(filePath);
-            if (string.IsNullOrEmpty(path))
-                path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            watcher = new FileSystemWatcher(path, Path.GetFileName(filePath));
-            observers = new List<IObserver<RawSettings>>();
-            sync = new object();
-            
-            ThreadRunner.Run(WatchFile);
+            fileWatcher = new SettingsFileWatcher(filePath, this, observePeriod);
         }
 
         public RawSettings Get()
         {
             var obj = JObject.Parse(File.ReadAllText(filePath));
             return JsonParser(obj);
+        }
+
+        public IObservable<RawSettings> Observe()
+        {
+            return Observable.Create<RawSettings>(observer =>
+            {
+                fileWatcher.AddObserver(observer);
+                return fileWatcher.GetDisposable(observer);
+            });
         }
 
         private RawSettings JsonParser(JObject obj)
@@ -86,50 +91,6 @@ namespace Vostok.Configuration.Sources
                 }
 
             return res;
-        }
-
-        private void WatchFile()
-        {
-            const int reloadPeriod = 10000;
-
-            while (true)
-            {
-                watcher.WaitForChanged(WatcherChangeTypes.All, reloadPeriod);
-
-                if (File.Exists(filePath))
-                {
-                    using (var reader = new StreamReader(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                        current = JsonParser(JObject.Parse(reader.ReadToEnd()));
-
-                    lock (sync)
-                    {
-                        foreach (var observer in observers)
-                            observer.OnNext(current);
-                    }
-                }
-            }
-        }
-
-        public IObservable<RawSettings> Observe()
-        {
-            return Observable.Create<RawSettings>(observer =>
-            {
-                lock (sync)
-                {
-                    observers.Add(observer);
-
-                    if (current != null)
-                        observer.OnNext(current);
-                }
-
-                return Disposable.Create(() =>
-                {
-                    lock (sync)
-                    {
-                        observers.Remove(observer);
-                    }
-                });
-            });
         }
     }
 }
