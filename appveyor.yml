@@ -60,9 +60,13 @@ install:
 configuration: Release
 after_build:
   - ps: |
-      $prbranch = "$env:APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH"
-      if ($prbranch -eq "")
-      {
+      if ($env:appveyor_repo_branch -eq "master" -and "$env:APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH" -eq "") {
+        $proj="Vostok.$env:APPVEYOR_PROJECT_NAME.csproj"
+        & $env:cm pack $proj
+        if (!$?) {
+            Write-Output "cm pack error"
+            exit 1
+        }
         $csprojs = $env:appveyor_build_folder | Get-ChildItem -Recurse -Filter "*.csproj"
         foreach($csproj in $csprojs)
         {
@@ -97,11 +101,7 @@ deploy:
     name: Nuget
     on:
       appveyor_repo_tag: true
-    skip_symbols: false
-    symbol_server:           # remove to push symbols to SymbolSource.org
     artifact: /.*\.nupkg/
   - provider: Environment
     name: FullNuget
-    skip_symbols: false
-    symbol_server:           # remove to push symbols to SymbolSource.org
     artifact: /.*\.nupkg/
