@@ -212,14 +212,13 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_Observe_file()
         {
-            var sec = 2;
-            new Action(() => Should_Observe_file_test(sec).Should().Be(2)).ShouldPassIn(sec.Seconds());
+            new Action(() => Should_Observe_file_test().Should().Be(2)).ShouldPassIn(2.Seconds());
         }
 
-        private int Should_Observe_file_test(int sec)
+        private int Should_Observe_file_test()
         {
             var val = 0;
-            var jcs = new JsonFileSource(TestFileName, 1000);
+            var jcs = new JsonFileSource(TestFileName, 300);
             jcs.Observe().Subscribe(settings =>
             {
                 val++;
@@ -244,7 +243,7 @@ namespace Vostok.Configuration.Tests.Sources
                         }));
             });
 
-            Thread.Sleep(TimeSpan.FromSeconds(sec));
+            Thread.Sleep(1.Seconds());
             return val;
         }
 

@@ -321,7 +321,7 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_observe_file()
         {
-            new Action(() => Should_observe_file_test().Should().Be(1)).ShouldPassIn(3.Seconds());
+            new Action(() => Should_observe_file_test().Should().Be(1)).ShouldPassIn(5.Seconds());
         }
         private int Should_observe_file_test()
         {
@@ -349,9 +349,9 @@ namespace Vostok.Configuration.Tests.Sources
                             }));
                 });
 
-            Thread.Sleep(1.Seconds());
+            Thread.Sleep(2.Seconds());
             CreateTextFile(2, "{ \"value 2\": 2, \"list\": [3,4] }");
-            Thread.Sleep(1.Seconds());
+            Thread.Sleep(2.Seconds());
 
             return val;
         }

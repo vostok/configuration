@@ -28,6 +28,7 @@ namespace Vostok.Configuration.Sources
 
         public RawSettings Get()
         {
+            if (!File.Exists(filePath)) return null;
             var obj = JObject.Parse(File.ReadAllText(filePath));
             return JsonParser(obj);
         }
