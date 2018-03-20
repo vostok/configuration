@@ -20,11 +20,13 @@ namespace Vostok.Configuration
             ChildrenByKey = children;
             Value = value;
         }
+
         public RawSettings(IList<RawSettings> children, string value = null)
         {
             Children = children;
             Value = value;
         }
+
         public RawSettings(IDictionary<string, RawSettings> childrenByKey, IList<RawSettings> children, string value = null)
         {
             ChildrenByKey = childrenByKey;
@@ -32,6 +34,8 @@ namespace Vostok.Configuration
             Value = value;
         }
 
+        // CR(krait): Wouldn't it be nicer to make RawSettings immutable and always set children through a constructor?
+        // CR(krait): Then Children becomes IReadOnlyList and ChildrenByKey becomes IReadOnlyDictionary.
         /// <summary>
         /// Creates ChildrenByKey dictionary
         /// </summary>
@@ -48,6 +52,7 @@ namespace Vostok.Configuration
             Children = new List<RawSettings>();
         }
 
+        // CR(krait): Why not override object.Equals()?
         /// <summary>
         /// Compares one RawSettings tree to another
         /// </summary>
@@ -58,7 +63,7 @@ namespace Vostok.Configuration
         {
             if (first == null && second == null)
                 return true;
-            else if (first == null || second == null)
+            if (first == null || second == null)
                 return false;
 
             if (first.Value != second.Value ||
@@ -68,6 +73,7 @@ namespace Vostok.Configuration
 
             if (first.ChildrenByKeyExists())
             {
+                // CR(krait): Is it correct to compare Keys collections with regard to order?
                 if (!first.ChildrenByKey.Keys.SequenceEqual(second.ChildrenByKey.Keys))
                     return false;
                 foreach (var pair in first.ChildrenByKey)
@@ -87,6 +93,7 @@ namespace Vostok.Configuration
         }
 
         private bool ChildrenByKeyExists() => ChildrenByKey != null;
+
         private bool ChildrenExists() => Children != null;
 
         /// <summary>

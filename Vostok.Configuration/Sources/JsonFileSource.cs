@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Vostok.Configuration.Sources
 {
+    // CR(krait): Need to create a JsonStringSource also.
     /// <inheritdoc />
     /// <summary>
     /// Json converter to RawSettings tree
@@ -28,9 +29,10 @@ namespace Vostok.Configuration.Sources
 
         public RawSettings Get()
         {
+            // CR(krait): Why not just get the current value from fileWatcher?
             if (!File.Exists(filePath)) return null;
             var obj = JObject.Parse(File.ReadAllText(filePath));
-            return JsonParser(obj);
+            return ParseJson(obj);
         }
 
         public IObservable<RawSettings> Observe()
@@ -42,7 +44,7 @@ namespace Vostok.Configuration.Sources
             });
         }
 
-        private RawSettings JsonParser(JObject obj)
+        private RawSettings ParseJson(JObject obj)
         {
             var res = new RawSettings();
             if (obj.Count > 0)
@@ -55,10 +57,10 @@ namespace Vostok.Configuration.Sources
                         res.ChildrenByKey.Add(token.Key, new RawSettings(null));
                         break;
                     case JTokenType.Object:
-                        res.ChildrenByKey.Add(token.Key, JsonParser((JObject)token.Value));
+                        res.ChildrenByKey.Add(token.Key, ParseJson((JObject)token.Value));
                         break;
                     case JTokenType.Array:
-                        res.ChildrenByKey.Add(token.Key, JsonParser((JArray)token.Value));
+                        res.ChildrenByKey.Add(token.Key, ParseJson((JArray)token.Value));
                         break;
                     default:
                         res.ChildrenByKey.Add(token.Key, new RawSettings(token.Value.ToString()));
@@ -67,7 +69,7 @@ namespace Vostok.Configuration.Sources
             return res;
         }
 
-        private RawSettings JsonParser(JArray arr)
+        private RawSettings ParseJson(JArray arr)
         {
             var res = new RawSettings();
             if (arr.Count > 0)
@@ -81,10 +83,10 @@ namespace Vostok.Configuration.Sources
                         list.Add(new RawSettings(null));
                         break;
                     case JTokenType.Object:
-                        list.Add(JsonParser((JObject)item));
+                        list.Add(ParseJson((JObject)item));
                         break;
                     case JTokenType.Array:
-                        list.Add(JsonParser((JArray)item));
+                        list.Add(ParseJson((JArray)item));
                         break;
                     default:
                         list.Add(new RawSettings(item.ToString()));

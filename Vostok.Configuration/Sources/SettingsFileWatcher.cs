@@ -27,7 +27,7 @@ namespace Vostok.Configuration.Sources
         /// <param name="filePath">Path to file</param>
         /// <param name="configurationSource">Configuration source for file parsing</param>
         /// <param name="observePeriod">Observe period in ms (min 100)</param>
-        public SettingsFileWatcher(string filePath, IConfigurationSource configurationSource, int observePeriod = 10000)
+        public SettingsFileWatcher(string filePath, IConfigurationSource configurationSource, int observePeriod = 10000) // CR(krait): Would be nicer to accept a TimeSpan.
         {
             var path = Path.GetDirectoryName(filePath);
             if (string.IsNullOrEmpty(path))

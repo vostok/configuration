@@ -35,6 +35,9 @@ namespace Vostok.Configuration.Sources
                         observer.OnNext(scp);
                 }
             });
+
+            // CR(krait): <-- and now source OnNext() fires. Boom, sync is null, observers is null.
+
             observers = new List<IObserver<RawSettings>>();
             sync = new object();
         }
@@ -59,7 +62,7 @@ namespace Vostok.Configuration.Sources
                         res = res.ChildrenByKey[scope[i]];
                 }
                 else if (res.Children != null &&
-                         scope[i].StartsWith("[") && scope[i].EndsWith("]") && scope[i].Length > 2)
+                         scope[i].StartsWith("[") && scope[i].EndsWith("]") && scope[i].Length > 2) // TODO(krait): We must write about this [] syntax in an xml doc.
                 {
                     var num = scope[i].Substring(1, scope[i].Length - 2);
                     if (int.TryParse(num, out var index) && index <= res.Children.Count)
@@ -85,6 +88,7 @@ namespace Vostok.Configuration.Sources
             {
                 lock (sync)
                 {
+                    // CR(krait): Maybe it isn't necessary to store observers? See comments in ConfigurationProvider.
                     observers.Add(observer);
                     observer.OnNext(Get());
                 }

@@ -11,12 +11,14 @@ namespace Vostok.Configuration
 {
     public delegate bool TryParse<T>(string s, out T value);
 
+    // CR(krait): The binder must support [Required]/[Optional] attributes on fields and properties.
     /// <inheritdoc />
     /// <summary>
     /// Default binder
     /// </summary>
     public class DefaultSettingsBinder : ISettingsBinder
     {
+        // CR(krait): Lets hide these in a region.
         private const string ParameterIsNull = "Settings parameter is null";
         private const string ValueIsNull = "Settings value is empty";
         private const string DictIsEmpty = "Settings dictionary is empty";
@@ -87,7 +89,8 @@ namespace Vostok.Configuration
              || TryBindToClass(settings, out mainRes))
                 return mainRes;
 
-            throw new InvalidCastException("Unknown data type. If it is primitive ask developers to add it.");
+            // CR(krait): Add the type name to other exception messages as well.
+            throw new InvalidCastException($"Unknown data type '{typeof(TSettings)}'. If it is primitive ask developers to add it.");
         }
 
         /// <summary>
@@ -106,17 +109,17 @@ namespace Vostok.Configuration
         /// Adds custom parser which can parse from string value to specified type
         /// </summary>
         /// <typeparam name="T">Type of in which you need to parse</typeparam>
-        /// <param name="parseMmethod">Method implemented TryParse_T_ delegate</param>
+        /// <param name="parseMethod">Method implemented TryParse_T_ delegate</param>
         /// <returns>This binder with new parser</returns>
-        public DefaultSettingsBinder WithCustomParser<T>(TryParse<T> parseMmethod)
+        public DefaultSettingsBinder WithCustomParser<T>(TryParse<T> parseMethod)
         {
-            primitiveAndSimpleParsers.Add(typeof(T), new InlineTypeParser<T>(parseMmethod));
+            primitiveAndSimpleParsers.Add(typeof(T), new InlineTypeParser<T>(parseMethod));
             return this;
         }
 
         private bool TryBindToPrimitiveOrSimple<TSettings>(RawSettings settings, out TSettings result)
         {
-            var bindType = typeof (TSettings);
+            var bindType = typeof(TSettings);
             result = default;
 
             if (IsPrimitiveOrSimple(bindType))
@@ -127,23 +130,24 @@ namespace Vostok.Configuration
                     return true;
                 }
 
+                // CR(krait): We'll never know which setting it was.
                 if (string.IsNullOrWhiteSpace(settings.Value))
                     CheckArgumentIsNull(null, ValueIsNull);
 
                 if (primitiveAndSimpleParsers[bindType].TryParse(settings.Value, out var res))
                 {
-                    result = (TSettings) res;
+                    result = (TSettings)res;
                     return true;
                 }
-
-                //Must throw only if get new primitive like int128
+                
+                // (Mansiper): Must throw only if get new primitive like int128
                 throw new InvalidCastException($"{settings.Value} to {bindType.Name}");
             }
 
             return false;
         }
 
-        private bool TryBindToEnum<TSettings>(RawSettings settings, out TSettings result)
+        private static bool TryBindToEnum<TSettings>(RawSettings settings, out TSettings result)
         {
             var bindType = typeof(TSettings);
             result = default;
@@ -153,11 +157,13 @@ namespace Vostok.Configuration
                 if (string.IsNullOrWhiteSpace(settings.Value))
                     CheckArgumentIsNull(null, ValueIsNull);
 
-                foreach (var name in Enum.GetNames(typeof (TSettings)).Where(n => n.ToLower() == settings.Value.ToLower()))
+                // CR(krait): string.Equals(a, b, StringComparison.OrdinalIgnoreCase)
+                foreach (var name in Enum.GetNames(typeof(TSettings)).Where(n => n.ToLower() == settings.Value.ToLower()))
                 {
                     result = (TSettings)Enum.Parse(typeof(TSettings), name, true);
                     return true;
                 }
+                // CR(krait): Enum.IsDefined() + cast?
                 if (int.TryParse(settings.Value, out var intVal))
                     foreach (var value in Enum.GetValues(typeof(TSettings)))
                         if ((int) value == intVal)
@@ -192,13 +198,13 @@ namespace Vostok.Configuration
 
         private bool TryBindToStruct<TSettings>(RawSettings settings, out TSettings result)
         {
-            var bindType = typeof (TSettings);
+            var bindType = typeof(TSettings);
             result = default;
 
             if (bindType.IsValueType)
             {
                 CheckArgumentIsNull(settings.ChildrenByKey, DictIsEmpty);
-                var boxedInst = (object) default(TSettings);
+                var boxedInst = (object)default(TSettings);
 
                 foreach (var field in bindType.GetFields())
                 {
@@ -219,14 +225,14 @@ namespace Vostok.Configuration
 
         private bool TryBindToArray<TSettings>(RawSettings settings, out TSettings result)
         {
-            var bindType = typeof (TSettings);
+            var bindType = typeof(TSettings);
             result = default;
 
             if (bindType.IsArray)
             {
                 CheckArgumentIsNull(settings.Children, ListIsEmpty);
                 var elType = bindType.GetElementType();
-                var inst = Array.CreateInstance(elType, settings.Children.Count());
+                var inst = Array.CreateInstance(elType, settings.Children.Count);
                 var i = 0;
                 foreach (var item in settings.Children)
                 {
@@ -261,7 +267,7 @@ namespace Vostok.Configuration
                     ((IList)inst).Add(val);
                     i++;
                 }
-                result = (TSettings) inst;
+                result = (TSettings)inst;
                 return true;
             }
 
@@ -289,7 +295,7 @@ namespace Vostok.Configuration
                     ((IDictionary)inst).Add(key, val);
                     i++;
                 }
-                result = (TSettings) inst;
+                result = (TSettings)inst;
                 return true;
             }
 
@@ -298,7 +304,7 @@ namespace Vostok.Configuration
 
         private bool TryBindToClass<TSettings>(RawSettings settings, out TSettings result)
         {
-            var bindType = typeof (TSettings);
+            var bindType = typeof(TSettings);
             result = default;
 
             if (bindType.IsClass)
@@ -328,6 +334,7 @@ namespace Vostok.Configuration
                 throw new ArgumentNullException(message);
         }
 
+        // CR(krait): Why not just make a BindInternal(RawSettings, Type) and use it everywhere instead of public Bind<T>()?
         private object BindInvoke(string fieldOrPropertyName, Type fieldOrPropertyType, RawSettings settings)
         {
             var method = typeof(DefaultSettingsBinder).GetMethod(nameof(Bind));

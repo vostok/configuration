@@ -98,6 +98,7 @@ namespace Vostok.Configuration.Sources
             {
                 lock (sync)
                 {
+                    // CR(krait): Maybe it isn't necessary to store observers? See comments in ConfigurationProvider.
                     observers.Add(observer);
 
                     if (sourcesSettings.Any(s => s != null))

@@ -17,7 +17,7 @@ namespace Vostok.Configuration
 
         public static IConfigurationSource Combine(this IConfigurationSource source, params IConfigurationSource[] others)
         {
-            return new CombinedSource(new[] { source }.Concat(others).ToArray());
+            return new CombinedSource(source.ToEnumerable().Concat(others).ToArray());
         }
 
         public static ConfigurationProvider WithSourcesFor<TSettings>(this ConfigurationProvider provider, params IConfigurationSource[] sources)
