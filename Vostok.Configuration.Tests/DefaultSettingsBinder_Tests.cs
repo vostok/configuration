@@ -186,7 +186,14 @@ namespace Vostok.Configuration.Tests
         public void Should_bind_to_DateTime()
         {
             var settings = new RawSettings("2018-03-14T15:09:26.535");
-            binder.Bind<DateTime>(settings).Should().Be(new DateTime(2018, 3, 14, 15, 9, 26, 535));
+            binder.Bind<DateTime>(settings).Should().Be(new DateTime(2018, 3, 14, 15, 9, 26, 535).ToUniversalTime());
+        }
+
+        [Test]
+        public void Should_bind_to_DateTimeOffset()
+        {
+            var settings = new RawSettings("2018-03-14T15:09:26.535");
+            binder.Bind<DateTimeOffset>(settings).Should().Be(new DateTimeOffset(2018, 3, 14, 15, 9, 26, 535, TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now)));
         }
 
         internal struct Struct1

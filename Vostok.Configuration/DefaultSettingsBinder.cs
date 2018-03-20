@@ -61,6 +61,7 @@ namespace Vostok.Configuration
                 {typeof(ulong), new InlineTypeParser<ulong>(ulong.TryParse)},
                 {typeof(ushort), new InlineTypeParser<ushort>(ushort.TryParse)},
                 {typeof(DateTime), new InlineTypeParser<DateTime>(DateTimeParser.TryParse)},
+                {typeof(DateTimeOffset), new InlineTypeParser<DateTimeOffset>(DateTimeOffsetParser.TryParse)},
                 {typeof(TimeSpan), new InlineTypeParser<TimeSpan>(TimeSpanParser.TryParse)},
                 {typeof(IPAddress), new InlineTypeParser<IPAddress>(IPAddress.TryParse)},
                 {typeof(IPEndPoint), new InlineTypeParser<IPEndPoint>(IPEndPointParser.TryParse)},

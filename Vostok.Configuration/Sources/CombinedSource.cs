@@ -61,6 +61,7 @@ namespace Vostok.Configuration.Sources
         /// <returns>Combine as RawSettings tree</returns>
         public RawSettings Get()
         {
+            if (sources.Length == 0) return null;
             var sets = sources.Select(s => s.Get()).ToArray();
             return Merge(sets);
         }

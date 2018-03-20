@@ -97,9 +97,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfigurationProvider_Tests.cs" />
     <Compile Include="RawSettings_Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DefaultSettingsBinder_Tests.cs" />
+    <Compile Include="Sources\ScopedSource_Tests.cs" />
     <Compile Include="Sources\CombinedSource_Tests.cs" />
     <Compile Include="Sources\JsonFileSource_Tests.cs" />
     <Compile Include="Sources\SettingsFileWatcher_Tests.cs" />

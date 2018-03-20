@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration
@@ -6,19 +7,44 @@ namespace Vostok.Configuration
     // TODO(krait): Implement the default configuration provider.
     public class ConfigurationProvider : IConfigurationProvider
     {
+        private readonly List<IConfigurationSource> sources;
+
+//        private readonly List<IObserver<object>> observers;
+//        private readonly object sync;
+
+        public ConfigurationProvider()
+        {
+            sources = new List<IConfigurationSource>();
+        }
+
         public TSettings Get<TSettings>()
         {
-            throw new NotImplementedException();
+            return new DefaultSettingsBinder().Bind<TSettings>(
+                new CombinedSource(sources.ToArray()).Get());
         }
 
         public TSettings Get<TSettings>(IConfigurationSource source)
         {
-            throw new NotImplementedException();
+            return new DefaultSettingsBinder().Bind<TSettings>(source.Get());
         }
 
         public IObservable<TSettings> Observe<TSettings>()
         {
-            throw new NotImplementedException();
+            /*return Observable.Create<TSettings>(observer =>
+            {
+                lock (sync)
+                {
+                    observers.Add((IObserver<object>) observer);
+                    observer.OnNext(Get<TSettings>());
+                }
+                return Disposable.Create(() =>
+                {
+                    lock (sync)
+                    {
+                        observers.Remove((IObserver<object>) observer);
+                    }
+                });
+            });*/
         }
 
         public IObservable<TSettings> Observe<TSettings>(IConfigurationSource source)
@@ -28,7 +54,8 @@ namespace Vostok.Configuration
 
         public ConfigurationProvider WithSourceFor<TSettings>(IConfigurationSource source)
         {
-            throw new NotImplementedException();
+            sources.Add(source);
+            return this;
         }
     }
 }
