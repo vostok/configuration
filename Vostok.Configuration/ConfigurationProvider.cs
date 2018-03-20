@@ -7,9 +7,6 @@ using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration
 {
-    /// <summary>
-    /// Implement the default configuration provider
-    /// </summary>
     public class ConfigurationProvider : IConfigurationProvider
     {
         internal class SourceInfo
@@ -29,6 +26,9 @@ namespace Vostok.Configuration
         private readonly List<ObserversInfo> observers;
         private readonly object sync;
 
+        /// <summary>
+        /// Creating configuration provider
+        /// </summary>
         public ConfigurationProvider()
         {
             sources = new List<SourceInfo>();
