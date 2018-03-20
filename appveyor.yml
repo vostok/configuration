@@ -40,15 +40,29 @@ install:
         }
       }
   - cd %appveyor_build_folder%\..
-  - git clone https://github.com/vostok/cement.git
-  - cd "cement"
-  - nuget restore
-  - msbuild Cement.Net.sln
-  - mkdir %USERPROFILE%\.cement
+  - ps: |
+      $ErrorActionPreference = "Stop"
+
+      $releases = "https://api.github.com/repos/skbkontur/cement/releases"
+
+      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+      Write-Host Determining latest release
+      $download = (Invoke-WebRequest $releases | ConvertFrom-Json)[0].assets[0].browser_download_url
+
+      $zip = "cement.zip"
+      $dir = "cement"
+
+      Write-Host Dowloading latest release
+      Invoke-WebRequest $download -Out $zip
+
+      Write-Host Extracting release files
+      Expand-Archive $zip -Force -DestinationPath $dir
+  - cd "cement\dotnet"
+  - install.cmd
   - ps: |
       $wc = New-Object System.Net.WebClient
       $wc.DownloadFile("https://raw.githubusercontent.com/vostok/cement-modules/master/settings", "$env:USERPROFILE\.cement\settings")
-  - set cm=%appveyor_build_folder%\..\cement\Cement.Net\bin\Release\cm.exe
+  - set cm=%USERPROFILE%\bin\cm.cmd
   - cd %appveyor_build_folder%\..
   - ps: | 
       & $env:cm init
@@ -60,9 +74,13 @@ install:
 configuration: Release
 after_build:
   - ps: |
-      $prbranch = "$env:APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH"
-      if ($prbranch -eq "")
-      {
+      if ($env:appveyor_repo_branch -eq "master" -and "$env:APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH" -eq "") {
+        $proj="Vostok.$env:APPVEYOR_PROJECT_NAME.csproj"
+        & $env:cm pack $proj
+        if (!$?) {
+            Write-Output "cm pack error"
+            exit 1
+        }
         $csprojs = $env:appveyor_build_folder | Get-ChildItem -Recurse -Filter "*.csproj"
         foreach($csproj in $csprojs)
         {
@@ -97,11 +115,7 @@ deploy:
     name: Nuget
     on:
       appveyor_repo_tag: true
-    skip_symbols: false
-    symbol_server:           # remove to push symbols to SymbolSource.org
     artifact: /.*\.nupkg/
   - provider: Environment
     name: FullNuget
-    skip_symbols: false
-    symbol_server:           # remove to push symbols to SymbolSource.org
     artifact: /.*\.nupkg/
