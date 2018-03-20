@@ -40,7 +40,7 @@ namespace Vostok.Configuration.Tests
         {
             if (string.IsNullOrEmpty(s))
             {
-                value = default;
+                value = default(SST);
                 return false;
             }
 
