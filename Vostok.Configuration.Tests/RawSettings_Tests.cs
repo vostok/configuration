@@ -10,7 +10,7 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Equals_returns_false_if_one_of_params_is_null()
         {
-            RawSettings.Equals(null, new RawSettings()).Should().BeFalse();
+            Equals(null, new RawSettings()).Should().BeFalse();
         }
 
         [Test]
@@ -18,7 +18,7 @@ namespace Vostok.Configuration.Tests
         {
             var sets1 = new RawSettings("val 1");
             var sets2 = new RawSettings("val 2");
-            RawSettings.Equals(sets1, sets2).Should().BeFalse();
+            Equals(sets1, sets2).Should().BeFalse();
         }
 
         [Test]
@@ -27,7 +27,7 @@ namespace Vostok.Configuration.Tests
             var sets1 = new RawSettings();
             sets1.CreateDictionary();
             var sets2 = new RawSettings();
-            RawSettings.Equals(sets1, sets2).Should().BeFalse();
+            Equals(sets1, sets2).Should().BeFalse();
         }
 
         [Test]
@@ -43,7 +43,7 @@ namespace Vostok.Configuration.Tests
                 {
                     { "key 2", new RawSettings("val 1") }
                 });
-            RawSettings.Equals(sets1, sets2).Should().BeFalse();
+            Equals(sets1, sets2).Should().BeFalse();
 
             sets1 = new RawSettings(
                 new Dictionary<string, RawSettings>
@@ -56,7 +56,7 @@ namespace Vostok.Configuration.Tests
                     { "key 1", new RawSettings("val 1") },
                     { "key 2", new RawSettings("val 2") },
                 });
-            RawSettings.Equals(sets1, sets2).Should().BeFalse();
+            Equals(sets1, sets2).Should().BeFalse();
 
             sets1 = new RawSettings(
                 new Dictionary<string, RawSettings>
@@ -69,7 +69,7 @@ namespace Vostok.Configuration.Tests
                 {
                     { "key 1", new RawSettings("val 1") },
                 });
-            RawSettings.Equals(sets1, sets2).Should().BeFalse();
+            Equals(sets1, sets2).Should().BeFalse();
         }
 
         [Test]
@@ -87,7 +87,7 @@ namespace Vostok.Configuration.Tests
                     { "key 1", new RawSettings("val 1") },
                     { "key 2", new RawSettings("val _") },
                 });
-            RawSettings.Equals(sets1, sets2).Should().BeFalse();
+            Equals(sets1, sets2).Should().BeFalse();
         }
 
         [Test]
@@ -96,7 +96,7 @@ namespace Vostok.Configuration.Tests
             var sets1 = new RawSettings();
             sets1.CreateList();
             var sets2 = new RawSettings();
-            RawSettings.Equals(sets1, sets2).Should().BeFalse();
+            Equals(sets1, sets2).Should().BeFalse();
         }
 
         [Test]
@@ -113,7 +113,7 @@ namespace Vostok.Configuration.Tests
                 {
                     new RawSettings("val 1"),
                 });
-            RawSettings.Equals(sets1, sets2).Should().BeFalse();
+            Equals(sets1, sets2).Should().BeFalse();
         }
 
         [Test]
@@ -131,13 +131,13 @@ namespace Vostok.Configuration.Tests
                     new RawSettings("val 1"),
                     new RawSettings("val _"),
                 });
-            RawSettings.Equals(sets1, sets2).Should().BeFalse();
+            Equals(sets1, sets2).Should().BeFalse();
         }
 
         [Test]
         public void Equals_returns_true_if_nulls()
         {
-            RawSettings.Equals(null, null).Should().BeTrue();
+            Equals(null, null).Should().BeTrue();
         }
 
         [Test]
@@ -187,7 +187,7 @@ namespace Vostok.Configuration.Tests
                         }),
                     new RawSettings("5"),
                 });
-            RawSettings.Equals(sets1, sets2).Should().BeTrue();
+            Equals(sets1, sets2).Should().BeTrue();
         }
     }
 }
