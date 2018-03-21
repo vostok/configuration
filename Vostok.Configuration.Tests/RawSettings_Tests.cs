@@ -44,6 +44,32 @@ namespace Vostok.Configuration.Tests
                     { "key 2", new RawSettings("val 1") }
                 });
             RawSettings.Equals(sets1, sets2).Should().BeFalse();
+
+            sets1 = new RawSettings(
+                new Dictionary<string, RawSettings>
+                {
+                    { "key 1", new RawSettings("val 1") },
+                });
+            sets2 = new RawSettings(
+                new Dictionary<string, RawSettings>
+                {
+                    { "key 1", new RawSettings("val 1") },
+                    { "key 2", new RawSettings("val 2") },
+                });
+            RawSettings.Equals(sets1, sets2).Should().BeFalse();
+
+            sets1 = new RawSettings(
+                new Dictionary<string, RawSettings>
+                {
+                    { "key 1", new RawSettings("val 1") },
+                    { "key 2", new RawSettings("val 2") },
+                });
+            sets2 = new RawSettings(
+                new Dictionary<string, RawSettings>
+                {
+                    { "key 1", new RawSettings("val 1") },
+                });
+            RawSettings.Equals(sets1, sets2).Should().BeFalse();
         }
 
         [Test]

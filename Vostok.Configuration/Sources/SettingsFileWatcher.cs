@@ -17,17 +17,17 @@ namespace Vostok.Configuration.Sources
         private readonly FileSystemWatcher watcher;
         private readonly List<IObserver<RawSettings>> observers;
         private readonly object sync;
-        private RawSettings current;
-        private readonly int observePeriod;
+        private readonly TimeSpan observePeriod;
         private DateTime lastFileWriteTime;
+        private RawSettings current;
 
         /// <summary>
         /// Creating settings file watcher
         /// </summary>
         /// <param name="filePath">Path to file</param>
         /// <param name="configurationSource">Configuration source for file parsing</param>
-        /// <param name="observePeriod">Observe period in ms (min 100)</param>
-        public SettingsFileWatcher(string filePath, IConfigurationSource configurationSource, int observePeriod = 10000) // CR(krait): Would be nicer to accept a TimeSpan.
+        /// <param name="observePeriod">Observe period (min 100)</param>
+        public SettingsFileWatcher(string filePath, IConfigurationSource configurationSource, TimeSpan observePeriod = default)
         {
             var path = Path.GetDirectoryName(filePath);
             if (string.IsNullOrEmpty(path))
@@ -37,7 +37,7 @@ namespace Vostok.Configuration.Sources
             watcher = new FileSystemWatcher(path, Path.GetFileName(filePath));
             observers = new List<IObserver<RawSettings>>();
             sync = new object();
-            this.observePeriod = observePeriod < 100 ? 100 : observePeriod;
+            this.observePeriod = observePeriod.Milliseconds < 100 ? TimeSpan.FromMilliseconds(100) : observePeriod;
             lastFileWriteTime = File.GetLastWriteTimeUtc(filePath);
 
             ThreadRunner.Run(WatchFile);
@@ -85,7 +85,7 @@ namespace Vostok.Configuration.Sources
 
             while (true)
             {
-                watcher.WaitForChanged(WatcherChangeTypes.All, observePeriod);
+                watcher.WaitForChanged(WatcherChangeTypes.All, observePeriod.Milliseconds);
                 var fileExists = File.Exists(filePath);
                 var lwt = File.GetLastWriteTimeUtc(filePath);
 

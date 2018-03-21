@@ -13,7 +13,7 @@ namespace Vostok.Configuration.Tests.Sources
     [TestFixture]
     public class ScopedSource_Tests
     {
-        private const string TestFileName = "test.json";
+        private const string TestFileName = "test_ScopedSource.json";
 
         [SetUp]
         public void SetUp()
@@ -108,16 +108,17 @@ namespace Vostok.Configuration.Tests.Sources
         private List<RawSettings> Should_observe_file_test()
         {
             CreateTextFile("{ \"value\": { \"list\": [1,2] } }");
-            var jfs = new JsonFileSource(TestFileName, 300);
+            var jfs = new JsonFileSource(TestFileName, 300.Milliseconds());
             var ss = new ScopedSource(jfs, "value", "list", "[1]");
             var rsList = new List<RawSettings>();
 
-            ss.Observe().Subscribe(settings => rsList.Add(settings));
+            var sub = ss.Observe().Subscribe(settings => rsList.Add(settings));
 
             Thread.Sleep(1.Seconds());
             CreateTextFile("{ \"value\": { \"list\": [3,4,5] } }");
             Thread.Sleep(1.Seconds());
 
+            sub.Dispose();
             return rsList;
         }
     }

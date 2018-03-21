@@ -15,27 +15,25 @@ namespace Vostok.Configuration
             Value = value;
         }
 
-        public RawSettings(IDictionary<string, RawSettings> children, string value = null)
+        public RawSettings(IReadOnlyDictionary<string, RawSettings> children, string value = null)
         {
             ChildrenByKey = children;
             Value = value;
         }
 
-        public RawSettings(IList<RawSettings> children, string value = null)
+        public RawSettings(IReadOnlyList<RawSettings> children, string value = null)
         {
             Children = children;
             Value = value;
         }
 
-        public RawSettings(IDictionary<string, RawSettings> childrenByKey, IList<RawSettings> children, string value = null)
+        public RawSettings(IReadOnlyDictionary<string, RawSettings> childrenByKey, IReadOnlyList<RawSettings> children, string value = null)
         {
             ChildrenByKey = childrenByKey;
             Children = children;
             Value = value;
         }
 
-        // CR(krait): Wouldn't it be nicer to make RawSettings immutable and always set children through a constructor?
-        // CR(krait): Then Children becomes IReadOnlyList and ChildrenByKey becomes IReadOnlyDictionary.
         /// <summary>
         /// Creates ChildrenByKey dictionary
         /// </summary>
@@ -52,7 +50,8 @@ namespace Vostok.Configuration
             Children = new List<RawSettings>();
         }
 
-        // CR(krait): Why not override object.Equals()?
+        public override bool Equals(object obj) => RawSettings.Equals(this, (RawSettings) obj);
+
         /// <summary>
         /// Compares one RawSettings tree to another
         /// </summary>
@@ -73,8 +72,8 @@ namespace Vostok.Configuration
 
             if (first.ChildrenByKeyExists())
             {
-                // CR(krait): Is it correct to compare Keys collections with regard to order?
-                if (!first.ChildrenByKey.Keys.SequenceEqual(second.ChildrenByKey.Keys))
+                if (!first.ChildrenByKey.Keys.All(k => second.ChildrenByKey.Keys.Contains(k)) ||
+                    !second.ChildrenByKey.Keys.All(k => first.ChildrenByKey.Keys.Contains(k)))
                     return false;
                 foreach (var pair in first.ChildrenByKey)
                     if (!Equals(pair.Value, second.ChildrenByKey[pair.Key]))
@@ -104,12 +103,12 @@ namespace Vostok.Configuration
         /// <summary>
         /// Inner values where order has no matter (dictioonary, fields/properties)
         /// </summary>
-        public IDictionary<string, RawSettings> ChildrenByKey { get; private set; }
+        public IReadOnlyDictionary<string, RawSettings> ChildrenByKey { get; private set; }
 
         /// <summary>
         /// Inner values where order has matter (array, list)
         /// </summary>
-        public IList<RawSettings> Children { get; private set; }
+        public IReadOnlyList<RawSettings> Children { get; private set; }
     }
 
     // TODO(krait): validator (+custom specified by attribute), example generator (+config saving)

@@ -13,9 +13,9 @@ namespace Vostok.Configuration.Tests.Sources
     [TestFixture]
     public class CombinedSource_Tests
     {
-        private const string TestFile1Name = "test1.json";
-        private const string TestFile2Name = "test2.json";
-        private const string TestFile3Name = "test3.json";
+        private const string TestFile1Name = "test1_CombinedSource.json";
+        private const string TestFile2Name = "test2_CombinedSource.json";
+        private const string TestFile3Name = "test3_CombinedSource.json";
 
         [SetUp]
         public void SetUp()
@@ -51,7 +51,7 @@ namespace Vostok.Configuration.Tests.Sources
 
         private static CombinedSource CreateCombinedSource(int cnt, ListCombineOptions listCombineOptions = ListCombineOptions.FirstOnly)
         {
-            var time = 300;
+            var time = 300.Milliseconds();
             switch (cnt)
             {
                 case 1:
@@ -330,7 +330,7 @@ namespace Vostok.Configuration.Tests.Sources
             var val = 0;
 
             var ccs = CreateCombinedSource(2, ListCombineOptions.FirstOnly);
-            ccs.Observe().Subscribe(
+            var sub = ccs.Observe().Subscribe(
                 settings =>
                 {
                     val++;
@@ -353,6 +353,7 @@ namespace Vostok.Configuration.Tests.Sources
             CreateTextFile(2, "{ \"value 2\": 2, \"list\": [3,4] }");
             Thread.Sleep(2.Seconds());
 
+            sub.Dispose();
             return val;
         }
     }

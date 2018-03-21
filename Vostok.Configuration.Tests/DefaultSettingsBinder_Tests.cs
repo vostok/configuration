@@ -13,11 +13,11 @@ namespace Vostok.Configuration.Tests
     {
         private DefaultSettingsBinder binder;
 
-        internal class CST
+        private class CST
         {
             public string[] Strings { get; set; }
         }
-        internal class CommaSeparatedTextParser: ITypeParser
+        private class CommaSeparatedTextParser: ITypeParser
         {
             public bool TryParse(string s, out object value)
             {
@@ -32,7 +32,7 @@ namespace Vostok.Configuration.Tests
             }
         }
 
-        internal class SST
+        private class SST
         {
             public string[] Strings { get; set; }
         }
@@ -173,7 +173,7 @@ namespace Vostok.Configuration.Tests
         }
 
         [Test]
-        public void Should_bind_to_Enum_ByValueOrName()
+        public void Should_bind_to_Enum_by_value_or_name()
         {
             var settings = new RawSettings("10");
             binder.Bind<ConsoleColor>(settings).Should().Be(ConsoleColor.Green);
@@ -196,12 +196,12 @@ namespace Vostok.Configuration.Tests
             binder.Bind<DateTimeOffset>(settings).Should().Be(new DateTimeOffset(2018, 3, 14, 15, 9, 26, 535, TimeZoneInfo.Local.GetUtcOffset(DateTime.Now)));
         }
 
-        internal struct Struct1
+        private struct Struct1
         {
             public int IntValue;
             public string StringValue;
         }
-        internal struct Struct2
+        private struct Struct2
         {
             public string StringValue;
             public Struct1 Struct1 { get; set; }
@@ -250,7 +250,7 @@ namespace Vostok.Configuration.Tests
                 );
         }
 
-        internal class MyClass
+        private class MyClass
         {
             private int privateIntField;
             private string PrivateStrGetProp { get; }
@@ -263,9 +263,24 @@ namespace Vostok.Configuration.Tests
             public MyClass2 Class2 { get; set; }
             public MyClass2 Class2Null { get; set; }
             public int[] PublicIntArrayProp { get; set; }
+            public int[] PublicIntArrayPropNull { get; set; }
             public List<string> PublicStringListProp { get; set; }
+            public List<string> PublicStringListPropNull { get; set; }
             public Dictionary<int, string> PublicDictionaryProp { get; set; }
+            public Dictionary<int, string> PublicDictionaryPropNull { get; set; }
             public double? PublicNullableDoubleSetProp { get; set; }
+            [Required]
+            public int? RequiredProp { get; set; }
+            [Optional]
+            public int OptionalProp { get; set; }
+            [Required, Optional]
+            public int? RequiredOptionalProp { get; set; }
+            [Required]
+            public MyClass3 RequiredClassProp { get; set; }
+            [Optional]
+            public MyClass3 OptionalClassProp { get; set; }
+            [Required, Optional]
+            public MyClass3 RequiredOptionalClassProp { get; set; }
 
             public MyClass() {}
             public MyClass(bool testOnly)
@@ -277,11 +292,11 @@ namespace Vostok.Configuration.Tests
 
             public int GetPublicIntReadonlyProp => PublicIntReadonlyField;
         }
-        internal class MyClass2
+        private class MyClass2
         {
             public int PublicIntProp { get; set; }
         }
-        internal class MyClass3
+        private class MyClass3
         {
             public int PublicIntField;
         }
@@ -299,21 +314,33 @@ namespace Vostok.Configuration.Tests
                 { "PublicStringStaticField", new RawSettings("statStr") },
                 { "PublicIntStaticProp", new RawSettings("1234") },
                 { "PublicNullableDoubleSetProp", new RawSettings(null) },
+                { "RequiredProp", new RawSettings("0") },
+                //{ "OptionalProp", new RawSettings(null) },
+                //{ "RequiredOptionalProp", new RawSettings("0") },
+                { "RequiredClassProp", new RawSettings(new Dictionary<string, RawSettings>
+                {
+                    { "PublicIntField", new RawSettings("0") },
+                }) },
+                //{ "OptionalClassProp", new RawSettings(null) },
+                //{ "RequiredOptionalClassProp", new RawSettings(new Dictionary<string, RawSettings>()) },
                 { "PublicIntArrayProp", new RawSettings(new List<RawSettings>
                 {
                     new RawSettings("1"),
                     new RawSettings("2"),
                 }) },
+                { "PublicIntArrayPropNull", new RawSettings(null) },
                 { "PublicStringListProp", new RawSettings(new List<RawSettings>
                 {
                     new RawSettings("str1"),
                     new RawSettings("str2"),
                 }) },
+                { "PublicStringListPropNull", new RawSettings(null) },
                 { "PublicDictionaryProp", new RawSettings(new Dictionary<string, RawSettings>
                 {
                     { "1", new RawSettings("str1") },
                     { "2", new RawSettings("str2") },
                 }) },
+                { "PublicDictionaryPropNull", new RawSettings(null) },
                 { "Struct1", new RawSettings(new Dictionary<string, RawSettings>
                     {
                         { "IntValue", new RawSettings("10") },
@@ -325,6 +352,7 @@ namespace Vostok.Configuration.Tests
                         { "PublicIntProp", new RawSettings("111") },
                     })
                 },
+                { "Class2Null", new RawSettings(null) },
 
                 { "GetPublicIntReadonlyProp", new RawSettings("321") },
             });
@@ -344,8 +372,18 @@ namespace Vostok.Configuration.Tests
                         },
                         Class2Null = null,
                         PublicIntArrayProp = new [] { 1, 2 },
+                        PublicIntArrayPropNull = null,
                         PublicStringListProp = new List<string> { "str1", "str2" },
+                        PublicStringListPropNull = null,
                         PublicDictionaryProp = new Dictionary<int, string> { {1, "str1"}, {2, "str2"} },
+                        PublicDictionaryPropNull = null,
+                        RequiredProp = 0,
+                        OptionalProp = 0,
+                        RequiredOptionalProp = 0,
+                        RequiredClassProp = new MyClass3 { PublicIntField = 0 },
+                        OptionalClassProp = null,
+                        RequiredOptionalClassProp = new MyClass3(),
+                        PublicNullableDoubleSetProp = null,
                     }
                 );
         }

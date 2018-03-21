@@ -1,15 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Reactive.Linq;
-using Newtonsoft.Json.Linq;
 
 namespace Vostok.Configuration.Sources
 {
-    // CR(krait): Need to create a JsonStringSource also.
     /// <inheritdoc />
     /// <summary>
-    /// Json converter to RawSettings tree
+    /// Json converter to RawSettings tree from file
     /// </summary>
     public class JsonFileSource : IConfigurationSource
     {
@@ -20,19 +17,18 @@ namespace Vostok.Configuration.Sources
         /// Creating json converter
         /// </summary>
         /// <param name="filePath">File name with settings</param>
-        /// <param name="observePeriod">Observe period in ms (min 100)</param>
-        public JsonFileSource(string filePath, int observePeriod = 10000)
+        /// <param name="observePeriod">Observe period in ms (min 100, default 10000)</param>
+        public JsonFileSource(string filePath, TimeSpan observePeriod = default)
         {
             this.filePath = filePath;
-            fileWatcher = new SettingsFileWatcher(filePath, this, observePeriod);
+            fileWatcher = new SettingsFileWatcher(filePath, this,
+                observePeriod == default ? TimeSpan.FromMilliseconds(10000) : observePeriod);
         }
 
         public RawSettings Get()
         {
-            // CR(krait): Why not just get the current value from fileWatcher?
             if (!File.Exists(filePath)) return null;
-            var obj = JObject.Parse(File.ReadAllText(filePath));
-            return ParseJson(obj);
+            return new JsonStringSource(File.ReadAllText(filePath)).Get();
         }
 
         public IObservable<RawSettings> Observe()
@@ -42,58 +38,6 @@ namespace Vostok.Configuration.Sources
                 fileWatcher.AddObserver(observer);
                 return fileWatcher.GetDisposable(observer);
             });
-        }
-
-        private RawSettings ParseJson(JObject obj)
-        {
-            var res = new RawSettings();
-            if (obj.Count > 0)
-                res.CreateDictionary();
-
-            foreach (var token in obj)
-                switch (token.Value.Type)
-                {
-                    case JTokenType.Null:
-                        res.ChildrenByKey.Add(token.Key, new RawSettings(null));
-                        break;
-                    case JTokenType.Object:
-                        res.ChildrenByKey.Add(token.Key, ParseJson((JObject)token.Value));
-                        break;
-                    case JTokenType.Array:
-                        res.ChildrenByKey.Add(token.Key, ParseJson((JArray)token.Value));
-                        break;
-                    default:
-                        res.ChildrenByKey.Add(token.Key, new RawSettings(token.Value.ToString()));
-                        break;
-                }
-            return res;
-        }
-
-        private RawSettings ParseJson(JArray arr)
-        {
-            var res = new RawSettings();
-            if (arr.Count > 0)
-                res.CreateList();
-
-            var list = (List<RawSettings>) res.Children;
-            foreach (var item in arr)
-                switch (item.Type)
-                {
-                    case JTokenType.Null:
-                        list.Add(new RawSettings(null));
-                        break;
-                    case JTokenType.Object:
-                        list.Add(ParseJson((JObject)item));
-                        break;
-                    case JTokenType.Array:
-                        list.Add(ParseJson((JArray)item));
-                        break;
-                    default:
-                        list.Add(new RawSettings(item.ToString()));
-                        break;
-                }
-
-            return res;
         }
     }
 }

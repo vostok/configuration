@@ -13,7 +13,7 @@ namespace Vostok.Configuration.Tests.Sources
     [TestFixture]
     public class JsonFileSource_Tests
     {
-        private const string TestFileName = "test.json";
+        private const string TestFileName = "test_JsonFileSource.json";
 
         [SetUp]
         public void SetUp()
@@ -30,6 +30,12 @@ namespace Vostok.Configuration.Tests.Sources
         {
             using (var file = new StreamWriter(TestFileName, false))
                 file.WriteLine(text);
+        }
+
+        [Test]
+        public void Should_return_null_if_file_not_exists()
+        {
+            new JsonFileSource(TestFileName).Get().Should().BeNull();
         }
         
         [Test]
@@ -218,8 +224,8 @@ namespace Vostok.Configuration.Tests.Sources
         private int Should_Observe_file_test()
         {
             var val = 0;
-            var jcs = new JsonFileSource(TestFileName, 300);
-            jcs.Observe().Subscribe(settings =>
+            var jcs = new JsonFileSource(TestFileName, 300.Milliseconds());
+            var sub1 = jcs.Observe().Subscribe(settings =>
             {
                 val++;
                 settings.Should().BeEquivalentTo(
@@ -232,7 +238,7 @@ namespace Vostok.Configuration.Tests.Sources
 
             CreateTextFile("{ \"Param2\": \"set2\" }");
 
-            jcs.Observe().Subscribe(settings =>
+            var sub2 = jcs.Observe().Subscribe(settings =>
             {
                 val++;
                 settings.Should().BeEquivalentTo(
@@ -244,6 +250,9 @@ namespace Vostok.Configuration.Tests.Sources
             });
 
             Thread.Sleep(1.Seconds());
+
+            sub1.Dispose();
+            sub2.Dispose();
             return val;
         }
 
@@ -257,8 +266,8 @@ namespace Vostok.Configuration.Tests.Sources
         public int Should_not_Observe_file_twice_test(int sec)
         {
             var val = 0;
-            var jcs = new JsonFileSource(TestFileName, 300);
-            jcs.Observe().Subscribe(settings =>
+            var jcs = new JsonFileSource(TestFileName, 300.Milliseconds());
+            var sub = jcs.Observe().Subscribe(settings =>
             {
                 val++;
                 settings.Should().BeEquivalentTo(
@@ -275,6 +284,7 @@ namespace Vostok.Configuration.Tests.Sources
             CreateTextFile("{ \"Param1\": \"set1\" }");
             Thread.Sleep(TimeSpan.FromSeconds(sec));
 
+            sub.Dispose();
             return val;
         }
     }

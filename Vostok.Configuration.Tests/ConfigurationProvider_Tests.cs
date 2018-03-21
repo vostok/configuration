@@ -12,8 +12,8 @@ namespace Vostok.Configuration.Tests
     [TestFixture]
     public class ConfigurationProvider_Tests
     {
-        private const string TestFile1Name = "test1.json";
-        private const string TestFile2Name = "test2.json";
+        private const string TestFile1Name = "test1_ConfigurationProvider.json";
+        private const string TestFile2Name = "test2_ConfigurationProvider.json";
 
         [TearDown]
         public void Cleanup()
@@ -90,17 +90,17 @@ namespace Vostok.Configuration.Tests
             CreateTextFile(2, "{ \"Value\": 123 }");
             var vClass = 0;
             var vInt = 0;
-            var jcs1 = new JsonFileSource(TestFile1Name, 300);
-            var jcs2 = new JsonFileSource(TestFile2Name, 300);
+            var jcs1 = new JsonFileSource(TestFile1Name, 300.Milliseconds());
+            var jcs2 = new JsonFileSource(TestFile2Name, 300.Milliseconds());
             var cp = new ConfigurationProvider()
                 .WithSourceFor<MyClass>(jcs1);
 
-            cp.Observe<MyClass>().Subscribe(val =>
+            var sub1 = cp.Observe<MyClass>().Subscribe(val =>
             {
                 vClass++;
                 val.Value.Should().Be(vClass);
             });
-            cp.Observe<int>().Subscribe(val => vInt++);
+            var sub2 = cp.Observe<int>().Subscribe(val => vInt++);
 
             cp.WithSourceFor<int>(jcs2);
 
@@ -108,6 +108,8 @@ namespace Vostok.Configuration.Tests
             CreateTextFile(1, "{ \"Value\": 2 }");
             Thread.Sleep(1.Seconds());
 
+            sub1.Dispose();
+            sub2.Dispose();
             return (vClass, vInt);
         }
 
@@ -116,17 +118,17 @@ namespace Vostok.Configuration.Tests
         {
             new Action(() => 
                     Should_Observe_file_by_source_test().Should().Be(1))
-                .ShouldPassIn(3.Seconds());
+                .ShouldPassIn(4.Seconds());
         }
 
         private int Should_Observe_file_by_source_test()
         {
             CreateTextFile(1, "{ \"Value\": 0 }");
             var val = 0;
-            var jcs = new JsonFileSource(TestFile1Name, 300);
+            var jcs = new JsonFileSource(TestFile1Name, 300.Milliseconds());
             var cp = new ConfigurationProvider();
 
-            cp.Observe<MyClass>(jcs).Subscribe(cl =>
+            var sub = cp.Observe<MyClass>(jcs).Subscribe(cl =>
             {
                 val++;
                 cl.Value.Should().Be(val);
@@ -134,6 +136,11 @@ namespace Vostok.Configuration.Tests
 
             Thread.Sleep(1.Seconds());
             CreateTextFile(1, "{ \"Value\": 1 }");
+            Thread.Sleep(1.Seconds());
+
+            sub.Dispose();
+
+            CreateTextFile(1, "{ \"Value\": 2 }");
             Thread.Sleep(1.Seconds());
 
             return val;

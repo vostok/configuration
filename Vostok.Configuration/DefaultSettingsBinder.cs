@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using Vostok.Commons;
 using Vostok.Commons.Parsers;
 using UriParser = Vostok.Commons.Parsers.UriParser;
@@ -11,20 +12,22 @@ namespace Vostok.Configuration
 {
     public delegate bool TryParse<T>(string s, out T value);
 
-    // CR(krait): The binder must support [Required]/[Optional] attributes on fields and properties.
     /// <inheritdoc />
     /// <summary>
     /// Default binder
     /// </summary>
     public class DefaultSettingsBinder : ISettingsBinder
     {
-        // CR(krait): Lets hide these in a region.
-        private const string ParameterIsNull = "Settings parameter is null";
-        private const string ValueIsNull = "Settings value is empty";
-        private const string DictIsEmpty = "Settings dictionary is empty";
-        private const string DictItemIsEmpty = "Settings dictionary item is empty";
-        private const string ListIsEmpty = "Settings list is empty";
-        private const string ListItemIsEmpty = "Settings list item is empty";
+        #region Constants
+
+        private const string ParameterIsNull = "Settings parameter \"%p\" is null";
+        private const string ValueIsNull = "Settings value \"%v\" of type \"%t\" is empty";
+        private const string DictIsEmpty = "Settings dictionary of value type \"%t\" is empty";
+        private const string DictItemIsEmpty = "Settings dictionary item by key \"%k\" of value type \"%t\" is empty";
+        private const string ListIsEmpty = "Settings list of type \"%t\" is empty";
+        private const string ListItemIsEmpty = "Settings list item #%i of type \"%t\" is empty";
+
+        #endregion
 
         private readonly Dictionary<Type, ITypeParser> primitiveAndSimpleParsers;
 
@@ -43,6 +46,13 @@ namespace Vostok.Configuration
                 value = v;
                 return result;
             }
+        }
+
+        [Flags]
+        private enum BinderAttributes
+        {
+            IsRequired = 1,
+            IsOptional = 2,
         }
 
         public DefaultSettingsBinder()
@@ -76,21 +86,7 @@ namespace Vostok.Configuration
 
         public TSettings Bind<TSettings>(RawSettings settings)
         {
-            CheckArgumentIsNull(settings, ParameterIsNull);
-
-            // (Mansiper): The order is important!
-            if (TryBindToPrimitiveOrSimple(settings, out TSettings mainRes)
-             || TryBindToEnum(settings, out mainRes)
-             || TryBindToNullable(settings, out mainRes)
-             || TryBindToStruct(settings, out mainRes)
-             || TryBindToArray(settings, out mainRes)
-             || TryBindToList(settings, out mainRes)
-             || TryBindToDictionary(settings, out mainRes)
-             || TryBindToClass(settings, out mainRes))
-                return mainRes;
-
-            // CR(krait): Add the type name to other exception messages as well.
-            throw new InvalidCastException($"Unknown data type '{typeof(TSettings)}'. If it is primitive ask developers to add it.");
+            return (TSettings)BindInternal(settings, typeof(TSettings), "root");
         }
 
         /// <summary>
@@ -117,215 +113,179 @@ namespace Vostok.Configuration
             return this;
         }
 
-        private bool TryBindToPrimitiveOrSimple<TSettings>(RawSettings settings, out TSettings result)
+        private bool TryBindToPrimitiveOrSimple(RawSettings settings, Type bindType, out object result)
         {
-            var bindType = typeof(TSettings);
             result = default;
+            if (!IsPrimitiveOrSimple(bindType))
+                return false;
 
-            if (IsPrimitiveOrSimple(bindType))
+            if (bindType == typeof(string))
             {
-                if (bindType == typeof(string))
-                {
-                    result = (TSettings)(object)settings.Value;
-                    return true;
-                }
+                result = settings.Value;
+                return true;
+            }
 
-                // CR(krait): We'll never know which setting it was.
-                if (string.IsNullOrWhiteSpace(settings.Value))
-                    CheckArgumentIsNull(null, ValueIsNull);
+            if (string.IsNullOrWhiteSpace(settings.Value))
+                CheckArgumentIsNull(null, ValueIsNull.Replace("%v", settings.Value).Replace("%t", bindType.Name));
 
-                if (primitiveAndSimpleParsers[bindType].TryParse(settings.Value, out var res))
-                {
-                    result = (TSettings)res;
-                    return true;
-                }
+            if (primitiveAndSimpleParsers[bindType].TryParse(settings.Value, out var res))
+            {
+                result = res;
+                return true;
+            }
                 
-                // (Mansiper): Must throw only if get new primitive like int128
-                throw new InvalidCastException($"{settings.Value} to {bindType.Name}");
-            }
-
-            return false;
+            // (Mansiper): Must throw only if get new primitive like int128
+            throw new InvalidCastException($"\"{settings.Value}\" to \"{bindType.Name}\"");
         }
 
-        private static bool TryBindToEnum<TSettings>(RawSettings settings, out TSettings result)
+        private static bool TryBindToEnum(RawSettings settings, Type bindType, out object result)
         {
-            var bindType = typeof(TSettings);
             result = default;
+            if (!bindType.IsEnum)
+                return false;
 
-            if (bindType.IsEnum)
+            if (string.IsNullOrWhiteSpace(settings.Value))
+                CheckArgumentIsNull(null, ValueIsNull.Replace("%v", settings.Value).Replace("%t", bindType.Name));
+
+            foreach (var name in Enum.GetNames(bindType).Where(n => string.Equals(n, settings.Value, StringComparison.OrdinalIgnoreCase)))
             {
-                if (string.IsNullOrWhiteSpace(settings.Value))
-                    CheckArgumentIsNull(null, ValueIsNull);
-
-                // CR(krait): string.Equals(a, b, StringComparison.OrdinalIgnoreCase)
-                foreach (var name in Enum.GetNames(typeof(TSettings)).Where(n => n.ToLower() == settings.Value.ToLower()))
-                {
-                    result = (TSettings)Enum.Parse(typeof(TSettings), name, true);
-                    return true;
-                }
-                // CR(krait): Enum.IsDefined() + cast?
-                if (int.TryParse(settings.Value, out var intVal))
-                    foreach (var value in Enum.GetValues(typeof(TSettings)))
-                        if ((int) value == intVal)
-                        {
-                            result = (TSettings)(object)intVal;
-                            return true;
-                        }
-
-                throw new InvalidCastException("Value for enum was not found.");
+                result = Enum.Parse(bindType, name, true);
+                return true;
             }
-
-            return false;
-        }
-
-        private bool TryBindToNullable<TSettings>(RawSettings settings, out TSettings result)
-        {
-            var bindType = typeof(TSettings);
-            result = default;
-
-            if (bindType.IsValueType && bindType.IsGenericType)
+                
+            if (int.TryParse(settings.Value, out var intVal) && Enum.IsDefined(bindType, intVal))
             {
-                if (settings.Value == null)
-                    return true;
-
-                var res = BindInvokeSettings(new RawSettings(settings.Value), bindType.GenericTypeArguments[0]);
-                result = (TSettings)res;
+                result = intVal;
                 return true;
             }
 
-            return false;
+            throw new InvalidCastException($"Value \"{settings.Value}\" for enum \"{bindType.Name}\" was not found.");
         }
 
-        private bool TryBindToStruct<TSettings>(RawSettings settings, out TSettings result)
+        private bool TryBindToNullable(RawSettings settings, Type bindType, out object result)
         {
-            var bindType = typeof(TSettings);
             result = default;
-
-            if (bindType.IsValueType)
-            {
-                CheckArgumentIsNull(settings.ChildrenByKey, DictIsEmpty);
-                var boxedInst = (object)default(TSettings);
-
-                foreach (var field in bindType.GetFields())
-                {
-                    var res = BindInvoke(field.Name, field.FieldType, settings);
-                    field.SetValue(boxedInst, res);
-                }
-                foreach (var prop in bindType.GetProperties().Where(p => p.CanWrite))
-                {
-                    var res = BindInvoke(prop.Name, prop.PropertyType, settings);
-                    prop.SetValue(boxedInst, res);
-                }
-                result = (TSettings)boxedInst;
+            if (!IsNullableValue(bindType))
+                return false;
+            if (settings.Value == null)
                 return true;
-            }
 
-            return false;
+            var res = BindInternal(new RawSettings(settings.Value), bindType.GenericTypeArguments[0]);
+            result = res;
+            return true;
         }
 
-        private bool TryBindToArray<TSettings>(RawSettings settings, out TSettings result)
+        private bool TryBindToStruct(RawSettings settings, Type bindType, out object result)
         {
-            var bindType = typeof(TSettings);
             result = default;
+            if (!bindType.IsValueType)
+                return false;
 
-            if (bindType.IsArray)
+            CheckArgumentIsNull(settings.ChildrenByKey, DictIsEmpty);
+            result = Activator.CreateInstance(bindType);
+
+            foreach (var field in bindType.GetFields())
             {
-                CheckArgumentIsNull(settings.Children, ListIsEmpty);
-                var elType = bindType.GetElementType();
-                var inst = Array.CreateInstance(elType, settings.Children.Count);
-                var i = 0;
-                foreach (var item in settings.Children)
-                {
-                    CheckArgumentIsNull(item, ListItemIsEmpty);
-                    var val = BindInvokeList(i, elType, settings);
-                    inst.SetValue(val, i++);
-                }
-                result = (TSettings)(object)inst;
-                return true;
+                var binderAttributes = GetAttributes(field.GetCustomAttributes().ToArray());
+                var res = BindInvokeFP(field.Name, field.FieldType, settings, binderAttributes);
+                field.SetValue(result, res);
             }
-
-            return false;
+            foreach (var prop in bindType.GetProperties().Where(p => p.CanWrite))
+            {
+                var binderAttributes = GetAttributes(prop.GetCustomAttributes().ToArray());
+                var res = BindInvokeFP(prop.Name, prop.PropertyType, settings, binderAttributes);
+                prop.SetValue(result, res);
+            }
+            return true;
         }
 
-        private bool TryBindToList<TSettings>(RawSettings settings, out TSettings result)
+        private bool TryBindToArray(RawSettings settings, Type bindType, out object result)
         {
-            var bindType = typeof(TSettings);
+            result = default;
+            if (!bindType.IsArray)
+                return false;
+
+            var elType = bindType.GetElementType();
+            CheckArgumentIsNull(settings.Children, ListIsEmpty.Replace("%t", elType.Name));
+            var inst = Array.CreateInstance(elType, settings.Children.Count);
+            var i = 0;
+            foreach (var item in settings.Children)
+            {
+                CheckArgumentIsNull(item, ListItemIsEmpty.Replace("%i", i.ToString()).Replace("%t", elType.Name));
+                var val = BindInvokeList(i, elType, settings);
+                inst.SetValue(val, i++);
+            }
+            result = inst;
+            return true;
+        }
+
+        private bool TryBindToList(RawSettings settings, Type bindType, out object result)
+        {
             var bindGtd = bindType.IsGenericType ? bindType.GetGenericTypeDefinition() : null;
             result = default;
+            if (!bindType.IsGenericType || bindGtd != typeof(List<>) && bindGtd != typeof(IEnumerable<>))
+                return false;
 
-            if (bindType.IsGenericType && (bindGtd == typeof(List<>) || bindGtd == typeof(IEnumerable<>)))
+            var genType = typeof(List<>).MakeGenericType(bindType.GetGenericArguments());
+            CheckArgumentIsNull(settings.Children, ListIsEmpty.Replace("%t", genType.Name));
+            var inst = Activator.CreateInstance(genType);
+            var i = 0;
+            foreach (var item in settings.Children)
             {
-                CheckArgumentIsNull(settings.Children, ListIsEmpty);
-                var listType = typeof(List<>);
-                var genType = listType.MakeGenericType(bindType.GetGenericArguments());
-                var inst = Activator.CreateInstance(genType);
-                var i = 0;
-                foreach (var item in settings.Children)
-                {
-                    CheckArgumentIsNull(item, ListItemIsEmpty);
-                    var val = BindInvokeList(i, genType.GenericTypeArguments[0], settings);
-                    ((IList)inst).Add(val);
-                    i++;
-                }
-                result = (TSettings)inst;
-                return true;
+                CheckArgumentIsNull(item, ListItemIsEmpty.Replace("%i", i.ToString()).Replace("%t", genType.Name));
+                var val = BindInvokeList(i, genType.GenericTypeArguments[0], settings);
+                ((IList)inst).Add(val);
+                i++;
             }
-
-            return false;
+            result = inst;
+            return true;
         }
 
-        private bool TryBindToDictionary<TSettings>(RawSettings settings, out TSettings result)
+        private bool TryBindToDictionary(RawSettings settings, Type bindType, out object result)
         {
-            var bindType = typeof(TSettings);
             var bindGtd = bindType.IsGenericType ? bindType.GetGenericTypeDefinition() : null;
             result = default;
+            if (!bindType.IsGenericType || bindGtd != typeof(Dictionary<,>))
+                return false;
 
-            if (bindType.IsGenericType && bindGtd == typeof(Dictionary<,>))
+            var genType = typeof(Dictionary<,>).MakeGenericType(bindType.GetGenericArguments());
+            CheckArgumentIsNull(settings.ChildrenByKey, DictIsEmpty.Replace("%t", genType.GenericTypeArguments[1].Name));
+            var inst = Activator.CreateInstance(genType);
+            var i = 0;
+            foreach (var item in settings.ChildrenByKey)
             {
-                CheckArgumentIsNull(settings.ChildrenByKey, DictIsEmpty);
-                var dictType = typeof(Dictionary<,>);
-                var genType = dictType.MakeGenericType(bindType.GetGenericArguments());
-                var inst = Activator.CreateInstance(genType);
-                var i = 0;
-                foreach (var item in settings.ChildrenByKey)
-                {
-                    CheckArgumentIsNull(item, DictItemIsEmpty);
-                    var key = BindInvokeSettings(new RawSettings(item.Key), genType.GenericTypeArguments[0]);
-                    var val = BindInvokeSettings(item.Value, genType.GenericTypeArguments[1]);
-                    ((IDictionary)inst).Add(key, val);
-                    i++;
-                }
-                result = (TSettings)inst;
-                return true;
+                CheckArgumentIsNull(item, DictItemIsEmpty.Replace("%k", item.Key).Replace("%t", genType.GenericTypeArguments[1].Name));
+                var key = BindInternal(new RawSettings(item.Key), genType.GenericTypeArguments[0]);
+                var val = BindInternal(item.Value, genType.GenericTypeArguments[1], item.Key);
+                ((IDictionary)inst).Add(key, val);
+                i++;
             }
-
-            return false;
+            result = inst;
+            return true;
         }
 
-        private bool TryBindToClass<TSettings>(RawSettings settings, out TSettings result)
+        private bool TryBindToClass(RawSettings settings, Type bindType, out object result)
         {
-            var bindType = typeof(TSettings);
             result = default;
+            if (!bindType.IsClass)
+                return false;
 
-            if (bindType.IsClass)
+            CheckArgumentIsNull(settings.ChildrenByKey, DictIsEmpty.Replace("%t", bindType.Name));
+            var inst = Activator.CreateInstance(bindType);
+            foreach (var field in bindType.GetFields())
             {
-                CheckArgumentIsNull(settings.ChildrenByKey, DictIsEmpty);
-                var inst = Activator.CreateInstance<TSettings>();
-                foreach (var field in bindType.GetFields())
-                {
-                    var res = BindInvoke(field.Name, field.FieldType, settings);
-                    field.SetValue(inst, res);
-                }
-                foreach (var prop in bindType.GetProperties().Where(p => p.CanWrite))
-                {
-                    var res = BindInvoke(prop.Name, prop.PropertyType, settings);
-                    prop.SetValue(inst, res);
-                }
-                result = inst;
-                return true;
+                var binderAttributes = GetAttributes(field.GetCustomAttributes().ToArray());
+                var res = BindInvokeFP(field.Name, field.FieldType, settings, binderAttributes);
+                field.SetValue(inst, res);
             }
-
-            return false;
+            foreach (var prop in bindType.GetProperties().Where(p => p.CanWrite))
+            {
+                var binderAttributes = GetAttributes(prop.GetCustomAttributes().ToArray());
+                var res = BindInvokeFP(prop.Name, prop.PropertyType, settings, binderAttributes);
+                prop.SetValue(inst, res);
+            }
+            result = inst;
+            return true;
         }
 
         private static void CheckArgumentIsNull(object obj, string message)
@@ -334,48 +294,66 @@ namespace Vostok.Configuration
                 throw new ArgumentNullException(message);
         }
 
-        // CR(krait): Why not just make a BindInternal(RawSettings, Type) and use it everywhere instead of public Bind<T>()?
-        private object BindInvoke(string fieldOrPropertyName, Type fieldOrPropertyType, RawSettings settings)
+        private object BindInternal(RawSettings settings, Type type, string paramName = null)
         {
-            var method = typeof(DefaultSettingsBinder).GetMethod(nameof(Bind));
-            var generic = method.MakeGenericMethod(fieldOrPropertyType);
+            CheckArgumentIsNull(settings, ParameterIsNull.Replace("%p", paramName));
 
-            if (!fieldOrPropertyType.IsClass)
+            // (Mansiper): The order is important!
+            if (TryBindToPrimitiveOrSimple(settings, type, out var mainRes)
+                || TryBindToEnum(settings, type, out mainRes)
+                || TryBindToNullable(settings, type, out mainRes)
+                || TryBindToStruct(settings, type, out mainRes)
+                || TryBindToArray(settings, type, out mainRes)
+                || TryBindToList(settings, type, out mainRes)
+                || TryBindToDictionary(settings, type, out mainRes)
+                || TryBindToClass(settings, type, out mainRes))
+                return mainRes;
+
+            throw new InvalidCastException($"Unknown data type \"{type.Name}\". If it is primitive ask developers to add it.");
+        }
+
+        private object BindInvokeFP(string fieldOrPropertyName, Type fieldOrPropertyType, RawSettings settings, BinderAttributes attributes)
+        {
+            if (!settings.ChildrenByKey.ContainsKey(fieldOrPropertyName))
             {
-                if (!settings.ChildrenByKey.ContainsKey(fieldOrPropertyName))
-                    throw new InvalidCastException($"Key is absent: {fieldOrPropertyName}");
-                return InvokeBind();
+                if (attributes.HasFlag(BinderAttributes.IsOptional) && attributes.HasFlag(BinderAttributes.IsRequired))
+                    return Activator.CreateInstance(
+                        fieldOrPropertyType.IsClass || fieldOrPropertyType.GenericTypeArguments.Length == 0 
+                            ? fieldOrPropertyType 
+                            : fieldOrPropertyType.GenericTypeArguments[0]);
+                else if (attributes.HasFlag(BinderAttributes.IsOptional))
+                    return fieldOrPropertyType.IsClass ? null : Activator.CreateInstance(fieldOrPropertyType);
+                else
+                    throw new InvalidCastException($"Key \"{fieldOrPropertyName}\" is absent");
             }
-            else
+            
+            var rs = settings.ChildrenByKey[fieldOrPropertyName];
+            if ((IsNullableValue(fieldOrPropertyType) || fieldOrPropertyType.IsClass) &&
+                rs.Value == null && rs.Children == null && rs.ChildrenByKey == null)
             {
-                if (!settings.ChildrenByKey.ContainsKey(fieldOrPropertyName))
+                if (attributes.HasFlag(BinderAttributes.IsRequired) && attributes.HasFlag(BinderAttributes.IsOptional))
+                    return Activator.CreateInstance(fieldOrPropertyType);
+                else if (attributes.HasFlag(BinderAttributes.IsRequired))
+                    throw new InvalidCastException($"Not nullable value of field/property \"{fieldOrPropertyName}\" is null");
+                else
                     return null;
-                else return InvokeBind();
             }
-
-            object InvokeBind()
-            {
-                var rs = settings.ChildrenByKey[fieldOrPropertyName];
-                CheckArgumentIsNull(rs, $"Value of field/property '{fieldOrPropertyName}' is null");
-                return generic.Invoke(this, new object[] { rs });
-            }
+            CheckArgumentIsNull(rs, $"Value of field/property \"{fieldOrPropertyName}\" of type \"{fieldOrPropertyType.Name}\" is null");
+            return BindInternal(rs, fieldOrPropertyType);
         }
 
         private object BindInvokeList(int index, Type listType, RawSettings settings)
         {
-            var method = typeof(DefaultSettingsBinder).GetMethod(nameof(Bind));
-            var generic = method.MakeGenericMethod(listType);
-
             if (!listType.IsClass)
             {
-                if (settings.Children.Count() <= index)
-                    //it must never be thrown
-                    throw new InvalidCastException($"Key is absent by index: {index}");
+                if (settings.Children.Count <= index)
+                    // (Mansiper): it must never be thrown
+                    throw new InvalidCastException($"Key by index \"{index}\" is absent of list type {listType.Name}");
                 return InvokeBind();
             }
             else
             {
-                if (settings.Children.Count() <= index)
+                if (settings.Children.Count <= index)
                     return null;
                 else
                     return InvokeBind();
@@ -384,21 +362,32 @@ namespace Vostok.Configuration
             object InvokeBind()
             {
                 var rs = settings.Children.ElementAt(index);
-                CheckArgumentIsNull(rs, $"Value of list on index '{index}' is null");
-                return generic.Invoke(this, new object[] { rs });
+                CheckArgumentIsNull(rs, $"Value of list of type \"{listType.Name}\" on index \"{index}\" is null");
+                return BindInternal(rs, listType, $"list index {index}");
             }
-        }
-
-        private object BindInvokeSettings(RawSettings settings, Type tp)
-        {
-            var method = typeof(DefaultSettingsBinder).GetMethod(nameof(Bind));
-            var generic = method.MakeGenericMethod(tp);
-            return generic.Invoke(this, new object[] { settings });
         }
 
         private bool IsPrimitiveOrSimple(Type type) =>
             type.IsValueType && type.IsPrimitive
             || type == typeof(string)
             || primitiveAndSimpleParsers.ContainsKey(type);
+
+        private bool IsNullableValue(Type type) => 
+            type.IsValueType && type.IsGenericType;
+
+        private BinderAttributes GetAttributes(Attribute[] attributes)
+        {
+            BinderAttributes binderAttributes = 0;
+            var attrs = new Dictionary<Type, BinderAttributes>
+            {
+                { typeof(RequiredAttribute), BinderAttributes.IsRequired },
+                { typeof(OptionalAttribute), BinderAttributes.IsOptional },
+            };
+            if (attributes != null && attributes.Length > 0)
+                foreach (var attribute in attributes)
+                    if (attrs.ContainsKey(attribute.GetType()))
+                        binderAttributes |= attrs[attribute.GetType()];
+            return binderAttributes;
+        }
     }
 }

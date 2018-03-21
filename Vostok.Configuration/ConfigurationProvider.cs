@@ -9,20 +9,15 @@ namespace Vostok.Configuration
 {
     public class ConfigurationProvider : IConfigurationProvider
     {
-        // CR(krait): Why not private?
-        internal class SourceInfo
-        {
-            public Type Type { get; set; }
-            public IConfigurationSource ConfigurationSource { get; set; }
-        }
-        internal class ObserverInfo
+        private class ObserverInfo
         {
             public Type Type { get; set; }
             public object Observer { get; set; }
             public IConfigurationSource Source { get; set; }
         }
 
-        private readonly List<SourceInfo> sources;
+        private readonly Dictionary<Type, IConfigurationSource> sources;
+        private readonly ISettingsBinder settingsBinder;
 
         private readonly List<ObserverInfo> observers;
         private readonly object sync;
@@ -30,9 +25,10 @@ namespace Vostok.Configuration
         /// <summary>
         /// Creating configuration provider
         /// </summary>
-        public ConfigurationProvider()
+        public ConfigurationProvider(ISettingsBinder settingsBinder = null)
         {
-            sources = new List<SourceInfo>();
+            this.settingsBinder = settingsBinder ?? new DefaultSettingsBinder();
+            sources = new Dictionary<Type, IConfigurationSource>();
             observers = new List<ObserverInfo>();
             sync = new object();
         }
@@ -40,28 +36,24 @@ namespace Vostok.Configuration
         public TSettings Get<TSettings>()
         {
             if (!CanGet<TSettings>())
-                throw new ArgumentException("IConfigurationSource for specified type is absent"); // CR(krait): Which type?
+                throw new ArgumentException($"IConfigurationSource for specified type \"{typeof(TSettings).Name}\" is absent");
 
-            var srcs = sources.Where(s => s.Type == typeof(TSettings)).Select(s => s.ConfigurationSource).ToArray();
-            return new DefaultSettingsBinder().Bind<TSettings>(
-                new CombinedSource(srcs).Get());
+            var srcs = sources.Where(s => s.Key == typeof(TSettings)).Select(s => s.Value).ToArray();
+            return settingsBinder.Bind<TSettings>(new CombinedSource(srcs).Get());
         }
 
         public TSettings Get<TSettings>(IConfigurationSource source)
         {
-            // CR(krait): User must be able to pass their own binder through a constructor.
-            return new DefaultSettingsBinder().Bind<TSettings>(source.Get());
+            return settingsBinder.Bind<TSettings>(source.Get());
         }
 
         private bool CanGet<TSettings>() => 
-            sources.Any(s => s.Type == typeof(TSettings));
+            sources.Any(s => s.Key == typeof(TSettings));
 
         public IObservable<TSettings> Observe<TSettings>()
         {
             return Observable.Create<TSettings>(observer =>
             {
-                // CR(krait): Why store observers? Could do something like this:
-                // CR(krait): sources[...].Observe().Subscribe(_ => observer.OnNext(Get<TSettings>()))
                 lock (sync)
                 {
                     observers.Add(new ObserverInfo { Type = typeof(TSettings), Observer = observer });
@@ -83,24 +75,26 @@ namespace Vostok.Configuration
         {
             ObserverInfo oi = null;
 
-            // CR(krait): Will it work if someone calls .Subscribe() twice on the returned observable?
-            source.Observe().Subscribe(settings =>
-                ((IObserver<TSettings>) oi?.Observer)?.OnNext(
-                    new DefaultSettingsBinder().Bind<TSettings>(settings)));
+            var sub = source.Observe().Subscribe(settings =>
+                ((IObserver<TSettings>)oi?.Observer)?.OnNext(
+                    settings == null ? default : settingsBinder.Bind<TSettings>(settings)));
 
             return Observable.Create<TSettings>(observer =>
             {
                 oi = new ObserverInfo {Type = typeof(TSettings), Observer = observer, Source = source};
-                return Disposable.Empty;
+                return Disposable.Create(() =>
+                {
+                    sub.Dispose();
+                    oi = null;
+                });
             });
         }
 
-        // CR(krait): There is at most one source for a type. Let's just store sources in a dictionary by type.
         public ConfigurationProvider WithSourceFor<TSettings>(IConfigurationSource source)
         {
-            if (!sources.Any(o => o.Type == typeof(TSettings) && o.ConfigurationSource == source))
+            if (!sources.Any(o => o.Key == typeof(TSettings) && o.Value == source))
             {
-                sources.Add(new SourceInfo { Type = typeof(TSettings), ConfigurationSource = source });
+                sources.Add(typeof(TSettings), source);
                 source.Observe().Subscribe(settings =>
                 {
                     if (CanGet<TSettings>())

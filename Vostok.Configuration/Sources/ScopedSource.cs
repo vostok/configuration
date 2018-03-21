@@ -26,6 +26,8 @@ namespace Vostok.Configuration.Sources
             this.source = source;
             this.scope = scope;
 
+            observers = new List<IObserver<RawSettings>>();
+            sync = new object();
             source.Observe().Subscribe(settings =>
             {
                 lock (sync)
@@ -35,15 +37,11 @@ namespace Vostok.Configuration.Sources
                         observer.OnNext(scp);
                 }
             });
-
-            // CR(krait): <-- and now source OnNext() fires. Boom, sync is null, observers is null.
-
-            observers = new List<IObserver<RawSettings>>();
-            sync = new object();
         }
 
         /// <summary>
-        /// Gets part of RawSettings tree by specified scope
+        /// Gets part of RawSettings tree by specified scope.
+        /// You can use "[n]" format to get n-th index of list.
         /// </summary>
         /// <returns>Part of RawSettings tree</returns>
         public RawSettings Get()
@@ -62,7 +60,7 @@ namespace Vostok.Configuration.Sources
                         res = res.ChildrenByKey[scope[i]];
                 }
                 else if (res.Children != null &&
-                         scope[i].StartsWith("[") && scope[i].EndsWith("]") && scope[i].Length > 2) // TODO(krait): We must write about this [] syntax in an xml doc.
+                         scope[i].StartsWith("[") && scope[i].EndsWith("]") && scope[i].Length > 2)
                 {
                     var num = scope[i].Substring(1, scope[i].Length - 2);
                     if (int.TryParse(num, out var index) && index <= res.Children.Count)
@@ -88,7 +86,6 @@ namespace Vostok.Configuration.Sources
             {
                 lock (sync)
                 {
-                    // CR(krait): Maybe it isn't necessary to store observers? See comments in ConfigurationProvider.
                     observers.Add(observer);
                     observer.OnNext(Get());
                 }

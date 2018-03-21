@@ -28,6 +28,8 @@ namespace Vostok.Configuration.Sources
             this.sources = sources;
             this.listCombineOptions = listCombineOptions;
             sourcesSettings = new RawSettings[sources.Length];
+            observers = new List<IObserver<RawSettings>>();
+            sync = new object();
             for (var i = 0; i < sources.Length; i++)
             {
                 var i1 = i;
@@ -42,8 +44,6 @@ namespace Vostok.Configuration.Sources
                     }
                 });
             }
-            observers = new List<IObserver<RawSettings>>();
-            sync = new object();
         }
 
         /// <summary>
@@ -69,23 +69,28 @@ namespace Vostok.Configuration.Sources
         private RawSettings Merge(params RawSettings[] sets)
         {
             if (sets == null || sets.Length == 0) return null;
-            var result = new RawSettings(sets[0].ChildrenByKey, sets[0].Children, sets[0].Value);
+            var dict = sets[0].ChildrenByKey?.ToDictionary(pair => pair.Key, pair => pair.Value);
+            var list = sets[0].Children?.ToList();
+            var strValue = sets[0].Value;
 
-            var allDicts = sets.Where(s => s.ChildrenByKey != null).SelectMany(d => d.ChildrenByKey).ToArray();
-            var notFirstDicts = sets.Where((s, i) => i > 0 && s.ChildrenByKey != null).SelectMany(d => d.ChildrenByKey).ToArray();
-            foreach (var pair in notFirstDicts.Where(d => !result.ChildrenByKey.ContainsKey(d.Key) && d.Value.ChildrenByKey == null && d.Value.Children == null))
-                result.ChildrenByKey.Add(pair);
+            if (dict != null)
+            {
+                var allDicts = sets.Where(s => s.ChildrenByKey != null).SelectMany(d => d.ChildrenByKey).ToArray();
+                var notFirstDicts = sets.Where((s, i) => i > 0 && s.ChildrenByKey != null).SelectMany(d => d.ChildrenByKey).ToArray();
+                foreach (var pair in notFirstDicts.Where(d => !dict.ContainsKey(d.Key) && d.Value.ChildrenByKey == null && d.Value.Children == null))
+                    dict.Add(pair.Key, pair.Value);
 
-            var complexDicts = notFirstDicts.Where(d => d.Value.ChildrenByKey != null || d.Value.Children != null).ToArray();
-            var complexKeys = complexDicts.Select(d => d.Key).Distinct().ToArray();
-            foreach (var key in complexKeys)
-                result.ChildrenByKey[key] = Merge(allDicts.Where(d => d.Key == key).Select(d => d.Value).ToArray());
+                var complexDicts = notFirstDicts.Where(d => d.Value.ChildrenByKey != null || d.Value.Children != null).ToArray();
+                var complexKeys = complexDicts.Select(d => d.Key).Distinct().ToArray();
+                foreach (var key in complexKeys)
+                    dict[key] = Merge(allDicts.Where(d => d.Key == key).Select(d => d.Value).ToArray());
+            }
 
-            if (listCombineOptions == ListCombineOptions.UnionAll)
+            if (list != null && listCombineOptions == ListCombineOptions.UnionAll)
                 foreach (var value in sets.Where((s, i) => i > 0 && s.Children != null).SelectMany(d => d.Children))
-                    result.Children.Add(value);
+                    list.Add(value);
 
-            return result;
+            return new RawSettings(dict, list, strValue);
         }
 
         /// <summary>
@@ -98,7 +103,6 @@ namespace Vostok.Configuration.Sources
             {
                 lock (sync)
                 {
-                    // CR(krait): Maybe it isn't necessary to store observers? See comments in ConfigurationProvider.
                     observers.Add(observer);
 
                     if (sourcesSettings.Any(s => s != null))
