@@ -3,6 +3,13 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Configurations>Debug;Release;NoTests</Configurations>
+    <Version>0.0.1</Version>
+    <Authors>Vostok team</Authors>
+    <Company>SKB Kontur</Company>
+    <Product>Vostok</Product>
+    <Copyright>Copyright (c) 2017-2018 SKB Kontur</Copyright>
+    <PackageProjectUrl>https://github.com/vostok/configuration</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/vostok/configuration/blob/master/LICENSE</PackageLicenseUrl>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <LangVersion>7.2</LangVersion>
