@@ -66,6 +66,7 @@ namespace Vostok.Configuration.Tests.Sources
                         }));
         }
 
+        // CR(krait): Does not work with my locale.
         [Test]
         public void Should_parse_Double_value()
         {

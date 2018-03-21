@@ -35,6 +35,7 @@ namespace Vostok.Configuration
             Value = value;
         }
 
+        // CR(krait): RawSettings is immutable, these two methods should not exist.
         /// <summary>
         /// Creates ChildrenByKey dictionary
         /// </summary>
@@ -51,7 +52,7 @@ namespace Vostok.Configuration
             Children = new List<RawSettings>();
         }
 
-
+        // CR(krait): It doesn't look like these methods improve readability. The null check is pretty obvious by itself, and they don't even make it shorter.
         private bool ChildrenByKeyExists() => ChildrenByKey != null;
         private bool ChildrenExists() => Children != null;
 
@@ -59,7 +60,8 @@ namespace Vostok.Configuration
         /// Current value
         /// </summary>
         public string Value { get; }
-
+        
+        // CR(krait): These properties should not have setters.
         /// <summary>
         /// Inner values where order has no matter (dictioonary, fields/properties)
         /// </summary>
@@ -86,9 +88,11 @@ namespace Vostok.Configuration
 
             if (ChildrenByKeyExists())
             {
+                // CR(krait): new HashSet<string>(ChildrenByKey.Keys).SetEquals(other.ChildrenByKey.Keys) is faster and more readable.
                 if (!ChildrenByKey.Keys.All(k => other.ChildrenByKey.Keys.Contains(k)) ||
                     !other.ChildrenByKey.Keys.All(k => ChildrenByKey.Keys.Contains(k)))
                     return false;
+                // CR(krait): But here .All() would look nice.
                 foreach (var pair in ChildrenByKey)
                     if (!Equals(pair.Value, other.ChildrenByKey[pair.Key]))
                         return false;
@@ -96,6 +100,7 @@ namespace Vostok.Configuration
 
             if (ChildrenExists())
             {
+                // CR(krait): .SequenceEqual()
                 if (Children.Count != other.Children.Count)
                     return false;
                 if (Children.Where((t, i) => !Equals(t, other.Children[i])).Any())

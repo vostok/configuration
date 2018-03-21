@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Reactive.Linq;
+using Vostok.Commons.Convertions;
 
 namespace Vostok.Configuration.Sources
 {
+    // CR(krait): Should be disposable, otherwise we have no means to stop the thread.
     /// <inheritdoc />
     /// <summary>
     /// Json converter to RawSettings tree from file
@@ -22,7 +24,7 @@ namespace Vostok.Configuration.Sources
         {
             this.filePath = filePath;
             fileWatcher = new SettingsFileWatcher(filePath, this,
-                observePeriod == default ? TimeSpan.FromMilliseconds(10000) : observePeriod);
+                observePeriod == default ? 10.Seconds() : observePeriod);
         }
 
         public RawSettings Get()

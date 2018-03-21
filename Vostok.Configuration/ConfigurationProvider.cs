@@ -36,7 +36,7 @@ namespace Vostok.Configuration
         public TSettings Get<TSettings>()
         {
             if (!CanGet<TSettings>())
-                throw new ArgumentException($"IConfigurationSource for specified type \"{typeof(TSettings).Name}\" is absent");
+                throw new ArgumentException($"{nameof(IConfigurationSource)} for specified type \"{typeof(TSettings).Name}\" is absent");
 
             var srcs = sources.Where(s => s.Key == typeof(TSettings)).Select(s => s.Value).ToArray();
             return settingsBinder.Bind<TSettings>(new CombinedSource(srcs).Get());

@@ -372,10 +372,10 @@ namespace Vostok.Configuration
             || type == typeof(string)
             || primitiveAndSimpleParsers.ContainsKey(type);
 
-        private bool IsNullableValue(Type type) => 
+        private static bool IsNullableValue(Type type) => 
             type.IsValueType && type.IsGenericType;
 
-        private BinderAttributes GetAttributes(Attribute[] attributes)
+        private static BinderAttributes GetAttributes(Attribute[] attributes)
         {
             BinderAttributes binderAttributes = 0;
             var attrs = new Dictionary<Type, BinderAttributes>

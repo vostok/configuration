@@ -10,6 +10,7 @@ using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests.Sources
 {
+    // CR(krait): Tests are unstable, IOException occurs from time to time. Perhaps disposing the watcher after each test will fix this?
     [TestFixture]
     public class ScopedSource_Tests
     {
@@ -105,7 +106,9 @@ namespace Vostok.Configuration.Tests.Sources
                 }
             )).ShouldPassIn(3.Seconds());
         }
-        private List<RawSettings> Should_observe_file_test()
+
+        // CR(krait): Helper methods are usually named in the traditional convention, camel case.
+        private static List<RawSettings> Should_observe_file_test()
         {
             CreateTextFile("{ \"value\": { \"list\": [1,2] } }");
             var jfs = new JsonFileSource(TestFileName, 300.Milliseconds());
@@ -113,7 +116,7 @@ namespace Vostok.Configuration.Tests.Sources
             var rsList = new List<RawSettings>();
 
             var sub = ss.Observe().Subscribe(settings => rsList.Add(settings));
-
+            // CR(krait): Nope, no more Thread.Sleep's in tests, please.
             Thread.Sleep(1.Seconds());
             CreateTextFile("{ \"value\": { \"list\": [3,4,5] } }");
             Thread.Sleep(1.Seconds());

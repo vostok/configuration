@@ -13,11 +13,13 @@ namespace Vostok.Configuration.Tests
     {
         private DefaultSettingsBinder binder;
 
+        // CR(krait): Let's place inner classes at the bottom of the class definition everywhere.
         private class CST
         {
             public string[] Strings { get; set; }
         }
-        private class CommaSeparatedTextParser: ITypeParser
+
+        private class CommaSeparatedTextParser : ITypeParser
         {
             public bool TryParse(string s, out object value)
             {

@@ -134,6 +134,7 @@ namespace Vostok.Configuration.Tests
             Equals(sets1, sets2).Should().BeFalse();
         }
 
+        // CR(krait): This test is useless now.
         [Test]
         public void Equals_returns_true_if_nulls()
         {
