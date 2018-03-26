@@ -1,8 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 
 namespace Vostok.Configuration.Sources
 {
@@ -14,9 +13,7 @@ namespace Vostok.Configuration.Sources
         private readonly IConfigurationSource[] sources;
         private readonly ListCombineOptions listCombineOptions;
         private readonly RawSettings[] sourcesSettings;
-
-        private readonly List<IObserver<RawSettings>> observers;
-        private readonly object sync;
+        private readonly BehaviorSubject<RawSettings> observers;
 
         /// <summary>
         /// Creating new source with list of configurations to combine
@@ -28,20 +25,14 @@ namespace Vostok.Configuration.Sources
             this.sources = sources;
             this.listCombineOptions = listCombineOptions;
             sourcesSettings = new RawSettings[sources.Length];
-            observers = new List<IObserver<RawSettings>>();
-            sync = new object();
+            observers = new BehaviorSubject<RawSettings>(null);
             for (var i = 0; i < sources.Length; i++)
             {
-                var i1 = i;
+                var ii = i;
                 sources[i].Observe().Subscribe(settings =>
                 {
-                    lock (sync)
-                    {
-                        sourcesSettings[i1] = settings;
-                        var merge = Get();
-                        foreach (var observer in observers)
-                            observer.OnNext(merge);
-                    }
+                    sourcesSettings[ii] = settings;
+                    observers.OnNext(Get());
                 });
             }
         }
@@ -59,12 +50,8 @@ namespace Vostok.Configuration.Sources
         /// Returns combine of configurations
         /// </summary>
         /// <returns>Combine as RawSettings tree</returns>
-        public RawSettings Get()
-        {
-            if (sources.Length == 0) return null;
-            var sets = sources.Select(s => s.Get()).ToArray();
-            return Merge(sets);
-        }
+        public RawSettings Get() => 
+            sources.Length == 0 ? null : Merge(sources.Select(s => s.Get()).ToArray());
 
         private RawSettings Merge(params RawSettings[] sets)
         {
@@ -87,8 +74,7 @@ namespace Vostok.Configuration.Sources
             }
 
             if (list != null && listCombineOptions == ListCombineOptions.UnionAll)
-                foreach (var value in sets.Where((s, i) => i > 0 && s.Children != null).SelectMany(d => d.Children))
-                    list.Add(value);
+                list.AddRange(sets.Where((s, i) => i > 0 && s.Children != null).SelectMany(d => d.Children));
 
             return new RawSettings(dict, list, strValue);
         }
@@ -101,20 +87,10 @@ namespace Vostok.Configuration.Sources
         {
             return Observable.Create<RawSettings>(observer =>
             {
-                lock (sync)
-                {
-                    observers.Add(observer);
-
-                    if (sourcesSettings.Any(s => s != null))
-                        observer.OnNext(Get());
-                }
-                return Disposable.Create(() =>
-                {
-                    lock (sync)
-                    {
-                        observers.Remove(observer);
-                    }
-                });
+                var subscribtion = observers.Where(o => o != null).SubscribeSafe(observer);
+                if (sourcesSettings.Any(s => s != null))
+                    observer.OnNext(Get());
+                return subscribtion;
             });
         }
 

@@ -22,23 +22,19 @@ namespace Vostok.Configuration.Sources
             this.json = json;
         }
 
-        public RawSettings Get()
-        {
-            if (string.IsNullOrWhiteSpace(json)) return null;
-            var obj = JObject.Parse(json);
-            return ParseJson(obj);
-        }
+        public RawSettings Get() => 
+            string.IsNullOrWhiteSpace(json) ? null : ParseJson(JObject.Parse(json));
 
         public IObservable<RawSettings> Observe() => 
             Observable.Empty<RawSettings>();
 
-        private RawSettings ParseJson(JObject obj)
+        private RawSettings ParseJson(JObject jObject)
         {
             Dictionary<string, RawSettings> dict = null;
-            if (obj.Count > 0)
+            if (jObject.Count > 0)
                 dict = new Dictionary<string, RawSettings>();
 
-            foreach (var token in obj)
+            foreach (var token in jObject)
                 switch (token.Value.Type)
                 {
                     case JTokenType.Null:
@@ -57,13 +53,13 @@ namespace Vostok.Configuration.Sources
             return new RawSettings(dict);
         }
 
-        private RawSettings ParseJson(JArray arr)
+        private RawSettings ParseJson(JArray jArray)
         {
             List<RawSettings> list = null;
-            if (arr.Count > 0)
-                list = new List<RawSettings>(arr.Count);
+            if (jArray.Count > 0)
+                list = new List<RawSettings>(jArray.Count);
 
-            foreach (var item in arr)
+            foreach (var item in jArray)
                 switch (item.Type)
                 {
                     case JTokenType.Null:

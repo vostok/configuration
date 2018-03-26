@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Threading;
 using FluentAssertions;
@@ -109,24 +108,25 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_callback_on_exception()
         {
-            new Action(() => ShouldCallbackOnExceptionTest().Should().BeTrue()).ShouldPassIn(1.Seconds());
+            new Action(() => ShouldCallbackOnExceptionTest().Should().Be(1)).ShouldPassIn(1.Seconds());
         }
 
-        private bool ShouldCallbackOnExceptionTest()
+        private int ShouldCallbackOnExceptionTest()
         {
-            var invoked = false;
-            using (var jfs = new JsonFileSource(TestFileName, 100.Milliseconds(), e => invoked = true))
+            var val = 0;
+            using (var jfs = new JsonFileSource(TestFileName, 100.Milliseconds(), e => val++))
             {
-                var sub = jfs.Observe().Subscribe(settings => {});
+                var sub1 = jfs.Observe().Subscribe(settings => {});
+                var sub2 = jfs.Observe().Subscribe(settings => {});
 
-                Thread.Sleep(200.Milliseconds());
                 CreateTextFile("wrong file format");
                 Thread.Sleep(200.Milliseconds());
 
-                sub.Dispose();
+                sub1.Dispose();
+                sub2.Dispose();
             }
             SettingsFileWatcher.StopAndClear();
-            return invoked;
+            return val;
         }
     }
 }

@@ -24,11 +24,8 @@ namespace Vostok.Configuration.Sources
             currentLine = -1;
         }
 
-        public RawSettings Get()
-        {
-            if (string.IsNullOrWhiteSpace(ini)) return null;
-            return ParseIni(ini);
-        }
+        public RawSettings Get() =>
+            string.IsNullOrWhiteSpace(ini) ? null : ParseIni(ini);
 
         public IObservable<RawSettings> Observe() => 
             Observable.Empty<RawSettings>();

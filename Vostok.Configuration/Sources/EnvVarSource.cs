@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Text;
 using System.Threading;
 using Vostok.Commons.ThreadManagment;
@@ -15,8 +14,7 @@ namespace Vostok.Configuration.Sources
     /// </summary>
     public class EnvVarSource : IConfigurationSource
     {
-        private readonly List<IObserver<RawSettings>> observers;
-        private readonly object sync;
+        private readonly BehaviorSubject<RawSettings> observers;
         private readonly TimeSpan observePeriod;
         private string current;
         private RawSettings currentTree;
@@ -24,8 +22,7 @@ namespace Vostok.Configuration.Sources
 
         public EnvVarSource(TimeSpan observePeriod = default)
         {
-            observers = new List<IObserver<RawSettings>>();
-            sync = new object();
+            observers = new BehaviorSubject<RawSettings>(null);
             this.observePeriod = observePeriod.Milliseconds < 100 ? TimeSpan.FromMilliseconds(100) : observePeriod;
             disposing = false;
 
@@ -36,8 +33,8 @@ namespace Vostok.Configuration.Sources
 
         private RawSettings Get(string vars)
         {
-            using (var iss = new IniStringSource(vars))
-                return iss.Get();
+            using (var source = new IniStringSource(vars))
+                return source.Get();
         }
 
         private string GetVariables()
@@ -52,19 +49,10 @@ namespace Vostok.Configuration.Sources
         {
             return Observable.Create<RawSettings>(observer =>
             {
-                lock (sync)
-                {
-                    observers.Add(observer);
-                    if (currentTree != null)
-                        observer.OnNext(currentTree);
-                }
-                return Disposable.Create(() =>
-                {
-                    lock (sync)
-                    {
-                        observers.Remove(observer);
-                    }
-                });
+                var subscribtion = observers.Where(s => s != null).SubscribeSafe(observer);
+                if (currentTree != null)
+                    observer.OnNext(currentTree);
+                return subscribtion;
             });
         }
 
@@ -75,27 +63,20 @@ namespace Vostok.Configuration.Sources
 
         private void WatchVars()
         {
-            void LockedReturn(string changes)
-            {
-                lock (sync)
-                {
-                    currentTree = Get(changes);
-                    foreach (var observer in observers)
-                        observer.OnNext(currentTree);
-                    current = changes;
-                }
-            }
-
             while (!disposing)
             {
                 Thread.Sleep(observePeriod);
                 if (disposing) break;
-                if (observers.Count == 0) continue;
+                if (!observers.HasObservers) continue;
 
                 var changes = GetVariables();
                 
                 if (!Equals(current, changes))
-                    LockedReturn(changes);
+                {
+                    currentTree = Get(changes);
+                    observers.OnNext(currentTree);
+                    current = changes;
+                }
             }
         }
     }

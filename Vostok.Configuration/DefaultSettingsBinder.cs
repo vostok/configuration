@@ -128,7 +128,7 @@ namespace Vostok.Configuration
                 result = Enum.Parse(bindType, name, true);
                 return true;
             }
-                
+
             if (int.TryParse(settings.Value, out var intVal) && Enum.IsDefined(bindType, intVal))
             {
                 result = intVal;

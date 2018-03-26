@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 
 namespace Vostok.Configuration.Sources
 {
@@ -13,7 +14,7 @@ namespace Vostok.Configuration.Sources
         private readonly IConfigurationSource source;
         private readonly string[] scope;
 
-        private readonly List<IObserver<RawSettings>> observers;
+        private readonly BehaviorSubject<RawSettings> observers;
         private readonly object sync;
 
         /// <summary>
@@ -26,17 +27,9 @@ namespace Vostok.Configuration.Sources
             this.source = source;
             this.scope = scope;
 
-            observers = new List<IObserver<RawSettings>>();
+            observers = new BehaviorSubject<RawSettings>(null);
             sync = new object();
-            source.Observe().Subscribe(settings =>
-            {
-                lock (sync)
-                {
-                    var scp = Get();
-                    foreach (var observer in observers)
-                        observer.OnNext(scp);
-                }
-            });
+            source.Observe().Subscribe(settings => observers.OnNext(Get()));
         }
 
         /// <summary>
@@ -84,18 +77,9 @@ namespace Vostok.Configuration.Sources
         {
             return Observable.Create<RawSettings>(observer =>
             {
-                lock (sync)
-                {
-                    observers.Add(observer);
-                    observer.OnNext(Get());
-                }
-                return Disposable.Create(() =>
-                {
-                    lock (sync)
-                    {
-                        observers.Remove(observer);
-                    }
-                });
+                var subscribtion = observers.Where(o => o != null).SubscribeSafe(observer);
+                observer.OnNext(Get());
+                return subscribtion;
             });
         }
 
