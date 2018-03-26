@@ -98,5 +98,10 @@ namespace Vostok.Configuration.Sources
                 });
             });
         }
+
+        public void Dispose()
+        {
+            source?.Dispose();
+        }
     }
 }

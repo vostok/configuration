@@ -13,43 +13,6 @@ namespace Vostok.Configuration.Tests
     {
         private DefaultSettingsBinder binder;
 
-        // CR(krait): Let's place inner classes at the bottom of the class definition everywhere.
-        private class CST
-        {
-            public string[] Strings { get; set; }
-        }
-
-        private class CommaSeparatedTextParser : ITypeParser
-        {
-            public bool TryParse(string s, out object value)
-            {
-                if (string.IsNullOrEmpty(s))
-                {
-                    value = null;
-                    return false;
-                }
-
-                value = new CST { Strings = s.Split(',') };
-                return true;
-            }
-        }
-
-        private class SST
-        {
-            public string[] Strings { get; set; }
-        }
-        private bool TryParseSemicolonSeparatedText(string s, out SST value)
-        {
-            if (string.IsNullOrEmpty(s))
-            {
-                value = default(SST);
-                return false;
-            }
-
-            value = new SST {Strings = s.Split(';')};
-            return true;
-        }
-
         [SetUp]
         public void SetUp()
         {
@@ -250,6 +213,19 @@ namespace Vostok.Configuration.Tests
                         }
                     }
                 );
+        }
+
+        [Test]
+        public void Should_bind_to_HashSet()
+        {
+            var settings = new RawSettings(new List<RawSettings>
+            {
+                new RawSettings("val_1"),
+                new RawSettings("val_2"),
+                new RawSettings("val_3"),
+            });
+            binder.Bind<HashSet<string>>(settings)
+                .Should().BeEquivalentTo(new HashSet<string> { "val_1", "val_2", "val_3" });
         }
 
         private class MyClass
@@ -512,14 +488,6 @@ namespace Vostok.Configuration.Tests
                     });
         }
 
-        internal class GenericClass<T1, T2>
-        {
-            public int PublicIntProp { get; set; }
-            public T1 PublicT1Prop { get; set; }
-            public T2 PublicT2Prop { get; set; }
-            public Dictionary<T1, T2> PublicDictProp { get; set; }
-        }
-
         [Test]
         public void Should_bind_to_GenericClass()
         {
@@ -640,6 +608,49 @@ namespace Vostok.Configuration.Tests
                 { "WrongName_PublicIntField", new RawSettings("10") }
             });
             new Action(() => binder.Bind<MyClass3>(settings)).Should().Throw<InvalidCastException>();
+        }
+
+        private class CST
+        {
+            public string[] Strings { get; set; }
+        }
+        private class CommaSeparatedTextParser : ITypeParser
+        {
+            public bool TryParse(string s, out object value)
+            {
+                if (string.IsNullOrEmpty(s))
+                {
+                    value = null;
+                    return false;
+                }
+
+                value = new CST { Strings = s.Split(',') };
+                return true;
+            }
+        }
+
+        private class SST
+        {
+            public string[] Strings { get; set; }
+        }
+        private bool TryParseSemicolonSeparatedText(string s, out SST value)
+        {
+            if (string.IsNullOrEmpty(s))
+            {
+                value = default(SST);
+                return false;
+            }
+
+            value = new SST { Strings = s.Split(';') };
+            return true;
+        }
+
+        private class GenericClass<T1, T2>
+        {
+            public int PublicIntProp { get; set; }
+            public T1 PublicT1Prop { get; set; }
+            public T2 PublicT2Prop { get; set; }
+            public Dictionary<T1, T2> PublicDictProp { get; set; }
         }
     }
 }

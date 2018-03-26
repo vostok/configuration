@@ -9,8 +9,6 @@ namespace Vostok.Configuration
     /// </summary>
     public sealed class RawSettings : IEquatable<RawSettings>
     {
-        public RawSettings() { }
-
         public RawSettings(string value)
         {
             Value = value;
@@ -35,42 +33,20 @@ namespace Vostok.Configuration
             Value = value;
         }
 
-        // CR(krait): RawSettings is immutable, these two methods should not exist.
-        /// <summary>
-        /// Creates ChildrenByKey dictionary
-        /// </summary>
-        public void CreateDictionary()
-        {
-            ChildrenByKey = new Dictionary<string, RawSettings>();
-        }
-
-        /// <summary>
-        /// Creates Children list
-        /// </summary>
-        public void CreateList()
-        {
-            Children = new List<RawSettings>();
-        }
-
-        // CR(krait): It doesn't look like these methods improve readability. The null check is pretty obvious by itself, and they don't even make it shorter.
-        private bool ChildrenByKeyExists() => ChildrenByKey != null;
-        private bool ChildrenExists() => Children != null;
-
         /// <summary>
         /// Current value
         /// </summary>
         public string Value { get; }
         
-        // CR(krait): These properties should not have setters.
         /// <summary>
         /// Inner values where order has no matter (dictioonary, fields/properties)
         /// </summary>
-        public IReadOnlyDictionary<string, RawSettings> ChildrenByKey { get; private set; }
+        public IReadOnlyDictionary<string, RawSettings> ChildrenByKey { get; }
 
         /// <summary>
         /// Inner values where order has matter (array, list)
         /// </summary>
-        public IReadOnlyList<RawSettings> Children { get; private set; }
+        public IReadOnlyList<RawSettings> Children { get; }
 
         #region Equality
 
@@ -81,39 +57,48 @@ namespace Vostok.Configuration
             if (other == null)
                 return false;
 
+            var thisCbkExists = ChildrenByKey != null;
+            var otherCbkExists = other.ChildrenByKey != null;
+            var thisChExists = Children != null;
+            var otherChExists = other.Children != null;
+
             if (Value != other.Value ||
-                ChildrenByKeyExists() != other.ChildrenByKeyExists() ||
-                ChildrenExists() != other.ChildrenExists())
+                thisCbkExists != otherCbkExists ||
+                thisChExists != otherChExists)
                 return false;
 
-            if (ChildrenByKeyExists())
-            {
-                // CR(krait): new HashSet<string>(ChildrenByKey.Keys).SetEquals(other.ChildrenByKey.Keys) is faster and more readable.
-                if (!ChildrenByKey.Keys.All(k => other.ChildrenByKey.Keys.Contains(k)) ||
-                    !other.ChildrenByKey.Keys.All(k => ChildrenByKey.Keys.Contains(k)))
-                    return false;
-                // CR(krait): But here .All() would look nice.
-                foreach (var pair in ChildrenByKey)
-                    if (!Equals(pair.Value, other.ChildrenByKey[pair.Key]))
-                        return false;
-            }
+            if (thisCbkExists &&
+                (!new HashSet<string>(ChildrenByKey.Keys).SetEquals(other.ChildrenByKey.Keys) ||
+                ChildrenByKey.Any(pair => !Equals(pair.Value, other.ChildrenByKey[pair.Key]))))
+                return false;
 
-            if (ChildrenExists())
-            {
-                // CR(krait): .SequenceEqual()
-                if (Children.Count != other.Children.Count)
-                    return false;
-                if (Children.Where((t, i) => !Equals(t, other.Children[i])).Any())
-                    return false;
-            }
+            if (thisChExists && !Children.SequenceEqual(other.Children))
+                return false;
 
             return true;
         }
 
-        // CR(krait): It'd be better to override GetHashCode too, to avoid nasty surprises.
         public override int GetHashCode()
         {
-            throw new System.NotImplementedException();
+            unchecked
+            {
+                var hashCode = Value != null ? Value.GetHashCode() : 0;
+                hashCode = (hashCode * 397) ^ (ChildrenByKey != null ? ChildrenByKeyHash() : 0);
+                hashCode = (hashCode * 397) ^ (Children != null ? ChildrenHash() : 0);
+                return hashCode;
+            }
+
+            int ChildrenByKeyHash()
+            {
+                var keysRes = ChildrenByKey.Keys
+                    .Select(k => k.GetHashCode()).Aggregate(0, (a, b) => unchecked(a + b));
+                var valsRes = ChildrenByKey.Values
+                    .Select(v => v.GetHashCode()).Aggregate(0, (a, b) => unchecked(a + b));
+                return unchecked (keysRes * 195) ^ valsRes;
+            }
+
+            int ChildrenHash() =>
+                Children.Select(v => v.GetHashCode()).Aggregate(0, (a, b) => unchecked(a + b));
         }
 
         #endregion

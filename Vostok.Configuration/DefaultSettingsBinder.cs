@@ -31,30 +31,6 @@ namespace Vostok.Configuration
 
         private readonly Dictionary<Type, ITypeParser> primitiveAndSimpleParsers;
 
-        private class InlineTypeParser<T> : ITypeParser
-        {
-            private readonly TryParse<T> parseMethod;
-
-            public InlineTypeParser(TryParse<T> parseMethod)
-            {
-                this.parseMethod = parseMethod;
-            }
-
-            public bool TryParse(string s, out object value)
-            {
-                var result = parseMethod(s, out var v);
-                value = v;
-                return result;
-            }
-        }
-
-        [Flags]
-        private enum BinderAttributes
-        {
-            IsRequired = 1,
-            IsOptional = 2,
-        }
-
         public DefaultSettingsBinder()
         {
             primitiveAndSimpleParsers = new Dictionary<Type, ITypeParser>
@@ -264,6 +240,28 @@ namespace Vostok.Configuration
             return true;
         }
 
+        private bool TryBindToHashSet(RawSettings settings, Type bindType, out object result)
+        {
+            var bindGtd = bindType.IsGenericType ? bindType.GetGenericTypeDefinition() : null;
+            result = default;
+            if (!bindType.IsGenericType || bindGtd != typeof(HashSet<>))
+                return false;
+
+            CheckArgumentIsNull(settings.Children, ListIsEmpty.Replace("%t", bindType.Name));
+            var inst = Activator.CreateInstance(bindType);
+            var addMethod = bindType.GetMethods().FirstOrDefault(m => m.Name == nameof(HashSet<int>.Add));
+            var i = 0;
+            foreach (var item in settings.Children)
+            {
+                CheckArgumentIsNull(item, ListItemIsEmpty.Replace("%i", i.ToString()).Replace("%t", bindType.GenericTypeArguments[0].Name));
+                var value = BindInvokeList(i, bindType.GenericTypeArguments[0], settings);
+                addMethod.Invoke(inst, new[] {value});
+                i++;
+            }
+            result = inst;
+            return true;
+        }
+
         private bool TryBindToClass(RawSettings settings, Type bindType, out object result)
         {
             result = default;
@@ -306,6 +304,7 @@ namespace Vostok.Configuration
                 || TryBindToArray(settings, type, out mainRes)
                 || TryBindToList(settings, type, out mainRes)
                 || TryBindToDictionary(settings, type, out mainRes)
+                || TryBindToHashSet(settings, type, out mainRes)
                 || TryBindToClass(settings, type, out mainRes))
                 return mainRes;
 
@@ -388,6 +387,30 @@ namespace Vostok.Configuration
                     if (attrs.ContainsKey(attribute.GetType()))
                         binderAttributes |= attrs[attribute.GetType()];
             return binderAttributes;
+        }
+
+        private class InlineTypeParser<T> : ITypeParser
+        {
+            private readonly TryParse<T> parseMethod;
+
+            public InlineTypeParser(TryParse<T> parseMethod)
+            {
+                this.parseMethod = parseMethod;
+            }
+
+            public bool TryParse(string s, out object value)
+            {
+                var result = parseMethod(s, out var v);
+                value = v;
+                return result;
+            }
+        }
+
+        [Flags]
+        private enum BinderAttributes
+        {
+            IsRequired = 1,
+            IsOptional = 2,
         }
     }
 }

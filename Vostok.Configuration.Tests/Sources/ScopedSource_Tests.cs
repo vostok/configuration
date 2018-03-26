@@ -4,22 +4,16 @@ using System.IO;
 using System.Threading;
 using FluentAssertions;
 using NUnit.Framework;
-using Vostok.Commons.Convertions;
+using Vostok.Commons.Conversions;
 using Vostok.Commons.Testing;
 using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests.Sources
 {
-    // CR(krait): Tests are unstable, IOException occurs from time to time. Perhaps disposing the watcher after each test will fix this?
     [TestFixture]
     public class ScopedSource_Tests
     {
         private const string TestFileName = "test_ScopedSource.json";
-
-        [SetUp]
-        public void SetUp()
-        {
-        }
 
         [TearDown]
         public void Cleanup()
@@ -39,8 +33,8 @@ namespace Vostok.Configuration.Tests.Sources
             CreateTextFile("{ \"value\": 1 }");
             var jfs = new JsonFileSource(TestFileName);
 
-            new ScopedSource(jfs).Get()
-                .Should().BeEquivalentTo(new RawSettings(
+            using (var ss = new ScopedSource(jfs))
+                ss.Get().Should().BeEquivalentTo(new RawSettings(
                     new Dictionary<string, RawSettings>
                     {
                         { "value", new RawSettings("1") },
@@ -53,15 +47,15 @@ namespace Vostok.Configuration.Tests.Sources
             CreateTextFile("{ \"value 1\": { \"value 2\": { \"value 3\": 1 } } }");
             var jfs = new JsonFileSource(TestFileName);
 
-            new ScopedSource(jfs, "value 1", "value 2").Get()
-                .Should().BeEquivalentTo(new RawSettings(
+            using (var ss = new ScopedSource(jfs, "value 1", "value 2"))
+                ss.Get().Should().BeEquivalentTo(new RawSettings(
                     new Dictionary<string, RawSettings>
                     {
                         { "value 3", new RawSettings("1") },
                     }));
 
-            new ScopedSource(jfs, "value 1", "value 2", "value 3").Get()
-                .Should().BeEquivalentTo(new RawSettings("1"));
+            using (var ss = new ScopedSource(jfs, "value 1", "value 2", "value 3"))
+                ss.Get().Should().BeEquivalentTo(new RawSettings("1"));
         }
 
         [Test]
@@ -70,7 +64,8 @@ namespace Vostok.Configuration.Tests.Sources
             CreateTextFile("{ \"value\": [[1,2], [3,4,5]] }");
             var jfs = new JsonFileSource(TestFileName);
 
-            new ScopedSource(jfs, "value", "[0]").Get()
+            using (var ss = new ScopedSource(jfs, "value", "[0]"))
+                ss.Get()
                 .Should().BeEquivalentTo(new RawSettings(
                     new List<RawSettings>
                     {
@@ -78,8 +73,8 @@ namespace Vostok.Configuration.Tests.Sources
                         new RawSettings("2"),
                     }));
 
-            new ScopedSource(jfs, "value", "[1]", "[2]").Get()
-                .Should().BeEquivalentTo(new RawSettings("5"));
+            using (var ss = new ScopedSource(jfs, "value", "[1]", "[2]"))
+                ss.Get().Should().BeEquivalentTo(new RawSettings("5"));
         }
 
         [Test]
@@ -88,40 +83,46 @@ namespace Vostok.Configuration.Tests.Sources
             CreateTextFile("{ \"value\": { \"list\": [1,2] } }");
             var jfs = new JsonFileSource(TestFileName);
 
-            new ScopedSource(jfs, "unknown value").Get().Should().BeNull();
-            new ScopedSource(jfs, "value", "[0]").Get().Should().BeNull();
-            new ScopedSource(jfs, "value", "list", "[]").Get().Should().BeNull();
-            new ScopedSource(jfs, "value", "list", "[not_a_number]").Get().Should().BeNull();
-            new ScopedSource(jfs, "value", "list", "[100]").Get().Should().BeNull();
+            using (var ss = new ScopedSource(jfs, "unknown value"))
+                ss.Get().Should().BeNull();
+            using (var ss = new ScopedSource(jfs, "value", "[0]"))
+                ss.Get().Should().BeNull();
+            using (var ss = new ScopedSource(jfs, "value", "list", "[]"))
+                ss.Get().Should().BeNull();
+            using (var ss = new ScopedSource(jfs, "value", "list", "[not_a_number]"))
+                ss.Get().Should().BeNull();
+            using (var ss = new ScopedSource(jfs, "value", "list", "[100]"))
+                ss.Get().Should().BeNull();
         }
 
         [Test]
         public void Should_observe_file()
         {
-            new Action(() => Should_observe_file_test().Should().BeEquivalentTo(
+            new Action(() => ShouldObserveFileTest().Should().BeEquivalentTo(
                 new List<RawSettings>
                 {
                     new RawSettings("2"),
                     new RawSettings("4"),
                 }
-            )).ShouldPassIn(3.Seconds());
+            )).ShouldPassIn(1.Seconds());
         }
 
-        // CR(krait): Helper methods are usually named in the traditional convention, camel case.
-        private static List<RawSettings> Should_observe_file_test()
+        private List<RawSettings> ShouldObserveFileTest()
         {
             CreateTextFile("{ \"value\": { \"list\": [1,2] } }");
-            var jfs = new JsonFileSource(TestFileName, 300.Milliseconds());
-            var ss = new ScopedSource(jfs, "value", "list", "[1]");
+            var jfs = new JsonFileSource(TestFileName, 100.Milliseconds());
             var rsList = new List<RawSettings>();
 
-            var sub = ss.Observe().Subscribe(settings => rsList.Add(settings));
-            // CR(krait): Nope, no more Thread.Sleep's in tests, please.
-            Thread.Sleep(1.Seconds());
-            CreateTextFile("{ \"value\": { \"list\": [3,4,5] } }");
-            Thread.Sleep(1.Seconds());
+            using (var ss = new ScopedSource(jfs, "value", "list", "[1]"))
+            {
+                var sub = ss.Observe().Subscribe(settings => rsList.Add(settings));
 
-            sub.Dispose();
+                Thread.Sleep(200.Milliseconds());
+                CreateTextFile("{ \"value\": { \"list\": [3,4,5] } }");
+                Thread.Sleep(200.Milliseconds());
+
+                sub.Dispose();
+            }
             return rsList;
         }
     }

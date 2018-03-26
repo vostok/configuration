@@ -117,5 +117,11 @@ namespace Vostok.Configuration.Sources
                 });
             });
         }
+
+        public void Dispose()
+        {
+            foreach (var source in sources)
+                source.Dispose();
+        }
     }
 }

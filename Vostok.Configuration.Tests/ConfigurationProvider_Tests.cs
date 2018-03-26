@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using FluentAssertions;
 using NUnit.Framework;
-using Vostok.Commons.Convertions;
+using Vostok.Commons.Conversions;
 using Vostok.Commons.Testing;
 using Vostok.Configuration.Sources;
 
@@ -38,10 +39,6 @@ namespace Vostok.Configuration.Tests
                 file.WriteLine(text);
         }
 
-        class MyClass
-        {
-            public int Value { get; set; }
-        }
         [Test]
         public void Get_WithSourceFor_should_work_correctly()
         {
@@ -62,7 +59,7 @@ namespace Vostok.Configuration.Tests
         }
 
         [Test]
-        public void Get_source_throw_on_no_sources()
+        public void Get_should_throw_on_no_sources()
         {
             CreateTextFile(1, "{ \"Value\": 123 }");
 
@@ -77,21 +74,44 @@ namespace Vostok.Configuration.Tests
         }
 
         [Test]
+        public void Get_should_call_back()
+        {
+            CreateTextFile(1, "{ \"Value\": 123 }");
+
+            var res = false;
+            Action<Exception> Cb() => exception => res = true;
+
+            new ConfigurationProvider(null, false, Cb()).Get<MyClass>();
+            res.Should().BeTrue();
+
+            res = false;
+            new ConfigurationProvider(null, false, Cb())
+                .WithSourceFor<int>(new JsonFileSource(TestFile1Name))
+                .Get<MyClass>();
+            res.Should().BeTrue();
+
+            res = false;
+            new ConfigurationProvider(null, false, Cb())
+                .Get<int>(new JsonFileSource(TestFile1Name));
+            res.Should().BeTrue();
+        }
+
+        [Test]
         public void Should_Observe_file_1_and_not_Observe_file_2()
         {
             new Action(() => 
-                    Should_Observe_file_1_and_not_Observe_file_2_test().Should().Be((2, 0)))
-                .ShouldPassIn(3.Seconds());
+                    ShouldObserveFile1AndNotObserveFile2Test().Should().Be((2, 0)))
+                .ShouldPassIn(1.Seconds());
         }
 
-        private (int vClass, int vInt) Should_Observe_file_1_and_not_Observe_file_2_test()
+        private (int vClass, int vInt) ShouldObserveFile1AndNotObserveFile2Test()
         {
             CreateTextFile(1, "{ \"Value\": 1 }");
             CreateTextFile(2, "{ \"Value\": 123 }");
             var vClass = 0;
             var vInt = 0;
-            var jcs1 = new JsonFileSource(TestFile1Name, 300.Milliseconds());
-            var jcs2 = new JsonFileSource(TestFile2Name, 300.Milliseconds());
+            var jcs1 = new JsonFileSource(TestFile1Name, 100.Milliseconds());
+            var jcs2 = new JsonFileSource(TestFile2Name, 100.Milliseconds());
             var cp = new ConfigurationProvider()
                 .WithSourceFor<MyClass>(jcs1);
 
@@ -104,9 +124,9 @@ namespace Vostok.Configuration.Tests
 
             cp.WithSourceFor<int>(jcs2);
 
-            Thread.Sleep(1.Seconds());
+            Thread.Sleep(200.Milliseconds());
             CreateTextFile(1, "{ \"Value\": 2 }");
-            Thread.Sleep(1.Seconds());
+            Thread.Sleep(200.Milliseconds());
 
             sub1.Dispose();
             sub2.Dispose();
@@ -117,15 +137,15 @@ namespace Vostok.Configuration.Tests
         public void Should_Observe_file_by_source()
         {
             new Action(() => 
-                    Should_Observe_file_by_source_test().Should().Be(1))
-                .ShouldPassIn(4.Seconds());
+                    ShouldObserveFileBySourceTest().Should().Be(1))
+                .ShouldPassIn(1.Seconds());
         }
 
-        private int Should_Observe_file_by_source_test()
+        private int ShouldObserveFileBySourceTest()
         {
             CreateTextFile(1, "{ \"Value\": 0 }");
             var val = 0;
-            var jcs = new JsonFileSource(TestFile1Name, 300.Milliseconds());
+            var jcs = new JsonFileSource(TestFile1Name, 100.Milliseconds());
             var cp = new ConfigurationProvider();
 
             var sub = cp.Observe<MyClass>(jcs).Subscribe(cl =>
@@ -134,16 +154,21 @@ namespace Vostok.Configuration.Tests
                 cl.Value.Should().Be(val);
             });
 
-            Thread.Sleep(1.Seconds());
+            Thread.Sleep(200.Milliseconds());
             CreateTextFile(1, "{ \"Value\": 1 }");
-            Thread.Sleep(1.Seconds());
+            Thread.Sleep(200.Milliseconds());
 
             sub.Dispose();
 
             CreateTextFile(1, "{ \"Value\": 2 }");
-            Thread.Sleep(1.Seconds());
+            Thread.Sleep(200.Milliseconds());
 
             return val;
+        }
+
+        private class MyClass
+        {
+            public int Value { get; set; }
         }
     }
 }

@@ -4,17 +4,17 @@ namespace Vostok.Configuration.Sources
 {
     /// <inheritdoc />
     /// <summary>
-    /// Json converter to RawSettings tree from file
+    /// Ini converter to RawSettings tree from file
     /// </summary>
-    public class JsonFileSource : BaseFileSource<JsonStringSource>
+    public class IniFileSource : BaseFileSource<IniStringSource>
     {
         /// <summary>
-        /// Creating json converter
+        /// Creating ini converter
         /// </summary>
         /// <param name="filePath">File name with settings</param>
         /// <param name="observePeriod">Observe period in ms (min 100, default 10000)</param>
-        public JsonFileSource(string filePath, TimeSpan observePeriod = default)
-            : base(filePath, observePeriod)
+        public IniFileSource(string filePath, TimeSpan observePeriod = default)
+            :base(filePath, observePeriod)
         { }
     }
 }

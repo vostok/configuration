@@ -18,7 +18,6 @@ namespace Vostok.Configuration
         /// <returns>Combined value</returns>
         TSettings Get<TSettings>();
 
-        // TODO(krait): take ISettings?
         /// <summary>
         /// Get binded value from specified source
         /// </summary>

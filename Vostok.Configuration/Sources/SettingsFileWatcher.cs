@@ -10,7 +10,7 @@ namespace Vostok.Configuration.Sources
     /// <summary>
     /// File watcher for settings files
     /// </summary>
-    internal class SettingsFileWatcher
+    internal class SettingsFileWatcher: IDisposable
     {
         private readonly string filePath;
         private readonly IConfigurationSource configurationSource;
@@ -20,6 +20,7 @@ namespace Vostok.Configuration.Sources
         private readonly TimeSpan observePeriod;
         private DateTime lastFileWriteTime;
         private RawSettings current;
+        private bool disposing;
 
         /// <summary>
         /// Creating settings file watcher
@@ -39,6 +40,7 @@ namespace Vostok.Configuration.Sources
             sync = new object();
             this.observePeriod = observePeriod.Milliseconds < 100 ? TimeSpan.FromMilliseconds(100) : observePeriod;
             lastFileWriteTime = File.GetLastWriteTimeUtc(filePath);
+            disposing = false;
 
             ThreadRunner.Run(WatchFile);
         }
@@ -83,9 +85,12 @@ namespace Vostok.Configuration.Sources
                 }
             }
 
-            while (true)
+            while (!disposing)
             {
                 watcher.WaitForChanged(WatcherChangeTypes.All, observePeriod.Milliseconds);
+                if (disposing) break;
+                if (observers.Count == 0) continue;
+
                 var fileExists = File.Exists(filePath);
                 var lwt = File.GetLastWriteTimeUtc(filePath);
 
@@ -99,10 +104,16 @@ namespace Vostok.Configuration.Sources
                     lastFileWriteTime = lwt;
                     var changes = configurationSource.Get();
 
-                    if (!RawSettings.Equals(current, changes))
+                    if (!Equals(current, changes))
                         LockedReturn(changes);
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            disposing = true;
+            watcher?.Dispose();
         }
     }
 }

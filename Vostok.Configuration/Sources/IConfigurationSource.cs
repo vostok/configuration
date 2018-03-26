@@ -5,7 +5,7 @@ namespace Vostok.Configuration.Sources
     /// <summary>
     /// File converter to RawSettings tree
     /// </summary>
-    public interface IConfigurationSource
+    public interface IConfigurationSource: IDisposable
     {
         /// <summary>
         /// Converts file

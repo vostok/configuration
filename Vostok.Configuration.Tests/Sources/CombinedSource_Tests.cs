@@ -4,7 +4,7 @@ using System.IO;
 using System.Threading;
 using FluentAssertions;
 using NUnit.Framework;
-using Vostok.Commons.Convertions;
+using Vostok.Commons.Conversions;
 using Vostok.Commons.Testing;
 using Vostok.Configuration.Sources;
 
@@ -16,11 +16,6 @@ namespace Vostok.Configuration.Tests.Sources
         private const string TestFile1Name = "test1_CombinedSource.json";
         private const string TestFile2Name = "test2_CombinedSource.json";
         private const string TestFile3Name = "test3_CombinedSource.json";
-
-        [SetUp]
-        public void SetUp()
-        {
-        }
 
         [TearDown]
         public void Cleanup()
@@ -51,7 +46,7 @@ namespace Vostok.Configuration.Tests.Sources
 
         private static CombinedSource CreateCombinedSource(int cnt, ListCombineOptions listCombineOptions = ListCombineOptions.FirstOnly)
         {
-            var time = 300.Milliseconds();
+            var time = 100.Milliseconds();
             switch (cnt)
             {
                 case 1:
@@ -74,7 +69,8 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_return_null_if_no_sources()
         {
-            CreateCombinedSource(0).Get().Should().BeNull();
+            using (var cs = CreateCombinedSource(0))
+                cs.Get().Should().BeNull();
         }
 
         [Test]
@@ -84,8 +80,8 @@ namespace Vostok.Configuration.Tests.Sources
             CreateTextFile(2, "{ \"value 2\": \"string 2\" }");
             CreateTextFile(3, "{ \"value 2\": \"string 22\" }");
 
-            CreateCombinedSource(3).Get()
-                .Should().BeEquivalentTo(
+            using (var cs = CreateCombinedSource(3))
+                cs.Get().Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -101,8 +97,8 @@ namespace Vostok.Configuration.Tests.Sources
             CreateTextFile(2, "{ \"value\": [4,5] }");
             CreateTextFile(3, "{ \"value\": [1,2] }");
 
-            CreateCombinedSource(3, ListCombineOptions.FirstOnly).Get()
-                .Should().BeEquivalentTo(
+            using (var cs = CreateCombinedSource(3, ListCombineOptions.FirstOnly))
+                cs.Get().Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -124,8 +120,8 @@ namespace Vostok.Configuration.Tests.Sources
             CreateTextFile(2, "{ \"value\": [4,5] }");
             CreateTextFile(3, "{ \"value\": [1,2] }");
 
-            CreateCombinedSource(3, ListCombineOptions.UnionAll).Get()
-                .Should().BeEquivalentTo(
+            using (var cs = CreateCombinedSource(3, ListCombineOptions.UnionAll))
+                cs.Get().Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -151,8 +147,8 @@ namespace Vostok.Configuration.Tests.Sources
             CreateTextFile(2, "{ \"value\": { \"ObjValue\": 2, \"ObjArray\": [3,4] } }");
             CreateTextFile(3, "{ \"value\": { \"ObjValue 2\": 3, \"ObjArray\": [5,6] } }");
 
-            CreateCombinedSource(3, ListCombineOptions.UnionAll).Get()
-                .Should().BeEquivalentTo(
+            using (var cs = CreateCombinedSource(3, ListCombineOptions.UnionAll))
+                cs.Get().Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -182,8 +178,8 @@ namespace Vostok.Configuration.Tests.Sources
             CreateTextFile(1, "{ \"value\": [ { \"Obj_1_Value\": 1 }, { \"Obj_2_Value\": 1 } ] }");
             CreateTextFile(2, "{ \"value\": [ { \"Obj_1_Value\": 2 }, { \"Obj_2_Value\": 2 } ] }");
 
-            CreateCombinedSource(2).Get()
-                .Should().BeEquivalentTo(
+            using (var cs = CreateCombinedSource(2))
+                cs.Get().Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -211,8 +207,8 @@ namespace Vostok.Configuration.Tests.Sources
             CreateTextFile(1, "{ \"value\": [ { \"Obj_1_Value\": 1 }, { \"Obj_2_Value\": 1 } ] }");
             CreateTextFile(2, "{ \"value\": [ { \"Obj_1_Value\": 2 }, { \"Obj_2_Value\": 2 } ] }");
 
-            CreateCombinedSource(2, ListCombineOptions.UnionAll).Get()
-                .Should().BeEquivalentTo(
+            using (var cs = CreateCombinedSource(2, ListCombineOptions.UnionAll))
+                cs.Get().Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -250,8 +246,8 @@ namespace Vostok.Configuration.Tests.Sources
             CreateTextFile(1, "{ \"value\": [ [1,2], [3,4] ] }");
             CreateTextFile(2, "{ \"value\": [ [5,6], [1,2] ] }");
 
-            CreateCombinedSource(2, ListCombineOptions.FirstOnly).Get()
-                .Should().BeEquivalentTo(
+            using (var cs = CreateCombinedSource(2, ListCombineOptions.FirstOnly))
+                cs.Get().Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -281,8 +277,8 @@ namespace Vostok.Configuration.Tests.Sources
             CreateTextFile(1, "{ \"value\": [ [1,2], [3,4] ] }");
             CreateTextFile(2, "{ \"value\": [ [5,6], [1,2] ] }");
 
-            CreateCombinedSource(2, ListCombineOptions.UnionAll).Get()
-                .Should().BeEquivalentTo(
+            using (var cs = CreateCombinedSource(2, ListCombineOptions.UnionAll))
+                cs.Get().Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -321,17 +317,17 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_observe_file()
         {
-            new Action(() => Should_observe_file_test().Should().Be(1)).ShouldPassIn(5.Seconds());
+            new Action(() => ShouldObserveFileTest().Should().Be(1)).ShouldPassIn(1.Seconds());
         }
-        private int Should_observe_file_test()
+        private int ShouldObserveFileTest()
         {
             CreateTextFile(1, "{ \"value 1\": 1, \"list\": [1,2] }");
             CreateTextFile(2, "{ \"value 2\": 2 }");
             var val = 0;
 
-            var ccs = CreateCombinedSource(2, ListCombineOptions.FirstOnly);
-            var sub = ccs.Observe().Subscribe(
-                settings =>
+            using (var ccs = CreateCombinedSource(2, ListCombineOptions.FirstOnly))
+            {
+                var sub = ccs.Observe().Subscribe(settings =>
                 {
                     val++;
                     settings.Should().BeEquivalentTo(
@@ -349,11 +345,12 @@ namespace Vostok.Configuration.Tests.Sources
                             }));
                 });
 
-            Thread.Sleep(2.Seconds());
-            CreateTextFile(2, "{ \"value 2\": 2, \"list\": [3,4] }");
-            Thread.Sleep(2.Seconds());
+                Thread.Sleep(200.Milliseconds());
+                CreateTextFile(2, "{ \"value 2\": 2, \"list\": [3,4] }");
+                Thread.Sleep(200.Milliseconds());
 
-            sub.Dispose();
+                sub.Dispose();
+            }
             return val;
         }
     }

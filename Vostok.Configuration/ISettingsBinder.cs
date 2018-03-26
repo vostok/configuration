@@ -5,7 +5,6 @@
     /// </summary>
     public interface ISettingsBinder
     {
-        // TODO(krait): throws on error
         /// <summary>
         /// Bindes RawSettings tree to specified type
         /// </summary>
@@ -13,7 +12,5 @@
         /// <param name="rawSettings">RawSettings tree</param>
         /// <returns>Value or object of specified type</returns>
         TSettings Bind<TSettings>(RawSettings rawSettings);
-
-        //RawSettings Unbind<TSettings>(TSettings settings);
     }
 }

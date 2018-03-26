@@ -16,7 +16,7 @@ namespace Vostok.Configuration.Sources
         /// <summary>
         /// Creating json converter
         /// </summary>
-        /// <param name="json">File name with settings</param>
+        /// <param name="json">Json file data in string</param>
         public JsonStringSource(string json)
         {
             this.json = json;
@@ -82,5 +82,7 @@ namespace Vostok.Configuration.Sources
 
             return new RawSettings(list);
         }
+
+        public void Dispose() { }
     }
 }

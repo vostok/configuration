@@ -9,13 +9,8 @@ namespace Vostok.Configuration
 {
     public class ConfigurationProvider : IConfigurationProvider
     {
-        private class ObserverInfo
-        {
-            public Type Type { get; set; }
-            public object Observer { get; set; }
-            public IConfigurationSource Source { get; set; }
-        }
-
+        private readonly bool throwExceptions;
+        private readonly Action<Exception> callBack;
         private readonly Dictionary<Type, IConfigurationSource> sources;
         private readonly ISettingsBinder settingsBinder;
 
@@ -25,8 +20,10 @@ namespace Vostok.Configuration
         /// <summary>
         /// Creating configuration provider
         /// </summary>
-        public ConfigurationProvider(ISettingsBinder settingsBinder = null)
+        public ConfigurationProvider(ISettingsBinder settingsBinder = null, bool throwExceptions = true, Action<Exception> callBack = null)
         {
+            this.throwExceptions = throwExceptions;
+            this.callBack = callBack;
             this.settingsBinder = settingsBinder ?? new DefaultSettingsBinder();
             sources = new Dictionary<Type, IConfigurationSource>();
             observers = new List<ObserverInfo>();
@@ -35,16 +32,35 @@ namespace Vostok.Configuration
 
         public TSettings Get<TSettings>()
         {
-            if (!CanGet<TSettings>())
-                throw new ArgumentException($"{nameof(IConfigurationSource)} for specified type \"{typeof(TSettings).Name}\" is absent");
-
-            var srcs = sources.Where(s => s.Key == typeof(TSettings)).Select(s => s.Value).ToArray();
-            return settingsBinder.Bind<TSettings>(new CombinedSource(srcs).Get());
+            try
+            {
+                if (!CanGet<TSettings>())
+                    throw new ArgumentException($"{nameof(IConfigurationSource)} for specified type \"{typeof(TSettings).Name}\" is absent");
+                var srcs = sources.Where(s => s.Key == typeof(TSettings)).Select(s => s.Value).ToArray();
+                return settingsBinder.Bind<TSettings>(new CombinedSource(srcs).Get());
+            }
+            catch (Exception e)
+            {
+                if (throwExceptions) 
+                    throw;
+                callBack?.Invoke(e);
+                return default;
+            }
         }
 
         public TSettings Get<TSettings>(IConfigurationSource source)
         {
-            return settingsBinder.Bind<TSettings>(source.Get());
+            try
+            {
+                return settingsBinder.Bind<TSettings>(source.Get());
+            }
+            catch (Exception e)
+            {
+                if (throwExceptions)
+                    throw;
+                callBack?.Invoke(e);
+                return default;
+            }
         }
 
         private bool CanGet<TSettings>() => 
@@ -59,7 +75,19 @@ namespace Vostok.Configuration
                     observers.Add(new ObserverInfo { Type = typeof(TSettings), Observer = observer });
 
                     if (CanGet<TSettings>())
-                        observer.OnNext(Get<TSettings>());
+                    {
+                        try
+                        {
+                            observer.OnNext(Get<TSettings>());
+                        }
+                        catch (Exception e)
+                        {
+                            if (throwExceptions)
+                                throw;
+                            callBack?.Invoke(e);
+                            observer.OnNext(default);
+                        }
+                    }
                 }
                 return Disposable.Create(() =>
                 {
@@ -76,8 +104,22 @@ namespace Vostok.Configuration
             ObserverInfo oi = null;
 
             var sub = source.Observe().Subscribe(settings =>
-                ((IObserver<TSettings>)oi?.Observer)?.OnNext(
-                    settings == null ? default : settingsBinder.Bind<TSettings>(settings)));
+            {
+                var obs = (IObserver<TSettings>)oi?.Observer;
+                try
+                {
+                    obs?.OnNext(settings == null
+                        ? default
+                        : settingsBinder.Bind<TSettings>(settings));
+                }
+                catch (Exception e)
+                {
+                    if (throwExceptions)
+                        throw;
+                    callBack?.Invoke(e);
+                    obs?.OnNext(default);
+                }
+            });
 
             return Observable.Create<TSettings>(observer =>
             {
@@ -107,6 +149,13 @@ namespace Vostok.Configuration
                 });
             }
             return this;
+        }
+
+        private class ObserverInfo
+        {
+            public Type Type { get; set; }
+            public object Observer { get; set; }
+            public IConfigurationSource Source { get; set; }
         }
     }
 }

@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using FluentAssertions;
 using NUnit.Framework;
-using Vostok.Commons.Convertions;
+using Vostok.Commons.Conversions;
 using Vostok.Commons.Testing;
 using Vostok.Configuration.Sources;
 
@@ -14,11 +15,6 @@ namespace Vostok.Configuration.Tests.Sources
     public class JsonFileSource_Tests
     {
         private const string TestFileName = "test_JsonFileSource.json";
-
-        [SetUp]
-        public void SetUp()
-        {
-        }
 
         [TearDown]
         public void Cleanup()
@@ -35,7 +31,8 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_return_null_if_file_not_exists()
         {
-            new JsonFileSource(TestFileName).Get().Should().BeNull();
+            using (var jfs = new JsonFileSource(TestFileName))
+                jfs.Get().Should().BeNull();
         }
         
         [Test]
@@ -43,8 +40,8 @@ namespace Vostok.Configuration.Tests.Sources
         {
             CreateTextFile("{ \"StringValue\": \"string\" }");
 
-            new JsonFileSource(TestFileName).Get()
-                .Should().BeEquivalentTo(
+            using (var jfs = new JsonFileSource(TestFileName))
+                jfs.Get().Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -57,8 +54,8 @@ namespace Vostok.Configuration.Tests.Sources
         {
             CreateTextFile("{ \"IntValue\": 123 }");
 
-            new JsonFileSource(TestFileName).Get()
-                .Should().BeEquivalentTo(
+            using (var jfs = new JsonFileSource(TestFileName))
+                jfs.Get().Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -66,18 +63,17 @@ namespace Vostok.Configuration.Tests.Sources
                         }));
         }
 
-        // CR(krait): Does not work with my locale.
         [Test]
         public void Should_parse_Double_value()
         {
             CreateTextFile("{ \"DoubleValue\": 123.321 }");
 
-            new JsonFileSource(TestFileName).Get()
-                .Should().BeEquivalentTo(
+            using (var jfs = new JsonFileSource(TestFileName))
+                jfs.Get().Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
-                            { "DoubleValue", new RawSettings("123,321") }
+                            { "DoubleValue", new RawSettings(123.321d.ToString(CultureInfo.CurrentCulture)) }
                         }));
         }
 
@@ -86,8 +82,8 @@ namespace Vostok.Configuration.Tests.Sources
         {
             CreateTextFile("{ \"BooleanValue\": true }");
 
-            new JsonFileSource(TestFileName).Get()
-                .Should().BeEquivalentTo(
+            using (var jfs = new JsonFileSource(TestFileName))
+                jfs.Get().Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -100,8 +96,8 @@ namespace Vostok.Configuration.Tests.Sources
         {
             CreateTextFile("{ \"NullValue\": null }");
 
-            new JsonFileSource(TestFileName).Get()
-                .Should().BeEquivalentTo(
+            using (var jfs = new JsonFileSource(TestFileName))
+                jfs.Get().Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -114,8 +110,8 @@ namespace Vostok.Configuration.Tests.Sources
         {
             CreateTextFile("{ \"IntArray\": [1, 2, 3] }");
 
-            new JsonFileSource(TestFileName).Get()
-                .Should().BeEquivalentTo(
+            using (var jfs = new JsonFileSource(TestFileName))
+                jfs.Get().Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -133,8 +129,8 @@ namespace Vostok.Configuration.Tests.Sources
         {
             CreateTextFile("{ \"Object\": { \"StringValue\": \"str\" } }");
 
-            new JsonFileSource(TestFileName).Get()
-                .Should().BeEquivalentTo(
+            using (var jfs = new JsonFileSource(TestFileName))
+                jfs.Get().Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -151,8 +147,8 @@ namespace Vostok.Configuration.Tests.Sources
         {
             CreateTextFile("{ \"Array\": [{ \"StringValue\": \"str\" }, { \"IntValue\": 123 }] }");
 
-            new JsonFileSource(TestFileName).Get()
-                .Should().BeEquivalentTo(
+            using (var jfs = new JsonFileSource(TestFileName))
+                jfs.Get().Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -176,8 +172,8 @@ namespace Vostok.Configuration.Tests.Sources
         {
             CreateTextFile("{ \"Array\": [null, null] }");
 
-            new JsonFileSource(TestFileName).Get()
-                .Should().BeEquivalentTo(
+            using (var jfs = new JsonFileSource(TestFileName))
+                jfs.Get().Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -195,8 +191,8 @@ namespace Vostok.Configuration.Tests.Sources
         {
             CreateTextFile("{ \"Array\": [[\"s\", \"t\"], [\"r\"]] }");
 
-            new JsonFileSource(TestFileName).Get()
-                .Should().BeEquivalentTo(
+            using (var jfs = new JsonFileSource(TestFileName))
+                jfs.Get().Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -219,73 +215,76 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_Observe_file()
         {
-            new Action(() => Should_Observe_file_test().Should().Be(2)).ShouldPassIn(2.Seconds());
+            new Action(() => ShouldObserveFileTest().Should().Be(2)).ShouldPassIn(1.Seconds());
         }
 
-        private int Should_Observe_file_test()
+        private int ShouldObserveFileTest()
         {
             var val = 0;
-            var jcs = new JsonFileSource(TestFileName, 300.Milliseconds());
-            var sub1 = jcs.Observe().Subscribe(settings =>
+            using (var jfs = new JsonFileSource(TestFileName, 100.Milliseconds()))
             {
-                val++;
-                settings.Should().BeEquivalentTo(
-                    new RawSettings(
-                        new Dictionary<string, RawSettings>
-                        {
-                            {"Param2", new RawSettings("set2")}
-                        }));
-            });
+                var sub1 = jfs.Observe().Subscribe(settings =>
+                {
+                    val++;
+                    settings.Should().BeEquivalentTo(
+                        new RawSettings(
+                            new Dictionary<string, RawSettings>
+                            {
+                                {"Param2", new RawSettings("set2")}
+                            }));
+                });
 
-            CreateTextFile("{ \"Param2\": \"set2\" }");
+                CreateTextFile("{ \"Param2\": \"set2\" }");
 
-            var sub2 = jcs.Observe().Subscribe(settings =>
-            {
-                val++;
-                settings.Should().BeEquivalentTo(
-                    new RawSettings(
-                        new Dictionary<string, RawSettings>
-                        {
-                            {"Param2", new RawSettings("set2")}
-                        }));
-            });
+                var sub2 = jfs.Observe().Subscribe(settings =>
+                {
+                    val++;
+                    settings.Should().BeEquivalentTo(
+                        new RawSettings(
+                            new Dictionary<string, RawSettings>
+                            {
+                                {"Param2", new RawSettings("set2")}
+                            }));
+                });
 
-            Thread.Sleep(1.Seconds());
+                Thread.Sleep(200.Milliseconds());
 
-            sub1.Dispose();
-            sub2.Dispose();
+                sub1.Dispose();
+                sub2.Dispose();
+            }
             return val;
         }
 
         [Test]
         public void Should_not_Observe_file_twice()
         {
-            var sec = 1;
-            new Action(() => Should_not_Observe_file_twice_test(sec).Should().Be(1)).ShouldPassIn((sec*3).Seconds());
+            new Action(() => ShouldNotObserveFileTwiceTest().Should().Be(1)).ShouldPassIn(1.Seconds());
         }
 
-        public int Should_not_Observe_file_twice_test(int sec)
+        public int ShouldNotObserveFileTwiceTest()
         {
             var val = 0;
-            var jcs = new JsonFileSource(TestFileName, 300.Milliseconds());
-            var sub = jcs.Observe().Subscribe(settings =>
+            using (var jfs = new JsonFileSource(TestFileName, 100.Milliseconds()))
             {
-                val++;
-                settings.Should().BeEquivalentTo(
-                    new RawSettings(
-                        new Dictionary<string, RawSettings>
-                        {
-                            {"Param1", new RawSettings("set1")}
-                        }));
-            });
+                var sub = jfs.Observe().Subscribe(settings =>
+                {
+                    val++;
+                    settings.Should().BeEquivalentTo(
+                        new RawSettings(
+                            new Dictionary<string, RawSettings>
+                            {
+                                {"Param1", new RawSettings("set1")}
+                            }));
+                });
 
-            CreateTextFile("{ \"Param1\": \"set1\" }");
-            Thread.Sleep(TimeSpan.FromSeconds(sec));
+                CreateTextFile("{ \"Param1\": \"set1\" }");
+                Thread.Sleep(200.Milliseconds());
 
-            CreateTextFile("{ \"Param1\": \"set1\" }");
-            Thread.Sleep(TimeSpan.FromSeconds(sec));
+                CreateTextFile("{ \"Param1\": \"set1\" }");
+                Thread.Sleep(200.Milliseconds());
 
-            sub.Dispose();
+                sub.Dispose();
+            }
             return val;
         }
     }
