@@ -62,18 +62,6 @@ namespace Vostok.Configuration.Tests.Sources
             CreateTextFile("a=0 \r a.b=1 \r a.b.c=2 \r a.b=11");
             using (var ifs = new IniFileSource(TestFileName))
                 new Action(() => ifs.Get()).Should().Throw<FormatException>();
-
-            /*CreateTextFile("[section]\r[] = 123");
-            using (var ifs = new IniFileSource(TestFileName))
-                new Action(() => ifs.Get()).Should().Throw<FormatException>();*/
-
-            /*CreateTextFile("[section] \r arr[]=123 \r arr=321");
-            using (var ifs = new IniFileSource(TestFileName))
-                new Action(() => ifs.Get()).Should().Throw<FormatException>();*/
-
-            /*CreateTextFile("[section] \r arr=123 \r arr[]=321");
-            using (var ifs = new IniFileSource(TestFileName))
-                new Action(() => ifs.Get()).Should().Throw<FormatException>();*/
         }
         
         [Test]
@@ -142,58 +130,5 @@ namespace Vostok.Configuration.Tests.Sources
                             },
                         }));
         }
-        
-        /*[Test]
-        public void Should_parse_array()
-        {
-            CreateTextFile("array[]=1 \r array[]=2 \r array[]=3");
-
-            using (var ifs = new IniFileSource(TestFileName))
-                ifs.Get().Should().BeEquivalentTo(
-                    new RawSettings(
-                        new Dictionary<string, RawSettings>
-                        {
-                            { "array", new RawSettings(
-                                new List<RawSettings>
-                                {
-                                    new RawSettings("1"),
-                                    new RawSettings("2"),
-                                    new RawSettings("3"),
-                                })
-                            }
-                        }));
-        }*/
-        
-        /*[Test]
-        public void Should_parse_array_in_section()
-        {
-            CreateTextFile("[section] \r array[]=1 \r array[]=2 \r xx[]=3 \r xx[]=4");
-
-            using (var ifs = new IniFileSource(TestFileName))
-                ifs.Get().Should().BeEquivalentTo(
-                    new RawSettings(
-                        new Dictionary<string, RawSettings>
-                        {
-                            { "section", new RawSettings(
-                                new Dictionary<string, RawSettings>
-                                {
-                                    { "array", new RawSettings(
-                                        new List<RawSettings>
-                                        {
-                                            new RawSettings("1"),
-                                            new RawSettings("2"),
-                                        })
-                                    },
-                                    { "xx", new RawSettings(
-                                        new List<RawSettings>
-                                        {
-                                            new RawSettings("3"),
-                                            new RawSettings("4"),
-                                        })
-                                    },
-                                })
-                            }
-                        }));
-        }*/
     }
 }

@@ -9,18 +9,17 @@ namespace Vostok.Configuration.Sources
         where TStringSource : IConfigurationSource
     {
         protected readonly string FilePath;
-        private readonly SettingsFileWatcher fileWatcher;
 
         /// <summary>
         /// Creating converter
         /// </summary>
         /// <param name="filePath">File name with settings</param>
         /// <param name="observePeriod">Observe period in ms (min 100, default 10000)</param>
-        public BaseFileSource(string filePath, TimeSpan observePeriod = default)
+        public BaseFileSource(string filePath, TimeSpan observePeriod = default, Action<Exception> callBack = null)
         {
             FilePath = filePath;
-            fileWatcher = new SettingsFileWatcher(filePath, this,
-                observePeriod == default ? 10.Seconds() : observePeriod);
+            SettingsFileWatcher.StartSettingsFileWatcher(filePath, this,
+                observePeriod == default ? 10.Seconds() : observePeriod, callBack);
         }
 
         public RawSettings Get()
@@ -34,14 +33,14 @@ namespace Vostok.Configuration.Sources
         {
             return Observable.Create<RawSettings>(observer =>
             {
-                fileWatcher.AddObserver(observer);
-                return fileWatcher.GetDisposable(observer);
+                SettingsFileWatcher.AddObserver(observer, FilePath);
+                return SettingsFileWatcher.GetDisposable(observer);
             });
         }
 
         public void Dispose()
         {
-            fileWatcher?.Dispose();
+            SettingsFileWatcher.RemoveObservers(this);
         }
     }
 }

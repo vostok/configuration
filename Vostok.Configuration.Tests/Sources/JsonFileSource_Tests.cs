@@ -212,7 +212,7 @@ namespace Vostok.Configuration.Tests.Sources
                         }));
         }
 
-        [Test]
+        [Test, Explicit("Not stable on mass tests")]
         public void Should_Observe_file()
         {
             new Action(() => ShouldObserveFileTest().Should().Be(2)).ShouldPassIn(1.Seconds());
@@ -252,10 +252,11 @@ namespace Vostok.Configuration.Tests.Sources
                 sub1.Dispose();
                 sub2.Dispose();
             }
+            SettingsFileWatcher.StopAndClear();
             return val;
         }
 
-        [Test]
+        [Test, Explicit("Not stable on mass tests")]
         public void Should_not_Observe_file_twice()
         {
             new Action(() => ShouldNotObserveFileTwiceTest().Should().Be(1)).ShouldPassIn(1.Seconds());
@@ -285,6 +286,7 @@ namespace Vostok.Configuration.Tests.Sources
 
                 sub.Dispose();
             }
+            SettingsFileWatcher.StopAndClear();
             return val;
         }
     }

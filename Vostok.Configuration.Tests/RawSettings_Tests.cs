@@ -183,7 +183,7 @@ namespace Vostok.Configuration.Tests
         }
 
         [Test]
-        public void Hashed_should_be_equal()
+        public void Hashes_should_be_equal()
         {
             var sets1 = new RawSettings("qwe");
             var sets2 = new RawSettings("qwe");
@@ -209,7 +209,7 @@ namespace Vostok.Configuration.Tests
         }
 
         [Test]
-        public void Hashed_should_not_be_equal()
+        public void Hashes_should_not_be_equal()
         {
             var sets1 = new RawSettings("qwe");
             var sets2 = new RawSettings("qwe_");

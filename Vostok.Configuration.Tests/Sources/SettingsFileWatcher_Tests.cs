@@ -1,20 +1,132 @@
-﻿using NUnit.Framework;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Threading;
+using FluentAssertions;
+using NUnit.Framework;
+using Vostok.Commons.Conversions;
+using Vostok.Commons.Testing;
+using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests.Sources
 {
     [TestFixture]
     public class SettingsFileWatcher_Tests
     {
-        [Test]
-        public void Should_Observe_file()
+        private const string TestFileName = "test_SettingsFileWatcher.json";
+
+        [TearDown]
+        public void Cleanup()
         {
-            new JsonFileSource_Tests().Should_Observe_file();
+            File.Delete(TestFileName);
+        }
+
+        private static void CreateTextFile(string text)
+        {
+            using (var file = new StreamWriter(TestFileName, false))
+                file.WriteLine(text);
         }
 
         [Test]
-        public void Should_not_Observe_file()
+        public void Should_Observe_file()
         {
-            new JsonFileSource_Tests().Should_not_Observe_file_twice();
+            new Action(() => ShouldObserveFileTest().Should().Be(2)).ShouldPassIn(1.Seconds());
+        }
+
+        private int ShouldObserveFileTest()
+        {
+            var val = 0;
+            using (var jfs = new JsonFileSource(TestFileName, 100.Milliseconds()))
+            {
+                var sub1 = jfs.Observe().Subscribe(settings =>
+                {
+                    val++;
+                    settings.Should().BeEquivalentTo(
+                        new RawSettings(
+                            new Dictionary<string, RawSettings>
+                            {
+                                {"Param2", new RawSettings("set2")}
+                            }));
+                });
+
+                CreateTextFile("{ \"Param2\": \"set2\" }");
+
+                var sub2 = jfs.Observe().Subscribe(settings =>
+                {
+                    val++;
+                    settings.Should().BeEquivalentTo(
+                        new RawSettings(
+                            new Dictionary<string, RawSettings>
+                            {
+                                {"Param2", new RawSettings("set2")}
+                            }));
+                });
+
+                Thread.Sleep(200.Milliseconds());
+
+                sub1.Dispose();
+                sub2.Dispose();
+            }
+            SettingsFileWatcher.StopAndClear();
+            return val;
+        }
+
+        [Test]
+        public void Should_not_Observe_file_twice()
+        {
+            new Action(() => ShouldNotObserveFileTwiceTest().Should().Be(1)).ShouldPassIn(1.Seconds());
+        }
+
+        public int ShouldNotObserveFileTwiceTest()
+        {
+            var val = 0;
+            using (var jfs = new JsonFileSource(TestFileName, 100.Milliseconds()))
+            {
+                var sub = jfs.Observe().Subscribe(settings =>
+                {
+                    val++;
+                    settings.Should().BeEquivalentTo(
+                        new RawSettings(
+                            new Dictionary<string, RawSettings>
+                            {
+                                {"Param1", new RawSettings("set1")}
+                            }));
+                });
+
+                CreateTextFile("{ \"Param1\": \"set1\" }");
+                Thread.Sleep(200.Milliseconds());
+
+                CreateTextFile("{ \"Param1\": \"set1\" }");
+                Thread.Sleep(200.Milliseconds());
+
+                sub.Dispose();
+            }
+            SettingsFileWatcher.StopAndClear();
+            return val;
+        }
+
+        [Test]
+        public void Should_callback_on_exception()
+        {
+            new Action(() => ShouldCallbackOnExceptionTest().Should().BeTrue()).ShouldPassIn(1.Seconds());
+        }
+
+        private bool ShouldCallbackOnExceptionTest()
+        {
+            var invoked = false;
+            using (var jfs = new JsonFileSource(TestFileName, 100.Milliseconds(), e => invoked = true))
+            {
+                var sub = jfs.Observe().Subscribe(settings => {});
+
+                Thread.Sleep(200.Milliseconds());
+                CreateTextFile("wrong file format");
+                Thread.Sleep(200.Milliseconds());
+
+                sub.Dispose();
+            }
+            SettingsFileWatcher.StopAndClear();
+            return invoked;
         }
     }
 }

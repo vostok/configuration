@@ -78,29 +78,6 @@ namespace Vostok.Configuration.Sources
 
         private void ParsePair(string key, string value, Rs settings)
         {
-            /* Arrays by keys:
-            if (key.EndsWith("[]"))
-            {
-                if (key.Length == 2)
-                    throw new FormatException($"Wrong ini file: key \"{key}\"");
-                key = key.Substring(0, key.Length - 2);
-                if (settings.ChildrenByKey.ContainsKey(key))
-                {
-                    var val = settings.ChildrenByKey[key];
-                    if (val.Value != null || val.Children == null || val.Children.Count == 0)
-                        throw new FormatException($"Wrong ini file ({currentLine}): array key \"{key}\" already exists");
-                    val.Children.Add(new Rs(value));
-                }
-                else
-                {
-                    var rs = new Rs();
-                    rs.Children.Add(new Rs(value));
-                    settings.ChildrenByKey.Add(key, rs);
-                }
-            }
-            else
-            {*/
-
             var keys = key.Replace(" ", "").Split('.');
             var isObj = false;
             var obj = settings;
@@ -133,8 +110,6 @@ namespace Vostok.Configuration.Sources
                 }
                 isObj = !isObj;
             }
-
-            /*}*/
         }
 
         public void Dispose() { }

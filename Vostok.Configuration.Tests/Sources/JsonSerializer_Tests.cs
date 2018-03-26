@@ -31,10 +31,12 @@ namespace Vostok.Configuration.Tests.Sources
                 }
             };
             JsonSerializer.Serialize(obj, TestFileName, SerializeOption.Short);
-            File.ReadAllText(TestFileName).Split(new[] {'\r', '\n'}, StringSplitOptions.RemoveEmptyEntries).Should().HaveCount(1);
+            File.ReadAllText(TestFileName).Split(new[] {'\r', '\n'}, StringSplitOptions.RemoveEmptyEntries)
+                .Should().HaveCount(1);
 
             JsonSerializer.Serialize(obj, TestFileName, SerializeOption.Readable);
-            File.ReadAllText(TestFileName).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Should().HaveCountGreaterThan(3);
+            File.ReadAllText(TestFileName).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Should().HaveCountGreaterThan(3);
         }
 
         private class MyClass

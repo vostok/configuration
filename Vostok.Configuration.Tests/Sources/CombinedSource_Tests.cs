@@ -314,7 +314,7 @@ namespace Vostok.Configuration.Tests.Sources
                         }));
         }
 
-        [Test]
+        [Test, Explicit("Not stable on mass tests")]
         public void Should_observe_file()
         {
             new Action(() => ShouldObserveFileTest().Should().Be(1)).ShouldPassIn(1.Seconds());
@@ -351,6 +351,7 @@ namespace Vostok.Configuration.Tests.Sources
 
                 sub.Dispose();
             }
+            SettingsFileWatcher.StopAndClear();
             return val;
         }
     }
