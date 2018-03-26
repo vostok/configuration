@@ -75,6 +75,7 @@ namespace Vostok.Configuration.Sources
         public void Dispose()
         {
             disposing = true;
+            observers.Dispose();
         }
 
         private void WatchSettings()

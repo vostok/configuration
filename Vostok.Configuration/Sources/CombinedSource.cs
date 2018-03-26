@@ -98,6 +98,7 @@ namespace Vostok.Configuration.Sources
         {
             foreach (var source in sources)
                 source.Dispose();
+            observers.Dispose();
         }
     }
 }

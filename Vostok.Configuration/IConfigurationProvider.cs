@@ -9,8 +9,6 @@ namespace Vostok.Configuration
     /// </summary>
     public interface IConfigurationProvider
     {
-        // TODO(krait): ICP decides whether to throw on invalid configs or ignore errors
-
         /// <summary>
         /// Get binded value from sources set to same type
         /// </summary>
