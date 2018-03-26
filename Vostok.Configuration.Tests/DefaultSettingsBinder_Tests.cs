@@ -230,7 +230,9 @@ namespace Vostok.Configuration.Tests
 
         private class MyClass
         {
+#pragma warning disable 169
             private int privateIntField;
+#pragma warning restore 169
             private string PrivateStrGetProp { get; }
             public double PublicDoubleSetProp { get; set; }
             public readonly int PublicIntReadonlyField;

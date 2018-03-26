@@ -4,6 +4,7 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Text;
 using System.Threading;
+using Vostok.Commons.Conversions;
 using Vostok.Commons.ThreadManagment;
 
 namespace Vostok.Configuration.Sources
@@ -23,7 +24,7 @@ namespace Vostok.Configuration.Sources
         public EnvVarSource(TimeSpan observePeriod = default)
         {
             observers = new BehaviorSubject<RawSettings>(null);
-            this.observePeriod = observePeriod.Milliseconds < 100 ? TimeSpan.FromMilliseconds(100) : observePeriod;
+            this.observePeriod = observePeriod.Milliseconds < 100 ? 100.Milliseconds() : observePeriod;
             disposing = false;
 
             ThreadRunner.Run(WatchVars);
