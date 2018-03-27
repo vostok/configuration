@@ -8,7 +8,7 @@ namespace Vostok.Configuration.Tests
     public class RawSettings_Tests
     {
         [Test]
-        public void Equals_returns_false_if_one_of_params_is_null()
+        public void Equals_returns_false_if_one_of_params_is_null() // CR(krait): Equals_should_return_false...
         {
             Equals(null, new RawSettings(null)).Should().BeFalse();
         }
@@ -183,7 +183,7 @@ namespace Vostok.Configuration.Tests
         }
 
         [Test]
-        public void Hashes_should_be_equal()
+        public void Hashes_should_be_equal() // CR(krait): Not always, but for_equal_instances.
         {
             var sets1 = new RawSettings("qwe");
             var sets2 = new RawSettings("qwe");

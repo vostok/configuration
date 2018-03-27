@@ -11,6 +11,7 @@ using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests.Sources
 {
+    // CR(krait): Edit these to use JsonStringSource, then leave only one simple test for JsonFileSource.
     [TestFixture]
     public class JsonFileSource_Tests
     {

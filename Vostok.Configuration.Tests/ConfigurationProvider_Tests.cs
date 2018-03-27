@@ -73,7 +73,7 @@ namespace Vostok.Configuration.Tests
         }
 
         [Test]
-        public void Get_should_call_back()
+        public void Get_should_call_back() // CR(krait): on_error
         {
             CreateTextFile(1, "{ \"Value\": 123 }");
 
@@ -96,7 +96,7 @@ namespace Vostok.Configuration.Tests
         }
 
         [Test, Explicit("Not stable on mass tests")]
-        public void Should_Observe_file_1_and_not_Observe_file_2()
+        public void Should_Observe_file_1_and_not_Observe_file_2() // CR(krait): The name says nothing. What are these files? Why should it observer 1, but not 2? :)
         {
             new Action(() => 
                     ShouldObserveFile1AndNotObserveFile2Test().Should().Be((2, 0)))
@@ -140,11 +140,11 @@ namespace Vostok.Configuration.Tests
         public void Should_Observe_file_by_source()
         {
             new Action(() => 
-                    ShouldObserveFileBySourceTest().Should().Be(1))
+                    ObserveFileBySource().Should().Be(1))
                 .ShouldPassIn(1.Seconds());
         }
 
-        private int ShouldObserveFileBySourceTest()
+        private static int ObserveFileBySource()
         {
             CreateTextFile(1, "{ \"Value\": 0 }");
             var val = 0;

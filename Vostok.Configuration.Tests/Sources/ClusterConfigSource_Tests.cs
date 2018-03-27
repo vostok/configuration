@@ -7,6 +7,7 @@ using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests.Sources
 {
+    // CR(krait): Tests should not depend on real CC.
     [TestFixture]
     public class ClusterConfigSource_Tests
     {

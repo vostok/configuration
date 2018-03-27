@@ -22,7 +22,6 @@ namespace Vostok.Configuration.Tests
         [TestCase("FaLsE", false, TestName = "BoolValue")]
         [TestCase("255", (byte) 255, TestName = "ByteValue")]
         [TestCase("q", 'q', TestName = "CharValue")]
-//        [TestCase("123.456", (decimal) 123456m, TestName = "DecimalValue")]  decimal is below
         [TestCase("123.456", 123.456d, TestName = "DoubleValue")]
         [TestCase("123,456", 123.456f, TestName = "FloatValue")]
         [TestCase("12345", 12345, TestName = "IntValue")]
