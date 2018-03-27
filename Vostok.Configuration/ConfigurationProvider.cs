@@ -48,6 +48,7 @@ namespace Vostok.Configuration
             }
         }
 
+        // CR(krait): Get() can be called VERY frequently. It should not do any time-consuming work unless the settings have changed. The same is true for all Get()'s down the line.
         public TSettings Get<TSettings>(IConfigurationSource source)
         {
             try

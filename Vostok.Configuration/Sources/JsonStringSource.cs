@@ -21,7 +21,7 @@ namespace Vostok.Configuration.Sources
         {
             this.json = json;
         }
-
+        
         public RawSettings Get() => 
             string.IsNullOrWhiteSpace(json) ? null : ParseJson(JObject.Parse(json));
 

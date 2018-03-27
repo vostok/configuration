@@ -12,10 +12,16 @@ default:
   deps:
     - vostok.commons@dev
 
-notests *default:
+client *default:
+  build:
+    configuration: Client
+
+notests:
+  deps:
+    - clusterconfig
   build:
     configuration: NoTests
 
-full-build:
+full-build > notests:
   build:
     configuration: Release

@@ -10,12 +10,14 @@ using Vostok.Commons.ThreadManagment;
 
 namespace Vostok.Configuration.Sources
 {
+    // CR(krait): It must be thread-safe, obviously.
     /// <summary>
     /// File watcher for settings files
     /// </summary>
     public static class SettingsFileWatcher
     {
-        private const int FileWatchingDelay = 100;
+        private static readonly TimeSpan MinObservationPeriod = 100.Milliseconds();
+
         private static List<ObserverInfo> observersInfo;
         private static List<FileInfo> filesInfo;
         private static bool needStop;
@@ -26,9 +28,9 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         /// <param name="filePath">Path to file</param>
         /// <param name="configurationSource">Configuration source for file parsing</param>
-        /// <param name="observePeriod">Observe period (min 100)</param>
+        /// <param name="observationPeriod">Observe period (min 100)</param>
         /// <param name="callBack">Callback on exception</param>
-        public static void StartSettingsFileWatcher(string filePath, IConfigurationSource configurationSource, TimeSpan observePeriod = default, Action<Exception> callBack = null)
+        public static void StartSettingsFileWatcher(string filePath, IConfigurationSource configurationSource, TimeSpan observationPeriod = default, Action<Exception> callBack = null)
         {
             if (observersInfo == null)
                 observersInfo = new List<ObserverInfo>();
@@ -39,11 +41,11 @@ namespace Vostok.Configuration.Sources
             {
                 FilePath = filePath,
                 LastFileWriteTime = File.GetLastWriteTimeUtc(filePath),
-                ObservePeriond = observePeriod.Milliseconds < 100 ? 100.Milliseconds() : observePeriod,
+                ObservationPeriod = observationPeriod < MinObservationPeriod ? MinObservationPeriod : observationPeriod,
                 ConfigurationSource = configurationSource,
-                NextCheck = DateTime.Now.AddMilliseconds(observePeriod.Milliseconds),
+                NextCheck = DateTime.Now + observationPeriod, // CR(krait): DateTime.Now should never be used. Use DateTime.UtcNow instead: https://blogs.msdn.microsoft.com/kirillosenkov/2012/01/10/datetime-utcnow-is-generally-preferable-to-datetime-now/
                 CurrentSettings = null,
-                CallBack = callBack,
+                OnError = callBack,
             });
 
             if (watcherThread == null)
@@ -51,7 +53,7 @@ namespace Vostok.Configuration.Sources
         }
 
         /// <summary>
-        /// Add subscribtion
+        /// Add subscription
         /// </summary>
         public static IDisposable Subscribe(IObserver<RawSettings> observer, string filePath)
         {
@@ -65,20 +67,20 @@ namespace Vostok.Configuration.Sources
                 };
                 observersInfo.Add(obsInfo);
             }
-            var subscribtion = obsInfo.Observers.Where(o => o != null).SubscribeSafe(observer);
+            var subscription = obsInfo.Observers.Where(o => o != null).SubscribeSafe(observer);
 
             var current = filesInfo.FirstOrDefault(i => i.FilePath == filePath)?.CurrentSettings;
             if (current != null)
                 observer.OnNext(current);
 
-            return subscribtion;
+            return subscription;
         }
 
         private static void WatchFile()
         {
             while (!needStop)
             {
-                Thread.Sleep(FileWatchingDelay);
+                Thread.Sleep(MinObservationPeriod);
                 if (needStop) break;
                 if (observersInfo.Count == 0 || filesInfo == null) continue;
 
@@ -89,7 +91,7 @@ namespace Vostok.Configuration.Sources
                     }
                     catch (Exception e)
                     {
-                        info.CallBack?.Invoke(e);
+                        info.OnError?.Invoke(e);
                     }
             }
             needStop = false;
@@ -116,7 +118,7 @@ namespace Vostok.Configuration.Sources
 
             void Return(RawSettings changes, string filePath)
             {
-                foreach (var observer in observersInfo.Where(i => i.FilePath == filePath))
+                foreach (var observer in observersInfo.Where(i => i.FilePath == filePath)) // CR(krait): Why not just store them already grouped by file path?
                     observer.Observers.OnNext(changes);
                 var info = filesInfo.FirstOrDefault(i => i.FilePath == filePath);
                 if (info != null)
@@ -155,10 +157,10 @@ namespace Vostok.Configuration.Sources
             public string FilePath { get; set; }
             public DateTime LastFileWriteTime { get; set; }
             public DateTime NextCheck { get; set; }
-            public TimeSpan ObservePeriond { get; set; }
-            public IConfigurationSource ConfigurationSource { get; set; }
+            public TimeSpan ObservationPeriod { get; set; }
+            public IConfigurationSource ConfigurationSource { get; set; } // CR(krait): Why IConfigurationSource? Just pass the Get() method.
             public RawSettings CurrentSettings { get; set; }
-            public Action<Exception> CallBack { get; set; }
+            public Action<Exception> OnError { get; set; }
         }
     }
 }
