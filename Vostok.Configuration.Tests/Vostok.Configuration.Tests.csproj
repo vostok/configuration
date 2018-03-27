@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Vostok.Configuration.ClusterConfig\Vostok.Configuration.ClusterConfig.csproj" />
     <ProjectReference Include="..\Vostok.Configuration\Vostok.Configuration.csproj" />
     <Reference Include="Vostok.Commons">
       <SpecificVersion>False</SpecificVersion>
