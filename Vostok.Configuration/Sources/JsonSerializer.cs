@@ -16,7 +16,7 @@ namespace Vostok.Configuration.Sources
         {
             var serializer = new Newtonsoft.Json.JsonSerializer
             {
-                NullValueHandling = NullValueHandling.Ignore,
+                NullValueHandling = NullValueHandling.Include,
                 Formatting = serializeOption == SerializeOption.Short ? Formatting.None : Formatting.Indented,
             };
             using (var sw = new StreamWriter(filePath))
