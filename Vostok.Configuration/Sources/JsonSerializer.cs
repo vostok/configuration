@@ -11,6 +11,7 @@ namespace Vostok.Configuration.Sources
 
     public class JsonSerializer
     {
+        // CR(krait): Nope, it should serialize to a string, not to a file. We usually log current settings. And some services have a special handler that returns the settings too.
         public static void Serialize(object obj, string filePath, SerializeOption serializeOption = SerializeOption.Short)
         {
             var serializer = new Newtonsoft.Json.JsonSerializer

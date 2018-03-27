@@ -87,10 +87,10 @@ namespace Vostok.Configuration.Sources
         {
             return Observable.Create<RawSettings>(observer =>
             {
-                var subscribtion = observers.Where(o => o != null).SubscribeSafe(observer);
+                var subscription = observers.Where(o => o != null).SubscribeSafe(observer);
                 if (sourcesSettings.Any(s => s != null))
                     observer.OnNext(Get());
-                return subscribtion;
+                return subscription;
             });
         }
 

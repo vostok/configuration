@@ -111,7 +111,8 @@ namespace Vostok.Configuration.Sources
 
         public void Dispose() { }
 
-        private class Rs: IConvertible
+        // CR(krait): The name is too mysterious.
+        private class Rs : IConvertible
         {
             public Rs()
             {
@@ -122,6 +123,8 @@ namespace Vostok.Configuration.Sources
             {
                 Value = value;
             }
+
+            // CR(krait): Unused constructors?
             public Rs(IDictionary<string, Rs> children, string value = null)
             {
                 ChildrenByKey = children;
@@ -143,6 +146,7 @@ namespace Vostok.Configuration.Sources
             public IDictionary<string, Rs> ChildrenByKey { get; set; }
             public IList<Rs> Children { get; }
 
+            // CR(krait): Why convertible? Could just override a type cast operator to RawSettings.
             #region Convertible, not implemented
             public TypeCode GetTypeCode()
             {

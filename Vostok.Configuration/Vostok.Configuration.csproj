@@ -19,6 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Kontur.ClusterConfig.Client">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\clusterconfig\Kontur.ClusterConfig.ClientNew\bin\Release\Kontur.ClusterConfig.Client.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Build.Framework">
@@ -27,6 +28,10 @@
     <Reference Include="Vostok.Commons">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\vostok.commons\Vostok.Commons\bin\Release\netstandard2.0\Vostok.Commons.dll</HintPath>
+    </Reference>
+    <Reference Include="Kontur.ClusterConfig.Common">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\clusterconfig\Kontur.ClusterConfig.ClientNew\bin\Release\Kontur.ClusterConfig.Common.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>

@@ -13,7 +13,6 @@ namespace Vostok.Configuration.Sources
         private readonly string[] scope;
 
         private readonly BehaviorSubject<RawSettings> observers;
-        private readonly object sync;
 
         /// <summary>
         /// Creating scope source
@@ -26,7 +25,6 @@ namespace Vostok.Configuration.Sources
             this.scope = scope;
 
             observers = new BehaviorSubject<RawSettings>(null);
-            sync = new object();
             source.Observe().Subscribe(settings => observers.OnNext(Get()));
         }
 
@@ -75,9 +73,9 @@ namespace Vostok.Configuration.Sources
         {
             return Observable.Create<RawSettings>(observer =>
             {
-                var subscribtion = observers.Where(o => o != null).SubscribeSafe(observer);
+                var subscription = observers.Where(o => o != null).SubscribeSafe(observer);
                 observer.OnNext(Get());
-                return subscribtion;
+                return subscription;
             });
         }
 

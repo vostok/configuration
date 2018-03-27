@@ -10,7 +10,7 @@ using Vostok.Commons.ThreadManagment;
 
 namespace Vostok.Configuration.Sources
 {
-    public class ClusterConfigSource: IConfigurationSource
+    public class ClusterConfigSource : IConfigurationSource
     {
         private readonly string prefix;
         private readonly string key;
@@ -23,10 +23,11 @@ namespace Vostok.Configuration.Sources
         {
             this.prefix = prefix;
             this.key = key;
-            this.observePeriod = observePeriod.Milliseconds < 1.Minutes().Milliseconds ? 1.Minutes() : observePeriod;
+            this.observePeriod = observePeriod.Milliseconds < 1.Minutes().Milliseconds ? 1.Minutes() : observePeriod; // CR(krait): milliseconds -> TimeSpan, see SettingsFileWatcher.
             observers = new BehaviorSubject<RawSettings>(null);
             disposing = false;
 
+            // CR(krait): No, this source also cannot create threads for every instance. It should work same as file sources.
             ThreadRunner.Run(WatchSettings);
         }
 
@@ -66,10 +67,10 @@ namespace Vostok.Configuration.Sources
         {
             return Observable.Create<RawSettings>(observer =>
             {
-                var subscribtion = observers.Where(s => s != null).SubscribeSafe(observer);
+                var subscription = observers.Where(s => s != null).SubscribeSafe(observer);
                 if (current != null)
                     observer.OnNext(current);
-                return subscribtion;
+                return subscription;
             });
         }
         public void Dispose()
