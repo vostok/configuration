@@ -30,12 +30,12 @@ namespace Vostok.Configuration.Tests.Sources
                     StringValue = "ewq",
                 }
             };
-            JsonSerializer.Serialize(obj, TestFileName, SerializeOption.Short);
-            File.ReadAllText(TestFileName).Split(new[] {'\r', '\n'}, StringSplitOptions.RemoveEmptyEntries)
+            JsonSerializer.Serialize(obj, SerializeOption.Short)
+                .Split(new[] {'\r', '\n'}, StringSplitOptions.RemoveEmptyEntries)
                 .Should().HaveCount(1);
 
-            JsonSerializer.Serialize(obj, TestFileName, SerializeOption.Readable);
-            File.ReadAllText(TestFileName).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+            JsonSerializer.Serialize(obj, SerializeOption.Readable)
+                .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
                 .Should().HaveCountGreaterThan(3);
         }
 

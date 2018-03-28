@@ -33,6 +33,8 @@ namespace Vostok.Configuration.Tests.Sources
             var val = 0;
             using (var evs = new EnvironmentVariablesSource(100.Milliseconds()))
             {
+                FixedPeriodSettingsWatcher.StartFixedPeriodSettingsWatcher(100.Milliseconds(), 100.Milliseconds());
+
                 var sub = evs.Observe().Subscribe(settings =>
                 {
                     if (settings.ChildrenByKey.ContainsKey(testVar))

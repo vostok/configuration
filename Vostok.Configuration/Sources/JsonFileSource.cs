@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 
 namespace Vostok.Configuration.Sources
 {
@@ -17,9 +16,9 @@ namespace Vostok.Configuration.Sources
         /// <param name="onError">Callback action on exception</param>
         public JsonFileSource(string filePath, TimeSpan observationPeriod = default, Action<Exception> onError = null)
             : base(filePath,
-                () =>
+                data =>
                 {
-                    using (var source = new JsonStringSource(File.ReadAllText(filePath)))
+                    using (var source = new JsonStringSource(data))
                         return source.Get();
                 },
                 observationPeriod,

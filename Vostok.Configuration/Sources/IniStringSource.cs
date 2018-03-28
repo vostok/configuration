@@ -32,7 +32,7 @@ namespace Vostok.Configuration.Sources
 
         private RawSettings ParseIni(string text)
         {
-            var res = new Rs();
+            var res = new RawSettingsEditable();
             var section = res;
 
             var lines = text
@@ -59,21 +59,21 @@ namespace Vostok.Configuration.Sources
 
             if (res.Children.Count == 0 && res.ChildrenByKey.Count == 0 && res.Value == null)
                 return null;
-            return (RawSettings)Convert.ChangeType(res, typeof(RawSettings));
+            return (RawSettings)res;
         }
 
-        private Rs ParseSection(string section, Rs settings)
+        private RawSettingsEditable ParseSection(string section, RawSettingsEditable settings)
         {
             section = section.Replace(" ", "");
 
             if (settings.ChildrenByKey.ContainsKey(section))
                 throw new FormatException($"Wrong ini file ({currentLine}): section \"{section}\" already exists");
-            var res = new Rs();
+            var res = new RawSettingsEditable();
             settings.ChildrenByKey.Add(section, res);
             return res;
         }
 
-        private void ParsePair(string key, string value, Rs settings)
+        private void ParsePair(string key, string value, RawSettingsEditable settings)
         {
             var keys = key.Replace(" ", "").Split('.');
             var isObj = false;
@@ -91,11 +91,11 @@ namespace Vostok.Configuration.Sources
                             obj.ChildrenByKey[keys[i]].Value = value;
                     }
                     else
-                        obj.ChildrenByKey.Add(keys[i], new Rs(value));
+                        obj.ChildrenByKey.Add(keys[i], new RawSettingsEditable(value));
                 }
                 else if (!obj.ChildrenByKey.ContainsKey(keys[i]))
                 {
-                    var newObj = new Rs();
+                    var newObj = new RawSettingsEditable();
                     obj.ChildrenByKey.Add(keys[i], newObj);
                     obj = newObj;
                 }
@@ -103,7 +103,7 @@ namespace Vostok.Configuration.Sources
                 {
                     obj = obj.ChildrenByKey[keys[i]];
                     if (obj.ChildrenByKey == null)
-                        obj.ChildrenByKey = new Dictionary<string, Rs>();
+                        obj.ChildrenByKey = new Dictionary<string, RawSettingsEditable>();
                 }
                 isObj = !isObj;
             }
@@ -111,135 +111,32 @@ namespace Vostok.Configuration.Sources
 
         public void Dispose() { }
 
-        // CR(krait): The name is too mysterious.
-        private class Rs : IConvertible
+        private class RawSettingsEditable
         {
-            public Rs()
+            public RawSettingsEditable()
             {
-                ChildrenByKey = new Dictionary<string, Rs>();
-                Children = new List<Rs>();
+                ChildrenByKey = new Dictionary<string, RawSettingsEditable>();
+                Children = new List<RawSettingsEditable>();
             }
-            public Rs(string value)
+            public RawSettingsEditable(string value)
             {
-                Value = value;
-            }
-
-            // CR(krait): Unused constructors?
-            public Rs(IDictionary<string, Rs> children, string value = null)
-            {
-                ChildrenByKey = children;
-                Value = value;
-            }
-            public Rs(IList<Rs> children, string value = null)
-            {
-                Children = children;
-                Value = value;
-            }
-            public Rs(IDictionary<string, Rs> childrenByKey, IList<Rs> children, string value = null)
-            {
-                ChildrenByKey = childrenByKey;
-                Children = children;
                 Value = value;
             }
 
             public string Value { get; set; }
-            public IDictionary<string, Rs> ChildrenByKey { get; set; }
-            public IList<Rs> Children { get; }
+            public IDictionary<string, RawSettingsEditable> ChildrenByKey { get; set; }
+            public IList<RawSettingsEditable> Children { get; }
 
-            // CR(krait): Why convertible? Could just override a type cast operator to RawSettings.
-            #region Convertible, not implemented
-            public TypeCode GetTypeCode()
+            public static explicit operator RawSettings(RawSettingsEditable settings)
             {
-                throw new NotImplementedException();
-            }
-
-            public bool ToBoolean(IFormatProvider provider)
-            {
-                throw new NotImplementedException();
-            }
-
-            public byte ToByte(IFormatProvider provider)
-            {
-                throw new NotImplementedException();
-            }
-
-            public char ToChar(IFormatProvider provider)
-            {
-                throw new NotImplementedException();
-            }
-
-            public DateTime ToDateTime(IFormatProvider provider)
-            {
-                throw new NotImplementedException();
-            }
-
-            public decimal ToDecimal(IFormatProvider provider)
-            {
-                throw new NotImplementedException();
-            }
-
-            public double ToDouble(IFormatProvider provider)
-            {
-                throw new NotImplementedException();
-            }
-
-            public short ToInt16(IFormatProvider provider)
-            {
-                throw new NotImplementedException();
-            }
-
-            public int ToInt32(IFormatProvider provider)
-            {
-                throw new NotImplementedException();
-            }
-
-            public long ToInt64(IFormatProvider provider)
-            {
-                throw new NotImplementedException();
-            }
-
-            public sbyte ToSByte(IFormatProvider provider)
-            {
-                throw new NotImplementedException();
-            }
-
-            public float ToSingle(IFormatProvider provider)
-            {
-                throw new NotImplementedException();
-            }
-
-            public string ToString(IFormatProvider provider)
-            {
-                throw new NotImplementedException();
-            }
-
-            public ushort ToUInt16(IFormatProvider provider)
-            {
-                throw new NotImplementedException();
-            }
-
-            public uint ToUInt32(IFormatProvider provider)
-            {
-                throw new NotImplementedException();
-            }
-
-            public ulong ToUInt64(IFormatProvider provider)
-            {
-                throw new NotImplementedException();
-            }
-
-            #endregion
-
-            public object ToType(Type conversionType, IFormatProvider provider)
-            {
-                var dict = ChildrenByKey == null || ChildrenByKey.Count == 0
+                var dict = settings.ChildrenByKey == null || settings.ChildrenByKey.Count == 0
                     ? null
-                    : ChildrenByKey?.ToDictionary(d => d.Key, d => (RawSettings)d.Value.ToType(typeof(RawSettings), null));
-                var list = Children == null || Children.Count == 0
+                    : settings.ChildrenByKey?.ToDictionary(d => d.Key, d => (RawSettings)d.Value);
+                var list = settings.Children == null || settings.Children.Count == 0
                     ? null
-                    : Children?.Select(i => (RawSettings)i.ToType(typeof(RawSettings), null)).ToList();
+                    : settings.Children?.Select(i => (RawSettings)i).ToList();
 
-                return new RawSettings(dict, list, Value);
+                return new RawSettings(dict, list, settings.Value);
             }
         }
     }

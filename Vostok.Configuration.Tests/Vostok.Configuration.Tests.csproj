@@ -17,6 +17,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Vostok.Configuration.ClusterConfig\Vostok.Configuration.ClusterConfig.csproj" />
     <ProjectReference Include="..\Vostok.Configuration\Vostok.Configuration.csproj" />
+    <Reference Include="Kontur.ClusterConfig.Client">
+      <HintPath>..\..\clusterconfig\Kontur.ClusterConfig.ClientNew\bin\Release\Kontur.ClusterConfig.Client.dll</HintPath>
+    </Reference>
     <Reference Include="Vostok.Commons">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\vostok.commons\Vostok.Commons\bin\Release\netstandard2.0\Vostok.Commons.dll</HintPath>

@@ -73,7 +73,7 @@ namespace Vostok.Configuration.Tests
         }
 
         [Test]
-        public void Get_should_call_back() // CR(krait): on_error
+        public void Get_should_call_back_on_error()
         {
             CreateTextFile(1, "{ \"Value\": 123 }");
 
@@ -96,14 +96,14 @@ namespace Vostok.Configuration.Tests
         }
 
         [Test, Explicit("Not stable on mass tests")]
-        public void Should_Observe_file_1_and_not_Observe_file_2() // CR(krait): The name says nothing. What are these files? Why should it observer 1, but not 2? :)
+        public void Should_only_call_OnNext_on_observers_of_the_type_whose_underlying_source_was_updated()
         {
-            new Action(() => 
-                    ShouldObserveFile1AndNotObserveFile2Test().Should().Be((2, 0)))
+            new Action(() =>
+                    CountOnNextCallsForTwoSources().Should().Be((2, 0)))
                 .ShouldPassIn(1.Seconds());
         }
 
-        private (int vClass, int vInt) ShouldObserveFile1AndNotObserveFile2Test()
+        private (int vClass, int vInt) CountOnNextCallsForTwoSources()
         {
             CreateTextFile(1, "{ \"Value\": 1 }");
             CreateTextFile(2, "{ \"Value\": 123 }");

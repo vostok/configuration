@@ -8,7 +8,7 @@ namespace Vostok.Configuration.Sources
     public class BaseFileSource : IConfigurationSource
     {
         protected readonly string FilePath;
-        private readonly Func<RawSettings> parseSettings;
+        private readonly Func<string, RawSettings> parseSettings;
 
         /// <summary>
         /// Creating converter
@@ -16,7 +16,7 @@ namespace Vostok.Configuration.Sources
         /// <param name="filePath">File name with settings</param>
         /// <param name="parseSettings">"Get" method invocation for string source</param>
         /// <param name="observationPeriod">Observe period in ms (min 100, default 10000)</param>
-        public BaseFileSource(string filePath, Func<RawSettings> parseSettings, TimeSpan observationPeriod = default, Action<Exception> onError = null)
+        public BaseFileSource(string filePath, Func<string, RawSettings> parseSettings, TimeSpan observationPeriod = default, Action<Exception> onError = null)
         {
             FilePath = filePath;
             this.parseSettings = parseSettings;
@@ -25,11 +25,11 @@ namespace Vostok.Configuration.Sources
         }
 
         public RawSettings Get() => 
-            !File.Exists(FilePath) ? null : parseSettings(); // CR(krait): parseSettings should be Func<string, RawSettings>. We can put the File.ReadAllText call here.
+            !File.Exists(FilePath) ? null : parseSettings(File.ReadAllText(FilePath));
 
         public IObservable<RawSettings> Observe() => 
             Observable.Create<RawSettings>(observer =>
-                SettingsFileWatcher.Subscribe(observer, FilePath));
+                SettingsFileWatcher.Subscribe(observer, this));
 
         public void Dispose() => 
             SettingsFileWatcher.RemoveObservers(this);

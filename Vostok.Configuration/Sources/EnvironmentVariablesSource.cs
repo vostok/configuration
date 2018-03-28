@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections;
-using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using System.Text;
-using System.Threading;
 using Vostok.Commons.Conversions;
-using Vostok.Commons.ThreadManagment;
 
 namespace Vostok.Configuration.Sources
 {
@@ -15,39 +11,25 @@ namespace Vostok.Configuration.Sources
     /// </summary>
     public class EnvironmentVariablesSource : IConfigurationSource
     {
-        private readonly BehaviorSubject<RawSettings> observers;
+        private static readonly TimeSpan MinObservationPeriod = 100.Milliseconds();
+
         private readonly TimeSpan observePeriod;
-        private string current;
-        private RawSettings currentTree;
-        private bool disposing;
 
-        public EnvironmentVariablesSource(TimeSpan observePeriod = default)
+        /// <param name="observePeriod">Observation period (min 100 ms)</param>
+        public EnvironmentVariablesSource(TimeSpan observePeriod = default) //todo: callback?
         {
-            observers = new BehaviorSubject<RawSettings>(null);
-            this.observePeriod = observePeriod.Milliseconds < 100 ? 100.Milliseconds() : observePeriod; // CR(krait): milliseconds -> TimeSpan, see SettingsFileWatcher.
-            disposing = false;
-
-            // CR(krait): No, this source also cannot create threads for every instance. It should work same as file sources.
-            ThreadRunner.Run(WatchVars);
+            this.observePeriod = observePeriod < MinObservationPeriod ? MinObservationPeriod : observePeriod;
+            FixedPeriodSettingsWatcher.StartFixedPeriodSettingsWatcher(1.Seconds(), 10.Seconds(), Get, this.observePeriod);
         }
 
         public RawSettings Get() => Get(GetVariables());
 
-        public IObservable<RawSettings> Observe()
-        {
-            return Observable.Create<RawSettings>(observer =>
-            {
-                var subscription = observers.Where(s => s != null).SubscribeSafe(observer);
-                if (currentTree != null)
-                    observer.OnNext(currentTree);
-                return subscription;
-            });
-        }
+        public IObservable<RawSettings> Observe() => 
+            FixedPeriodSettingsWatcher.Observe(observePeriod);
 
         public void Dispose()
         {
-            disposing = true;
-            observers.Dispose();
+            FixedPeriodSettingsWatcher.RemoveObservers(observePeriod);
         }
 
         private static RawSettings Get(string vars)
@@ -62,25 +44,6 @@ namespace Vostok.Configuration.Sources
             foreach (DictionaryEntry ev in Environment.GetEnvironmentVariables())
                 builder.AppendLine($"{ev.Key}={ev.Value}");
             return builder.ToString();
-        }
-
-        private void WatchVars()
-        {
-            while (!disposing)
-            {
-                Thread.Sleep(observePeriod);
-                if (disposing) break;
-                if (!observers.HasObservers) continue;
-
-                var changes = GetVariables();
-                
-                if (!Equals(current, changes))
-                {
-                    currentTree = Get(changes);
-                    observers.OnNext(currentTree);
-                    current = changes;
-                }
-            }
         }
     }
 }

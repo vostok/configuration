@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Text;
 using Newtonsoft.Json;
 
 namespace Vostok.Configuration.Sources
@@ -11,17 +12,20 @@ namespace Vostok.Configuration.Sources
 
     public class JsonSerializer
     {
-        // CR(krait): Nope, it should serialize to a string, not to a file. We usually log current settings. And some services have a special handler that returns the settings too.
-        public static void Serialize(object obj, string filePath, SerializeOption serializeOption = SerializeOption.Short)
+        public static string Serialize(object obj, SerializeOption serializeOption = SerializeOption.Short)
         {
             var serializer = new Newtonsoft.Json.JsonSerializer
             {
                 NullValueHandling = NullValueHandling.Include,
                 Formatting = serializeOption == SerializeOption.Short ? Formatting.None : Formatting.Indented,
             };
-            using (var sw = new StreamWriter(filePath))
-                using (JsonWriter writer = new JsonTextWriter(sw))
-                    serializer.Serialize(writer, obj);
+            var sb = new StringBuilder();
+            using (var sw = new StringWriter(sb))
+            using (JsonWriter writer = new JsonTextWriter(sw))
+            {
+                serializer.Serialize(writer, obj);
+                return sb.ToString();
+            }
         }
     }
 }

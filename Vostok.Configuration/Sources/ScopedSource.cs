@@ -10,6 +10,7 @@ namespace Vostok.Configuration.Sources
     public class ScopedSource : IConfigurationSource
     {
         private readonly IConfigurationSource source;
+        private readonly RawSettings settings;
         private readonly string[] scope;
 
         private readonly BehaviorSubject<RawSettings> observers;
@@ -25,7 +26,16 @@ namespace Vostok.Configuration.Sources
             this.scope = scope;
 
             observers = new BehaviorSubject<RawSettings>(null);
-            source.Observe().Subscribe(settings => observers.OnNext(Get()));
+            source.Observe().Subscribe(_ => observers.OnNext(Get()));
+        }
+
+        public ScopedSource(RawSettings settings, params string[] scope)
+        {
+            this.settings = settings;
+            this.scope = scope;
+
+            observers = new BehaviorSubject<RawSettings>(null);
+            source.Observe().Subscribe(_ => observers.OnNext(Get()));
         }
 
         /// <summary>
@@ -35,7 +45,7 @@ namespace Vostok.Configuration.Sources
         /// <returns>Part of RawSettings tree</returns>
         public RawSettings Get()
         {
-            var res = source.Get();
+            var res = settings ?? source.Get();
             if (scope.Length == 0)
                 return res;
 

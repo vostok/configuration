@@ -2,33 +2,43 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
-using System.Threading;
 using Kontur.ClusterConfig.Client;
+using Vostok.Commons;
 using Vostok.Commons.Conversions;
-using Vostok.Commons.ThreadManagment;
+using Vostok.Configuration.Sources;
 
-namespace Vostok.Configuration.Sources
+namespace Vostok.Configuration.ClusterConfig
 {
+    public interface IClusterConfigClientProxy
+    {
+        Dictionary<string, List<string>> GetAll();
+        List<string> GetByKey(string key);
+        Dictionary<string, List<string>> GetByPrefix(string prefix);
+    }
+
+    public class ClusterConfigClientProxy : IClusterConfigClientProxy
+    {
+        public Dictionary<string, List<string>> GetAll() => ClusterConfigClient.GetAll();
+
+        public List<string> GetByKey(string key) => ClusterConfigClient.GetByKey(key);
+
+        public Dictionary<string, List<string>> GetByPrefix(string prefix) => ClusterConfigClient.GetByPrefix(prefix);
+    }
+
     public class ClusterConfigSource : IConfigurationSource
     {
+        private static readonly TimeSpan MinObservationPeriod = 1.Minutes();
+
         private readonly string prefix;
         private readonly string key;
-        private readonly BehaviorSubject<RawSettings> observers;
         private readonly TimeSpan observePeriod;
-        private RawSettings current;
-        private bool disposing;
 
-        public ClusterConfigSource(string prefix, string key, TimeSpan observePeriod = default)
+        public ClusterConfigSource(string prefix, string key, TimeSpan observePeriod = default) //todo: callback?
         {
             this.prefix = prefix;
             this.key = key;
-            this.observePeriod = observePeriod.Milliseconds < 1.Minutes().Milliseconds ? 1.Minutes() : observePeriod; // CR(krait): milliseconds -> TimeSpan, see SettingsFileWatcher.
-            observers = new BehaviorSubject<RawSettings>(null);
-            disposing = false;
-
-            // CR(krait): No, this source also cannot create threads for every instance. It should work same as file sources.
-            ThreadRunner.Run(WatchSettings);
+            this.observePeriod = observePeriod < MinObservationPeriod ? MinObservationPeriod : observePeriod;
+            FixedPeriodSettingsWatcher.StartFixedPeriodSettingsWatcher(1.Seconds(), 1.Minutes(), GetAll, this.observePeriod);
         }
 
         public ClusterConfigSource(TimeSpan observePeriod = default)
@@ -41,14 +51,16 @@ namespace Vostok.Configuration.Sources
             var emptyKey = string.IsNullOrWhiteSpace(key);
 
             if (emptyPrefix && emptyKey)
-                return ParseCcTree(ClusterConfigClient.GetAll());
+                return ParseCcTree(new ClusterConfigClientProxy().GetAll());
             else if (!emptyPrefix && !emptyKey)
-                return ParseCcList(ClusterConfigClient.GetByKey($"{prefix}/{key}"));
+                return ParseCcList(new ClusterConfigClientProxy().GetByKey($"{prefix}/{key}"));
             else if (!emptyPrefix)
-                return ParseCcTree(ClusterConfigClient.GetByPrefix(prefix));
+                return ParseCcTree(new ClusterConfigClientProxy().GetByPrefix(prefix));
             else
-                return ParseCcTree(ClusterConfigClient.GetAll(), true);
+                return ParseCcTree(new ClusterConfigClientProxy().GetAll(), true);
         }
+
+        private RawSettings GetAll() => ParseCcTree(new ClusterConfigClientProxy().GetAll());
 
         private RawSettings ParseCcTree(Dictionary<string, List<string>> tree, bool byKey = false)
         {
@@ -65,36 +77,19 @@ namespace Vostok.Configuration.Sources
 
         public IObservable<RawSettings> Observe()
         {
-            return Observable.Create<RawSettings>(observer =>
-            {
-                var subscription = observers.Where(s => s != null).SubscribeSafe(observer);
-                if (current != null)
-                    observer.OnNext(current);
-                return subscription;
-            });
+            var prefScope = prefix?.Split(new []{'/'}, StringSplitOptions.RemoveEmptyEntries).ToArray();
+            var keyScope = key?.ToEnumerable();
+            var scope = prefScope ?? keyScope;
+            if (prefScope != null && keyScope != null)
+                scope = scope.Concat(keyScope);
+            return FixedPeriodSettingsWatcher.Observe(observePeriod)
+                .Select(s => new ScopedSource(s, scope.ToArray()).Get())
+                .Where(s => !Equals(s, Get()));
         }
+
         public void Dispose()
         {
-            disposing = true;
-            observers.Dispose();
-        }
-
-        private void WatchSettings()
-        {
-            while (!disposing)
-            {
-                Thread.Sleep(observePeriod);
-                if (disposing) break;
-                if (!observers.HasObservers) continue;
-
-                var changes = Get();
-
-                if (!Equals(current, changes))
-                {
-                    observers.OnNext(current);
-                    current = changes;
-                }
-            }
+            FixedPeriodSettingsWatcher.RemoveObservers(observePeriod);
         }
     }
 }

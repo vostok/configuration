@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,7 +11,6 @@ using Vostok.Commons.ThreadManagment;
 
 namespace Vostok.Configuration.Sources
 {
-    // CR(krait): It must be thread-safe, obviously.
     /// <summary>
     /// File watcher for settings files
     /// </summary>
@@ -18,13 +18,14 @@ namespace Vostok.Configuration.Sources
     {
         private static readonly TimeSpan MinObservationPeriod = 100.Milliseconds();
 
-        private static List<ObserverInfo> observersInfo;
+        private static ConcurrentDictionary<IConfigurationSource, BehaviorSubject<RawSettings>> observersInfo;
         private static List<FileInfo> filesInfo;
         private static bool needStop;
         private static Thread watcherThread;
+        private static object sync;
 
         /// <summary>
-        /// Creating settings file watcher
+        /// Starts settings file watcher
         /// </summary>
         /// <param name="filePath">Path to file</param>
         /// <param name="configurationSource">Configuration source for file parsing</param>
@@ -32,21 +33,25 @@ namespace Vostok.Configuration.Sources
         /// <param name="callBack">Callback on exception</param>
         public static void StartSettingsFileWatcher(string filePath, IConfigurationSource configurationSource, TimeSpan observationPeriod = default, Action<Exception> callBack = null)
         {
+            if (sync == null)
+                sync = new object();
             if (observersInfo == null)
-                observersInfo = new List<ObserverInfo>();
+                observersInfo = new ConcurrentDictionary<IConfigurationSource, BehaviorSubject<RawSettings>>();
             if (filesInfo == null)
-                filesInfo = new List<FileInfo>();
+                lock (sync)
+                    filesInfo = new List<FileInfo>();
             needStop = false;
-            filesInfo.Add(new FileInfo
-            {
-                FilePath = filePath,
-                LastFileWriteTime = File.GetLastWriteTimeUtc(filePath),
-                ObservationPeriod = observationPeriod < MinObservationPeriod ? MinObservationPeriod : observationPeriod,
-                ConfigurationSource = configurationSource,
-                NextCheck = DateTime.Now + observationPeriod, // CR(krait): DateTime.Now should never be used. Use DateTime.UtcNow instead: https://blogs.msdn.microsoft.com/kirillosenkov/2012/01/10/datetime-utcnow-is-generally-preferable-to-datetime-now/
-                CurrentSettings = null,
-                OnError = callBack,
-            });
+            lock (sync)
+                filesInfo.Add(new FileInfo
+                {
+                    FilePath = filePath,
+                    LastFileWriteTime = File.GetLastWriteTimeUtc(filePath),
+                    ObservationPeriod = observationPeriod < MinObservationPeriod ? MinObservationPeriod : observationPeriod,
+                    ConfigurationSource = configurationSource,
+                    NextCheck = DateTime.UtcNow + observationPeriod,
+                    CurrentSettings = null,
+                    OnError = callBack,
+                });
 
             if (watcherThread == null)
                 watcherThread = ThreadRunner.Run(WatchFile);
@@ -55,21 +60,24 @@ namespace Vostok.Configuration.Sources
         /// <summary>
         /// Add subscription
         /// </summary>
-        public static IDisposable Subscribe(IObserver<RawSettings> observer, string filePath)
+        public static IDisposable Subscribe(IObserver<RawSettings> observer, IConfigurationSource source)
         {
-            var obsInfo = observersInfo.FirstOrDefault(i => i.FilePath == filePath);
-            if (obsInfo == null)
+            IDisposable subscription;
+            RawSettings current;
+            lock (sync)
             {
-                obsInfo = new ObserverInfo
+                BehaviorSubject<RawSettings> obsInfo;
+                if (observersInfo.ContainsKey(source))
+                    obsInfo = observersInfo[source];
+                else
                 {
-                    FilePath = filePath,
-                    Observers = new BehaviorSubject<RawSettings>(null),
-                };
-                observersInfo.Add(obsInfo);
-            }
-            var subscription = obsInfo.Observers.Where(o => o != null).SubscribeSafe(observer);
+                    obsInfo = new BehaviorSubject<RawSettings>(null);
+                    observersInfo.TryAdd(source, obsInfo);
+                }
+                subscription = obsInfo.Where(o => o != null).SubscribeSafe(observer);
 
-            var current = filesInfo.FirstOrDefault(i => i.FilePath == filePath)?.CurrentSettings;
+                current = filesInfo.FirstOrDefault(i => i.ConfigurationSource == source)?.CurrentSettings;
+            }
             if (current != null)
                 observer.OnNext(current);
 
@@ -82,12 +90,16 @@ namespace Vostok.Configuration.Sources
             {
                 Thread.Sleep(MinObservationPeriod);
                 if (needStop) break;
-                if (observersInfo.Count == 0 || filesInfo == null) continue;
 
-                foreach (var info in filesInfo.Where(i => i.NextCheck <= DateTime.Now))
+                if (observersInfo.Count == 0 || filesInfo == null) continue;
+                FileInfo[] fi;
+                lock (sync)
+                    fi = filesInfo.Where(i => i.NextCheck <= DateTime.UtcNow).ToArray();
+                foreach (var info in fi)
                     try
                     {
                         CheckFile(info);
+                        info.NextCheck = DateTime.UtcNow + info.ObservationPeriod;
                     }
                     catch (Exception e)
                     {
@@ -99,57 +111,74 @@ namespace Vostok.Configuration.Sources
 
         private static void CheckFile(FileInfo fileInfo)
         {
-            var fileExists = File.Exists(fileInfo.FilePath);
-            var lwt = File.GetLastWriteTimeUtc(fileInfo.FilePath);
+            RawSettings changes = null;
+            IConfigurationSource source = null;
+            var needReturn = false;
 
-            if (!fileExists && fileInfo.CurrentSettings != null)
+            lock (sync)
             {
-                fileInfo.LastFileWriteTime = DateTime.UtcNow;
-                Return(null, fileInfo.FilePath);
-            }
-            else if (fileExists && lwt > fileInfo.LastFileWriteTime)
-            {
-                fileInfo.LastFileWriteTime = lwt;
-                var changes = fileInfo.ConfigurationSource.Get();
+                var fileExists = File.Exists(fileInfo.FilePath);
+                var lwt = File.GetLastWriteTimeUtc(fileInfo.FilePath);
 
-                if (!Equals(fileInfo.CurrentSettings, changes))
-                    Return(changes, fileInfo.FilePath);
-            }
+                if (!fileExists && fileInfo.CurrentSettings != null)
+                {
+                    fileInfo.LastFileWriteTime = DateTime.UtcNow;
+                    source = fileInfo.ConfigurationSource;
+                    needReturn = true;
+                }
+                else if (fileExists && lwt > fileInfo.LastFileWriteTime)
+                {
+                    fileInfo.LastFileWriteTime = lwt;
+                    changes = fileInfo.ConfigurationSource.Get();
 
-            void Return(RawSettings changes, string filePath)
-            {
-                foreach (var observer in observersInfo.Where(i => i.FilePath == filePath)) // CR(krait): Why not just store them already grouped by file path?
-                    observer.Observers.OnNext(changes);
-                var info = filesInfo.FirstOrDefault(i => i.FilePath == filePath);
-                if (info != null)
-                    info.CurrentSettings = changes;
+                    if (!Equals(fileInfo.CurrentSettings, changes))
+                    {
+                        source = fileInfo.ConfigurationSource;
+                        needReturn = true;
+                    }
+                }
+                if (!needReturn) return;
             }
+            
+            if (observersInfo.ContainsKey(source))
+                observersInfo[source].OnNext(changes);
+            FileInfo info;
+            lock (sync)
+                info = filesInfo.FirstOrDefault(i => i.ConfigurationSource == source);
+            if (info != null)
+                info.CurrentSettings = changes;
         }
 
+        /// <summary>
+        /// Stop watcher and clear all data for next start
+        /// </summary>
         public static void StopAndClear()
         {
+            lock (sync)
+            {
+                filesInfo.Clear();
+                filesInfo = null;
+            }
             needStop = true;
-            filesInfo.Clear();
-            filesInfo = null;
-            observersInfo.ForEach(i => i.Observers.Dispose());
+            observersInfo.Values.ToList().ForEach(o => o.Dispose());
             observersInfo.Clear();
             observersInfo = null;
             watcherThread = null;
         }
 
+        /// <summary>
+        /// Remove observers of specified source
+        /// </summary>
+        /// <param name="baseFileSource">Source which observers must be removed</param>
         public static void RemoveObservers(IConfigurationSource baseFileSource)
         {
-            var filePath = filesInfo?.FirstOrDefault(fi => fi.ConfigurationSource == baseFileSource)?.FilePath;
-            foreach (var obsInfo in observersInfo.Where(i => i.FilePath == filePath))
-                obsInfo.Observers.Dispose();
-            observersInfo?.RemoveAll(i => i.FilePath == filePath);
-            filesInfo?.RemoveAll(i => i.FilePath == filePath);
-        }
-
-        private class ObserverInfo
-        {
-            public string FilePath { get; set; }
-            public BehaviorSubject<RawSettings> Observers { get; set; }
+            if (observersInfo != null && observersInfo.ContainsKey(baseFileSource))
+            {
+                observersInfo[baseFileSource].Dispose();
+                observersInfo.TryRemove(baseFileSource, out var _);
+            }
+            lock (sync)
+                filesInfo?.RemoveAll(i => i.ConfigurationSource == baseFileSource);
         }
 
         private class FileInfo
@@ -158,7 +187,7 @@ namespace Vostok.Configuration.Sources
             public DateTime LastFileWriteTime { get; set; }
             public DateTime NextCheck { get; set; }
             public TimeSpan ObservationPeriod { get; set; }
-            public IConfigurationSource ConfigurationSource { get; set; } // CR(krait): Why IConfigurationSource? Just pass the Get() method.
+            public IConfigurationSource ConfigurationSource { get; set; }
             public RawSettings CurrentSettings { get; set; }
             public Action<Exception> OnError { get; set; }
         }
