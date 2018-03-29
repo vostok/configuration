@@ -101,7 +101,7 @@ namespace Vostok.Configuration.Tests
         public void Should_only_call_OnNext_on_observers_of_the_type_whose_underlying_source_was_updated()
         {
             new Action(() =>
-                    CountOnNextCallsForTwoSources().Should().Be((2, 0)))
+                    CountOnNextCallsForTwoSources().Should().Be((2, 1)))
                 .ShouldPassIn(1.Seconds());
         }
 
@@ -115,16 +115,15 @@ namespace Vostok.Configuration.Tests
             using (var jcs2 = new JsonFileSource(TestFile2Name, 100.Milliseconds()))
             {
                 var cp = new ConfigurationProvider()
-                    .WithSourceFor<MyClass>(jcs1);
-
+                    .WithSourceFor<MyClass>(jcs1)
+                    .WithSourceFor<MyClass2>(jcs2);
+                
                 var sub1 = cp.Observe<MyClass>().Subscribe(val =>
                 {
                     vClass++;
                     val.Value.Should().Be(vClass);
                 });
-                var sub2 = cp.Observe<int>().Subscribe(val => vInt++);
-
-                cp.WithSourceFor<int>(jcs2);
+                var sub2 = cp.Observe<MyClass2>().Subscribe(val => vInt++);
 
                 Thread.Sleep(200.Milliseconds());
                 CreateTextFile(1, "{ \"Value\": 2 }");
@@ -175,6 +174,15 @@ namespace Vostok.Configuration.Tests
         private class MyClass
         {
             public int Value { get; set; }
+
+            public override string ToString() => Value.ToString();
+        }
+
+        private class MyClass2
+        {
+            public int Value { get; set; }
+
+            public override string ToString() => Value.ToString();
         }
 
         [Test]
@@ -189,9 +197,10 @@ namespace Vostok.Configuration.Tests
                 }),
                 x => throw new Exception("Only one execution is allowed. Second one must be from cache."));
 
-            var cp = new ConfigurationProvider();
-            cp.Get<MyClass>(cs).Should().BeEquivalentTo(res);
-            cp.Get<MyClass>(cs).Should().BeEquivalentTo(res);   //from cache
+            var cp = new ConfigurationProvider()
+                .WithSourceFor<MyClass>(cs);
+            cp.Get<MyClass>().Should().BeEquivalentTo(res);
+            cp.Get<MyClass>().Should().BeEquivalentTo(res);   //from cache
 
             cs.Dispose();
         }
