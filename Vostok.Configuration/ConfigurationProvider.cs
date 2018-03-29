@@ -38,17 +38,11 @@ namespace Vostok.Configuration
         {
             try
             {
-                if (cache.TryGetValue(typeof (TSettings), out var item) && DateTime.UtcNow < item.expiration)
-                    return (TSettings)item.value;
-                
                 if (!sources.TryGetValue(typeof(TSettings), out var source))
                     throw new ArgumentException($"{nameof(IConfigurationSource)} for specified type \"{typeof(TSettings).Name}\" is absent");
-
-                var value = settingsBinder.Bind<TSettings>(source.Get());
-
-                cache[typeof(TSettings)] = (value, DateTime.UtcNow + cacheTime);
-
-                return value;
+                if (cache.TryGetValue(typeof(TSettings), out var item) && DateTime.UtcNow < item.expiration)
+                    return (TSettings)item.value;
+                return Get<TSettings>(source.Get(), true);
             }
             catch (Exception e)
             {
@@ -63,7 +57,7 @@ namespace Vostok.Configuration
         {
             try
             {
-                return settingsBinder.Bind<TSettings>(source.Get());
+                return Get<TSettings>(source.Get());
             }
             catch (Exception e)
             {
@@ -71,6 +65,27 @@ namespace Vostok.Configuration
                     throw;
                 onError?.Invoke(e);
                 return default;
+            }
+        }
+
+        private TSettings Get<TSettings>(RawSettings settings, bool cached = false)
+        {
+            (object value, DateTime expiration) item = default;
+            if (cached && cache.TryGetValue(typeof(TSettings), out item) && DateTime.UtcNow < item.expiration)
+                return (TSettings)item.value;
+
+            try
+            {
+                var value = settingsBinder.Bind<TSettings>(settings);
+                cache[typeof(TSettings)] = (value, DateTime.UtcNow + cacheTime);
+                return value;
+            }
+            catch (Exception e)
+            {
+                if (throwExceptions)
+                    throw;
+                onError?.Invoke(e);
+                return (TSettings)item.value;
             }
         }
 
@@ -83,15 +98,13 @@ namespace Vostok.Configuration
             var subject = subjects.GetOrAdd(typeof(TSettings), _ => newSubject = new BehaviorSubject<object>(Get<TSettings>()));
 
             if (subject == newSubject)
-                source.Observe().Where(s => s != null).Select(_ => Get<TSettings>() as object).Subscribe(subject);
+                source.Observe().Where(s => s != null).Select(settings => Get<TSettings>(settings, true) as object).Subscribe(subject);
 
             return subject.Where(s => s != null).Cast<TSettings>();
         }
 
-        public IObservable<TSettings> Observe<TSettings>(IConfigurationSource source)
-        {
-            return source.Observe().Select(settings => settingsBinder.Bind<TSettings>(settings)).Where(s => s != null);
-        }
+        public IObservable<TSettings> Observe<TSettings>(IConfigurationSource source) => 
+            source.Observe().Select(settings => Get<TSettings>(settings)).Where(s => s != null);
 
         public ConfigurationProvider WithSourceFor<TSettings>(IConfigurationSource source)
         {
