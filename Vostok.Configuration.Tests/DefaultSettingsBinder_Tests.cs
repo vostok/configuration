@@ -38,6 +38,16 @@ namespace Vostok.Configuration.Tests
         }
 
         [Test]
+        public void Should_bind_to_Primitive_from_single_dictionary_value()
+        {
+            var settings = new RawSettings(new Dictionary<string, RawSettings>
+            {
+                { "key", new RawSettings("123") }
+            });
+            binder.Bind<int>(settings).Should().Be(123);
+        }
+
+        [Test]
         public void Should_bind_to_Decimal()
         {
             var settings = new RawSettings("123,456");

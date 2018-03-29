@@ -101,17 +101,22 @@ namespace Vostok.Configuration
                 return true;
             }
 
-            if (string.IsNullOrWhiteSpace(settings.Value))
+            string value = null;
+            if (!string.IsNullOrWhiteSpace(settings.Value))
+                value = settings.Value;
+            else if (settings.Value == null && settings.Children == null && settings.ChildrenByKey != null && settings.ChildrenByKey.Count == 1)
+                value = settings.ChildrenByKey.First().Value.Value;
+            else
                 CheckArgumentIsNull(null, ValueIsNull.Replace("%v", settings.Value).Replace("%t", bindType.Name));
-
-            if (primitiveAndSimpleParsers[bindType].TryParse(settings.Value, out var res))
+            
+            if (primitiveAndSimpleParsers[bindType].TryParse(value, out var res))
             {
                 result = res;
                 return true;
             }
                 
             // (Mansiper): Must throw only if get new primitive like int128
-            throw new InvalidCastException($"\"{settings.Value}\" to \"{bindType.Name}\"");
+            throw new InvalidCastException($"\"{value}\" to \"{bindType.Name}\"");
         }
 
         private static bool TryBindToEnum(RawSettings settings, Type bindType, out object result)

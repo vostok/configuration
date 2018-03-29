@@ -77,7 +77,7 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Get_should_call_back_on_error()
         {
-            CreateTextFile(1, "{ \"Value\": 123 }");
+            CreateTextFile(1, "{ \"Value\": 123.45 }");
 
             var res = false;
             Action<Exception> Cb() => exception => res = true;
