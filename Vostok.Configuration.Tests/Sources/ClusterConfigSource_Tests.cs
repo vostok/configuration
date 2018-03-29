@@ -19,12 +19,12 @@ namespace Vostok.Configuration.Tests.Sources
         private const string FullKey = "banana/core/houstontimeout";
         private const string Prefix = "banana/core";
         private const string Key = "houstontimeout";
-        private const string Value = "1 minutes";
-        /*private Dictionary<string, List<string>>  fullDict;
+        private const string Value = "1 minute";
+        private Dictionary<string, List<string>>  fullDict;
         private Dictionary<string, List<string>>  shortDict;
-        private List<string> keyList;*/
+        private List<string> keyList;
 
-        /*[SetUp]
+        [SetUp]
         public void SetUp()
         {
             fullDict = new Dictionary<string, List<string>>();
@@ -43,13 +43,13 @@ namespace Vostok.Configuration.Tests.Sources
             clusterClient.GetAll().Returns(fullDict);
             clusterClient.GetByKey(Arg.Any<string>()).Returns(keyList);
             clusterClient.GetByPrefix(Arg.Any<string>()).Returns(shortDict);
-        }*/
+        }
         
         [Test]
         public void Should_get_all_settings()
         {
-            using (var ccs = new ClusterConfigSource())
-                ccs.Get().ChildrenByKey.Should().HaveCountGreaterThan(1000);
+            using (var ccs = new ClusterConfigSource(null, null, clusterClient))
+                ccs.Get().ChildrenByKey.Should().HaveCountGreaterThan(100);
         }
 
         [Test]
@@ -69,7 +69,7 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_get_by_prefix_and_key()
         {
-            using (var ccs = new ClusterConfigSource(Prefix, Key))
+            using (var ccs = new ClusterConfigSource(Prefix, Key, clusterClient))
                 ccs.Get().Children.Should().HaveCount(1).And.BeEquivalentTo(new RawSettings(Value));
         }
 
@@ -83,7 +83,7 @@ namespace Vostok.Configuration.Tests.Sources
                 }).Should().Throw<ArgumentException>();
         }
 
-        /*[Test]
+        [Test]
         public void Should_observe_variables()
         {
             new Action(() => ShouldObserveVariablesTest().Should().Be(1)).ShouldPassIn(1.Seconds());
@@ -93,7 +93,7 @@ namespace Vostok.Configuration.Tests.Sources
             const string newValue = "NewValue";
 
             var val = 0;
-            using (var ccs = new ClusterConfigSource(Prefix, Key))
+            using (var ccs = new ClusterConfigSource(Prefix, Key, clusterClient, 100.Milliseconds(), true))
             {
                 var sub = ccs.Observe().Subscribe(settings =>
                 {
@@ -116,6 +116,6 @@ namespace Vostok.Configuration.Tests.Sources
             }
             FixedPeriodSettingsWatcher.StopAndClear();
             return val;
-        }*/
+        }
     }
 }

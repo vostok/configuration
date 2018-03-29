@@ -26,7 +26,11 @@ namespace Vostok.Configuration.Sources
             this.scope = scope;
 
             observers = new BehaviorSubject<RawSettings>(null);
-            source.Observe().Subscribe(_ => observers.OnNext(Get()));
+            source.Observe().Subscribe(_ =>
+            {
+                if (observers.HasObservers)
+                    observers.OnNext(Get());
+            });
         }
 
         public ScopedSource(RawSettings settings, params string[] scope)

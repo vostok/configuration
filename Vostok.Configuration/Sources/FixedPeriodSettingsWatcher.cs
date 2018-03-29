@@ -85,7 +85,7 @@ namespace Vostok.Configuration.Sources
                     if (observers.ContainsKey(observePeriod))
                         subscription = observers[observePeriod].Observers.Where(s => s != null).SubscribeSafe(observer);
                     else
-                        return null;    //todo: null or exception?
+                        return null;
                     if (observers[observePeriod].Current != null)
                         observer.OnNext(observers[observePeriod].Current);
                 }

@@ -16,7 +16,7 @@ namespace Vostok.Configuration.Sources
         private readonly TimeSpan observePeriod;
 
         /// <param name="observePeriod">Observation period (min 100 ms)</param>
-        public EnvironmentVariablesSource(TimeSpan observePeriod = default) //todo: callback?
+        public EnvironmentVariablesSource(TimeSpan observePeriod = default)
         {
             this.observePeriod = observePeriod < MinObservationPeriod ? MinObservationPeriod : observePeriod;
             FixedPeriodSettingsWatcher.StartFixedPeriodSettingsWatcher(1.Seconds(), 10.Seconds(), Get, this.observePeriod);

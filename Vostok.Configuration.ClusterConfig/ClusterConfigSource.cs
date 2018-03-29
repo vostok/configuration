@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reactive.Linq;
-using Kontur.ClusterConfig.Client;
 using Vostok.Commons;
 using Vostok.Commons.Conversions;
 using Vostok.Configuration.Sources;
@@ -16,15 +14,6 @@ namespace Vostok.Configuration.ClusterConfig
         Dictionary<string, List<string>> GetByPrefix(string prefix);
     }
 
-    public class ClusterConfigClientProxy : IClusterConfigClientProxy
-    {
-        public Dictionary<string, List<string>> GetAll() => ClusterConfigClient.GetAll();
-
-        public List<string> GetByKey(string key) => ClusterConfigClient.GetByKey(key);
-
-        public Dictionary<string, List<string>> GetByPrefix(string prefix) => ClusterConfigClient.GetByPrefix(prefix);
-    }
-
     public class ClusterConfigSource : IConfigurationSource
     {
         private static readonly TimeSpan MinObservationPeriod = 1.Minutes();
@@ -32,18 +21,27 @@ namespace Vostok.Configuration.ClusterConfig
         private readonly string prefix;
         private readonly string key;
         private readonly TimeSpan observePeriod;
+        private readonly IClusterConfigClientProxy clusterConfigClient;
 
-        public ClusterConfigSource(string prefix, string key, TimeSpan observePeriod = default) //todo: callback?
+        public ClusterConfigSource(string prefix, string key, TimeSpan observePeriod = default)
+            : this(prefix, key, new ClusterConfigClientProxy(), observePeriod)
+        { }
+
+        public ClusterConfigSource(TimeSpan observePeriod = default)
+            : this(null, null, new ClusterConfigClientProxy(), observePeriod)
+        { }
+
+        internal ClusterConfigSource(string prefix, string key, IClusterConfigClientProxy clusterConfigClient, TimeSpan observePeriod = default, bool forTest = false)
         {
             this.prefix = prefix;
             this.key = key;
-            this.observePeriod = observePeriod < MinObservationPeriod ? MinObservationPeriod : observePeriod;
-            FixedPeriodSettingsWatcher.StartFixedPeriodSettingsWatcher(1.Seconds(), 1.Minutes(), GetAll, this.observePeriod);
+            this.clusterConfigClient = clusterConfigClient;
+            if (!forTest)
+                this.observePeriod = observePeriod < MinObservationPeriod ? MinObservationPeriod : observePeriod;
+            else
+                this.observePeriod = observePeriod;
+            FixedPeriodSettingsWatcher.StartFixedPeriodSettingsWatcher(forTest ? 100.Milliseconds() : 1.Seconds(), forTest ? 100.Milliseconds() : 1.Minutes(), GetAll, this.observePeriod);
         }
-
-        public ClusterConfigSource(TimeSpan observePeriod = default)
-            : this(null, null, observePeriod)
-        { }
 
         public RawSettings Get()
         {
@@ -51,16 +49,16 @@ namespace Vostok.Configuration.ClusterConfig
             var emptyKey = string.IsNullOrWhiteSpace(key);
 
             if (emptyPrefix && emptyKey)
-                return ParseCcTree(new ClusterConfigClientProxy().GetAll());
+                return ParseCcTree(clusterConfigClient.GetAll());
             else if (!emptyPrefix && !emptyKey)
-                return ParseCcList(new ClusterConfigClientProxy().GetByKey($"{prefix}/{key}"));
+                return ParseCcList(clusterConfigClient.GetByKey($"{prefix}/{key}"));
             else if (!emptyPrefix)
-                return ParseCcTree(new ClusterConfigClientProxy().GetByPrefix(prefix));
+                return ParseCcTree(clusterConfigClient.GetByPrefix(prefix));
             else
-                return ParseCcTree(new ClusterConfigClientProxy().GetAll(), true);
+                return ParseCcTree(clusterConfigClient.GetAll(), true);
         }
 
-        private RawSettings GetAll() => ParseCcTree(new ClusterConfigClientProxy().GetAll());
+        private RawSettings GetAll() => ParseCcTree(clusterConfigClient.GetAll());
 
         private RawSettings ParseCcTree(Dictionary<string, List<string>> tree, bool byKey = false)
         {
@@ -83,13 +81,22 @@ namespace Vostok.Configuration.ClusterConfig
             if (prefScope != null && keyScope != null)
                 scope = scope.Concat(keyScope);
             return FixedPeriodSettingsWatcher.Observe(observePeriod)
-                .Select(s => new ScopedSource(s, scope.ToArray()).Get())
-                .Where(s => !Equals(s, Get()));
+                /*.Select(s => new ScopedSource(s, scope.ToArray()).Get())
+                .Where(s => !Equals(s, Get()))*/;
         }
 
         public void Dispose()
         {
             FixedPeriodSettingsWatcher.RemoveObservers(observePeriod);
+        }
+
+        private class ClusterConfigClientProxy : IClusterConfigClientProxy
+        {
+            public Dictionary<string, List<string>> GetAll() => Kontur.ClusterConfig.Client.ClusterConfigClient.GetAll();
+
+            public List<string> GetByKey(string key) => Kontur.ClusterConfig.Client.ClusterConfigClient.GetByKey(key);
+
+            public Dictionary<string, List<string>> GetByPrefix(string prefix) => Kontur.ClusterConfig.Client.ClusterConfigClient.GetByPrefix(prefix);
         }
     }
 }

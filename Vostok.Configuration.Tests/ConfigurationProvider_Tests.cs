@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
 using Vostok.Commons.Conversions;
 using Vostok.Commons.Testing;
@@ -173,6 +175,53 @@ namespace Vostok.Configuration.Tests
         private class MyClass
         {
             public int Value { get; set; }
+        }
+
+        [Test]
+        public void Should_read_from_cache_for_one_source()
+        {
+            var res = new MyClass { Value = 0 };
+            var cs = Substitute.For<IConfigurationSource>();
+            cs.Get().Returns(
+                x => new RawSettings(new Dictionary<string, RawSettings>
+                {
+                    {"Value", new RawSettings("0")},
+                }),
+                x => throw new Exception("Only one execution is allowed. Second one must be from cache."));
+
+            var cp = new ConfigurationProvider();
+            cp.Get<MyClass>(cs).Should().BeEquivalentTo(res);
+            cp.Get<MyClass>(cs).Should().BeEquivalentTo(res);   //from cache
+
+            cs.Dispose();
+        }
+
+        [Test]
+        public void Should_read_from_cache_for_multiple_sources()
+        {
+            var res = new MyClass { Value = 0 };
+            var ret = new RawSettings(
+                new Dictionary<string, RawSettings>
+                {
+                    {"Value", new RawSettings("0")},
+                });
+            var cs1 = Substitute.For<IConfigurationSource>();
+            cs1.Get().Returns(
+                x => ret,   //on the first WithSourceFor
+                x => ret,   //on the second WithSourceFor
+                x => throw new Exception("Only two executions are allowed (source 1). The third one must be from cache."));
+            var cs2 = Substitute.For<IConfigurationSource>();
+            cs2.Get().Returns(
+                x => ret,   //on the second WithSourceFor
+                x => throw new Exception("Only one execution is allowed (source 2). The second one must be from cache."));
+
+            var cp = new ConfigurationProvider()
+                .WithSourceFor<MyClass>(cs1)
+                .WithSourceFor<MyClass>(cs2);
+            cp.Get<MyClass>().Should().BeEquivalentTo(res); //from cache
+            cp.Get<MyClass>().Should().BeEquivalentTo(res); //from cache
+
+            cs1.Dispose();
         }
     }
 }

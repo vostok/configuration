@@ -32,7 +32,8 @@ namespace Vostok.Configuration.Sources
                 sources[i].Observe().Subscribe(settings =>
                 {
                     sourcesSettings[ii] = settings;
-                    observers.OnNext(Get());
+                    if (observers.HasObservers)
+                        observers.OnNext(Get());
                 });
             }
         }
