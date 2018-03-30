@@ -112,7 +112,7 @@ namespace Vostok.Configuration.Sources
                 source = pair.Key;
                 needReturn = true;
             }
-            else if (fileExists && lwt > pair.Value.LastFileWriteTime)
+            else if (fileExists && (lwt > pair.Value.LastFileWriteTime || pair.Value.CurrentSettings == null))
             {
                 pair.Value.LastFileWriteTime = lwt;
                 changes = pair.Key.Get();
@@ -124,7 +124,7 @@ namespace Vostok.Configuration.Sources
                 }
             }
             if (!needReturn) return;
-            
+
             if (observersInfo.ContainsKey(source))
                 observersInfo[source].OnNext(changes);
             if (filesInfo.TryGetValue(pair.Key, out var info) && info != null)

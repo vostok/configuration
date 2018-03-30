@@ -30,10 +30,10 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_Observe_file()
         {
-            new Action(() => ShouldObserveFileTest().Should().Be(2)).ShouldPassIn(1.Seconds());
+            new Action(() => ReturnsNumberOfSubscribeActionInvokes_1().Should().Be(2)).ShouldPassIn(1.Seconds());
         }
 
-        private int ShouldObserveFileTest()
+        private int ReturnsNumberOfSubscribeActionInvokes_1()
         {
             var val = 0;
             using (var jfs = new JsonFileSource(TestFileName, 100.Milliseconds()))
@@ -74,10 +74,10 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_not_Observe_file_twice()
         {
-            new Action(() => ShouldNotObserveFileTwiceTest().Should().Be(1)).ShouldPassIn(1.Seconds());
+            new Action(() => ReturnsNumberOfSubscribeActionInvokes_2().Should().Be(1)).ShouldPassIn(1.Seconds());
         }
 
-        public int ShouldNotObserveFileTwiceTest()
+        public int ReturnsNumberOfSubscribeActionInvokes_2()
         {
             var val = 0;
             using (var jfs = new JsonFileSource(TestFileName, 100.Milliseconds()))
@@ -108,10 +108,10 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_callback_on_exception()
         {
-            new Action(() => ShouldCallbackOnExceptionTest().Should().Be(1)).ShouldPassIn(1.Seconds());
+            new Action(() => ReturnsNumberOfCallbacks().Should().BeGreaterOrEqualTo(2)).ShouldPassIn(1.Seconds());
         }
 
-        private int ShouldCallbackOnExceptionTest()
+        private int ReturnsNumberOfCallbacks()
         {
             var val = 0;
             using (var jfs = new JsonFileSource(TestFileName, 100.Milliseconds(), e => val++))
@@ -120,7 +120,7 @@ namespace Vostok.Configuration.Tests.Sources
                 var sub2 = jfs.Observe().Subscribe(settings => {});
 
                 CreateTextFile("wrong file format");
-                Thread.Sleep(200.Milliseconds());
+                Thread.Sleep(250.Milliseconds());
 
                 sub1.Dispose();
                 sub2.Dispose();

@@ -13,7 +13,6 @@ namespace Vostok.Configuration.Sources
         private readonly IConfigurationSource[] sources;
         private readonly ListCombineOptions listCombineOptions;
         private readonly RawSettings[] sourcesSettings;
-        private readonly BehaviorSubject<RawSettings> observers;
 
         /// <summary>
         /// Creating new source with list of configurations to combine
@@ -25,17 +24,6 @@ namespace Vostok.Configuration.Sources
             this.sources = sources;
             this.listCombineOptions = listCombineOptions;
             sourcesSettings = new RawSettings[sources.Length];
-            observers = new BehaviorSubject<RawSettings>(null);
-            for (var i = 0; i < sources.Length; i++)
-            {
-                var ii = i;
-                sources[i].Observe().Subscribe(settings =>
-                {
-                    sourcesSettings[ii] = settings;
-                    if (observers.HasObservers)
-                        observers.OnNext(Get());
-                });
-            }
         }
 
         /// <summary>
@@ -44,8 +32,7 @@ namespace Vostok.Configuration.Sources
         /// <param name="sources">Configurations</param>
         public CombinedSource(params IConfigurationSource[] sources)
             : this(sources.ToArray(), ListCombineOptions.FirstOnly)
-        {
-        }
+        { }
 
         /// <summary>
         /// Returns combine of configurations
@@ -84,22 +71,13 @@ namespace Vostok.Configuration.Sources
         /// Watches changes of any of the sources
         /// </summary>
         /// <returns>Event with new RawSettings tree</returns>
-        public IObservable<RawSettings> Observe()
-        {
-            return Observable.Create<RawSettings>(observer =>
-            {
-                var subscription = observers.Where(o => o != null).SubscribeSafe(observer);
-                if (sourcesSettings.Any(s => s != null))
-                    observer.OnNext(Get());
-                return subscription;
-            });
-        }
+        public IObservable<RawSettings> Observe() =>
+            sources.Select(s => s.Observe()).Merge().Select(_ => Get());
 
         public void Dispose()
         {
             foreach (var source in sources)
                 source.Dispose();
-            observers.Dispose();
         }
     }
 }

@@ -317,7 +317,7 @@ namespace Vostok.Configuration.Tests.Sources
         [Test, Explicit("Not stable on mass tests")]
         public void Should_observe_file()
         {
-            new Action(() => ShouldObserveFileTest().Should().Be(1)).ShouldPassIn(1.Seconds());
+            new Action(() => ShouldObserveFileTest().Should().Be(3)).ShouldPassIn(1.Seconds());
         }
         private int ShouldObserveFileTest()
         {

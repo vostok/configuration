@@ -105,12 +105,12 @@ namespace Vostok.Configuration.Tests
                 .ShouldPassIn(1.Seconds());
         }
 
-        private (int vClass, int vInt) CountOnNextCallsForTwoSources()
+        private (int vClass1, int vClass2) CountOnNextCallsForTwoSources()
         {
             CreateTextFile(1, "{ \"Value\": 1 }");
             CreateTextFile(2, "{ \"Value\": 123 }");
-            var vClass = 0;
-            var vInt = 0;
+            var vClass1 = 0;
+            var vClass2 = 0;
             using (var jcs1 = new JsonFileSource(TestFile1Name, 100.Milliseconds()))
             using (var jcs2 = new JsonFileSource(TestFile2Name, 100.Milliseconds()))
             {
@@ -120,10 +120,10 @@ namespace Vostok.Configuration.Tests
                 
                 var sub1 = cp.Observe<MyClass>().Subscribe(val =>
                 {
-                    vClass++;
-                    val.Value.Should().Be(vClass);
+                    vClass1++;
+                    val.Value.Should().Be(vClass1);
                 });
-                var sub2 = cp.Observe<MyClass2>().Subscribe(val => vInt++);
+                var sub2 = cp.Observe<MyClass2>().Subscribe(val => vClass2++);
 
                 Thread.Sleep(200.Milliseconds());
                 CreateTextFile(1, "{ \"Value\": 2 }");
@@ -134,7 +134,7 @@ namespace Vostok.Configuration.Tests
                 Thread.Sleep(200.Milliseconds());
             }
             SettingsFileWatcher.StopAndClear();
-            return (vClass, vInt);
+            return (vClass1, vClass2);
         }
 
         [Test, Explicit("Not stable on mass tests")]

@@ -162,19 +162,25 @@ namespace Vostok.Configuration
             if (!bindType.IsValueType)
                 return false;
 
-            CheckArgumentIsNull(settings.ChildrenByKey, DictIsEmpty);
+            var defaultAttrOption = BinderAttributes.IsOptional;
+            if (bindType.GetCustomAttributes().Any(a => a.GetType() == typeof(RequiredByDefaultAttribute)))
+            {
+                CheckArgumentIsNull(settings.ChildrenByKey, DictIsEmpty.Replace("%t", bindType.Name));
+                defaultAttrOption = BinderAttributes.IsRequired;
+            }
+
             result = Activator.CreateInstance(bindType);
 
             foreach (var field in bindType.GetFields())
             {
-                var binderAttributes = GetAttributes(field.GetCustomAttributes().ToArray());
-                var res = BindInvokeFP(field.Name, field.FieldType, settings, binderAttributes);
+                var binderAttributes = GetAttributes(field.GetCustomAttributes().ToArray(), defaultAttrOption);
+                var res = BindInvokeFieldOrProperty(field.Name, field.FieldType, settings, binderAttributes);
                 field.SetValue(result, res);
             }
             foreach (var prop in bindType.GetProperties().Where(p => p.CanWrite))
             {
-                var binderAttributes = GetAttributes(prop.GetCustomAttributes().ToArray());
-                var res = BindInvokeFP(prop.Name, prop.PropertyType, settings, binderAttributes);
+                var binderAttributes = GetAttributes(prop.GetCustomAttributes().ToArray(), defaultAttrOption);
+                var res = BindInvokeFieldOrProperty(prop.Name, prop.PropertyType, settings, binderAttributes);
                 prop.SetValue(result, res);
             }
             return true;
@@ -273,18 +279,23 @@ namespace Vostok.Configuration
             if (!bindType.IsClass)
                 return false;
 
-            CheckArgumentIsNull(settings.ChildrenByKey, DictIsEmpty.Replace("%t", bindType.Name));
+            var defaultAttrOption = BinderAttributes.IsOptional;
+            if (bindType.GetCustomAttributes().Any(a => a.GetType() == typeof(RequiredByDefaultAttribute)))
+            {
+                CheckArgumentIsNull(settings.ChildrenByKey, DictIsEmpty.Replace("%t", bindType.Name));
+                defaultAttrOption = BinderAttributes.IsRequired;
+            }
             var inst = Activator.CreateInstance(bindType);
             foreach (var field in bindType.GetFields())
             {
-                var binderAttributes = GetAttributes(field.GetCustomAttributes().ToArray());
-                var res = BindInvokeFP(field.Name, field.FieldType, settings, binderAttributes);
+                var binderAttribute = GetAttributes(field.GetCustomAttributes().ToArray(), defaultAttrOption);
+                var res = BindInvokeFieldOrProperty(field.Name, field.FieldType, settings, binderAttribute);
                 field.SetValue(inst, res);
             }
             foreach (var prop in bindType.GetProperties().Where(p => p.CanWrite))
             {
-                var binderAttributes = GetAttributes(prop.GetCustomAttributes().ToArray());
-                var res = BindInvokeFP(prop.Name, prop.PropertyType, settings, binderAttributes);
+                var binderAttribute = GetAttributes(prop.GetCustomAttributes().ToArray(), defaultAttrOption);
+                var res = BindInvokeFieldOrProperty(prop.Name, prop.PropertyType, settings, binderAttribute);
                 prop.SetValue(inst, res);
             }
             result = inst;
@@ -316,34 +327,27 @@ namespace Vostok.Configuration
             throw new InvalidCastException($"Unknown data type \"{type.Name}\". If it is primitive ask developers to add it.");
         }
 
-        private object BindInvokeFP(string fieldOrPropertyName, Type fieldOrPropertyType, RawSettings settings, BinderAttributes attributes)
+        private object BindInvokeFieldOrProperty(string name, Type type, RawSettings settings, BinderAttributes attribute)
         {
-            if (!settings.ChildrenByKey.ContainsKey(fieldOrPropertyName))
+            if (settings.ChildrenByKey == null || !settings.ChildrenByKey.ContainsKey(name))
             {
-                if (attributes.HasFlag(BinderAttributes.IsOptional) && attributes.HasFlag(BinderAttributes.IsRequired))
-                    return Activator.CreateInstance(
-                        fieldOrPropertyType.IsClass || fieldOrPropertyType.GenericTypeArguments.Length == 0 
-                            ? fieldOrPropertyType 
-                            : fieldOrPropertyType.GenericTypeArguments[0]);
-                else if (attributes.HasFlag(BinderAttributes.IsOptional))
-                    return fieldOrPropertyType.IsClass ? null : Activator.CreateInstance(fieldOrPropertyType);
+                if (attribute == BinderAttributes.IsOptional)
+                    return type.IsClass ? null : Activator.CreateInstance(type);
                 else
-                    throw new InvalidCastException($"Key \"{fieldOrPropertyName}\" is absent");
+                    throw new InvalidCastException($"Required key \"{name}\" is absent");
             }
-            
-            var rs = settings.ChildrenByKey[fieldOrPropertyName];
-            if ((IsNullableValue(fieldOrPropertyType) || fieldOrPropertyType.IsClass) &&
+
+            var rs = settings.ChildrenByKey[name];
+            if ((IsNullableValue(type) || type.IsClass) &&
                 rs.Value == null && rs.Children == null && rs.ChildrenByKey == null)
             {
-                if (attributes.HasFlag(BinderAttributes.IsRequired) && attributes.HasFlag(BinderAttributes.IsOptional))
-                    return Activator.CreateInstance(fieldOrPropertyType);
-                else if (attributes.HasFlag(BinderAttributes.IsRequired))
-                    throw new InvalidCastException($"Not nullable value of field/property \"{fieldOrPropertyName}\" is null");
-                else
+                if (attribute == BinderAttributes.IsOptional)
                     return null;
+                else
+                    throw new InvalidCastException($"Not nullable required value of field/property \"{name}\" is null");
             }
-            CheckArgumentIsNull(rs, $"Value of field/property \"{fieldOrPropertyName}\" of type \"{fieldOrPropertyType.Name}\" is null");
-            return BindInternal(rs, fieldOrPropertyType);
+            CheckArgumentIsNull(rs, $"Value of field/property \"{name}\" of type \"{type.Name}\" is null");
+            return BindInternal(rs, type);
         }
 
         private object BindInvokeList(int index, Type listType, RawSettings settings)
@@ -379,9 +383,8 @@ namespace Vostok.Configuration
         private static bool IsNullableValue(Type type) => 
             type.IsValueType && type.IsGenericType;
 
-        private static BinderAttributes GetAttributes(Attribute[] attributes)
+        private static BinderAttributes GetAttributes(Attribute[] attributes, BinderAttributes defaultAttribute)
         {
-            BinderAttributes binderAttributes = 0;
             var attrs = new Dictionary<Type, BinderAttributes>
             {
                 { typeof(RequiredAttribute), BinderAttributes.IsRequired },
@@ -390,8 +393,8 @@ namespace Vostok.Configuration
             if (attributes != null && attributes.Length > 0)
                 foreach (var attribute in attributes)
                     if (attrs.ContainsKey(attribute.GetType()))
-                        binderAttributes |= attrs[attribute.GetType()];
-            return binderAttributes;
+                        return attrs[attribute.GetType()];
+            return defaultAttribute;
         }
 
         private class InlineTypeParser<T> : ITypeParser
@@ -411,7 +414,6 @@ namespace Vostok.Configuration
             }
         }
 
-        [Flags]
         private enum BinderAttributes
         {
             IsRequired = 1,

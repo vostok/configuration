@@ -1,6 +1,5 @@
 using System;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
 
 namespace Vostok.Configuration.Sources
 {
@@ -13,8 +12,6 @@ namespace Vostok.Configuration.Sources
         private readonly RawSettings settings;
         private readonly string[] scope;
 
-        private readonly BehaviorSubject<RawSettings> observers;
-
         /// <summary>
         /// Creating scope source
         /// </summary>
@@ -24,22 +21,12 @@ namespace Vostok.Configuration.Sources
         {
             this.source = source;
             this.scope = scope;
-
-            observers = new BehaviorSubject<RawSettings>(null);
-            source.Observe().Subscribe(_ =>
-            {
-                if (observers.HasObservers)
-                    observers.OnNext(Get());
-            });
         }
 
         public ScopedSource(RawSettings settings, params string[] scope)
         {
             this.settings = settings;
             this.scope = scope;
-
-            observers = new BehaviorSubject<RawSettings>(null);
-            source.Observe().Subscribe(_ => observers.OnNext(Get()));
         }
 
         /// <summary>
@@ -83,20 +70,11 @@ namespace Vostok.Configuration.Sources
             return null;
         }
 
-        public IObservable<RawSettings> Observe()
-        {
-            return Observable.Create<RawSettings>(observer =>
-            {
-                var subscription = observers.Where(o => o != null).SubscribeSafe(observer);
-                observer.OnNext(Get());
-                return subscription;
-            });
-        }
+        public IObservable<RawSettings> Observe() => source.Observe().Select(s => Get());
 
         public void Dispose()
         {
             source?.Dispose();
-            observers.Dispose();
         }
     }
 }

@@ -95,7 +95,7 @@ namespace Vostok.Configuration
                 throw new ArgumentException($"{nameof(IConfigurationSource)} for specified type \"{typeof(TSettings).Name}\" is absent");
 
             var newSubject = null as BehaviorSubject<object>;
-            var subject = subjects.GetOrAdd(typeof(TSettings), _ => newSubject = new BehaviorSubject<object>(Get<TSettings>()));
+            var subject = subjects.GetOrAdd(typeof(TSettings), _ => newSubject = new BehaviorSubject<object>(null));
 
             if (subject == newSubject)
                 source.Observe().Where(s => s != null).Select(settings => Get<TSettings>(settings, true) as object).Subscribe(subject);

@@ -11,7 +11,6 @@ using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests.Sources
 {
-    // CR(krait): Tests should not depend on real CC.
     [TestFixture]
     public class ClusterConfigSource_Tests
     {
@@ -36,8 +35,8 @@ namespace Vostok.Configuration.Tests.Sources
                     shortDict.Add(i.ToString(), new List<string> { "a", "b" });
                 fullDict.Add(i.ToString(), new List<string>{ "a", "b" });
             }
-            fullDict.Add(Key, keyList);
-            shortDict.Add(Key, keyList);
+            fullDict.Add(FullKey, keyList);
+            shortDict.Add(FullKey, keyList);
 
             clusterClient = Substitute.For<IClusterConfigClientProxy>();
             clusterClient.GetAll().Returns(fullDict);
@@ -86,7 +85,7 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_observe_variables()
         {
-            new Action(() => ShouldObserveVariablesTest().Should().Be(1)).ShouldPassIn(1.Seconds());
+            new Action(() => ShouldObserveVariablesTest().Should().Be(2)).ShouldPassIn(1.Seconds());
         }
         private int ShouldObserveVariablesTest()
         {
@@ -95,21 +94,24 @@ namespace Vostok.Configuration.Tests.Sources
             var val = 0;
             using (var ccs = new ClusterConfigSource(Prefix, Key, clusterClient, 100.Milliseconds(), true))
             {
+                FixedPeriodSettingsWatcher.StartFixedPeriodSettingsWatcher(100.Milliseconds(), 100.Milliseconds());
                 var sub = ccs.Observe().Subscribe(settings =>
                 {
+                    if (settings == null) return;
                     val++;
-                    settings.Should().BeEquivalentTo(
-                        new RawSettings(
-                            new Dictionary<string, RawSettings>
-                            {
-                                { Key, new RawSettings(newValue) }
-                            }));
+                    if (val == 2)
+                        settings.Should().BeEquivalentTo(
+                            new RawSettings(
+                                new Dictionary<string, RawSettings>
+                                {
+                                    { Key, new RawSettings(newValue) }
+                                }));
                 });
 
                 fullDict.Add("_", new List<string>{ "a", "b" });
                 shortDict.Add("_", new List<string>{ "a", "b" });
                 Thread.Sleep(200.Milliseconds());
-                fullDict[Key][0] = newValue;
+                fullDict[FullKey][0] = newValue;
                 Thread.Sleep(200.Milliseconds());
 
                 sub.Dispose();

@@ -195,6 +195,61 @@ namespace Vostok.Configuration.Tests
                     new Struct1{ IntValue = 10, StringValue = "str" }
                 );
         }
+        
+        [RequiredByDefault]
+        private struct MyRequiredStruct
+        {
+            public int Required { get; set; }
+            [Optional]
+            public int Optional { get; set; }
+            [Optional]
+            public int? OptionalNullable { get; set; }
+        }
+
+        private struct MyOptionalStruct
+        {
+            [Required]
+            public int Required { get; set; }
+            [Required]
+            public int? RequiredNullable { get; set; }
+            public int Optional { get; set; }
+        }
+
+        [Test]
+        public void Should_bind_to_Struct_with_checking_attributes()
+        {
+            var settings = new RawSettings(new Dictionary<string, RawSettings>
+            {
+                { "Required", new RawSettings("1") },
+                //{ "Optional", new RawSettings("2") },
+                { "OptionalNullable", new RawSettings(null) },
+            });
+            binder.Bind<MyRequiredStruct>(settings)
+                .Should().BeEquivalentTo(
+                    new MyRequiredStruct
+                    {
+                        Required = 1,
+                        Optional = default,
+                        OptionalNullable = null,
+                    }
+                );
+
+            settings = new RawSettings(new Dictionary<string, RawSettings>
+            {
+                { "Required", new RawSettings("1") },
+                { "RequiredNullable", new RawSettings("0") },
+                //{ "Optional", new RawSettings("2") },
+            });
+            binder.Bind<MyOptionalStruct>(settings)
+                .Should().BeEquivalentTo(
+                    new MyOptionalStruct
+                    {
+                        Required = 1,
+                        RequiredNullable = 0,
+                        Optional = default,
+                    }
+                );
+        }
 
         [Test]
         public void Should_bind_to_StructWithStruct()
@@ -258,18 +313,6 @@ namespace Vostok.Configuration.Tests
             public Dictionary<int, string> PublicDictionaryProp { get; set; }
             public Dictionary<int, string> PublicDictionaryPropNull { get; set; }
             public double? PublicNullableDoubleSetProp { get; set; }
-            [Required]
-            public int? RequiredProp { get; set; }
-            [Optional]
-            public int OptionalProp { get; set; }
-            [Required, Optional]
-            public int? RequiredOptionalProp { get; set; }
-            [Required]
-            public MyClass3 RequiredClassProp { get; set; }
-            [Optional]
-            public MyClass3 OptionalClassProp { get; set; }
-            [Required, Optional]
-            public MyClass3 RequiredOptionalClassProp { get; set; }
 
             public MyClass() {}
             public MyClass(bool testOnly)
@@ -303,15 +346,6 @@ namespace Vostok.Configuration.Tests
                 { "PublicStringStaticField", new RawSettings("statStr") },
                 { "PublicIntStaticProp", new RawSettings("1234") },
                 { "PublicNullableDoubleSetProp", new RawSettings(null) },
-                { "RequiredProp", new RawSettings("0") },
-                //{ "OptionalProp", new RawSettings(null) },
-                //{ "RequiredOptionalProp", new RawSettings("0") },
-                { "RequiredClassProp", new RawSettings(new Dictionary<string, RawSettings>
-                {
-                    { "PublicIntField", new RawSettings("0") },
-                }) },
-                //{ "OptionalClassProp", new RawSettings(null) },
-                //{ "RequiredOptionalClassProp", new RawSettings(new Dictionary<string, RawSettings>()) },
                 { "PublicIntArrayProp", new RawSettings(new List<RawSettings>
                 {
                     new RawSettings("1"),
@@ -366,13 +400,62 @@ namespace Vostok.Configuration.Tests
                         PublicStringListPropNull = null,
                         PublicDictionaryProp = new Dictionary<int, string> { {1, "str1"}, {2, "str2"} },
                         PublicDictionaryPropNull = null,
-                        RequiredProp = 0,
-                        OptionalProp = 0,
-                        RequiredOptionalProp = 0,
-                        RequiredClassProp = new MyClass3 { PublicIntField = 0 },
-                        OptionalClassProp = null,
-                        RequiredOptionalClassProp = new MyClass3(),
                         PublicNullableDoubleSetProp = null,
+                    }
+                );
+        }
+
+        [RequiredByDefault]
+        private class MyRequiredClass
+        {
+            public int Required { get; set; }
+            [Optional]
+            public int Optional { get; set; }
+            [Optional]
+            public int? OptionalNullable { get; set; }
+        }
+
+        private class MyOptionalClass
+        {
+            [Required]
+            public int Required { get; set; }
+            [Required]
+            public int? RequiredNullable { get; set; }
+            public int Optional { get; set; }
+        }
+
+        [Test]
+        public void Should_bind_to_class_with_checking_attributes()
+        {
+            var settings = new RawSettings(new Dictionary<string, RawSettings>
+            {
+                { "Required", new RawSettings("1") },
+                //{ "Optional", new RawSettings("2") },
+                { "OptionalNullable", new RawSettings(null) },
+            });
+            binder.Bind<MyRequiredClass>(settings)
+                .Should().BeEquivalentTo(
+                    new MyRequiredClass
+                    {
+                        Required = 1,
+                        Optional = default,
+                        OptionalNullable = null,
+                    }
+                );
+
+            settings = new RawSettings(new Dictionary<string, RawSettings>
+            {
+                { "Required", new RawSettings("1") },
+                { "RequiredNullable", new RawSettings("0") },
+                //{ "Optional", new RawSettings("2") },
+            });
+            binder.Bind<MyOptionalClass>(settings)
+                .Should().BeEquivalentTo(
+                    new MyOptionalClass
+                    {
+                        Required = 1,
+                        RequiredNullable = 0,
+                        Optional = default,
                     }
                 );
         }
@@ -542,7 +625,7 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_throw_ArgumentNullException_Dictionary()
         {
-            new Action(() => binder.Bind<Struct1>(new RawSettings(null))).Should().Throw<ArgumentNullException>();
+            new Action(() => binder.Bind<MyRequiredStruct>(new RawSettings(null))).Should().Throw<ArgumentNullException>();
         }
 
         [Test]
@@ -560,22 +643,39 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_throw_ArgumentNullException_Class()
         {
-            new Action(() => binder.Bind<MyClass2>(new RawSettings(null))).Should().Throw<ArgumentNullException>();
+            new Action(() => binder.Bind<MyRequiredClass>(new RawSettings(null))).Should().Throw<ArgumentNullException>();
         }
 
         [Test]
         public void Should_throw_ArgumentNullException_Struct()
         {
-            new Action(() => binder.Bind<Struct1>(new RawSettings(null))).Should().Throw<ArgumentNullException>();
+            new Action(() => binder.Bind<MyRequiredStruct>(new RawSettings(null))).Should().Throw<ArgumentNullException>();
         }
+
+        [Test]
+        public void Should_throw_InvalidCastException_Primitive_if_not_single_value_dictionary()
+        {
+            var settings = new RawSettings(new Dictionary<string, RawSettings>
+            {
+                { "key1", new RawSettings("123") },
+                { "key2", new RawSettings("123") },
+            });
+            new Action(() => binder.Bind<int>(settings)).Should().Throw<ArgumentException>();
+
+            settings = new RawSettings(new List<RawSettings> { new RawSettings("123") });
+            new Action(() => binder.Bind<int>(settings)).Should().Throw<ArgumentException>();
+
+            settings = new RawSettings(new Dictionary<string, RawSettings>());
+            new Action(() => binder.Bind<int>(settings)).Should().Throw<ArgumentException>();
+        }
+
+        // === InvalidCastException
 
         [Test]
         public void Should_throw_ArgumentNullException_on_unknown_data_type()
         {
-            new Action(() => binder.Bind<CST>(new RawSettings("a,b,c"))).Should().Throw<ArgumentNullException>();
+            new Action(() => binder.Bind<CST>(new RawSettings("a,b,c"))).Should().Throw<InvalidCastException>();
         }
-
-        // === InvalidCastException
 
         [Test]
         public void Should_throw_InvalidCastException_Primitive_if_wrong_type()
@@ -595,34 +695,28 @@ namespace Vostok.Configuration.Tests
         }
         
         [Test]
-        public void Should_throw_InvalidCastException_struct_field_or_prop_is_absent()
+        public void Should_throw_InvalidCastException_struct_required_field_or_prop_is_absent()
         {
             var settings = new RawSettings(new Dictionary<string, RawSettings>
             {
-                { "IntValue", new RawSettings("10") },
-                { "WrongName_StringValue", new RawSettings("10") }
+                { "WrongName", new RawSettings("10") }
             });
-            new Action(() => binder.Bind<Struct2>(settings)).Should().Throw<InvalidCastException>();
+            new Action(() => binder.Bind<MyRequiredStruct>(settings)).Should().Throw<InvalidCastException>();
         }
         
         [Test]
-        public void Should_throw_InvalidCastException_class_field_or_prop_is_absent()
+        public void Should_throw_InvalidCastException_class_required_field_or_prop_is_absent()
         {
             var settings = new RawSettings(new Dictionary<string, RawSettings>
             {
-                { "WrongName_PublicIntProp", new RawSettings("10") }
+                { "WrongName", new RawSettings("10") }
             });
-            new Action(() => binder.Bind<MyClass3>(settings)).Should().Throw<InvalidCastException>();
-
-            settings = new RawSettings(new Dictionary<string, RawSettings>
-            {
-                { "WrongName_PublicIntField", new RawSettings("10") }
-            });
-            new Action(() => binder.Bind<MyClass3>(settings)).Should().Throw<InvalidCastException>();
+            new Action(() => binder.Bind<MyRequiredClass>(settings)).Should().Throw<InvalidCastException>();
         }
 
         private class CST
         {
+            [Required]
             public string[] Strings { get; set; }
         }
         private class CommaSeparatedTextParser : ITypeParser
@@ -642,6 +736,7 @@ namespace Vostok.Configuration.Tests
 
         private class SST
         {
+            [Required]
             public string[] Strings { get; set; }
         }
         private bool TryParseSemicolonSeparatedText(string s, out SST value)

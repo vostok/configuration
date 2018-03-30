@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
 using Vostok.Commons;
 using Vostok.Commons.Conversions;
 using Vostok.Configuration.Sources;
@@ -75,14 +76,27 @@ namespace Vostok.Configuration.ClusterConfig
 
         public IObservable<RawSettings> Observe()
         {
-            var prefScope = prefix?.Split(new []{'/'}, StringSplitOptions.RemoveEmptyEntries).ToArray();
+            return FixedPeriodSettingsWatcher.Observe(observePeriod).Select(s =>
+            {
+                if (s == null) return s;
+                var emptyPrefix = string.IsNullOrWhiteSpace(prefix);
+                var emptyKey = string.IsNullOrWhiteSpace(key);
+
+                if (emptyPrefix && emptyKey)
+                    return s;
+                else if (!emptyPrefix && !emptyKey)
+                    return s.ChildrenByKey != null && s.ChildrenByKey.ContainsKey($"{prefix}/{key}") ? s.ChildrenByKey[$"{prefix}/{key}"] : null;
+                else if (!emptyPrefix)
+                    return new RawSettings(s.ChildrenByKey.Where(p => p.Key.StartsWith(prefix)).ToDictionary(p => p.Key, p => p.Value));
+                else
+                    return s.ChildrenByKey != null && s.ChildrenByKey.ContainsKey($"{prefix}/{key}") ? s.ChildrenByKey[$"{prefix}/{key}"] : null;
+            });
+            /*var prefScope = prefix?.Split(new []{'/'}, StringSplitOptions.RemoveEmptyEntries).ToArray();
             var keyScope = key?.ToEnumerable();
             var scope = prefScope ?? keyScope;
             if (prefScope != null && keyScope != null)
                 scope = scope.Concat(keyScope);
-            return FixedPeriodSettingsWatcher.Observe(observePeriod)
-                /*.Select(s => new ScopedSource(s, scope.ToArray()).Get())
-                .Where(s => !Equals(s, Get()))*/;
+            return FixedPeriodSettingsWatcher.Observe(observePeriod)./*Where(s => s != null).#1#Select(s => new ScopedSource(s, scope.ToArray()).Get());*/
         }
 
         public void Dispose()
