@@ -71,6 +71,7 @@ namespace Vostok.Configuration
         /// <typeparam name="T">Type of in which you need to parse</typeparam>
         /// <param name="parser">Class with method implemented TryParse_T_ delegate</param>
         /// <returns>This binder with new parser</returns>
+        // CR(iloktionov): Naming: With --> Add 
         public DefaultSettingsBinder WithCustomParser<T>(ITypeParser parser)
         {
             primitiveAndSimpleParsers.Add(typeof(T), parser);

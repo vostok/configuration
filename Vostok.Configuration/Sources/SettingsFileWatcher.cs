@@ -14,6 +14,7 @@ namespace Vostok.Configuration.Sources
     /// <summary>
     /// File watcher for settings files
     /// </summary>
+    // CR(iloktionov): Should not be public.
     public static class SettingsFileWatcher
     {
         private static readonly TimeSpan MinObservationPeriod = 100.Milliseconds();
@@ -22,6 +23,12 @@ namespace Vostok.Configuration.Sources
         private static ConcurrentDictionary<IConfigurationSource, FileInfo> filesInfo;
         private static bool needStop;
         private static Thread watcherThread;
+
+        // CR(iloktionov): This should be the only public interface of such class:
+        public static IObservable<string> WatchFile(string file)
+        {
+            throw new NotImplementedException();
+        }
 
         /// <summary>
         /// Starts settings file watcher

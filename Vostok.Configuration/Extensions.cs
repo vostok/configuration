@@ -4,6 +4,7 @@ using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration
 {
+    // CR(iloktionov): Separate for each interface/class (like IConfigurationSourceExtensions).
     public static class Extensions
     {
         public static IConfigurationSource ScopeTo(this IConfigurationSource source, params string[] scope) => 

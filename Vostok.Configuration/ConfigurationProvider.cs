@@ -38,6 +38,7 @@ namespace Vostok.Configuration
         {
             try
             {
+                // CR(iloktionov): Source and cache checks can be swapped for better performance.
                 if (!sources.TryGetValue(typeof(TSettings), out var source))
                     throw new ArgumentException($"{nameof(IConfigurationSource)} for specified type \"{typeof(TSettings).Name}\" is absent");
                 if (cache.TryGetValue(typeof(TSettings), out var item) && DateTime.UtcNow < item.expiration)
@@ -70,6 +71,8 @@ namespace Vostok.Configuration
 
         private TSettings Get<TSettings>(RawSettings settings, bool cached = false)
         {
+            // CR(iloktionov): A bug here. Suppose I set up some source for MySettings model and the perform an ordinary Get().
+            // CR(iloktionov): Result gets cached and then it's impossible to get MySettings with any other source.
             (object value, DateTime expiration) item = default;
             if (cached && cache.TryGetValue(typeof(TSettings), out item) && DateTime.UtcNow < item.expiration)
                 return (TSettings)item.value;
@@ -106,6 +109,7 @@ namespace Vostok.Configuration
         public IObservable<TSettings> Observe<TSettings>(IConfigurationSource source) => 
             source.Observe().Select(settings => Get<TSettings>(settings)).Where(s => s != null);
 
+        // CR(iloktionov): Naming: With --> Setup to highlight that user mutates current object.
         public ConfigurationProvider WithSourceFor<TSettings>(IConfigurationSource source)
         {
             if (subjects.Any())

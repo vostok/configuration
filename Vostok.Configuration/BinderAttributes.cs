@@ -15,7 +15,7 @@ namespace Vostok.Configuration
     public class RequiredAttribute : Attribute { }
 
     /// <summary>
-    /// Attribute for fields and properties that can absent or be null. Is default for all fields and properties.
+    /// Attribute for fields and properties that can be absent or be null. Is default for all fields and properties.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class OptionalAttribute : Attribute { }
