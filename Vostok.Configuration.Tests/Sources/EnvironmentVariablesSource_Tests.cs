@@ -12,7 +12,7 @@ namespace Vostok.Configuration.Tests.Sources
     public class EnvironmentVariablesSource_Tests
     {
         [Test]
-        public void Should_return_null_if_file_not_exists()
+        public void Should_return_correct_values()
         {
             using (var evs = new EnvironmentVariablesSource())
             {
@@ -24,24 +24,23 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_observe_variables()
         {
-            new Action(() => ShouldObserveVariablesTest().Should().Be(1)).ShouldPassIn(1.Seconds());
+            new Action(() => ShouldObserveVariablesTest_ReturnsIfChangeWasReceived().Should().BeTrue()).ShouldPassIn(1.Seconds());
         }
-        private int ShouldObserveVariablesTest()
+        private bool ShouldObserveVariablesTest_ReturnsIfChangeWasReceived()
         {
             const string testVar = "test_key";
             const string testValue = "test_value";
-            var val = 0;
+            var val = false;
+            var read = false;
             using (var evs = new EnvironmentVariablesSource(100.Milliseconds()))
             {
-                FixedPeriodSettingsWatcher.StartFixedPeriodSettingsWatcher(100.Milliseconds(), 100.Milliseconds());
-
                 var sub = evs.Observe().Subscribe(settings =>
                 {
-                    if (settings.ChildrenByKey.ContainsKey(testVar))
-                        val++;
+                    if (settings.ChildrenByKey.ContainsKey(testVar) && read)
+                        val = true;
+                    read = true;
                 });
 
-                Thread.Sleep(200.Milliseconds());
                 Environment.SetEnvironmentVariable(testVar, testValue);
                 Thread.Sleep(200.Milliseconds());
 

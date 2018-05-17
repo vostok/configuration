@@ -38,11 +38,10 @@ namespace Vostok.Configuration
         {
             try
             {
-                // CR(iloktionov): Source and cache checks can be swapped for better performance.
-                if (!sources.TryGetValue(typeof(TSettings), out var source))
-                    throw new ArgumentException($"{nameof(IConfigurationSource)} for specified type \"{typeof(TSettings).Name}\" is absent");
                 if (cache.TryGetValue(typeof(TSettings), out var item) && DateTime.UtcNow < item.expiration)
                     return (TSettings)item.value;
+                if (!sources.TryGetValue(typeof(TSettings), out var source))
+                    throw new ArgumentException($"{nameof(IConfigurationSource)} for specified type \"{typeof(TSettings).Name}\" is absent");
                 return Get<TSettings>(source.Get(), true);
             }
             catch (Exception e)
@@ -109,8 +108,7 @@ namespace Vostok.Configuration
         public IObservable<TSettings> Observe<TSettings>(IConfigurationSource source) => 
             source.Observe().Select(settings => Get<TSettings>(settings)).Where(s => s != null);
 
-        // CR(iloktionov): Naming: With --> Setup to highlight that user mutates current object.
-        public ConfigurationProvider WithSourceFor<TSettings>(IConfigurationSource source)
+        public ConfigurationProvider SetupSourceFor<TSettings>(IConfigurationSource source)
         {
             if (subjects.Any())
                 throw new InvalidOperationException($"It is not allowed to add sources to a {nameof(ConfigurationProvider)} after .{nameof(Observe)}() was called.");

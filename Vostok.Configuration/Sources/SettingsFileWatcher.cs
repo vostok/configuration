@@ -1,86 +1,104 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using System.Threading;
+using JetBrains.Annotations;
 using Vostok.Commons.Conversions;
 using Vostok.Commons.ThreadManagment;
 
 namespace Vostok.Configuration.Sources
 {
     /// <summary>
-    /// File watcher for settings files
+    /// Watchs for changes in files by <see cref="IConfigurationSource"/>.
     /// </summary>
-    // CR(iloktionov): Should not be public.
-    public static class SettingsFileWatcher
+    internal static class SettingsFileWatcher
     {
         private static readonly TimeSpan MinObservationPeriod = 100.Milliseconds();
+        private const string DefaultSettingsValue = "\u0001";
 
-        private static ConcurrentDictionary<IConfigurationSource, BehaviorSubject<RawSettings>> observersInfo;
+        private static ConcurrentDictionary<IConfigurationSource, IObserver<string>> observersInfo;
         private static ConcurrentDictionary<IConfigurationSource, FileInfo> filesInfo;
         private static bool needStop;
         private static Thread watcherThread;
-
-        // CR(iloktionov): This should be the only public interface of such class:
-        public static IObservable<string> WatchFile(string file)
-        {
-            throw new NotImplementedException();
-        }
+        private static object locker;
 
         /// <summary>
-        /// Starts settings file watcher
+        /// Subscribtion to <paramref name="file" /> for specified <paramref name="source"/> with <paramref name="observationPeriod"/>
         /// </summary>
-        /// <param name="filePath">Path to file</param>
-        /// <param name="configurationSource">Configuration source for file parsing</param>
-        /// <param name="observationPeriod">Observe period (min 100)</param>
-        /// <param name="callBack">Callback on exception</param>
-        public static void StartSettingsFileWatcher(string filePath, IConfigurationSource configurationSource, TimeSpan observationPeriod = default, Action<Exception> callBack = null)
+        /// <param name="file">Watching file path</param>
+        /// <param name="source">Subscribing source</param>
+        /// <param name="observationPeriod">Observation period for <paramref name="file"/></param>
+        /// <param name="callBack">Callback in case of any exception while reading the file</param>
+        /// <returns>Subscriber receiving file text. Receive null if file not exists.</returns>
+        public static IObservable<string> WatchFile(
+            [NotNull] string file,
+            [NotNull] IConfigurationSource source,
+            TimeSpan observationPeriod = default,
+            [CanBeNull] Action<Exception> callBack = null)
+        {
+            if (locker == null)
+                locker = new object();
+
+            lock (locker)
+            {
+                if (observersInfo == null)
+                    PrepareFileWatcher();
+                AddFileInfo(file, source, observationPeriod, callBack);
+            }
+
+            var subscribtion = Observable.Create<string>(
+                observer =>
+                {
+                    lock (locker)
+                    {
+                        observersInfo.AddOrUpdate(source, observer, (s, o) => observer);
+                        if (filesInfo.TryGetValue(source, out var fileInfo) && fileInfo.CurrentValue != DefaultSettingsValue)
+                            observer.OnNext(fileInfo.CurrentValue);
+                    }
+                    
+                    return Disposable.Create(
+                        () =>
+                        {
+                            lock (locker)
+                            {
+                                observersInfo.TryRemove(source, out var _);
+                                if (!observersInfo.Any())
+                                    StopAndClear();
+                            }
+                        });
+                });
+
+            lock (locker)
+
+            return subscribtion;
+        }
+
+        private static void PrepareFileWatcher()
         {
             if (observersInfo == null)
-                observersInfo = new ConcurrentDictionary<IConfigurationSource, BehaviorSubject<RawSettings>>();
+                observersInfo = new ConcurrentDictionary<IConfigurationSource, IObserver<string>>();
             if (filesInfo == null)
                 filesInfo = new ConcurrentDictionary<IConfigurationSource, FileInfo>();
             needStop = false;
-            var info = new FileInfo
-            {
-                FilePath = filePath,
-                LastFileWriteTime = File.GetLastWriteTimeUtc(filePath),
-                ObservationPeriod = observationPeriod < MinObservationPeriod ? MinObservationPeriod : observationPeriod,
-                NextCheck = DateTime.UtcNow + observationPeriod,
-                CurrentSettings = null,
-                OnError = callBack,
-            };
-            filesInfo.AddOrUpdate(configurationSource, info, (cs, fi) => info);
 
             if (watcherThread == null)
                 watcherThread = ThreadRunner.Run(WatchFile);
         }
-
-        /// <summary>
-        /// Add subscription
-        /// </summary>
-        public static IDisposable Subscribe(IObserver<RawSettings> observer, IConfigurationSource source)
+        
+        private static void AddFileInfo(string filePath, IConfigurationSource source, TimeSpan observationPeriod = default, Action<Exception> callBack = null)
         {
-            RawSettings current = null;
-            BehaviorSubject<RawSettings> obsInfo;
-            if (observersInfo.ContainsKey(source))
-                obsInfo = observersInfo[source];
-            else
+            var info = new FileInfo
             {
-                obsInfo = new BehaviorSubject<RawSettings>(null);
-                observersInfo.TryAdd(source, obsInfo);
-            }
-            var subscription = obsInfo.Where(o => o != null).SubscribeSafe(observer);
-
-            if (filesInfo.TryGetValue(source, out var info))
-                current = info?.CurrentSettings;
-            if (current != null)
-                observer.OnNext(current);
-
-            return subscription;
+                FilePath = filePath,
+                ObservationPeriod = observationPeriod < MinObservationPeriod ? MinObservationPeriod : observationPeriod,
+                NextCheck = DateTime.UtcNow.AddMinutes(-1),
+                CurrentValue = DefaultSettingsValue,
+                OnError = callBack,
+            };
+            filesInfo.AddOrUpdate(source, info, (cs, fi) => info);
         }
 
         private static void WatchFile()
@@ -88,91 +106,76 @@ namespace Vostok.Configuration.Sources
             while (!needStop)
             {
                 Thread.Sleep(MinObservationPeriod);
-                if (needStop) break;
 
-                if (observersInfo.Count == 0 || filesInfo == null) continue;
-                foreach (var pair in filesInfo.Where(i => i.Value.NextCheck <= DateTime.UtcNow))
+                if (observersInfo.Count == 0) continue;
+                var needCheck = filesInfo.Where(i => i.Value.NextCheck <= DateTime.UtcNow).ToArray();
+                foreach (var (filePath, currentValue) in needCheck.Select(p => (p.Value.FilePath, p.Value.CurrentValue)).Distinct())
+                {
+                    var filesByPath = filesInfo.Where(n => n.Value.FilePath == filePath).ToArray();
                     try
                     {
-                        CheckFile(pair);
-                        pair.Value.NextCheck = DateTime.UtcNow + pair.Value.ObservationPeriod;
+                        if (CheckFile(filePath, currentValue, out var changes))
+                            SendChanges(filePath, changes);
+                        var time = DateTime.UtcNow;
+                        foreach (var file in filesByPath)
+                            file.Value.NextCheck = time + file.Value.ObservationPeriod;
                     }
                     catch (Exception e)
                     {
-                        pair.Value.OnError?.Invoke(e);
+                        foreach (var file in filesByPath)
+                            file.Value.OnError?.Invoke(e);
                     }
+                }
             }
+
             needStop = false;
         }
 
-        private static void CheckFile(KeyValuePair<IConfigurationSource, FileInfo> pair)
+        private static bool CheckFile(string filePath, string currentValue, out string changes)
         {
-            RawSettings changes = null;
-            IConfigurationSource source = null;
-            var needReturn = false;
-            var fileExists = File.Exists(pair.Value.FilePath);
-            var lwt = File.GetLastWriteTimeUtc(pair.Value.FilePath);
+            var fileExists = File.Exists(filePath);
+            changes = null;
 
-            if (!fileExists && pair.Value.CurrentSettings != null)
+            if (!fileExists && currentValue != null)
+                return true;
+            else if (fileExists)
             {
-                pair.Value.LastFileWriteTime = DateTime.UtcNow;
-                source = pair.Key;
-                needReturn = true;
-            }
-            else if (fileExists && (lwt > pair.Value.LastFileWriteTime || pair.Value.CurrentSettings == null))
-            {
-                pair.Value.LastFileWriteTime = lwt;
-                changes = pair.Key.Get();
+                changes = File.ReadAllText(filePath);
 
-                if (!Equals(pair.Value.CurrentSettings, changes))
-                {
-                    source = pair.Key;
-                    needReturn = true;
-                }
+                if (currentValue != changes)
+                    return true;
             }
-            if (!needReturn) return;
 
-            if (observersInfo.ContainsKey(source))
-                observersInfo[source].OnNext(changes);
-            if (filesInfo.TryGetValue(pair.Key, out var info) && info != null)
-                info.CurrentSettings = changes;
+            return false;
         }
 
-        /// <summary>
-        /// Stop watcher and clear all data for next start
-        /// </summary>
-        public static void StopAndClear()
+        private static void SendChanges(string filePath, string changes)
+        {
+            foreach (var source in filesInfo.Where(i => i.Value.FilePath == filePath).Select(i => i.Key))
+            {
+                if (observersInfo.TryGetValue(source, out var observer))
+                    observer?.OnNext(changes);
+                if (filesInfo.TryGetValue(source, out var info) && info != null)
+                    info.CurrentValue = changes;
+            }
+        }
+
+        private static void StopAndClear()
         {
             filesInfo.Clear();
             filesInfo = null;
             needStop = true;
-            observersInfo.Values.ToList().ForEach(o => o.Dispose());
             observersInfo.Clear();
             observersInfo = null;
             watcherThread = null;
         }
 
-        /// <summary>
-        /// Remove observers of specified source
-        /// </summary>
-        /// <param name="baseFileSource">Source which observers must be removed</param>
-        public static void RemoveObservers(IConfigurationSource baseFileSource)
-        {
-            if (observersInfo != null && observersInfo.ContainsKey(baseFileSource))
-            {
-                observersInfo[baseFileSource].Dispose();
-                observersInfo.TryRemove(baseFileSource, out var _);
-            }
-            filesInfo?.TryRemove(baseFileSource, out var _);
-        }
-
         private class FileInfo
         {
             public string FilePath { get; set; }
-            public DateTime LastFileWriteTime { get; set; }
             public DateTime NextCheck { get; set; }
             public TimeSpan ObservationPeriod { get; set; }
-            public RawSettings CurrentSettings { get; set; }
+            public string CurrentValue { get; set; }
             public Action<Exception> OnError { get; set; }
         }
     }

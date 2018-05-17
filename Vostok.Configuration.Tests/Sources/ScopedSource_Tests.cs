@@ -28,11 +28,16 @@ namespace Vostok.Configuration.Tests.Sources
         }
 
         [Test]
+        public void Should_return_null_if_file_not_exists()
+        {
+            
+        }
+
+        [Test]
         public void Should_return_full_tree()
         {
             CreateTextFile("{ \"value\": 1 }");
-            var jfs = new JsonFileSource(TestFileName);
-
+            using (var jfs = new JsonFileSource(TestFileName))
             using (var ss = new ScopedSource(jfs))
                 ss.Get().Should().BeEquivalentTo(new RawSettings(
                     new Dictionary<string, RawSettings>
@@ -45,60 +50,63 @@ namespace Vostok.Configuration.Tests.Sources
         public void Should_scope_by_dictionaries_keys()
         {
             CreateTextFile("{ \"value 1\": { \"value 2\": { \"value 3\": 1 } } }");
-            var jfs = new JsonFileSource(TestFileName);
+            using (var jfs = new JsonFileSource(TestFileName))
+            {
+                using (var ss = new ScopedSource(jfs, "value 1", "value 2"))
+                    ss.Get().Should().BeEquivalentTo(new RawSettings(
+                        new Dictionary<string, RawSettings>
+                        {
+                            { "value 3", new RawSettings("1") },
+                        }));
 
-            using (var ss = new ScopedSource(jfs, "value 1", "value 2"))
-                ss.Get().Should().BeEquivalentTo(new RawSettings(
-                    new Dictionary<string, RawSettings>
-                    {
-                        { "value 3", new RawSettings("1") },
-                    }));
-
-            using (var ss = new ScopedSource(jfs, "value 1", "value 2", "value 3"))
-                ss.Get().Should().BeEquivalentTo(new RawSettings("1"));
+                using (var ss = new ScopedSource(jfs, "value 1", "value 2", "value 3"))
+                    ss.Get().Should().BeEquivalentTo(new RawSettings("1"));
+            }
         }
 
         [Test]
         public void Should_scope_by_list_indexes()
         {
             CreateTextFile("{ \"value\": [[1,2], [3,4,5]] }");
-            var jfs = new JsonFileSource(TestFileName);
+            using (var jfs = new JsonFileSource(TestFileName))
+            {
+                using (var ss = new ScopedSource(jfs, "value", "[0]"))
+                    ss.Get()
+                        .Should().BeEquivalentTo(new RawSettings(
+                            new List<RawSettings>
+                            {
+                                new RawSettings("1"),
+                                new RawSettings("2"),
+                            }));
 
-            using (var ss = new ScopedSource(jfs, "value", "[0]"))
-                ss.Get()
-                .Should().BeEquivalentTo(new RawSettings(
-                    new List<RawSettings>
-                    {
-                        new RawSettings("1"),
-                        new RawSettings("2"),
-                    }));
-
-            using (var ss = new ScopedSource(jfs, "value", "[1]", "[2]"))
-                ss.Get().Should().BeEquivalentTo(new RawSettings("5"));
+                using (var ss = new ScopedSource(jfs, "value", "[1]", "[2]"))
+                    ss.Get().Should().BeEquivalentTo(new RawSettings("5"));
+            }
         }
 
         [Test]
         public void Should_return_null()
         {
             CreateTextFile("{ \"value\": { \"list\": [1,2] } }");
-            var jfs = new JsonFileSource(TestFileName);
-
-            using (var ss = new ScopedSource(jfs, "unknown value"))
-                ss.Get().Should().BeNull();
-            using (var ss = new ScopedSource(jfs, "value", "[0]"))
-                ss.Get().Should().BeNull();
-            using (var ss = new ScopedSource(jfs, "value", "list", "[]"))
-                ss.Get().Should().BeNull();
-            using (var ss = new ScopedSource(jfs, "value", "list", "[not_a_number]"))
-                ss.Get().Should().BeNull();
-            using (var ss = new ScopedSource(jfs, "value", "list", "[100]"))
-                ss.Get().Should().BeNull();
+            using (var jfs = new JsonFileSource(TestFileName))
+            {
+                using (var ss = new ScopedSource(jfs, "unknown value"))
+                    ss.Get().Should().BeNull();
+                using (var ss = new ScopedSource(jfs, "value", "[0]"))
+                    ss.Get().Should().BeNull();
+                using (var ss = new ScopedSource(jfs, "value", "list", "[]"))
+                    ss.Get().Should().BeNull();
+                using (var ss = new ScopedSource(jfs, "value", "list", "[not_a_number]"))
+                    ss.Get().Should().BeNull();
+                using (var ss = new ScopedSource(jfs, "value", "list", "[100]"))
+                    ss.Get().Should().BeNull();
+            }
         }
 
         [Test, Explicit("Not stable on mass tests")]
         public void Should_observe_file()
         {
-            new Action(() => ShouldObserveFileTest().Should().BeEquivalentTo(
+            new Action(() => ShouldObserveFileTest_ReturnsReceivedSubtrees().Should().BeEquivalentTo(
                 new List<RawSettings>
                 {
                     new RawSettings("2"),
@@ -107,24 +115,26 @@ namespace Vostok.Configuration.Tests.Sources
             )).ShouldPassIn(1.Seconds());
         }
 
-        private List<RawSettings> ShouldObserveFileTest()
+        private List<RawSettings> ShouldObserveFileTest_ReturnsReceivedSubtrees()
         {
             CreateTextFile("{ \"value\": { \"list\": [1,2] } }");
-            var jfs = new JsonFileSource(TestFileName, 100.Milliseconds());
-            var rsList = new List<RawSettings>();
-
-            using (var ss = new ScopedSource(jfs, "value", "list", "[1]"))
+            using (var jfs = new JsonFileSource(TestFileName, 100.Milliseconds()))
             {
-                var sub = ss.Observe().Subscribe(settings => rsList.Add(settings));
+                var rsList = new List<RawSettings>();
 
-                Thread.Sleep(200.Milliseconds());
-                CreateTextFile("{ \"value\": { \"list\": [3,4,5] } }");
-                Thread.Sleep(200.Milliseconds());
+                using (var ss = new ScopedSource(jfs, "value", "list", "[1]"))
+                {
+                    var sub = ss.Observe().Subscribe(settings => rsList.Add(settings));
 
-                sub.Dispose();
+                    Thread.Sleep(200.Milliseconds());
+                    CreateTextFile("{ \"value\": { \"list\": [3,4,5] } }");
+                    Thread.Sleep(200.Milliseconds());
+
+                    sub.Dispose();
+                }
+
+               return rsList;
             }
-            SettingsFileWatcher.StopAndClear();
-            return rsList;
         }
     }
 }

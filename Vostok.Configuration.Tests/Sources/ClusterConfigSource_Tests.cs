@@ -47,28 +47,28 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_get_all_settings()
         {
-            using (var ccs = new ClusterConfigSource(null, null, clusterClient))
+            using (var ccs = new ClusterConfigSource(null, null, clusterClient, 100.Milliseconds(), true))
                 ccs.Get().ChildrenByKey.Should().HaveCountGreaterThan(100);
         }
 
         [Test]
         public void Should_get_by_prefix()
         {
-            using (var ccs = new ClusterConfigSource(Prefix, null))
+            using (var ccs = new ClusterConfigSource(Prefix, null, clusterClient, 100.Milliseconds(), true))
                 ccs.Get().ChildrenByKey.Should().HaveCountGreaterThan(0).And.HaveCountLessThan(100);
         }
 
         [Test]
         public void Should_get_by_key_in_whole_tree()
         {
-            using (var ccs = new ClusterConfigSource(" ", FullKey))
+            using (var ccs = new ClusterConfigSource(" ", FullKey, clusterClient, 100.Milliseconds(), true))
                 ccs.Get().Children.Should().HaveCount(1);
         }
 
         [Test]
         public void Should_get_by_prefix_and_key()
         {
-            using (var ccs = new ClusterConfigSource(Prefix, Key, clusterClient))
+            using (var ccs = new ClusterConfigSource(Prefix, Key, clusterClient, 100.Milliseconds(), true))
                 ccs.Get().Children.Should().HaveCount(1).And.BeEquivalentTo(new RawSettings(Value));
         }
 
@@ -76,10 +76,9 @@ namespace Vostok.Configuration.Tests.Sources
         public void Should_throw_exception_on_wrong_key()
         {
             new Action(() =>
-                {
-                    using (var ccs = new ClusterConfigSource(null, "wrong key"))
-                        ccs.Get();
-                }).Should().Throw<ArgumentException>();
+            {
+                using (new ClusterConfigSource(null, "wrong key", clusterClient, 100.Milliseconds(), true)) { }
+            }).Should().Throw<ArgumentException>();
         }
 
         [Test]
@@ -94,7 +93,6 @@ namespace Vostok.Configuration.Tests.Sources
             var val = 0;
             using (var ccs = new ClusterConfigSource(Prefix, Key, clusterClient, 100.Milliseconds(), true))
             {
-                FixedPeriodSettingsWatcher.StartFixedPeriodSettingsWatcher(100.Milliseconds(), 100.Milliseconds());
                 var sub = ccs.Observe().Subscribe(settings =>
                 {
                     if (settings == null) return;
@@ -102,9 +100,9 @@ namespace Vostok.Configuration.Tests.Sources
                     if (val == 2)
                         settings.Should().BeEquivalentTo(
                             new RawSettings(
-                                new Dictionary<string, RawSettings>
+                                new List<RawSettings>
                                 {
-                                    { Key, new RawSettings(newValue) }
+                                    new RawSettings(newValue),
                                 }));
                 });
 
@@ -116,7 +114,6 @@ namespace Vostok.Configuration.Tests.Sources
 
                 sub.Dispose();
             }
-            FixedPeriodSettingsWatcher.StopAndClear();
             return val;
         }
     }

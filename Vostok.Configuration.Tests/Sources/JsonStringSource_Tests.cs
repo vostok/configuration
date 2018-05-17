@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using FluentAssertions;
+using FluentAssertions.Extensions;
 using NUnit.Framework;
+using Vostok.Commons.Testing;
 using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests.Sources
@@ -10,9 +13,18 @@ namespace Vostok.Configuration.Tests.Sources
     public class JsonStringSource_Tests
     {
         [Test]
+        public void Should_return_null_if_null_or_whitespace_string()
+        {
+            using (var jss = new JsonStringSource(null))
+                jss.Get().Should().BeNull();
+            using (var jss = new JsonStringSource(" "))
+                jss.Get().Should().BeNull();
+        }
+
+        [Test]
         public void Should_parse_String_value()
         {
-            var value = "{ \"StringValue\": \"string\" }";
+            const string value = "{ \"StringValue\": \"string\" }";
 
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
@@ -26,7 +38,7 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_parse_Integer_value()
         {
-            var value = "{ \"IntValue\": 123 }";
+            const string value = "{ \"IntValue\": 123 }";
 
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
@@ -40,7 +52,7 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_parse_Double_value()
         {
-            var value = "{ \"DoubleValue\": 123.321 }";
+            const string value = "{ \"DoubleValue\": 123.321 }";
 
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
@@ -54,7 +66,7 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_parse_Boolean_value()
         {
-            var value = "{ \"BooleanValue\": true }";
+            const string value = "{ \"BooleanValue\": true }";
 
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
@@ -68,7 +80,7 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_parse_Null_value()
         {
-            var value = "{ \"NullValue\": null }";
+            const string value = "{ \"NullValue\": null }";
 
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
@@ -82,7 +94,7 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_parse_Array_value()
         {
-            var value = "{ \"IntArray\": [1, 2, 3] }";
+            const string value = "{ \"IntArray\": [1, 2, 3] }";
 
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
@@ -101,7 +113,7 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_parse_Object_value()
         {
-            var value = "{ \"Object\": { \"StringValue\": \"str\" } }";
+            const string value = "{ \"Object\": { \"StringValue\": \"str\" } }";
 
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
@@ -119,7 +131,7 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_parse_ArrayOfObjects_value()
         {
-            var value = "{ \"Array\": [{ \"StringValue\": \"str\" }, { \"IntValue\": 123 }] }";
+            const string value = "{ \"Array\": [{ \"StringValue\": \"str\" }, { \"IntValue\": 123 }] }";
 
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
@@ -144,7 +156,7 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_parse_ArrayOfNulls_value()
         {
-            var value = "{ \"Array\": [null, null] }";
+            const string value = "{ \"Array\": [null, null] }";
 
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
@@ -163,7 +175,7 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_parse_ArrayOfArrays_value()
         {
-            var value = "{ \"Array\": [[\"s\", \"t\"], [\"r\"]] }";
+            const string value = "{ \"Array\": [[\"s\", \"t\"], [\"r\"]] }";
 
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
@@ -184,6 +196,36 @@ namespace Vostok.Configuration.Tests.Sources
                                     })
                                 }) }
                         }));
+        }
+
+        [Test]
+        public void Should_subscribe_and_get_parsed_tree()
+        {
+            new Action(() => ShouldSubscribeAndGetParsedTreeTest_ReturnsCountOfReceives().Should().Be(1)).ShouldPassIn(1.Seconds());
+        }
+
+        private int ShouldSubscribeAndGetParsedTreeTest_ReturnsCountOfReceives()
+        {
+            const string value = "{ \"IntValue\": 123 }";
+            var val = 0;
+
+            using (var jss = new JsonStringSource(value))
+            {
+                var sub = jss.Observe().Subscribe(
+                    settings =>
+                    {
+                        val++;
+                        settings.Should().BeEquivalentTo(
+                            new RawSettings(
+                                new Dictionary<string, RawSettings>
+                                {
+                                    {"IntValue", new RawSettings("123")}
+                                }));
+                    });
+                sub.Dispose();
+            }
+
+            return val;
         }
     }
 }

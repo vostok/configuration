@@ -1,64 +1,110 @@
 using System;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
+using JetBrains.Annotations;
 
 namespace Vostok.Configuration.Sources
 {
+    /// <inheritdoc />
     /// <summary>
-    /// Search in RawSettings tree by dictionary keys and list indexes
+    /// Searches subtree in <see cref="RawSettings"/> tree.
     /// </summary>
     public class ScopedSource : IConfigurationSource
     {
-        private readonly IConfigurationSource source;
-        private readonly RawSettings settings;
-        private readonly string[] scope;
+        private readonly BehaviorSubject<RawSettings> observers;
+        private readonly IDisposable watcher;
+        //        private readonly IConfigurationSource source;
+        //        private readonly RawSettings settings;
+        //        private readonly string[] scope;
+        private RawSettings currentSettings;
 
         /// <summary>
-        /// Creating scope source
+        /// Creates a <see cref="ScopedSource"/> instance for <see cref="source"/> to search in by <see cref="scope"/>
+        /// <para>You can use "[n]" format in <see cref="Scope"/> to get n-th index of list.</para>
         /// </summary>
-        /// <param name="source">File source</param>
+        /// <param name="source">Source of <see cref="RawSettings"/> tree</param>
         /// <param name="scope">Search path</param>
-        public ScopedSource(IConfigurationSource source, params string[] scope)
+        public ScopedSource(
+            [NotNull] IConfigurationSource source,
+            [NotNull] params string[] scope)
         {
-            this.source = source;
-            this.scope = scope;
+            observers = new BehaviorSubject<RawSettings>(currentSettings);
+            currentSettings = Scope(source.Get(), scope);
+            watcher = source.Observe()
+                .Subscribe(
+                    settings =>
+                    {
+                        var newSettings = Scope(settings, scope);
+                        if (!Equals(newSettings, currentSettings))
+                        {
+                            currentSettings = newSettings;
+                            observers.OnNext(currentSettings);
+                        }
+                    });
         }
 
-        public ScopedSource(RawSettings settings, params string[] scope)
+        /// <summary>
+        /// <para>Creates a <see cref="ScopedSource"/> instance for <see cref="settings"/> to search in by <see cref="scope"/></para> 
+        /// <para>You can use "[n]" format in <see cref="Scope"/> to get n-th index of list.</para>
+        /// </summary>
+        /// <param name="settings">Tree to search in</param>
+        /// <param name="scope">Search path</param>
+        public ScopedSource(
+            [NotNull] RawSettings settings,
+            [NotNull] params string[] scope)
         {
-            this.settings = settings;
-            this.scope = scope;
+            observers = new BehaviorSubject<RawSettings>(currentSettings);
+            currentSettings = Scope(settings, scope);
         }
 
+        /// <inheritdoc />
         /// <summary>
         /// Gets part of RawSettings tree by specified scope.
-        /// You can use "[n]" format to get n-th index of list.
         /// </summary>
         /// <returns>Part of RawSettings tree</returns>
-        public RawSettings Get()
+        public RawSettings Get() => currentSettings;
+
+        /// <inheritdoc />
+        /// <summary>
+        /// <para>Subscribtion to see <see cref="RawSettings"/> scoped subtree changes.</para>
+        /// <para>Returns current value immediately on subscribtion.</para>
+        /// <para>You can get update only if you used scope by source.</para>
+        /// </summary>
+        /// <returns>Event with new RawSettings tree</returns>
+        public IObservable<RawSettings> Observe() =>
+            Observable.Create<RawSettings>(
+                observer => observers.Select(settings => currentSettings).Subscribe(observer));
+
+        public void Dispose()
         {
-            var res = settings ?? source.Get();
+            observers.Dispose();
+            watcher?.Dispose();
+        }
+
+        private RawSettings Scope(RawSettings settings, params string[] scope)
+        {
             if (scope.Length == 0)
-                return res;
+                return settings;
 
             for (var i = 0; i < scope.Length; i++)
             {
-                if (res.ChildrenByKey != null && res.ChildrenByKey.ContainsKey(scope[i]))
+                if (settings.ChildrenByKey != null && settings.ChildrenByKey.ContainsKey(scope[i]))
                 {
                     if (i == scope.Length - 1)
-                        return res.ChildrenByKey[scope[i]];
+                        return settings.ChildrenByKey[scope[i]];
                     else
-                        res = res.ChildrenByKey[scope[i]];
+                        settings = settings.ChildrenByKey[scope[i]];
                 }
-                else if (res.Children != null &&
+                else if (settings.Children != null &&
                          scope[i].StartsWith("[") && scope[i].EndsWith("]") && scope[i].Length > 2)
                 {
                     var num = scope[i].Substring(1, scope[i].Length - 2);
-                    if (int.TryParse(num, out var index) && index <= res.Children.Count)
+                    if (int.TryParse(num, out var index) && index <= settings.Children.Count)
                     {
                         if (i == scope.Length - 1)
-                            return res.Children[index];
+                            return settings.Children[index];
                         else
-                            res = res.Children[index];
+                            settings = settings.Children[index];
                     }
                     else
                         return null;
@@ -68,13 +114,6 @@ namespace Vostok.Configuration.Sources
             }
 
             return null;
-        }
-
-        public IObservable<RawSettings> Observe() => source.Observe().Select(s => Get());
-
-        public void Dispose()
-        {
-            source?.Dispose();
         }
     }
 }

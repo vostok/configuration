@@ -27,7 +27,7 @@ namespace Vostok.Configuration.Tests.Sources
                 file.WriteLine(text);
         }
 
-        [Test]
+        /*[Test]
         public void Should_Observe_file()
         {
             new Action(() => ReturnsNumberOfSubscribeActionInvokes_1().Should().Be(2)).ShouldPassIn(1.Seconds());
@@ -69,9 +69,9 @@ namespace Vostok.Configuration.Tests.Sources
             }
             SettingsFileWatcher.StopAndClear();
             return val;
-        }
+        }*/
 
-        [Test]
+        /*[Test]
         public void Should_not_Observe_file_twice()
         {
             new Action(() => ReturnsNumberOfSubscribeActionInvokes_2().Should().Be(1)).ShouldPassIn(1.Seconds());
@@ -103,9 +103,9 @@ namespace Vostok.Configuration.Tests.Sources
             }
             SettingsFileWatcher.StopAndClear();
             return val;
-        }
+        }*/
 
-        [Test]
+        /*[Test]
         public void Should_callback_on_exception()
         {
             new Action(() => ReturnsNumberOfCallbacks().Should().BeGreaterOrEqualTo(2)).ShouldPassIn(1.Seconds());
@@ -127,6 +127,6 @@ namespace Vostok.Configuration.Tests.Sources
             }
             SettingsFileWatcher.StopAndClear();
             return val;
-        }
+        }*/
     }
 }

@@ -122,7 +122,7 @@ namespace Vostok.Configuration.Tests
         public void Should_bind_with_custom_CSTParser()
         {
             var settings = new RawSettings("some,string");
-            binder.WithCustomParser<CST>(new CommaSeparatedTextParser())
+            binder.AddCustomParser<CST>(new CommaSeparatedTextParser())
                 .Bind<CST>(settings).Should().BeEquivalentTo(
                     new CST{ Strings = new [] {"some", "string"} });
         }
@@ -131,7 +131,7 @@ namespace Vostok.Configuration.Tests
         public void Should_bind_with_custom_SSTParser()
         {
             var settings = new RawSettings("some;string");
-            binder.WithCustomParser<SST>(TryParseSemicolonSeparatedText)
+            binder.AddCustomParser<SST>(TryParseSemicolonSeparatedText)
                 .Bind<SST>(settings).Should().BeEquivalentTo(
                     new SST{ Strings = new [] {"some", "string"} });
         }
@@ -330,7 +330,9 @@ namespace Vostok.Configuration.Tests
         }
         private class MyClass3
         {
+#pragma warning disable 169
             public int PublicIntField;
+#pragma warning restore 169
         }
 
         [Test]
@@ -542,6 +544,18 @@ namespace Vostok.Configuration.Tests
                         new MyClass2{ PublicIntProp = 1 },
                         new MyClass2{ PublicIntProp = 2 },
                     });
+        }
+
+        [Test]
+        public void Should_bind_to_IntCollection()
+        {
+            ICollection<int> list = new List<int> { 1, 2 };
+            var settings = new RawSettings(new List<RawSettings>
+            {
+                new RawSettings("1"),
+                new RawSettings("2"),
+            });
+            binder.Bind<List<int>>(settings).Should().BeEquivalentTo(list);
         }
 
         [Test]

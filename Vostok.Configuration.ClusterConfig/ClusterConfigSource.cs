@@ -2,49 +2,88 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
-using Vostok.Commons;
+using System.Reactive.Subjects;
+using System.Threading;
 using Vostok.Commons.Conversions;
+using Vostok.Commons.ThreadManagment;
 using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.ClusterConfig
 {
-    public interface IClusterConfigClientProxy
-    {
-        Dictionary<string, List<string>> GetAll();
-        List<string> GetByKey(string key);
-        Dictionary<string, List<string>> GetByPrefix(string prefix);
-    }
-
+    /// <inheritdoc />
+    /// <summary>
+    /// Cluster config converter to <see cref="RawSettings"/> tree
+    /// </summary>
     public class ClusterConfigSource : IConfigurationSource
     {
-        private static readonly TimeSpan MinObservationPeriod = 1.Minutes();
-
+        private readonly TimeSpan minObservationPeriod = 1.Minutes();
+        private readonly TimeSpan checkPeriod = 100.Milliseconds();
+        private readonly BehaviorSubject<RawSettings> observers;
+        private readonly TimeSpan observationPeriod;
+        private readonly AutoResetEvent firstRead;
         private readonly string prefix;
         private readonly string key;
-        private readonly TimeSpan observePeriod;
         private readonly IClusterConfigClientProxy clusterConfigClient;
+        private bool needStop;
+        private RawSettings currentSettings;
 
-        public ClusterConfigSource(string prefix, string key, TimeSpan observePeriod = default)
-            : this(prefix, key, new ClusterConfigClientProxy(), observePeriod)
-        { }
+        /// <inheritdoc />
+        /// <summary>
+        /// <para>Creates a <see cref="ClusterConfigSource"/> instance using given parameters <paramref name="prefix"/>, <paramref name="key"/>, and <paramref name="observationPeriod"/>.</para>
+        /// <para>Current config source uses <paramref name="prefix"/> and <paramref name="key"/> to get subtree from cluster config</para>
+        /// </summary>
+        /// <param name="prefix">Prefix for cluster config search in.</param>
+        /// <param name="key">Key for cluster config search in.</param>
+        /// <param name="observationPeriod">Observe period in ms (min 100, default 60000)</param>
+        public ClusterConfigSource(string prefix, string key, TimeSpan observationPeriod = default)
+            : this(prefix, key, new ClusterConfigClientProxy(), observationPeriod)
+        {
+        }
 
-        public ClusterConfigSource(TimeSpan observePeriod = default)
-            : this(null, null, new ClusterConfigClientProxy(), observePeriod)
-        { }
+        /// <inheritdoc />
+        /// <summary>
+        /// <para>Creates a <see cref="ClusterConfigSource"/> instance using given parameter <paramref name="observationPeriod"/>.</para>
+        /// <para>Current config source always return all settings from cluster config</para>
+        /// </summary>
+        /// <param name="observationPeriod">Observe period in ms (min 100, default 60000)</param>
+        public ClusterConfigSource(TimeSpan observationPeriod = default)
+            : this(null, null, new ClusterConfigClientProxy(), observationPeriod)
+        {
+        }
 
-        internal ClusterConfigSource(string prefix, string key, IClusterConfigClientProxy clusterConfigClient, TimeSpan observePeriod = default, bool forTest = false)
+        internal ClusterConfigSource(string prefix, string key, IClusterConfigClientProxy clusterConfigClient, TimeSpan observationPeriod = default, bool forTest = false)
         {
             this.prefix = prefix;
             this.key = key;
             this.clusterConfigClient = clusterConfigClient;
             if (!forTest)
-                this.observePeriod = observePeriod < MinObservationPeriod ? MinObservationPeriod : observePeriod;
+                this.observationPeriod = observationPeriod < minObservationPeriod ? minObservationPeriod : observationPeriod;
             else
-                this.observePeriod = observePeriod;
-            FixedPeriodSettingsWatcher.StartFixedPeriodSettingsWatcher(forTest ? 100.Milliseconds() : 1.Seconds(), forTest ? 100.Milliseconds() : 1.Minutes(), GetAll, this.observePeriod);
+                this.observationPeriod = observationPeriod;
+
+            needStop = false;
+            observers = new BehaviorSubject<RawSettings>(currentSettings);
+
+            firstRead = new AutoResetEvent(false);
+            ThreadRunner.Run(WatchClusterConfig);
+            if (!firstRead.WaitOne(1.Seconds(), false))
+                throw new TimeoutException();
+            firstRead = null;
         }
 
-        public RawSettings Get()
+        public RawSettings Get() => currentSettings;
+
+        public IObservable<RawSettings> Observe() =>
+            Observable.Create<RawSettings>(
+                observer => observers.Select(settings => currentSettings).Subscribe(observer));
+
+        public void Dispose()
+        {
+            needStop = true;
+            observers.Dispose();
+        }
+
+        private RawSettings ReadSettings()
         {
             var emptyPrefix = string.IsNullOrWhiteSpace(prefix);
             var emptyKey = string.IsNullOrWhiteSpace(key);
@@ -59,9 +98,7 @@ namespace Vostok.Configuration.ClusterConfig
                 return ParseCcTree(clusterConfigClient.GetAll(), true);
         }
 
-        private RawSettings GetAll() => ParseCcTree(clusterConfigClient.GetAll());
-
-        private RawSettings ParseCcTree(Dictionary<string, List<string>> tree, bool byKey = false)
+        private RawSettings ParseCcTree(IReadOnlyDictionary<string, List<string>> tree, bool byKey = false)
         {
             if (!byKey)
                 return new RawSettings(tree.ToDictionary(pair => pair.Key, pair => ParseCcList(pair.Value)));
@@ -71,45 +108,46 @@ namespace Vostok.Configuration.ClusterConfig
             throw new ArgumentException($"Key \"{key}\" does not exist.");
         }
 
-        private RawSettings ParseCcList(List<string> tree) => 
+        private static RawSettings ParseCcList(IEnumerable<string> tree) =>
             new RawSettings(tree.Select(v => new RawSettings(v)).ToList());
 
-        public IObservable<RawSettings> Observe()
+        private void WatchClusterConfig()
         {
-            return FixedPeriodSettingsWatcher.Observe(observePeriod).Select(s =>
+            var nextCheck = DateTime.UtcNow.AddMinutes(-1);
+
+            while (!needStop)
             {
-                if (s == null) return s;
-                var emptyPrefix = string.IsNullOrWhiteSpace(prefix);
-                var emptyKey = string.IsNullOrWhiteSpace(key);
+                if (nextCheck <= DateTime.UtcNow)
+                {
+                    try
+                    {
+                        var newSettings = ReadSettings();
+                        if (!Equals(newSettings, currentSettings))
+                        {
+                            currentSettings = newSettings;
+                            observers.OnNext(currentSettings);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        firstRead?.Set();
+                        Thread.CurrentThread.Abort(e);
+                    }
+                    finally
+                    {
+                        nextCheck = DateTime.UtcNow + observationPeriod;
+                        firstRead?.Set();
+                    }
+                }
 
-                if (emptyPrefix && emptyKey)
-                    return s;
-                else if (!emptyPrefix && !emptyKey)
-                    return s.ChildrenByKey != null && s.ChildrenByKey.ContainsKey($"{prefix}/{key}") ? s.ChildrenByKey[$"{prefix}/{key}"] : null;
-                else if (!emptyPrefix)
-                    return new RawSettings(s.ChildrenByKey.Where(p => p.Key.StartsWith(prefix)).ToDictionary(p => p.Key, p => p.Value));
-                else
-                    return s.ChildrenByKey != null && s.ChildrenByKey.ContainsKey($"{prefix}/{key}") ? s.ChildrenByKey[$"{prefix}/{key}"] : null;
-            });
-            /*var prefScope = prefix?.Split(new []{'/'}, StringSplitOptions.RemoveEmptyEntries).ToArray();
-            var keyScope = key?.ToEnumerable();
-            var scope = prefScope ?? keyScope;
-            if (prefScope != null && keyScope != null)
-                scope = scope.Concat(keyScope);
-            return FixedPeriodSettingsWatcher.Observe(observePeriod)./*Where(s => s != null).#1#Select(s => new ScopedSource(s, scope.ToArray()).Get());*/
-        }
-
-        public void Dispose()
-        {
-            FixedPeriodSettingsWatcher.RemoveObservers(observePeriod);
+                Thread.Sleep(checkPeriod);
+            }
         }
 
         private class ClusterConfigClientProxy : IClusterConfigClientProxy
         {
             public Dictionary<string, List<string>> GetAll() => Kontur.ClusterConfig.Client.ClusterConfigClient.GetAll();
-
             public List<string> GetByKey(string key) => Kontur.ClusterConfig.Client.ClusterConfigClient.GetByKey(key);
-
             public Dictionary<string, List<string>> GetByPrefix(string prefix) => Kontur.ClusterConfig.Client.ClusterConfigClient.GetByPrefix(prefix);
         }
     }

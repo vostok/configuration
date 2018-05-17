@@ -88,19 +88,20 @@ namespace Vostok.Configuration.Tests.Sources
                 sub1.Dispose();
                 sub2.Dispose();
             }
-            SettingsFileWatcher.StopAndClear();
             return val;
         }
 
         [Test, Explicit("Not stable on mass tests")]
         public void Should_not_Observe_file_twice()
         {
-            new Action(() => ShouldNotObserveFileTwiceTest().Should().Be(1)).ShouldPassIn(1.Seconds());
+            new Action(() => ShouldNotObserveFileTwiceTest_ReturnsCountOfReceives().Should().Be(1)).ShouldPassIn(1.Seconds());
         }
 
-        public int ShouldNotObserveFileTwiceTest()
+        public int ShouldNotObserveFileTwiceTest_ReturnsCountOfReceives()
         {
             var val = 0;
+            CreateTextFile("{ \"Param1\": \"set1\" }");
+
             using (var jfs = new JsonFileSource(TestFileName, 100.Milliseconds()))
             {
                 var sub = jfs.Observe().Subscribe(settings =>
@@ -117,12 +118,8 @@ namespace Vostok.Configuration.Tests.Sources
                 CreateTextFile("{ \"Param1\": \"set1\" }");
                 Thread.Sleep(200.Milliseconds());
 
-                CreateTextFile("{ \"Param1\": \"set1\" }");
-                Thread.Sleep(200.Milliseconds());
-
                 sub.Dispose();
             }
-            SettingsFileWatcher.StopAndClear();
             return val;
         }
     }

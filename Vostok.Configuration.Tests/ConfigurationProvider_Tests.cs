@@ -45,7 +45,7 @@ namespace Vostok.Configuration.Tests
         {
             CreateTextFile(1, "{ \"Value\": 123 }");
             new ConfigurationProvider()
-                .WithSourceFor<MyClass>(new JsonFileSource(TestFile1Name))
+                .SetupSourceFor<MyClass>(new JsonFileSource(TestFile1Name))
                 .Get<MyClass>()
                 .Should().BeEquivalentTo(new MyClass{ Value = 123 });
         }
@@ -69,7 +69,7 @@ namespace Vostok.Configuration.Tests
                 .Should().Throw<ArgumentException>();
 
             new Action(() => new ConfigurationProvider()
-                .WithSourceFor<int>(new JsonFileSource(TestFile1Name))
+                .SetupSourceFor<int>(new JsonFileSource(TestFile1Name))
                 .Get<MyClass>())
                 .Should().Throw<ArgumentException>();
         }
@@ -87,7 +87,7 @@ namespace Vostok.Configuration.Tests
 
             res = false;
             new ConfigurationProvider(null, false, Cb())
-                .WithSourceFor<int>(new JsonFileSource(TestFile1Name))
+                .SetupSourceFor<int>(new JsonFileSource(TestFile1Name))
                 .Get<MyClass>();
             res.Should().BeTrue();
 
@@ -97,7 +97,7 @@ namespace Vostok.Configuration.Tests
             res.Should().BeTrue();
         }
 
-        [Test, Explicit("Not stable on mass tests")]
+        /*[Test, Explicit("Not stable on mass tests")]
         public void Should_only_call_OnNext_on_observers_of_the_type_whose_underlying_source_was_updated()
         {
             new Action(() =>
@@ -115,8 +115,8 @@ namespace Vostok.Configuration.Tests
             using (var jcs2 = new JsonFileSource(TestFile2Name, 100.Milliseconds()))
             {
                 var cp = new ConfigurationProvider()
-                    .WithSourceFor<MyClass>(jcs1)
-                    .WithSourceFor<MyClass2>(jcs2);
+                    .SetupSourceFor<MyClass>(jcs1)
+                    .SetupSourceFor<MyClass2>(jcs2);
                 
                 var sub1 = cp.Observe<MyClass>().Subscribe(val =>
                 {
@@ -135,9 +135,9 @@ namespace Vostok.Configuration.Tests
             }
             SettingsFileWatcher.StopAndClear();
             return (vClass1, vClass2);
-        }
+        }*/
 
-        [Test, Explicit("Not stable on mass tests")]
+        /*[Test, Explicit("Not stable on mass tests")]
         public void Should_Observe_file_by_source()
         {
             new Action(() => 
@@ -169,7 +169,7 @@ namespace Vostok.Configuration.Tests
             }
             SettingsFileWatcher.StopAndClear();
             return val;
-        }
+        }*/
 
         private class MyClass
         {
@@ -198,7 +198,7 @@ namespace Vostok.Configuration.Tests
                 x => throw new Exception("Only one execution is allowed. Second one must be from cache."));
 
             var cp = new ConfigurationProvider()
-                .WithSourceFor<MyClass>(cs);
+                .SetupSourceFor<MyClass>(cs);
             cp.Get<MyClass>().Should().BeEquivalentTo(res);
             cp.Get<MyClass>().Should().BeEquivalentTo(res);   //from cache
 
@@ -225,8 +225,8 @@ namespace Vostok.Configuration.Tests
                 x => throw new Exception("Only one execution is allowed (source 2). The second one must be from cache."));
 
             var cp = new ConfigurationProvider()
-                .WithSourceFor<MyClass>(cs1)
-                .WithSourceFor<MyClass>(cs2);
+                .SetupSourceFor<MyClass>(cs1)
+                .SetupSourceFor<MyClass>(cs2);
             cp.Get<MyClass>().Should().BeEquivalentTo(res); //from cache
             cp.Get<MyClass>().Should().BeEquivalentTo(res); //from cache
 

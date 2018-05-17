@@ -2,38 +2,51 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 
 namespace Vostok.Configuration.Sources
 {
     /// <inheritdoc />
     /// <summary>
-    /// Json converter to RawSettings tree from string
+    /// Ini converter to <see cref="RawSettings"/> tree from string
     /// </summary>
     public class IniStringSource : IConfigurationSource
     {
-        private readonly string ini;
-        private int currentLine;
+        private readonly RawSettings currentSettings;
+        private readonly BehaviorSubject<RawSettings> observers;
 
         /// <summary>
-        /// Creating ini converter
+        /// <para>Creates a <see cref="JsonFileSource"/> instance using given string in <paramref name="ini"/> parameter</para>
+        /// <para>Parsing is here.</para>
         /// </summary>
-        /// <param name="ini">Ini file data in string</param>
+        /// <param name="ini">ini data in string</param>
+        /// <exception cref="Exception">Ini has wrong format</exception>
         public IniStringSource(string ini)
         {
-            this.ini = ini;
-            currentLine = -1;
+            observers = new BehaviorSubject<RawSettings>(currentSettings);
+            currentSettings = string.IsNullOrWhiteSpace(ini) ? null : ParseIni(ini);
         }
 
-        public RawSettings Get() =>
-            string.IsNullOrWhiteSpace(ini) ? null : ParseIni(ini);
+        /// <inheritdoc />
+        /// <summary>
+        /// Returns previously parsed <see cref="RawSettings"/> tree.
+        /// </summary>
+        public RawSettings Get() => currentSettings;
 
+        /// <inheritdoc />
+        /// <summary>
+        /// <para>Subscribtion to <see cref="RawSettings"/> tree changes.</para>
+        /// <para>Returns current value immediately on subscribtion.</para>
+        /// </summary>
         public IObservable<RawSettings> Observe() => 
-            Observable.Empty<RawSettings>();
+            Observable.Create<RawSettings>(
+                observer => observers.Select(settings => currentSettings).Subscribe(observer));
 
         private RawSettings ParseIni(string text)
         {
             var res = new RawSettingsEditable();
             var section = res;
+            var currentLine = -1;
 
             var lines = text
                 .Split(new[] {'\r', '\n'}, StringSplitOptions.RemoveEmptyEntries)
@@ -45,12 +58,12 @@ namespace Vostok.Configuration.Sources
                 if (line.StartsWith("#") || line.StartsWith(";"))
                     continue;
                 if (line.StartsWith("[") && line.EndsWith("]") && line.Length > 2 && !line.Contains(" "))
-                    section = ParseSection(line.Substring(1, line.Length - 2), res);
+                    section = ParseSection(line.Substring(1, line.Length - 2), res, currentLine);
                 else
                 {
                     var pair = line.Split(new[] {'='}, 2).Select(s => s.Trim()).ToArray();
                     if (pair.Length == 2 && pair[0].Length > 0 && !pair[0].Contains(" "))
-                        ParsePair(pair[0], pair[1], section);
+                        ParsePair(pair[0], pair[1], section, currentLine);
                     else
                         throw new FormatException($"Wrong ini file ({currentLine}): line \"{line}\"");
                 }
@@ -62,7 +75,7 @@ namespace Vostok.Configuration.Sources
             return (RawSettings)res;
         }
 
-        private RawSettingsEditable ParseSection(string section, RawSettingsEditable settings)
+        private RawSettingsEditable ParseSection(string section, RawSettingsEditable settings, int currentLine)
         {
             section = section.Replace(" ", "");
 
@@ -73,7 +86,7 @@ namespace Vostok.Configuration.Sources
             return res;
         }
 
-        private void ParsePair(string key, string value, RawSettingsEditable settings)
+        private void ParsePair(string key, string value, RawSettingsEditable settings, int currentLine)
         {
             var keys = key.Replace(" ", "").Split('.');
             var isObj = false;

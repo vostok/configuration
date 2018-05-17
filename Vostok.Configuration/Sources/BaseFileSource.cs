@@ -1,38 +1,63 @@
 ﻿using System;
-using System.IO;
 using System.Reactive.Linq;
-using Vostok.Commons.Conversions;
+using System.Reactive.Subjects;
+using System.Threading;
 
 namespace Vostok.Configuration.Sources
 {
+    /// <inheritdoc />
+    /// <summary>
+    /// Base class for converters to <see cref="RawSettings"/> tree from file
+    /// </summary>
     public class BaseFileSource : IConfigurationSource
     {
-        protected readonly string FilePath;
-        private readonly Func<string, RawSettings> parseSettings;
+        private readonly BehaviorSubject<RawSettings> observers;
+        private readonly IDisposable fileWatcherSubscribtion;
+        private RawSettings current;
 
         /// <summary>
-        /// Creating converter
+        /// <para>Creates a <see cref="BaseFileSource"/> instance.</para>
+        /// <para>Wayits for file to be parsed.</para>
         /// </summary>
         /// <param name="filePath">File name with settings</param>
         /// <param name="parseSettings">"Get" method invocation for string source</param>
         /// <param name="observationPeriod">Observe period in ms (min 100, default 10000)</param>
         /// <param name="onError">Callback on error</param>
-        public BaseFileSource(string filePath, Func<string, RawSettings> parseSettings, TimeSpan observationPeriod = default, Action<Exception> onError = null)
+        protected BaseFileSource(string filePath, Func<string, RawSettings> parseSettings, TimeSpan observationPeriod = default, Action<Exception> onError = null)
         {
-            FilePath = filePath;
-            this.parseSettings = parseSettings;
-            SettingsFileWatcher.StartSettingsFileWatcher(filePath, this,
-                observationPeriod == default ? 10.Seconds() : observationPeriod, onError);
+            observers = new BehaviorSubject<RawSettings>(current);
+
+            var fileWatcher = SettingsFileWatcher.WatchFile(filePath, this, observationPeriod, onError);
+            var msg = new AutoResetEvent(false);
+            fileWatcherSubscribtion = fileWatcher.Subscribe(
+                str =>
+                {
+                    current = parseSettings(str);
+                    observers.OnNext(current);
+                    msg.Set();
+                });
+            msg.WaitOne();
         }
 
-        public RawSettings Get() => 
-            !File.Exists(FilePath) ? null : parseSettings(File.ReadAllText(FilePath));
+        /// <inheritdoc />
+        /// <summary>
+        /// Returns previously parsed <see cref="RawSettings"/> tree.
+        /// </summary>
+        public RawSettings Get() => current;
 
-        public IObservable<RawSettings> Observe() => 
+        /// <inheritdoc />
+        /// <summary>
+        /// <para>Subscribtion to <see cref="RawSettings"/> tree changes.</para>
+        /// <para>Returns current value immediately on subscribtion.</para>
+        /// </summary>
+        public IObservable<RawSettings> Observe() =>
             Observable.Create<RawSettings>(observer =>
-                SettingsFileWatcher.Subscribe(observer, this));
+                observers.Select(settings => current).Subscribe(observer));
 
-        public void Dispose() => 
-            SettingsFileWatcher.RemoveObservers(this);
+        public void Dispose()
+        {
+            observers.Dispose();
+            fileWatcherSubscribtion?.Dispose();
+        }
     }
 }

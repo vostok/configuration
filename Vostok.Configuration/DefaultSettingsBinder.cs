@@ -11,6 +11,7 @@ using UriParser = Vostok.Commons.Parsers.UriParser;
 namespace Vostok.Configuration
 {
     public delegate bool TryParse<T>(string s, out T value);
+    public delegate bool TryBind(RawSettings settings, Type bindType, out object result);
 
     /// <inheritdoc />
     /// <summary>
@@ -30,6 +31,7 @@ namespace Vostok.Configuration
         #endregion
 
         private readonly Dictionary<Type, ITypeParser> primitiveAndSimpleParsers;
+        private readonly List<IComplexBinder> complexBinders;
 
         public DefaultSettingsBinder()
         {
@@ -58,6 +60,20 @@ namespace Vostok.Configuration
                 {typeof(DataSize), new InlineTypeParser<DataSize>(DataSizeParser.TryParse)},
                 {typeof(DataRate), new InlineTypeParser<DataRate>(DataRateParser.TryParse)},
             };
+            
+            // (Mansiper): The order is important!
+            complexBinders = new List<IComplexBinder>
+            {
+                new InlineComplexBinder(TryBindToPrimitiveOrSimple),
+                new InlineComplexBinder(TryBindToEnum),
+                new InlineComplexBinder(TryBindToNullable),
+                new InlineComplexBinder(TryBindToStruct),
+                new InlineComplexBinder(TryBindToArray),
+                new InlineComplexBinder(TryBindToList),
+                new InlineComplexBinder(TryBindToDictionary),
+                new InlineComplexBinder(TryBindToHashSet),
+                new InlineComplexBinder(TryBindToClass),
+            };
         }
 
         public TSettings Bind<TSettings>(RawSettings settings)
@@ -71,8 +87,7 @@ namespace Vostok.Configuration
         /// <typeparam name="T">Type of in which you need to parse</typeparam>
         /// <param name="parser">Class with method implemented TryParse_T_ delegate</param>
         /// <returns>This binder with new parser</returns>
-        // CR(iloktionov): Naming: With --> Add 
-        public DefaultSettingsBinder WithCustomParser<T>(ITypeParser parser)
+        public DefaultSettingsBinder AddCustomParser<T>(ITypeParser parser)
         {
             primitiveAndSimpleParsers.Add(typeof(T), parser);
             return this;
@@ -84,11 +99,13 @@ namespace Vostok.Configuration
         /// <typeparam name="T">Type of in which you need to parse</typeparam>
         /// <param name="parseMethod">Method implemented TryParse_T_ delegate</param>
         /// <returns>This binder with new parser</returns>
-        public DefaultSettingsBinder WithCustomParser<T>(TryParse<T> parseMethod)
+        public DefaultSettingsBinder AddCustomParser<T>(TryParse<T> parseMethod)
         {
             primitiveAndSimpleParsers.Add(typeof(T), new InlineTypeParser<T>(parseMethod));
             return this;
         }
+
+        #region Binders
 
         private bool TryBindToPrimitiveOrSimple(RawSettings settings, Type bindType, out object result)
         {
@@ -211,7 +228,10 @@ namespace Vostok.Configuration
         {
             var bindGtd = bindType.IsGenericType ? bindType.GetGenericTypeDefinition() : null;
             result = default;
-            if (!bindType.IsGenericType || bindGtd != typeof(List<>) && bindGtd != typeof(IEnumerable<>))
+            if (bindGtd == null || !bindType.IsGenericType)
+                return false;
+            var interfaces = new[] { typeof(IList), typeof(ICollection), typeof(IEnumerable), typeof(IList<>), typeof(ICollection<>), typeof(IEnumerable<>), typeof(IReadOnlyList<>), typeof(IReadOnlyCollection<>) };
+            if (((TypeInfo)bindGtd).ImplementedInterfaces.All(t => !interfaces.Contains(t)))
                 return false;
 
             var genType = typeof(List<>).MakeGenericType(bindType.GetGenericArguments());
@@ -303,6 +323,8 @@ namespace Vostok.Configuration
             return true;
         }
 
+        #endregion
+
         private static void CheckArgumentIsNull(object obj, string message)
         {
             if (obj == null)
@@ -313,18 +335,10 @@ namespace Vostok.Configuration
         {
             CheckArgumentIsNull(settings, ParameterIsNull.Replace("%p", paramName));
 
-            // (Mansiper): The order is important!
-            if (TryBindToPrimitiveOrSimple(settings, type, out var mainRes)
-                || TryBindToEnum(settings, type, out mainRes)
-                || TryBindToNullable(settings, type, out mainRes)
-                || TryBindToStruct(settings, type, out mainRes)
-                || TryBindToArray(settings, type, out mainRes)
-                || TryBindToList(settings, type, out mainRes)
-                || TryBindToDictionary(settings, type, out mainRes)
-                || TryBindToHashSet(settings, type, out mainRes)
-                || TryBindToClass(settings, type, out mainRes))
-                return mainRes;
-
+            foreach (var binder in complexBinders)
+                if (binder.TryBind(settings, type, out var res))
+                    return res;
+        
             throw new InvalidCastException($"Unknown data type \"{type.Name}\". If it is primitive ask developers to add it.");
         }
 
@@ -419,6 +433,26 @@ namespace Vostok.Configuration
         {
             IsRequired = 1,
             IsOptional = 2,
+        }
+
+        private interface IComplexBinder
+        {
+            bool TryBind(RawSettings settings, Type bindType, out object result);
+        }
+
+        private class InlineComplexBinder: IComplexBinder
+        {
+            private readonly TryBind bindMethod;
+
+            public InlineComplexBinder(TryBind bindMethod)
+            {
+                this.bindMethod = bindMethod;
+            }
+
+            public bool TryBind(RawSettings settings, Type bindType, out object result)
+            {
+                return bindMethod(settings, bindType, out result);
+            }
         }
     }
 }

@@ -10,7 +10,7 @@ using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests.Sources
 {
-    [TestFixture]
+    [TestFixture, SingleThreaded]
     public class CombinedSource_Tests
     {
         private const string TestFile1Name = "test1_CombinedSource.json";
@@ -148,7 +148,9 @@ namespace Vostok.Configuration.Tests.Sources
             CreateTextFile(3, "{ \"value\": { \"ObjValue 2\": 3, \"ObjArray\": [5,6] } }");
 
             using (var cs = CreateCombinedSource(3, ListCombineOptions.UnionAll))
-                cs.Get().Should().BeEquivalentTo(
+            {
+                var result = cs.Get();
+                result.Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -169,7 +171,7 @@ namespace Vostok.Configuration.Tests.Sources
                                         })
                                     },
                                 }) },
-                        }));
+                        }));}
         }
 
         [Test]
@@ -178,8 +180,10 @@ namespace Vostok.Configuration.Tests.Sources
             CreateTextFile(1, "{ \"value\": [ { \"Obj_1_Value\": 1 }, { \"Obj_2_Value\": 1 } ] }");
             CreateTextFile(2, "{ \"value\": [ { \"Obj_1_Value\": 2 }, { \"Obj_2_Value\": 2 } ] }");
 
-            using (var cs = CreateCombinedSource(2))
-                cs.Get().Should().BeEquivalentTo(
+            using (var cs = CreateCombinedSource(2, ListCombineOptions.FirstOnly))
+            {
+                var result = cs.Get();
+                result.Should().BeEquivalentTo(
                     new RawSettings(
                         new Dictionary<string, RawSettings>
                         {
@@ -198,7 +202,7 @@ namespace Vostok.Configuration.Tests.Sources
                                         }),
                                 })
                             }
-                        }));
+                        }));}
         }
 
         [Test]
@@ -317,9 +321,9 @@ namespace Vostok.Configuration.Tests.Sources
         [Test, Explicit("Not stable on mass tests")]
         public void Should_observe_file()
         {
-            new Action(() => ShouldObserveFileTest().Should().Be(3)).ShouldPassIn(1.Seconds());
+            new Action(() => ShouldObserveFileTest_ReturnsCountOfReceives().Should().Be(2)).ShouldPassIn(1.Seconds());
         }
-        private int ShouldObserveFileTest()
+        private int ShouldObserveFileTest_ReturnsCountOfReceives()
         {
             CreateTextFile(1, "{ \"value 1\": 1, \"list\": [1,2] }");
             CreateTextFile(2, "{ \"value 2\": 2 }");
@@ -351,7 +355,6 @@ namespace Vostok.Configuration.Tests.Sources
 
                 sub.Dispose();
             }
-            SettingsFileWatcher.StopAndClear();
             return val;
         }
     }
