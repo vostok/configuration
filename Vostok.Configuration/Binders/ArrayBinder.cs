@@ -1,20 +1,28 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 
 namespace Vostok.Configuration.Binders
 {
-    internal class ArrayBinder<T> :
-        ISettingsBinder<T[]>
+    internal class ArrayBinder<T> : ISettingsBinder<T>
     {
-        private readonly ISettingsBinder<T> elementBinder;
+        private readonly ISettingsBinderFactory binderFactory;
 
-        public ArrayBinder(ISettingsBinder<T> elementBinder)
+        public ArrayBinder(ISettingsBinderFactory binderFactory)
         {
-            this.elementBinder = elementBinder;
+            this.binderFactory = binderFactory;
         }
 
-        public T[] Bind(RawSettings settings) =>
-            (settings.Children ?? Enumerable.Empty<RawSettings>())
-            .Select(n => elementBinder.Bind(n))
-            .ToArray();
+        public T Bind(RawSettings settings)
+        {
+            var subType = typeof(T).GetElementType();
+            var binder = binderFactory.CreateForType(subType);
+
+            var i = 0;
+            var instance = Array.CreateInstance(subType, settings.Children.Count);
+            foreach (var value in (settings.Children ?? Enumerable.Empty<RawSettings>()).Select(n => binder.Bind(n)))
+                instance.SetValue(value, i++);
+            
+            return (T)(object)instance;
+        }
     }
 }

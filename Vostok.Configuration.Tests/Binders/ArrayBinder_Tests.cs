@@ -1,25 +1,12 @@
-﻿/*using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
-using SimpleInjector;
 using Vostok.Configuration.Binders;
 
 namespace Vostok.Configuration.Tests.Binders
 {
-    public class ArrayBinder_Tests
+    public class ArrayBinder_Tests: Binders_Test
     {
-        private Container container;
-
-        [SetUp]
-        public void SetUp()
-        {
-            container = new Container();
-            container.Register(typeof(ISettingsBinder<>), typeof(PrimitiveAndSimpleBinder));
-            container.Register(typeof(ISettingsBinder<>), typeof(ListBinder<>));
-            container.Register(typeof(ISettingsBinder<>), typeof(ArrayBinder<>));
-        }
-
         [Test]
         public void Should_bind_to_Array_of_primitives()
         {
@@ -28,93 +15,40 @@ namespace Vostok.Configuration.Tests.Binders
                 new RawSettings("TRUE"),
                 new RawSettings("false"),
             });
-            var binder = container.GetInstance<ISettingsBinder<bool[]>>();
+            var binder = Container.GetInstance<ISettingsBinder<bool[]>>();
             var result = binder.Bind(settings);
             result.Should().BeEquivalentTo(new[] { true, false });
         }
 
         [Test]
-        public void Should_bind_to_ICollection_of_primitives()
+        public void Should_bind_to_Array_of_structs()
         {
             var settings = new RawSettings(new List<RawSettings>
             {
-                new RawSettings("1"),
-                new RawSettings("2"),
-            });
-            var binder = container.GetInstance<ISettingsBinder<IList>>();
-            var result = binder.Bind(settings);
-            result.Should().BeEquivalentTo(new[] { 1, 2 });
-        }
-
-        /*[Test]
-        public void Should_bind_to_IEnumerable_of_primitives()
-        {
-            var settings = new RawSettings(new List<RawSettings>
-            {
-                new RawSettings("1"),
-                new RawSettings("2"),
-            });
-            var binder = container.GetInstance<ISettingsBinder<IEnumerable<int>>>();
-            var result = binder.Bind(settings);
-            result.Should().BeEquivalentTo(new List<int> { 1, 2 });
-        }
-
-        [Test]
-        public void Should_bind_to_IList_of_primitives()
-        {
-            var settings = new RawSettings(new List<RawSettings>
-            {
-                new RawSettings("1"),
-                new RawSettings("2"),
-            });
-            var binder = container.GetInstance<ISettingsBinder<IList<int>>>();
-            var result = binder.Bind(settings);
-            result.Should().BeEquivalentTo(new List<int> { 1, 2 });
-        }
-
-        [Test]
-        public void Should_bind_to_IReadOnlyList_of_primitives()
-        {
-            var settings = new RawSettings(new List<RawSettings>
-            {
-                new RawSettings("1"),
-                new RawSettings("2"),
-            });
-            var binder = container.GetInstance<ISettingsBinder<IReadOnlyList<int>>>();
-            var result = binder.Bind(settings);
-            result.Should().BeEquivalentTo(new List<int> { 1, 2 });
-        }
-
-        [Test]
-        public void Should_bind_to_IReadOnlyCollection_of_primitives()
-        {
-            var settings = new RawSettings(new List<RawSettings>
-            {
-                new RawSettings("1"),
-                new RawSettings("2"),
-            });
-            var binder = container.GetInstance<ISettingsBinder<IReadOnlyCollection<int>>>();
-            var result = binder.Bind(settings);
-            result.Should().BeEquivalentTo(new List<int> { 1, 2 });
-        }
-
-        [Test]
-        public void Should_bind_to_list_of_lists_of_primitives()
-        {
-            var settings = new RawSettings(new List<RawSettings>
-            {
-                new RawSettings(new List<RawSettings>
+                new RawSettings(new Dictionary<string, RawSettings>
                 {
-                    new RawSettings("10"),
+                    { "Int", new RawSettings("1") },
+                    { "String", new RawSettings("str1") },
                 }),
-                new RawSettings(new List<RawSettings>
+                new RawSettings(new Dictionary<string, RawSettings>
                 {
-                    new RawSettings("12"),
+                    { "Int", new RawSettings("2") },
+                    { "String", new RawSettings("str2") },
                 }),
             });
-            var binder = container.GetInstance<ISettingsBinder<List<List<int>>>>();
+            var binder = Container.GetInstance<ISettingsBinder<SimpleStruct[]>>();
             var result = binder.Bind(settings);
-            result.Should().BeEquivalentTo(new List<List<int>> { new List<int> {10}, new List<int> {12} });
-        }#1#
+            result.Should().BeEquivalentTo(new[]
+            {
+                new SimpleStruct{ Int = 1, String = "str1" },
+                new SimpleStruct{ Int = 2, String = "str2" },
+            });
+        }
+
+        private struct SimpleStruct
+        {
+            public int Int { get; set; }
+            public string String { get; set; }
+        }
     }
-}*/
+}

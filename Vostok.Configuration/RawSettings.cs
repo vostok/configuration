@@ -37,7 +37,7 @@ namespace Vostok.Configuration
         /// Current value
         /// </summary>
         public string Value { get; }
-        
+
         /// <summary>
         /// Inner values where order has no matter (dictioonary, fields/properties)
         /// </summary>
@@ -47,6 +47,9 @@ namespace Vostok.Configuration
         /// Inner values where order has matter (array, list)
         /// </summary>
         public IReadOnlyList<RawSettings> Children { get; }
+
+        public bool IsEmpty() =>
+            Value == null && Children == null && ChildrenByKey == null;
 
         #region Equality
 
@@ -69,7 +72,7 @@ namespace Vostok.Configuration
 
             if (thisCbkExists &&
                 (!new HashSet<string>(ChildrenByKey.Keys).SetEquals(other.ChildrenByKey.Keys) ||
-                ChildrenByKey.Any(pair => !Equals(pair.Value, other.ChildrenByKey[pair.Key]))))
+                 ChildrenByKey.Any(pair => !Equals(pair.Value, other.ChildrenByKey[pair.Key]))))
                 return false;
 
             if (thisChExists && !Children.SequenceEqual(other.Children))
@@ -91,9 +94,11 @@ namespace Vostok.Configuration
             int ChildrenByKeyHash()
             {
                 var keysRes = ChildrenByKey.Keys
-                    .Select(k => k.GetHashCode()).Aggregate(0, (a, b) => unchecked(a + b));
+                    .Select(k => k.GetHashCode())
+                    .Aggregate(0, (a, b) => unchecked(a + b));
                 var valsRes = ChildrenByKey.Values
-                    .Select(v => v.GetHashCode()).Aggregate(0, (a, b) => unchecked(a + b));
+                    .Select(v => v.GetHashCode())
+                    .Aggregate(0, (a, b) => unchecked(a + b));
                 return unchecked (keysRes * 195) ^ valsRes;
             }
 
