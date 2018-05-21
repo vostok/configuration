@@ -6,11 +6,10 @@
     public interface ISettingsBinder
     {
         /// <summary>
-        /// Bindes RawSettings tree to specified type
+        /// Bindes <paramref name="rawSettings"/> tree to specified type
         /// </summary>
         /// <typeparam name="TSettings">Data type you need to get</typeparam>
-        /// <param name="rawSettings">RawSettings tree</param>
-        /// <returns>Value or object of specified type</returns>
+        /// <param name="rawSettings"><see cref="RawSettings"/> tree</param>
         TSettings Bind<TSettings>(RawSettings rawSettings);
     }
 }

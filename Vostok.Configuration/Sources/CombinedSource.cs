@@ -83,8 +83,6 @@ namespace Vostok.Configuration.Sources
             foreach (var watcher in watchers)
                 watcher.Dispose();
             observers.Dispose();
-            /*foreach (var source in sources)
-                source.Dispose();*/
         }
 
         private void MergeIntoCurrentSettings(IEnumerable<RawSettings> settingses)

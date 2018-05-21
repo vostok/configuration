@@ -1,12 +1,10 @@
-﻿using System;
-using SimpleInjector;
+﻿using SimpleInjector;
 using Vostok.Commons.Parsers;
 using Vostok.Configuration.Binders;
 
 namespace Vostok.Configuration
 {
     public delegate bool TryParse<T>(string s, out T value);
-    public delegate bool TryBind(RawSettings settings, Type bindType, out object result);
 
     /// <inheritdoc />
     /// <summary>

@@ -71,8 +71,19 @@ namespace Vostok.Configuration.ClusterConfig
             firstRead = null;
         }
 
+        /// <inheritdoc />
+        /// <summary>
+        /// Returns previously parsed configurations. Null if sources where not specified.
+        /// </summary>
+        /// <returns>Combine as RawSettings tree</returns>
         public RawSettings Get() => currentSettings;
 
+        /// <inheritdoc />
+        /// <summary>
+        /// <para>Subscribtion to see <see cref="RawSettings"/> changes in source.</para>
+        /// <para>Returns current value immediately on subscribtion.</para>
+        /// </summary>
+        /// <returns>Event with new RawSettings tree</returns>
         public IObservable<RawSettings> Observe() =>
             Observable.Create<RawSettings>(
                 observer => observers.Select(settings => currentSettings).Subscribe(observer));

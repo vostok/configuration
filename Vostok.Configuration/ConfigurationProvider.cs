@@ -19,10 +19,15 @@ namespace Vostok.Configuration
 
         private readonly ConcurrentDictionary<Type, (object value, DateTime expiration)> cache;
         private readonly ConcurrentDictionary<Type, BehaviorSubject<object>> subjects;
+        private readonly BehaviorSubject<object> observers;
 
         /// <summary>
-        /// Creating configuration provider
+        /// Creates a <see cref="ConfigurationProvider"/> instance with given parameters <paramref name="settingsBinder"/>, <paramref name="throwExceptions"/>, <paramref name="onError"/>, and <paramref name="cacheTime"/>
         /// </summary>
+        /// <param name="settingsBinder">Binder for using here</param>
+        /// <param name="throwExceptions">Exception reaction</param>
+        /// <param name="onError">Action on exception</param>
+        /// <param name="cacheTime">Cache storing time</param>
         public ConfigurationProvider(ISettingsBinder settingsBinder = null, bool throwExceptions = true, Action<Exception> onError = null, TimeSpan cacheTime = default)
         {
             this.throwExceptions = throwExceptions;
@@ -34,6 +39,11 @@ namespace Vostok.Configuration
             subjects = new ConcurrentDictionary<Type, BehaviorSubject<object>>();
         }
 
+        /// <inheritdoc />
+        /// <summary>
+        /// <para>Returns value of given type <typeparamref name="TSettings"/> using binder from constructor.</para>
+        /// <para>Uses cache.</para>
+        /// </summary>
         public TSettings Get<TSettings>()
         {
             try
@@ -42,7 +52,7 @@ namespace Vostok.Configuration
                     return (TSettings)item.value;
                 if (!sources.TryGetValue(typeof(TSettings), out var source))
                     throw new ArgumentException($"{nameof(IConfigurationSource)} for specified type \"{typeof(TSettings).Name}\" is absent");
-                return Get<TSettings>(source.Get(), true);
+                return GetInternal<TSettings>(source.Get(), true);
             }
             catch (Exception e)
             {
@@ -53,11 +63,16 @@ namespace Vostok.Configuration
             }
         }
 
+        /// <inheritdoc />
+        /// <summary>
+        /// Returns value of given type <typeparamref name="TSettings"/> from specified <paramref name="source"/>.
+        /// </summary>
         public TSettings Get<TSettings>(IConfigurationSource source)
         {
             try
             {
-                return Get<TSettings>(source.Get());
+                //todo: one more cache for souces?
+                return GetInternal<TSettings>(source.Get());
             }
             catch (Exception e)
             {
@@ -68,7 +83,7 @@ namespace Vostok.Configuration
             }
         }
 
-        private TSettings Get<TSettings>(RawSettings settings, bool cached = false)
+        private TSettings GetInternal<TSettings>(RawSettings settings, bool cached = false)
         {
             // CR(iloktionov): A bug here. Suppose I set up some source for MySettings model and the perform an ordinary Get().
             // CR(iloktionov): Result gets cached and then it's impossible to get MySettings with any other source.
@@ -91,6 +106,12 @@ namespace Vostok.Configuration
             }
         }
 
+        /// <inheritdoc />
+        /// <summary>
+        /// <para>Subscribtion to see changes in source.</para>
+        /// <para>Returns current value immediately on subscribtion.</para>
+        /// </summary>
+        /// <returns>Event with new value</returns>
         public IObservable<TSettings> Observe<TSettings>()
         {
             if (!sources.TryGetValue(typeof(TSettings), out var source))
@@ -100,14 +121,25 @@ namespace Vostok.Configuration
             var subject = subjects.GetOrAdd(typeof(TSettings), _ => newSubject = new BehaviorSubject<object>(null));
 
             if (subject == newSubject)
-                source.Observe().Where(s => s != null).Select(settings => Get<TSettings>(settings, true) as object).Subscribe(subject);
+                source.Observe().Where(s => s != null).Select(settings => GetInternal<TSettings>(settings, true) as object).Subscribe(subject);
 
             return subject.Where(s => s != null).Cast<TSettings>();
         }
 
+        /// <inheritdoc />
+        /// <summary>
+        /// <para>Subscribtion to see changes in specified <paramref name="source"/>.</para>
+        /// <para>Returns current value immediately on subscribtion.</para>
+        /// </summary>
+        /// <returns>Event with new value</returns>
         public IObservable<TSettings> Observe<TSettings>(IConfigurationSource source) => 
-            source.Observe().Select(settings => Get<TSettings>(settings)).Where(s => s != null);
+            source.Observe().Select(settings => GetInternal<TSettings>(settings)).Where(s => s != null);
 
+        /// <summary>
+        /// Changes source to combination of source for given type <typeparamref name="TSettings"/> and <paramref name="source"/>
+        /// </summary>
+        /// <typeparam name="TSettings">Type of souce to combine with</typeparam>
+        /// <param name="source">Second souce to combine with</param>
         public ConfigurationProvider SetupSourceFor<TSettings>(IConfigurationSource source)
         {
             if (subjects.Any())
