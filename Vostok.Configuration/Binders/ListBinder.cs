@@ -18,10 +18,14 @@ namespace Vostok.Configuration.Binders
             this.elementBinder = elementBinder;
         }
 
-        public List<T> Bind(RawSettings settings) =>
-            (settings.Children ?? Enumerable.Empty<RawSettings>())
-            .Select(n => elementBinder.Bind(n))
-            .ToList();
+        public List<T> Bind(RawSettings settings)
+        {
+            RawSettings.CheckSettings(settings);
+
+            return (settings.Children ?? Enumerable.Empty<RawSettings>())
+                .Select(n => elementBinder.Bind(n))
+                .ToList();
+        }
 
         IList<T> ISettingsBinder<IList<T>>.Bind(RawSettings settings) => Bind(settings);
         IEnumerable<T> ISettingsBinder<IEnumerable<T>>.Bind(RawSettings settings) => Bind(settings);

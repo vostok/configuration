@@ -22,7 +22,7 @@ namespace Vostok.Configuration.Binders
                 {
                     return method.Invoke(binder, new object[] { rawSettings });
                 }
-                catch { return default; }
+                catch { return default; }   //todo: maybe need Default method
 
             return method.Invoke(binder, new object[] {rawSettings});
         }

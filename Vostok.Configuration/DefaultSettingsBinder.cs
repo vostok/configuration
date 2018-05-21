@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Reflection;
-using Vostok.Commons;
+using SimpleInjector;
 using Vostok.Commons.Parsers;
-using UriParser = Vostok.Commons.Parsers.UriParser;
+using Vostok.Configuration.Binders;
 
 namespace Vostok.Configuration
 {
@@ -19,440 +14,70 @@ namespace Vostok.Configuration
     /// </summary>
     public class DefaultSettingsBinder : ISettingsBinder
     {
-        #region Constants
+        private readonly Container container;
 
-        private const string ParameterIsNull = "Settings parameter \"%p\" is null";
-        private const string ValueIsNull = "Settings value \"%v\" of type \"%t\" is empty";
-        private const string DictIsEmpty = "Settings dictionary of value type \"%t\" is empty";
-        private const string DictItemIsEmpty = "Settings dictionary item by key \"%k\" of value type \"%t\" is empty";
-        private const string ListIsEmpty = "Settings list of type \"%t\" is empty";
-        private const string ListItemIsEmpty = "Settings list item #%i of type \"%t\" is empty";
-
-        #endregion
-
-        private readonly Dictionary<Type, ITypeParser> primitiveAndSimpleParsers;
-        private readonly List<IComplexBinder> complexBinders;
-
+        /// <summary>
+        /// Creates a <see cref="DefaultSettingsBinder"/> instance
+        /// </summary>
         public DefaultSettingsBinder()
         {
-            primitiveAndSimpleParsers = new Dictionary<Type, ITypeParser>
-            {
-                {typeof(bool), new InlineTypeParser<bool>(bool.TryParse)},
-                {typeof(byte), new InlineTypeParser<byte>(byte.TryParse)},
-                {typeof(char), new InlineTypeParser<char>(char.TryParse)},
-                {typeof(decimal), new InlineTypeParser<decimal>(DecimalParser.TryParse)},
-                {typeof(double), new InlineTypeParser<double>(DoubleParser.TryParse)},
-                {typeof(float), new InlineTypeParser<float>(FloatParser.TryParse)},
-                {typeof(int), new InlineTypeParser<int>(int.TryParse)},
-                {typeof(long), new InlineTypeParser<long>(long.TryParse)},
-                {typeof(sbyte), new InlineTypeParser<sbyte>(sbyte.TryParse)},
-                {typeof(short), new InlineTypeParser<short>(short.TryParse)},
-                {typeof(uint), new InlineTypeParser<uint>(uint.TryParse)},
-                {typeof(ulong), new InlineTypeParser<ulong>(ulong.TryParse)},
-                {typeof(ushort), new InlineTypeParser<ushort>(ushort.TryParse)},
-                {typeof(DateTime), new InlineTypeParser<DateTime>(DateTimeParser.TryParse)},
-                {typeof(DateTimeOffset), new InlineTypeParser<DateTimeOffset>(DateTimeOffsetParser.TryParse)},
-                {typeof(TimeSpan), new InlineTypeParser<TimeSpan>(TimeSpanParser.TryParse)},
-                {typeof(IPAddress), new InlineTypeParser<IPAddress>(IPAddress.TryParse)},
-                {typeof(IPEndPoint), new InlineTypeParser<IPEndPoint>(IPEndPointParser.TryParse)},
-                {typeof(Guid), new InlineTypeParser<Guid>(Guid.TryParse)},
-                {typeof(Uri), new InlineTypeParser<Uri>(UriParser.TryParse)},
-                {typeof(DataSize), new InlineTypeParser<DataSize>(DataSizeParser.TryParse)},
-                {typeof(DataRate), new InlineTypeParser<DataRate>(DataRateParser.TryParse)},
-            };
-            
-            // (Mansiper): The order is important!
-            complexBinders = new List<IComplexBinder>
-            {
-                new InlineComplexBinder(TryBindToPrimitiveOrSimple),
-                new InlineComplexBinder(TryBindToEnum),
-                new InlineComplexBinder(TryBindToNullable),
-                new InlineComplexBinder(TryBindToStruct),
-                new InlineComplexBinder(TryBindToArray),
-                new InlineComplexBinder(TryBindToList),
-                new InlineComplexBinder(TryBindToDictionary),
-                new InlineComplexBinder(TryBindToHashSet),
-                new InlineComplexBinder(TryBindToClass),
-            };
+            container = new Container();
+            container.RegisterConditional(typeof(ISettingsBinder<>), typeof(PrimitiveAndSimpleBinder<>),
+                c => PrimitiveAndSimpleBinder<bool>.IsAvailableType(c.ServiceType.GetGenericArguments()[0]));
+            container.RegisterConditional(typeof(ISettingsBinder<>), typeof(NullableBinder<>),
+                c => c.ServiceType.GetGenericArguments()[0].IsNullable());
+            container.RegisterConditional(typeof(ISettingsBinder<>), typeof(EnumBinder<>),
+                c => c.ServiceType.GetGenericArguments()[0].IsEnum);
+            container.Register(typeof(ISettingsBinder<>), typeof(ListBinder<>));
+            container.Register(typeof(ISettingsBinder<>), typeof(DictionaryBinder<,>));
+            container.Register(typeof(ISettingsBinder<>), typeof(SetBinder<>));
+            container.RegisterConditional(typeof(ISettingsBinder<>), typeof(ArrayBinder<>),
+                c => c.ServiceType.GetGenericArguments()[0].IsArray);
+            container.RegisterConditional(typeof(ISettingsBinder<>), typeof(ClassAndStructBinder<>),
+                c =>
+                {
+                    var type = c.ServiceType.GetGenericArguments()[0];
+                    return type.IsValueType && !type.IsPrimitive && !type.IsGenericType && !type.IsEnum && !PrimitiveAndSimpleBinder<bool>.IsAvailableType(type) || !c.Handled;
+                });
+            container.Register<ISettingsBinderFactory>(() => new SettingsBinderFactory(container));
         }
 
+        /// <inheritdoc />
+        /// <summary>
+        /// Binds <paramref name="settings"/> tree to type you chose in <typeparamref name="TSettings"/>
+        /// </summary>
+        /// <typeparam name="TSettings">Type to</typeparam>
+        /// <param name="settings">Settings tree</param>
+        /// <returns></returns>
         public TSettings Bind<TSettings>(RawSettings settings)
         {
-            return (TSettings)BindInternal(settings, typeof(TSettings), "root");
+            var factory = container.GetInstance<ISettingsBinderFactory>();
+            var binder = factory.CreateFor<TSettings>();
+            return binder.Bind(settings);
         }
 
         /// <summary>
         /// Adds custom parser which can parse from string value to specified type
         /// </summary>
-        /// <typeparam name="T">Type of in which you need to parse</typeparam>
-        /// <param name="parser">Class with method implemented TryParse_T_ delegate</param>
+        /// <typeparam name="T">Type we need to parse in</typeparam>
+        /// <param name="parser">Class with method implemented TryParse&lt;T&gt; delegate</param>
         /// <returns>This binder with new parser</returns>
         public DefaultSettingsBinder AddCustomParser<T>(ITypeParser parser)
         {
-            primitiveAndSimpleParsers.Add(typeof(T), parser);
+            PrimitiveAndSimpleParsers.AddCustomParser<T>(parser);
             return this;
         }
 
         /// <summary>
         /// Adds custom parser which can parse from string value to specified type
         /// </summary>
-        /// <typeparam name="T">Type of in which you need to parse</typeparam>
-        /// <param name="parseMethod">Method implemented TryParse_T_ delegate</param>
+        /// <typeparam name="T">Type we need to parse in</typeparam>
+        /// <param name="parseMethod">Method implemented TryParse&lt;T&gt; delegate</param>
         /// <returns>This binder with new parser</returns>
         public DefaultSettingsBinder AddCustomParser<T>(TryParse<T> parseMethod)
         {
-            primitiveAndSimpleParsers.Add(typeof(T), new InlineTypeParser<T>(parseMethod));
+            PrimitiveAndSimpleParsers.AddCustomParser(parseMethod);
             return this;
-        }
-
-        #region Binders
-
-        private bool TryBindToPrimitiveOrSimple(RawSettings settings, Type bindType, out object result)
-        {
-            result = default;
-            if (!IsPrimitiveOrSimple(bindType))
-                return false;
-
-            if (bindType == typeof(string))
-            {
-                result = settings.Value;
-                return true;
-            }
-
-            string value = null;
-            if (!string.IsNullOrWhiteSpace(settings.Value))
-                value = settings.Value;
-            else if (settings.Value == null && settings.Children == null && settings.ChildrenByKey != null && settings.ChildrenByKey.Count == 1)
-                value = settings.ChildrenByKey.First().Value.Value;
-            else
-                CheckArgumentIsNull(null, ValueIsNull.Replace("%v", settings.Value).Replace("%t", bindType.Name));
-            
-            if (primitiveAndSimpleParsers[bindType].TryParse(value, out var res))
-            {
-                result = res;
-                return true;
-            }
-                
-            // (Mansiper): Must throw only if get new primitive like int128
-            throw new InvalidCastException($"\"{value}\" to \"{bindType.Name}\"");
-        }
-
-        private static bool TryBindToEnum(RawSettings settings, Type bindType, out object result)
-        {
-            result = default;
-            if (!bindType.IsEnum)
-                return false;
-
-            if (string.IsNullOrWhiteSpace(settings.Value))
-                CheckArgumentIsNull(null, ValueIsNull.Replace("%v", settings.Value).Replace("%t", bindType.Name));
-
-            foreach (var name in Enum.GetNames(bindType).Where(n => string.Equals(n, settings.Value, StringComparison.OrdinalIgnoreCase)))
-            {
-                result = Enum.Parse(bindType, name, true);
-                return true;
-            }
-
-            if (int.TryParse(settings.Value, out var intVal) && Enum.IsDefined(bindType, intVal))
-            {
-                result = intVal;
-                return true;
-            }
-
-            throw new InvalidCastException($"Value \"{settings.Value}\" for enum \"{bindType.Name}\" was not found.");
-        }
-
-        private bool TryBindToNullable(RawSettings settings, Type bindType, out object result)
-        {
-            result = default;
-            if (!IsNullableValue(bindType))
-                return false;
-            if (settings.Value == null)
-                return true;
-
-            var res = BindInternal(new RawSettings(settings.Value), bindType.GenericTypeArguments[0]);
-            result = res;
-            return true;
-        }
-
-        private bool TryBindToStruct(RawSettings settings, Type bindType, out object result)
-        {
-            result = default;
-            if (!bindType.IsValueType)
-                return false;
-
-            var defaultAttrOption = BinderAttributes.IsOptional;
-            if (bindType.GetCustomAttributes().Any(a => a.GetType() == typeof(RequiredByDefaultAttribute)))
-            {
-                CheckArgumentIsNull(settings.ChildrenByKey, DictIsEmpty.Replace("%t", bindType.Name));
-                defaultAttrOption = BinderAttributes.IsRequired;
-            }
-
-            result = Activator.CreateInstance(bindType);
-
-            foreach (var field in bindType.GetFields())
-            {
-                var binderAttributes = GetAttributes(field.GetCustomAttributes().ToArray(), defaultAttrOption);
-                var res = BindInvokeFieldOrProperty(field.Name, field.FieldType, settings, binderAttributes);
-                field.SetValue(result, res);
-            }
-            foreach (var prop in bindType.GetProperties().Where(p => p.CanWrite))
-            {
-                var binderAttributes = GetAttributes(prop.GetCustomAttributes().ToArray(), defaultAttrOption);
-                var res = BindInvokeFieldOrProperty(prop.Name, prop.PropertyType, settings, binderAttributes);
-                prop.SetValue(result, res);
-            }
-            return true;
-        }
-
-        private bool TryBindToArray(RawSettings settings, Type bindType, out object result)
-        {
-            result = default;
-            if (!bindType.IsArray)
-                return false;
-
-            var elType = bindType.GetElementType();
-            CheckArgumentIsNull(settings.Children, ListIsEmpty.Replace("%t", elType.Name));
-            var inst = Array.CreateInstance(elType, settings.Children.Count);
-            var i = 0;
-            foreach (var item in settings.Children)
-            {
-                CheckArgumentIsNull(item, ListItemIsEmpty.Replace("%i", i.ToString()).Replace("%t", elType.Name));
-                var val = BindInvokeList(i, elType, settings);
-                inst.SetValue(val, i++);
-            }
-            result = inst;
-            return true;
-        }
-
-        private bool TryBindToList(RawSettings settings, Type bindType, out object result)
-        {
-            var bindGtd = bindType.IsGenericType ? bindType.GetGenericTypeDefinition() : null;
-            result = default;
-            if (bindGtd == null || !bindType.IsGenericType)
-                return false;
-            var interfaces = new[] { typeof(IList), typeof(ICollection), typeof(IEnumerable), typeof(IList<>), typeof(ICollection<>), typeof(IEnumerable<>), typeof(IReadOnlyList<>), typeof(IReadOnlyCollection<>) };
-            if (((TypeInfo)bindGtd).ImplementedInterfaces.All(t => !interfaces.Contains(t)))
-                return false;
-
-            var genType = typeof(List<>).MakeGenericType(bindType.GetGenericArguments());
-            CheckArgumentIsNull(settings.Children, ListIsEmpty.Replace("%t", genType.Name));
-            var inst = Activator.CreateInstance(genType);
-            var i = 0;
-            foreach (var item in settings.Children)
-            {
-                CheckArgumentIsNull(item, ListItemIsEmpty.Replace("%i", i.ToString()).Replace("%t", genType.Name));
-                var val = BindInvokeList(i, genType.GenericTypeArguments[0], settings);
-                ((IList)inst).Add(val);
-                i++;
-            }
-            result = inst;
-            return true;
-        }
-
-        private bool TryBindToDictionary(RawSettings settings, Type bindType, out object result)
-        {
-            var bindGtd = bindType.IsGenericType ? bindType.GetGenericTypeDefinition() : null;
-            result = default;
-            if (!bindType.IsGenericType || bindGtd != typeof(Dictionary<,>))
-                return false;
-
-            var genType = typeof(Dictionary<,>).MakeGenericType(bindType.GetGenericArguments());
-            CheckArgumentIsNull(settings.ChildrenByKey, DictIsEmpty.Replace("%t", genType.GenericTypeArguments[1].Name));
-            var inst = Activator.CreateInstance(genType);
-            var i = 0;
-            foreach (var item in settings.ChildrenByKey)
-            {
-                CheckArgumentIsNull(item, DictItemIsEmpty.Replace("%k", item.Key).Replace("%t", genType.GenericTypeArguments[1].Name));
-                var key = BindInternal(new RawSettings(item.Key), genType.GenericTypeArguments[0]);
-                var val = BindInternal(item.Value, genType.GenericTypeArguments[1], item.Key);
-                ((IDictionary)inst).Add(key, val);
-                i++;
-            }
-            result = inst;
-            return true;
-        }
-
-        private bool TryBindToHashSet(RawSettings settings, Type bindType, out object result)
-        {
-            var bindGtd = bindType.IsGenericType ? bindType.GetGenericTypeDefinition() : null;
-            result = default;
-            if (!bindType.IsGenericType || bindGtd != typeof(HashSet<>))
-                return false;
-
-            CheckArgumentIsNull(settings.Children, ListIsEmpty.Replace("%t", bindType.Name));
-            var inst = Activator.CreateInstance(bindType);
-            var addMethod = bindType.GetMethods().FirstOrDefault(m => m.Name == nameof(HashSet<int>.Add));
-            var i = 0;
-            foreach (var item in settings.Children)
-            {
-                CheckArgumentIsNull(item, ListItemIsEmpty.Replace("%i", i.ToString()).Replace("%t", bindType.GenericTypeArguments[0].Name));
-                var value = BindInvokeList(i, bindType.GenericTypeArguments[0], settings);
-                addMethod.Invoke(inst, new[] {value});
-                i++;
-            }
-            result = inst;
-            return true;
-        }
-
-        private bool TryBindToClass(RawSettings settings, Type bindType, out object result)
-        {
-            result = default;
-            if (!bindType.IsClass)
-                return false;
-
-            var defaultAttrOption = BinderAttributes.IsOptional;
-            if (bindType.GetCustomAttributes().Any(a => a.GetType() == typeof(RequiredByDefaultAttribute)))
-            {
-                CheckArgumentIsNull(settings.ChildrenByKey, DictIsEmpty.Replace("%t", bindType.Name));
-                defaultAttrOption = BinderAttributes.IsRequired;
-            }
-            var inst = Activator.CreateInstance(bindType);
-            foreach (var field in bindType.GetFields())
-            {
-                var binderAttribute = GetAttributes(field.GetCustomAttributes().ToArray(), defaultAttrOption);
-                var res = BindInvokeFieldOrProperty(field.Name, field.FieldType, settings, binderAttribute);
-                field.SetValue(inst, res);
-            }
-            foreach (var prop in bindType.GetProperties().Where(p => p.CanWrite))
-            {
-                var binderAttribute = GetAttributes(prop.GetCustomAttributes().ToArray(), defaultAttrOption);
-                var res = BindInvokeFieldOrProperty(prop.Name, prop.PropertyType, settings, binderAttribute);
-                prop.SetValue(inst, res);
-            }
-            result = inst;
-            return true;
-        }
-
-        #endregion
-
-        private static void CheckArgumentIsNull(object obj, string message)
-        {
-            if (obj == null)
-                throw new ArgumentNullException(message);
-        }
-
-        private object BindInternal(RawSettings settings, Type type, string paramName = null)
-        {
-            CheckArgumentIsNull(settings, ParameterIsNull.Replace("%p", paramName));
-
-            foreach (var binder in complexBinders)
-                if (binder.TryBind(settings, type, out var res))
-                    return res;
-        
-            throw new InvalidCastException($"Unknown data type \"{type.Name}\". If it is primitive ask developers to add it.");
-        }
-
-        private object BindInvokeFieldOrProperty(string name, Type type, RawSettings settings, BinderAttributes attribute)
-        {
-            if (settings.ChildrenByKey == null || !settings.ChildrenByKey.ContainsKey(name))
-            {
-                if (attribute == BinderAttributes.IsOptional)
-                    return type.IsClass ? null : Activator.CreateInstance(type);
-                else
-                    throw new InvalidCastException($"Required key \"{name}\" is absent");
-            }
-
-            var rs = settings.ChildrenByKey[name];
-            if ((IsNullableValue(type) || type.IsClass) &&
-                rs.Value == null && rs.Children == null && rs.ChildrenByKey == null)
-            {
-                if (attribute == BinderAttributes.IsOptional)
-                    return null;
-                else
-                    throw new InvalidCastException($"Not nullable required value of field/property \"{name}\" is null");
-            }
-            CheckArgumentIsNull(rs, $"Value of field/property \"{name}\" of type \"{type.Name}\" is null");
-            return BindInternal(rs, type);
-        }
-
-        private object BindInvokeList(int index, Type listType, RawSettings settings)
-        {
-            if (!listType.IsClass)
-            {
-                if (settings.Children.Count <= index)
-                    // (Mansiper): it must never be thrown
-                    throw new InvalidCastException($"Key by index \"{index}\" is absent of list type {listType.Name}");
-                return InvokeBind();
-            }
-            else
-            {
-                if (settings.Children.Count <= index)
-                    return null;
-                else
-                    return InvokeBind();
-            }
-
-            object InvokeBind()
-            {
-                var rs = settings.Children.ElementAt(index);
-                CheckArgumentIsNull(rs, $"Value of list of type \"{listType.Name}\" on index \"{index}\" is null");
-                return BindInternal(rs, listType, $"list index {index}");
-            }
-        }
-
-        private bool IsPrimitiveOrSimple(Type type) =>
-            type.IsValueType && type.IsPrimitive
-            || type == typeof(string)
-            || primitiveAndSimpleParsers.ContainsKey(type);
-
-        private static bool IsNullableValue(Type type) => 
-            type.IsValueType && type.IsGenericType;
-
-        private static BinderAttributes GetAttributes(Attribute[] attributes, BinderAttributes defaultAttribute)
-        {
-            var attrs = new Dictionary<Type, BinderAttributes>
-            {
-                { typeof(RequiredAttribute), BinderAttributes.IsRequired },
-                { typeof(OptionalAttribute), BinderAttributes.IsOptional },
-            };
-            if (attributes != null && attributes.Length > 0)
-                foreach (var attribute in attributes)
-                    if (attrs.ContainsKey(attribute.GetType()))
-                        return attrs[attribute.GetType()];
-            return defaultAttribute;
-        }
-
-        private class InlineTypeParser<T> : ITypeParser
-        {
-            private readonly TryParse<T> parseMethod;
-
-            public InlineTypeParser(TryParse<T> parseMethod)
-            {
-                this.parseMethod = parseMethod;
-            }
-
-            public bool TryParse(string s, out object value)
-            {
-                var result = parseMethod(s, out var v);
-                value = v;
-                return result;
-            }
-        }
-
-        private enum BinderAttributes
-        {
-            IsRequired = 1,
-            IsOptional = 2,
-        }
-
-        private interface IComplexBinder
-        {
-            bool TryBind(RawSettings settings, Type bindType, out object result);
-        }
-
-        private class InlineComplexBinder: IComplexBinder
-        {
-            private readonly TryBind bindMethod;
-
-            public InlineComplexBinder(TryBind bindMethod)
-            {
-                this.bindMethod = bindMethod;
-            }
-
-            public bool TryBind(RawSettings settings, Type bindType, out object result)
-            {
-                return bindMethod(settings, bindType, out result);
-            }
         }
     }
 }

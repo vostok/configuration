@@ -6,26 +6,25 @@ namespace Vostok.Configuration
 {
     /// <inheritdoc />
     /// <summary>
-    /// Attribute for class which changes fields and properties behavior to required. Not required by default.
+    /// Sets all fields and properties required. All values must be not null. Not required by default.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
     public class RequiredByDefaultAttribute : Attribute { }
 
     /// <inheritdoc />
     /// <summary>
-    /// Attribute for required class fields and properties. It must exist in settings and not be null.
+    /// Sets current field or property required. Value must be not null. Not required by default.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class RequiredAttribute : Attribute { }
 
     /// <inheritdoc />
     /// <summary>
-    /// Attribute for fields and properties that can be absent or be null. Is default for all fields and properties.
+    /// Sets all fields and properties optional. If value cannot be parsed it sets to default.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class OptionalAttribute : Attribute { }
-
-
+    
     internal enum BinderAttribute
     {
         IsRequired = 1,
@@ -34,7 +33,12 @@ namespace Vostok.Configuration
 
     internal static class AttributesExtensions
     {
-        public static BinderAttribute GetAttributes(this IEnumerable<Attribute> attributes, BinderAttribute defaultAttribute)
+        /// <summary>
+        /// Gets required or optional attribute from list of <paramref name="attributes"/>. Sets <paramref name="defaultAttribute"/> if not found.
+        /// </summary>
+        /// <param name="attributes">List of attributes to look in.</param>
+        /// <param name="defaultAttribute">Default attribute if not found in <paramref name="attributes"/></param>
+        public static BinderAttribute GetReqOptAttribute(this IEnumerable<Attribute> attributes, BinderAttribute defaultAttribute)
         {
             var attrsDict = new Dictionary<Type, BinderAttribute>
             {

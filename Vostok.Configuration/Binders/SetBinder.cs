@@ -14,10 +14,14 @@ namespace Vostok.Configuration.Binders
             elementBinder = kelementBinder;
         }
 
-        public HashSet<T> Bind(RawSettings settings) =>
-            new HashSet<T>(
+        public HashSet<T> Bind(RawSettings settings)
+        {
+            RawSettings.CheckSettings(settings);
+
+            return new HashSet<T>(
                 (settings.Children ?? Enumerable.Empty<RawSettings>())
                 .Select(n => elementBinder.Bind(n)));
+        }
 
         ISet<T> ISettingsBinder<ISet<T>>.Bind(RawSettings settings) => Bind(settings);
     }

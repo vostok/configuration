@@ -17,9 +17,13 @@ namespace Vostok.Configuration.Binders
             this.valueBinder = valueBinder;
         }
 
-        public Dictionary<T1, T2> Bind(RawSettings settings) =>
-            (settings.ChildrenByKey ?? new Dictionary<string, RawSettings>())
-            .ToDictionary(n => keyBinder.Bind(new RawSettings(n.Key)), n => valueBinder.Bind(n.Value));
+        public Dictionary<T1, T2> Bind(RawSettings settings)
+        {
+            RawSettings.CheckSettings(settings, false);
+
+            return (settings.ChildrenByKey ?? new Dictionary<string, RawSettings>())
+                .ToDictionary(n => keyBinder.Bind(new RawSettings(n.Key)), n => valueBinder.Bind(n.Value));
+        }
 
         IDictionary<T1, T2> ISettingsBinder<IDictionary<T1, T2>>.Bind(RawSettings settings) => Bind(settings);
         IReadOnlyDictionary<T1, T2> ISettingsBinder<IReadOnlyDictionary<T1, T2>>.Bind(RawSettings settings) => Bind(settings);

@@ -4,12 +4,11 @@ using System.Reflection;
 
 namespace Vostok.Configuration.Binders
 {
-    internal class StructBinder<T> :
-        ISettingsBinder<T>
+    internal class ClassAndStructBinder<T> : ISettingsBinder<T>
     {
         private readonly ISettingsBinderFactory binderFactory;
 
-        public StructBinder(ISettingsBinderFactory binderFactory)
+        public ClassAndStructBinder(ISettingsBinderFactory binderFactory)
         {
             this.binderFactory = binderFactory;
         }
@@ -25,13 +24,13 @@ namespace Vostok.Configuration.Binders
 
             foreach (var field in type.GetFields())
             {
-                var binderAttribute = field.GetCustomAttributes().GetAttributes(defaultAttrOption);
+                var binderAttribute = field.GetCustomAttributes().GetReqOptAttribute(defaultAttrOption);
                 var res = GetValue(field.FieldType, field.Name, binderAttribute, settings);
                 field.SetValue(instance, res);
             }
             foreach (var prop in type.GetProperties().Where(p => p.CanWrite))
             {
-                var binderAttribute = prop.GetCustomAttributes().GetAttributes(defaultAttrOption);
+                var binderAttribute = prop.GetCustomAttributes().GetReqOptAttribute(defaultAttrOption);
                 var res = GetValue(prop.PropertyType, prop.Name, binderAttribute, settings);
                 prop.SetValue(instance, res);
             }
@@ -45,6 +44,8 @@ namespace Vostok.Configuration.Binders
                 t.IsClass || t.IsNullable() ? null : Activator.CreateInstance(t);
             object DefautByOptionalOrThrow(BinderAttribute attr, Type t, string msg) =>
                 attr == BinderAttribute.IsOptional ? SetDefault(t) : throw new InvalidCastException(msg);
+
+            RawSettings.CheckSettings(settings, false);
 
             var binder = binderFactory.CreateForType(type, binderAttribute);
             if (settings.ChildrenByKey == null || !settings.ChildrenByKey.ContainsKey(name))

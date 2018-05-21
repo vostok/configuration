@@ -119,21 +119,23 @@ namespace Vostok.Configuration.Tests
         }
 
         [Test]
-        public void Should_bind_with_custom_CSTParser()
+        public void Should_bind_with_custom_CSTParser_over_ITypeParser()
         {
             var settings = new RawSettings("some,string");
-            binder.AddCustomParser<CST>(new CommaSeparatedTextParser())
-                .Bind<CST>(settings).Should().BeEquivalentTo(
-                    new CST{ Strings = new [] {"some", "string"} });
+            var result = binder.AddCustomParser<CST>(new CommaSeparatedTextParser())
+                .Bind<CST>(settings);
+            result.Should().BeEquivalentTo(
+                new CST{ Strings = new [] {"some", "string"} });
         }
 
         [Test]
-        public void Should_bind_with_custom_SSTParser()
+        public void Should_bind_with_custom_SSTParser_over_delegate()
         {
             var settings = new RawSettings("some;string");
-            binder.AddCustomParser<SST>(TryParseSemicolonSeparatedText)
-                .Bind<SST>(settings).Should().BeEquivalentTo(
-                    new SST{ Strings = new [] {"some", "string"} });
+            var result = binder.AddCustomParser<SST>(TryParseSemicolonSeparatedText)
+                .Bind<SST>(settings);
+            result.Should().BeEquivalentTo(
+                new SST{ Strings = new [] {"some", "string"} });
         }
 
         [Test]
@@ -628,7 +630,12 @@ namespace Vostok.Configuration.Tests
 
         //-------Exceptions---------//
 
-        // === ArgumentNullException
+        [Test]
+        [Order(0)]
+        public void Should_throw_ArgumentNullException_on_unknown_data_type()
+        {
+            new Action(() => binder.Bind<CST>(new RawSettings("a,b,c"))).Should().Throw<InvalidCastException>();
+        }
 
         [Test]
         public void Should_throw_ArgumentNullException_Main()
@@ -639,7 +646,7 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_throw_ArgumentNullException_Dictionary()
         {
-            new Action(() => binder.Bind<MyRequiredStruct>(new RawSettings(null))).Should().Throw<ArgumentNullException>();
+            new Action(() => binder.Bind<MyRequiredStruct>(new RawSettings(null))).Should().Throw<InvalidCastException>();
         }
 
         [Test]
@@ -657,13 +664,13 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_throw_ArgumentNullException_Class()
         {
-            new Action(() => binder.Bind<MyRequiredClass>(new RawSettings(null))).Should().Throw<ArgumentNullException>();
+            new Action(() => binder.Bind<MyRequiredClass>(new RawSettings(null))).Should().Throw<InvalidCastException>();
         }
 
         [Test]
         public void Should_throw_ArgumentNullException_Struct()
         {
-            new Action(() => binder.Bind<MyRequiredStruct>(new RawSettings(null))).Should().Throw<ArgumentNullException>();
+            new Action(() => binder.Bind<MyRequiredStruct>(new RawSettings(null))).Should().Throw<InvalidCastException>();
         }
 
         [Test]
@@ -682,15 +689,7 @@ namespace Vostok.Configuration.Tests
             settings = new RawSettings(new Dictionary<string, RawSettings>());
             new Action(() => binder.Bind<int>(settings)).Should().Throw<ArgumentException>();
         }
-
-        // === InvalidCastException
-
-        [Test]
-        public void Should_throw_ArgumentNullException_on_unknown_data_type()
-        {
-            new Action(() => binder.Bind<CST>(new RawSettings("a,b,c"))).Should().Throw<InvalidCastException>();
-        }
-
+        
         [Test]
         public void Should_throw_InvalidCastException_Primitive_if_wrong_type()
         {

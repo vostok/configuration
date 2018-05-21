@@ -9,7 +9,11 @@
             this.elementBinder = elementBinder;
         }
 
-        public T? Bind(RawSettings rawSettings) =>
-            rawSettings.Value == null ? (T?)null : elementBinder.Bind(rawSettings);
+        public T? Bind(RawSettings settings)
+        {
+            RawSettings.CheckSettings(settings, false);
+
+            return settings.Value == null ? (T?)null : elementBinder.Bind(settings);
+        }
     }
 }

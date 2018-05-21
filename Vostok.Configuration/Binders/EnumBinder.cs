@@ -5,11 +5,13 @@ namespace Vostok.Configuration.Binders
     internal class EnumBinder<T> : ISettingsBinder<T>
         where T : struct
     {
-        public T Bind(RawSettings rawSettings)
+        public T Bind(RawSettings settings)
         {
-            if (Enum.TryParse<T>(rawSettings.Value, true, out var result))
+            RawSettings.CheckSettings(settings);
+
+            if (Enum.TryParse<T>(settings.Value, true, out var result))
                 return result;
-            throw new InvalidCastException($"Value \"{rawSettings.Value}\" for enum \"{typeof(T).Name}\" was not found.");
+            throw new InvalidCastException($"Value \"{settings.Value}\" for enum \"{typeof(T).Name}\" was not found.");
         }
     }
 }

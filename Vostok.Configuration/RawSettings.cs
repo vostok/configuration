@@ -9,23 +9,50 @@ namespace Vostok.Configuration
     /// </summary>
     public sealed class RawSettings : IEquatable<RawSettings>
     {
+        /// <summary>
+        /// Checks <see cref="settings"/>. Throws exeption if something is wrong.
+        /// </summary>
+        /// <param name="settings">Settings you're going to check</param>
+        /// <param name="checkValues">Check inner values</param>
+        /// <exception cref="ArgumentNullException">If <paramref name="settings"/> is null</exception>
+        /// <exception cref="ArgumentNullException">If <paramref name="settings"/> fields values are null and <paramref name="checkValues"/> is true</exception>
+        public static void CheckSettings(RawSettings settings, bool checkValues = true)
+        {
+            if (settings == null)
+                throw new ArgumentNullException($"Parameter \"{nameof(settings)}\" is null");
+            if (checkValues && settings.IsEmpty())
+                throw new ArgumentNullException($"Parameter \"{nameof(settings)}\" is empty");
+        }
+
+        /// <summary>
+        /// Creates <see cref="RawSettings"/> instance with <paramref name="value"/>
+        /// </summary>
         public RawSettings(string value)
         {
             Value = value;
         }
 
-        public RawSettings(IReadOnlyDictionary<string, RawSettings> children, string value = null)
+        /// <summary>
+        /// Creates <see cref="RawSettings"/> instance with parameters <paramref name="childrenByKey"/> and <paramref name="value"/>
+        /// </summary>
+        public RawSettings(IReadOnlyDictionary<string, RawSettings> childrenByKey, string value = null)
         {
-            ChildrenByKey = children;
+            ChildrenByKey = childrenByKey;
             Value = value;
         }
 
+        /// <summary>
+        /// Creates <see cref="RawSettings"/> instance with parameters <paramref name="children"/> and <paramref name="value"/>
+        /// </summary>
         public RawSettings(IReadOnlyList<RawSettings> children, string value = null)
         {
             Children = children;
             Value = value;
         }
 
+        /// <summary>
+        /// Creates <see cref="RawSettings"/> instance with parameters <paramref name="childrenByKey"/>, <paramref name="children"/>, and <paramref name="value"/>
+        /// </summary>
         public RawSettings(IReadOnlyDictionary<string, RawSettings> childrenByKey, IReadOnlyList<RawSettings> children, string value = null)
         {
             ChildrenByKey = childrenByKey;
@@ -39,7 +66,7 @@ namespace Vostok.Configuration
         public string Value { get; }
 
         /// <summary>
-        /// Inner values where order has no matter (dictioonary, fields/properties)
+        /// Inner values where order has no matter (dictionary, fields/properties)
         /// </summary>
         public IReadOnlyDictionary<string, RawSettings> ChildrenByKey { get; }
 
@@ -48,6 +75,9 @@ namespace Vostok.Configuration
         /// </summary>
         public IReadOnlyList<RawSettings> Children { get; }
 
+        /// <summary>
+        /// Checks if fields values are null
+        /// </summary>
         public bool IsEmpty() =>
             Value == null && Children == null && ChildrenByKey == null;
 
