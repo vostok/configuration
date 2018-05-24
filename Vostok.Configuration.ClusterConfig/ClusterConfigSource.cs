@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading;
@@ -12,20 +11,20 @@ namespace Vostok.Configuration.ClusterConfig
 {
     /// <inheritdoc />
     /// <summary>
-    /// Cluster config converter to <see cref="RawSettings"/> tree
+    /// Cluster config converter to <see cref="IRawSettings"/> tree
     /// </summary>
     public class ClusterConfigSource : IConfigurationSource
     {
         private readonly TimeSpan minObservationPeriod = 1.Minutes();
         private readonly TimeSpan checkPeriod = 100.Milliseconds();
-        private readonly BehaviorSubject<RawSettings> observers;
+        private readonly BehaviorSubject<IRawSettings> observers;
         private readonly TimeSpan observationPeriod;
         private readonly AutoResetEvent firstRead;
         private readonly string prefix;
         private readonly string key;
         private readonly IClusterConfigClientProxy clusterConfigClient;
         private bool needStop;
-        private RawSettings currentSettings;
+        private IRawSettings currentSettings;
 
         /// <inheritdoc />
         /// <summary>
@@ -62,7 +61,7 @@ namespace Vostok.Configuration.ClusterConfig
                 this.observationPeriod = observationPeriod;
 
             needStop = false;
-            observers = new BehaviorSubject<RawSettings>(currentSettings);
+            observers = new BehaviorSubject<IRawSettings>(currentSettings);
 
             firstRead = new AutoResetEvent(false);
             ThreadRunner.Run(WatchClusterConfig);
@@ -76,16 +75,16 @@ namespace Vostok.Configuration.ClusterConfig
         /// Returns previously parsed configurations. Null if sources where not specified.
         /// </summary>
         /// <returns>Combine as RawSettings tree</returns>
-        public RawSettings Get() => currentSettings;
+        public IRawSettings Get() => currentSettings;
 
         /// <inheritdoc />
         /// <summary>
-        /// <para>Subscribtion to see <see cref="RawSettings"/> changes in source.</para>
+        /// <para>Subscribtion to see <see cref="IRawSettings"/> changes in source.</para>
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
         /// <returns>Event with new RawSettings tree</returns>
-        public IObservable<RawSettings> Observe() =>
-            Observable.Create<RawSettings>(
+        public IObservable<IRawSettings> Observe() =>
+            Observable.Create<IRawSettings>(
                 observer => observers.Select(settings => currentSettings).Subscribe(observer));
 
         public void Dispose()
@@ -112,7 +111,7 @@ namespace Vostok.Configuration.ClusterConfig
         private RawSettings ParseCcTree(IReadOnlyDictionary<string, List<string>> tree, bool byKey = false)
         {
             if (!byKey)
-                return new RawSettings(tree.ToDictionary(pair => pair.Key, pair => ParseCcList(pair.Value)));
+                return new RawSettings(tree.ToOrderedDictionary(pair => pair.Key, pair => ParseCcList(pair.Value)));
             if (tree.ContainsKey(key))
                 return ParseCcList(tree[key]);
 
@@ -120,7 +119,7 @@ namespace Vostok.Configuration.ClusterConfig
         }
 
         private static RawSettings ParseCcList(IEnumerable<string> tree) =>
-            new RawSettings(tree.Select(v => new RawSettings(v)).ToList());
+            new RawSettings(tree.ToOrderedDictionary(v => v, v => new RawSettings(v)));
 
         private void WatchClusterConfig()
         {

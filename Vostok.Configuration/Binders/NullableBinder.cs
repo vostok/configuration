@@ -9,7 +9,7 @@
             this.elementBinder = elementBinder;
         }
 
-        public T? Bind(RawSettings settings)
+        public T? Bind(IRawSettings settings)
         {
             RawSettings.CheckSettings(settings, false);
 

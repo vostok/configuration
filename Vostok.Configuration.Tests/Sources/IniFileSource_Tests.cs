@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Specialized;
 using System.IO;
 using FluentAssertions;
 using NUnit.Framework;
@@ -10,6 +10,12 @@ namespace Vostok.Configuration.Tests.Sources
     public class IniFileSource_Tests
     {
         private const string TestFileName = "test_IniFileSource.ini";
+
+        [SetUp]
+        public void SetUp()
+        {
+            Cleanup();
+        }
 
         [TearDown]
         public void Cleanup()
@@ -38,7 +44,7 @@ namespace Vostok.Configuration.Tests.Sources
             using (var ifs = new IniFileSource(TestFileName))
                 ifs.Get().Should().BeEquivalentTo(
                     new RawSettings(
-                        new Dictionary<string, RawSettings>
+                        new OrderedDictionary
                         {
                             { "value", new RawSettings("123") },
                             { "value2", new RawSettings("321") },

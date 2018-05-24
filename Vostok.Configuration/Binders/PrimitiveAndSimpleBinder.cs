@@ -10,7 +10,7 @@ namespace Vostok.Configuration.Binders
             type == typeof(string) ||
             PrimitiveAndSimpleParsers.Parsers.ContainsKey(type);
 
-        public T Bind(RawSettings settings)
+        public T Bind(IRawSettings settings)
         {
             var type = typeof(T);
             if (!PrimitiveAndSimpleParsers.Parsers.ContainsKey(type) && type != typeof(string))
@@ -20,8 +20,8 @@ namespace Vostok.Configuration.Binders
             string value;
             if (!string.IsNullOrWhiteSpace(settings.Value))
                 value = settings.Value;
-            else if (settings.Value == null && settings.Children == null && settings.ChildrenByKey != null && settings.ChildrenByKey.Count == 1)
-                value = settings.ChildrenByKey.First().Value.Value;
+            else if (settings.Value == null && settings.Children.Count() == 1)
+                value = ((RawSettings)settings.Children.First()).Value;
             else
                 throw new ArgumentNullException("Value is null");
 

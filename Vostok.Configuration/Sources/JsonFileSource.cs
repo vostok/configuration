@@ -1,5 +1,4 @@
-﻿using System;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 
 namespace Vostok.Configuration.Sources
 {
@@ -11,23 +10,17 @@ namespace Vostok.Configuration.Sources
     {
         /// <inheritdoc />
         /// <summary>
-        /// Creates a <see cref="JsonFileSource"/> instance using given parameters <paramref name="filePath"/>, <paramref name="observationPeriod"/>, and <paramref name="onError"/>
+        /// Creates a <see cref="JsonFileSource"/> instance using given parameters <paramref name="filePath"/> and <paramref name="observationPeriod"/>
         /// </summary>
         /// <param name="filePath">File name with settings</param>
-        /// <param name="observationPeriod">Observe period in ms (min 100, default 10000)</param>
-        /// <param name="onError">Callback action on exception</param>
         public JsonFileSource(
-            [NotNull] string filePath,
-            TimeSpan observationPeriod = default,
-            [CanBeNull] Action<Exception> onError = null)
+            [NotNull] string filePath)
             : base(filePath,
                 data =>
                 {
                     using (var source = new JsonStringSource(data))
                         return source.Get();
-                },
-                observationPeriod,
-                onError)
+                })
         { }
     }
 }

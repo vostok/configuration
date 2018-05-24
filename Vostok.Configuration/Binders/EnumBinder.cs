@@ -5,7 +5,7 @@ namespace Vostok.Configuration.Binders
     internal class EnumBinder<T> : ISettingsBinder<T>
         where T : struct
     {
-        public T Bind(RawSettings settings)
+        public T Bind(IRawSettings settings)
         {
             RawSettings.CheckSettings(settings);
 

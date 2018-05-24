@@ -18,19 +18,19 @@ namespace Vostok.Configuration.Binders
             this.elementBinder = elementBinder;
         }
 
-        public List<T> Bind(RawSettings settings)
+        public List<T> Bind(IRawSettings settings)
         {
             RawSettings.CheckSettings(settings);
 
-            return (settings.Children ?? Enumerable.Empty<RawSettings>())
+            return settings.Children
                 .Select(n => elementBinder.Bind(n))
                 .ToList();
         }
 
-        IList<T> ISettingsBinder<IList<T>>.Bind(RawSettings settings) => Bind(settings);
-        IEnumerable<T> ISettingsBinder<IEnumerable<T>>.Bind(RawSettings settings) => Bind(settings);
-        ICollection<T> ISettingsBinder<ICollection<T>>.Bind(RawSettings settings) => Bind(settings);
-        IReadOnlyCollection<T> ISettingsBinder<IReadOnlyCollection<T>>.Bind(RawSettings settings) => Bind(settings);
-        IReadOnlyList<T> ISettingsBinder<IReadOnlyList<T>>.Bind(RawSettings settings) => Bind(settings);
+        IList<T> ISettingsBinder<IList<T>>.Bind(IRawSettings settings) => Bind(settings);
+        IEnumerable<T> ISettingsBinder<IEnumerable<T>>.Bind(IRawSettings settings) => Bind(settings);
+        ICollection<T> ISettingsBinder<ICollection<T>>.Bind(IRawSettings settings) => Bind(settings);
+        IReadOnlyCollection<T> ISettingsBinder<IReadOnlyCollection<T>>.Bind(IRawSettings settings) => Bind(settings);
+        IReadOnlyList<T> ISettingsBinder<IReadOnlyList<T>>.Bind(IRawSettings settings) => Bind(settings);
     }
 }

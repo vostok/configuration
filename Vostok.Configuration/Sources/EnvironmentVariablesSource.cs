@@ -11,17 +11,17 @@ namespace Vostok.Configuration.Sources
 {
     /// <inheritdoc />
     /// <summary>
-    /// Environment variables converter to <see cref="RawSettings"/> tree
+    /// Environment variables converter to <see cref="IRawSettings"/> tree
     /// </summary>
     public class EnvironmentVariablesSource : IConfigurationSource
     {
         private readonly TimeSpan minObservationPeriod = 100.Milliseconds();
         private readonly TimeSpan defaultObservationPeriod = 1.Minutes();
         private bool needStop;
-        private readonly BehaviorSubject<RawSettings> observers;
+        private readonly BehaviorSubject<IRawSettings> observers;
         private readonly TimeSpan observationPeriod;
         private readonly AutoResetEvent firstRead;
-        private RawSettings currentSettings;
+        private IRawSettings currentSettings;
 
         /// <inheritdoc />
         /// <summary>
@@ -36,7 +36,7 @@ namespace Vostok.Configuration.Sources
                     ? minObservationPeriod
                     : observationPeriod);
             needStop = false;
-            observers = new BehaviorSubject<RawSettings>(currentSettings);
+            observers = new BehaviorSubject<IRawSettings>(currentSettings);
 
             firstRead = new AutoResetEvent(false);
             ThreadRunner.Run(WatchVariables);
@@ -46,17 +46,17 @@ namespace Vostok.Configuration.Sources
 
         /// <inheritdoc />
         /// <summary>
-        /// Returns previously parsed <see cref="RawSettings"/> tree.
+        /// Returns previously parsed <see cref="IRawSettings"/> tree.
         /// </summary>
-        public RawSettings Get() => currentSettings;
+        public IRawSettings Get() => currentSettings;
 
         /// <inheritdoc />
         /// <summary>
-        /// <para>Subscribtion to <see cref="RawSettings"/> tree changes.</para>
+        /// <para>Subscribtion to <see cref="IRawSettings"/> tree changes.</para>
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
-        public IObservable<RawSettings> Observe() =>
-            Observable.Create<RawSettings>(
+        public IObservable<IRawSettings> Observe() =>
+            Observable.Create<IRawSettings>(
                 observer => observers.Select(settings => currentSettings).Subscribe(observer));
 
         public void Dispose()
@@ -65,7 +65,7 @@ namespace Vostok.Configuration.Sources
             observers.Dispose();
         }
 
-        private static RawSettings GetSettings(string vars)
+        private static IRawSettings GetSettings(string vars)
         {
             using (var source = new IniStringSource(vars))
                 return source.Get();

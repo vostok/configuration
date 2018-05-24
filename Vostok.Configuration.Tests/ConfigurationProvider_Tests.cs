@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
-using System.Threading;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
-using Vostok.Commons.Conversions;
-using Vostok.Commons.Testing;
 using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests
@@ -191,7 +188,7 @@ namespace Vostok.Configuration.Tests
             var res = new MyClass { Value = 0 };
             var cs = Substitute.For<IConfigurationSource>();
             cs.Get().Returns(
-                x => new RawSettings(new Dictionary<string, RawSettings>
+                x => new RawSettings(new OrderedDictionary
                 {
                     {"Value", new RawSettings("0")},
                 }),
@@ -210,7 +207,7 @@ namespace Vostok.Configuration.Tests
         {
             var res = new MyClass { Value = 0 };
             var ret = new RawSettings(
-                new Dictionary<string, RawSettings>
+                new OrderedDictionary
                 {
                     {"Value", new RawSettings("0")},
                 });

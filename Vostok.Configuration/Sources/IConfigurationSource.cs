@@ -11,12 +11,12 @@ namespace Vostok.Configuration.Sources
         /// Converts file
         /// </summary>
         /// <returns>RawSettings tree</returns>
-        RawSettings Get();
+        IRawSettings Get();
 
         /// <summary>
         /// Watches file changes
         /// </summary>
         /// <returns>Event with new RawSettings tree</returns>
-        IObservable<RawSettings> Observe();
+        IObservable<IRawSettings> Observe();
     }
 }

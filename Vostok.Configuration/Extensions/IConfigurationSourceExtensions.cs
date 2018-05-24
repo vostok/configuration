@@ -2,7 +2,7 @@ using System.Linq;
 using Vostok.Commons;
 using Vostok.Configuration.Sources;
 
-namespace Vostok.Configuration
+namespace Vostok.Configuration.Extensions
 {
     // ReSharper disable once InconsistentNaming
     public static class IConfigurationSourceExtensions

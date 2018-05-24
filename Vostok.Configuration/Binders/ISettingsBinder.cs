@@ -2,6 +2,6 @@
 {
     public interface ISettingsBinder<out T>
     {
-        T Bind(RawSettings rawSettings);
+        T Bind(IRawSettings rawSettings);
     }
 }

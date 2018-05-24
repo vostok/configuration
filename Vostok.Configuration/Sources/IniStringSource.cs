@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -8,12 +9,12 @@ namespace Vostok.Configuration.Sources
 {
     /// <inheritdoc />
     /// <summary>
-    /// Ini converter to <see cref="RawSettings"/> tree from string
+    /// Ini converter to <see cref="IRawSettings"/> tree from string
     /// </summary>
     public class IniStringSource : IConfigurationSource
     {
-        private readonly RawSettings currentSettings;
-        private readonly BehaviorSubject<RawSettings> observers;
+        private readonly IRawSettings currentSettings;
+        private readonly BehaviorSubject<IRawSettings> observers;
 
         /// <summary>
         /// <para>Creates a <see cref="JsonFileSource"/> instance using given string in <paramref name="ini"/> parameter</para>
@@ -23,28 +24,28 @@ namespace Vostok.Configuration.Sources
         /// <exception cref="Exception">Ini has wrong format</exception>
         public IniStringSource(string ini)
         {
-            observers = new BehaviorSubject<RawSettings>(currentSettings);
-            currentSettings = string.IsNullOrWhiteSpace(ini) ? null : ParseIni(ini);
+            observers = new BehaviorSubject<IRawSettings>(currentSettings);
+            currentSettings = string.IsNullOrWhiteSpace(ini) ? null : ParseIni(ini, "root");
         }
 
         /// <inheritdoc />
         /// <summary>
-        /// Returns previously parsed <see cref="RawSettings"/> tree.
+        /// Returns previously parsed <see cref="IRawSettings"/> tree.
         /// </summary>
-        public RawSettings Get() => currentSettings;
+        public IRawSettings Get() => currentSettings;
 
         /// <inheritdoc />
         /// <summary>
         /// <para>Subscribtion to <see cref="RawSettings"/> tree changes.</para>
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
-        public IObservable<RawSettings> Observe() => 
-            Observable.Create<RawSettings>(
+        public IObservable<IRawSettings> Observe() => 
+            Observable.Create<IRawSettings>(
                 observer => observers.Select(settings => currentSettings).Subscribe(observer));
 
-        private RawSettings ParseIni(string text)
+        private static IRawSettings ParseIni(string text, string name)
         {
-            var res = new RawSettingsEditable();
+            var res = new RawSettingsEditable(name);
             var section = res;
             var currentLine = -1;
 
@@ -68,25 +69,24 @@ namespace Vostok.Configuration.Sources
                         throw new FormatException($"Wrong ini file ({currentLine}): line \"{line}\"");
                 }
             }
-            currentLine = -1;
 
-            if (res.Children.Count == 0 && res.ChildrenByKey.Count == 0 && res.Value == null)
+            if (res.Children.Count == 0 && res.Value == null)
                 return null;
             return (RawSettings)res;
         }
 
-        private RawSettingsEditable ParseSection(string section, RawSettingsEditable settings, int currentLine)
+        private static RawSettingsEditable ParseSection(string section, RawSettingsEditable settings, int currentLine)
         {
             section = section.Replace(" ", "");
 
-            if (settings.ChildrenByKey.ContainsKey(section))
+            if (settings.Children[section] != null)
                 throw new FormatException($"Wrong ini file ({currentLine}): section \"{section}\" already exists");
-            var res = new RawSettingsEditable();
-            settings.ChildrenByKey.Add(section, res);
+            var res = new RawSettingsEditable(section);
+            settings.Children.Add(section, res);
             return res;
         }
 
-        private void ParsePair(string key, string value, RawSettingsEditable settings, int currentLine)
+        private static void ParsePair(string key, string value, RawSettingsEditable settings, int currentLine)
         {
             var keys = key.Replace(" ", "").Split('.');
             var isObj = false;
@@ -95,29 +95,25 @@ namespace Vostok.Configuration.Sources
             {
                 if (i == keys.Length - 1)
                 {
-                    if (obj.ChildrenByKey.ContainsKey(keys[i]))
+                    if (obj.Children[keys[i]] != null)
                     {
-                        var val = obj.ChildrenByKey[keys[i]].Value;
-                        if (val != null)
-                            throw new FormatException($"Wrong ini file ({currentLine}): key \"{keys[i]}\" with value \"{val}\" already exists");
+                        var child = (RawSettingsEditable)obj.Children[keys[i]];
+                        if (child.Value != null)
+                            throw new FormatException($"Wrong ini file ({currentLine}): key \"{keys[i]}\" with value \"{child.Value}\" already exists");
                         else
-                            obj.ChildrenByKey[keys[i]].Value = value;
+                            child.Value = value;
                     }
                     else
-                        obj.ChildrenByKey.Add(keys[i], new RawSettingsEditable(value));
+                        obj.Children.Add(keys[i], new RawSettingsEditable(value, keys[i]));
                 }
-                else if (!obj.ChildrenByKey.ContainsKey(keys[i]))
+                else if (obj.Children[keys[i]] == null)
                 {
-                    var newObj = new RawSettingsEditable();
-                    obj.ChildrenByKey.Add(keys[i], newObj);
+                    var newObj = new RawSettingsEditable(keys[i]);
+                    obj.Children.Add(keys[i], newObj);
                     obj = newObj;
                 }
                 else
-                {
-                    obj = obj.ChildrenByKey[keys[i]];
-                    if (obj.ChildrenByKey == null)
-                        obj.ChildrenByKey = new Dictionary<string, RawSettingsEditable>();
-                }
+                    obj = (RawSettingsEditable) obj.Children[keys[i]];
                 isObj = !isObj;
             }
         }
@@ -126,30 +122,32 @@ namespace Vostok.Configuration.Sources
 
         private class RawSettingsEditable
         {
-            public RawSettingsEditable()
+            public RawSettingsEditable(string name = "")
             {
-                ChildrenByKey = new Dictionary<string, RawSettingsEditable>();
-                Children = new List<RawSettingsEditable>();
+                Children = new OrderedDictionary();
+                Name = name;
             }
-            public RawSettingsEditable(string value)
+            public RawSettingsEditable(string value, string name = "")
             {
+                Children = new OrderedDictionary();
                 Value = value;
+                Name = name;
             }
 
+            public string Name { get; set; }
             public string Value { get; set; }
-            public IDictionary<string, RawSettingsEditable> ChildrenByKey { get; set; }
-            public IList<RawSettingsEditable> Children { get; }
+            public IOrderedDictionary Children { get; set; }
 
             public static explicit operator RawSettings(RawSettingsEditable settings)
             {
-                var dict = settings.ChildrenByKey == null || settings.ChildrenByKey.Count == 0
-                    ? null
-                    : settings.ChildrenByKey?.ToDictionary(d => d.Key, d => (RawSettings)d.Value);
-                var list = settings.Children == null || settings.Children.Count == 0
-                    ? null
-                    : settings.Children?.Select(i => (RawSettings)i).ToList();
+                IOrderedDictionary dict;
+                if (settings.Children.Count == 0)
+                    dict = null;
+                else
+                    dict = settings.Children.Cast<DictionaryEntry>()
+                        .ToOrderedDictionary(p => p.Key, p => (RawSettings)(RawSettingsEditable)p.Value);
 
-                return new RawSettings(dict, list, settings.Value);
+                return new RawSettings(dict, settings.Name, settings.Value);
             }
         }
     }

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Threading;
 using FluentAssertions;
@@ -42,7 +42,7 @@ namespace Vostok.Configuration.Tests.Sources
             using (var jfs = new JsonFileSource(TestFileName))
                 jfs.Get().Should().BeEquivalentTo(
                     new RawSettings(
-                        new Dictionary<string, RawSettings>
+                        new OrderedDictionary
                         {
                             { "StringValue", new RawSettings("string") }
                         }));
@@ -57,14 +57,14 @@ namespace Vostok.Configuration.Tests.Sources
         private int ShouldObserveFileTest()
         {
             var val = 0;
-            using (var jfs = new JsonFileSource(TestFileName, 100.Milliseconds()))
+            using (var jfs = new JsonFileSource(TestFileName))
             {
                 var sub1 = jfs.Observe().Subscribe(settings =>
                 {
                     val++;
                     settings.Should().BeEquivalentTo(
                         new RawSettings(
-                            new Dictionary<string, RawSettings>
+                            new OrderedDictionary
                             {
                                 {"Param2", new RawSettings("set2")}
                             }));
@@ -77,7 +77,7 @@ namespace Vostok.Configuration.Tests.Sources
                     val++;
                     settings.Should().BeEquivalentTo(
                         new RawSettings(
-                            new Dictionary<string, RawSettings>
+                            new OrderedDictionary
                             {
                                 {"Param2", new RawSettings("set2")}
                             }));
@@ -102,14 +102,14 @@ namespace Vostok.Configuration.Tests.Sources
             var val = 0;
             CreateTextFile("{ \"Param1\": \"set1\" }");
 
-            using (var jfs = new JsonFileSource(TestFileName, 100.Milliseconds()))
+            using (var jfs = new JsonFileSource(TestFileName))
             {
                 var sub = jfs.Observe().Subscribe(settings =>
                 {
                     val++;
                     settings.Should().BeEquivalentTo(
                         new RawSettings(
-                            new Dictionary<string, RawSettings>
+                            new OrderedDictionary
                             {
                                 {"Param1", new RawSettings("set1")}
                             }));

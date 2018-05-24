@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Binders;
@@ -12,10 +13,10 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_bind_to_Struct_of_primitives()
         {
             var settings = new RawSettings(
-                new Dictionary<string, RawSettings>
+                new OrderedDictionary
                 {
-                    {"Int", new RawSettings("10")},
-                    {"String", new RawSettings("str")},
+                    {"Int", new RawSettings("10", "Int")},
+                    {"String", new RawSettings("str", "String")},
                 });
             var binder = Container.GetInstance<ISettingsBinder<SimpleStruct>>();
             var result = binder.Bind(settings);
@@ -28,12 +29,12 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_bind_to_Struct_of_primitives_considering_prop_attributes()
         {
             var settings = new RawSettings(
-                new Dictionary<string, RawSettings>
+                new OrderedDictionary
                 {
-                    {"Int", new RawSettings("10")},
-                    //{"Long", new RawSettings("1234567890")},  is optional
-                    //{"String", new RawSettings("str")},   is optional
-                    {"Float", new RawSettings("1,23")},
+                    {"Int", new RawSettings("10", "Int")},
+                    //{"Long", new RawSettings("1234567890", "Long")},  is optional
+                    //{"String", new RawSettings("str", "String")},   is optional
+                    {"Float", new RawSettings("1,23", "Float")},
                 });
             var binder = Container.GetInstance<ISettingsBinder<AttributedStructByProps>>();
             var result = binder.Bind(settings);
@@ -46,12 +47,12 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_bind_to_Struct_of_primitives_considering_struct_attributes()
         {
             var settings = new RawSettings(
-                new Dictionary<string, RawSettings>
+                new OrderedDictionary
                 {
-                    {"Int", new RawSettings("10")},
-                    {"Long", new RawSettings("123456789012")},
-                    {"String", new RawSettings("str")},
-                    {"Float", new RawSettings("not float number")},
+                    {"Int", new RawSettings("10", "Int")},
+                    {"Long", new RawSettings("123456789012", "Long")},
+                    {"String", new RawSettings("str", "String")},
+                    {"Float", new RawSettings("not float number", "Float")},
                 });
             var binder = Container.GetInstance<ISettingsBinder<AttributedStructGlobal>>();
             var result = binder.Bind(settings);
@@ -64,9 +65,9 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_throw_exception_if_requred_value_has_wrong_value()
         {
             var settings = new RawSettings(
-                new Dictionary<string, RawSettings>
+                new OrderedDictionary
                 {
-                    {"Float", new RawSettings("not float number")},
+                    {"Float", new RawSettings("not float number", "Float")},
                 });
             var binder = Container.GetInstance<ISettingsBinder<AttributedStructByProps>>();
             new Action(() => binder.Bind(settings)).Should().Throw<Exception>();
@@ -76,9 +77,9 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_throw_exception_if_requred_value_has_no_value_in_settings()
         {
             var settings = new RawSettings(
-                new Dictionary<string, RawSettings>
+                new OrderedDictionary
                 {
-                    {"wrong_key_name", new RawSettings("1.23")},
+                    {"wrong_key_name", new RawSettings("1.23", "wrong_key_name")},
                 });
             var binder = Container.GetInstance<ISettingsBinder<AttributedStructByProps>>();
             new Action(() => binder.Bind(settings)).Should().Throw<Exception>();
@@ -88,9 +89,9 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_throw_exception_if_requred_value_has_null_value()
         {
             var settings = new RawSettings(
-                new Dictionary<string, RawSettings>
+                new OrderedDictionary
                 {
-                    {"Float", new RawSettings(null)},
+                    {"Float", new RawSettings(null, "Float")},
                 });
             var binder = Container.GetInstance<ISettingsBinder<AttributedStructByProps>>();
             new Action(() => binder.Bind(settings)).Should().Throw<Exception>();
@@ -131,14 +132,14 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_bind_to_Class()
         {
             var settings = new RawSettings(
-                new Dictionary<string, RawSettings>
+                new OrderedDictionary
                 {
-                    {"Int", new RawSettings("10")},
-                    {"Strings", new RawSettings(new List<RawSettings>
+                    {"Int", new RawSettings("10", "Int")},
+                    {"Strings", new RawSettings(new OrderedDictionary
                     {
-                        new RawSettings("str"),
-                        new RawSettings("qwe"),
-                    })},
+                        ["1"] = new RawSettings("str", "1"),
+                        ["2"] = new RawSettings("qwe", "2"),
+                    }, "Strings")},
                 });
             var binder = Container.GetInstance<ISettingsBinder<SimpleClass>>();
             var result = binder.Bind(settings);
@@ -150,13 +151,13 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_bind_to_Class_with_class_field()
         {
             var settings = new RawSettings(
-                new Dictionary<string, RawSettings>
+                new OrderedDictionary
                 {
-                    {"Int", new RawSettings("10")},
-                    {"SimpleClass", new RawSettings(new Dictionary<string, RawSettings>
+                    {"Int", new RawSettings("10", "Int")},
+                    {"SimpleClass", new RawSettings(new OrderedDictionary
                     {
-                        { "Int", new RawSettings("123") },
-                    })},
+                        { "Int", new RawSettings("123", "Int") },
+                    }, "SimpleClass")},
                 });
             var binder = Container.GetInstance<ISettingsBinder<ClassWithClass>>();
             var result = binder.Bind(settings);
@@ -168,12 +169,12 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_bind_to_Class_considering_prop_attributes()
         {
             var settings = new RawSettings(
-                new Dictionary<string, RawSettings>
+                new OrderedDictionary
                 {
-                    {"Int", new RawSettings("10")},
+                    {"Int", new RawSettings("10", "Int")},
                     //{"Long", new RawSettings("1234567890")},  is optional
                     //{"Strings", new RawSettings(...)},    is optional
-                    {"Float", new RawSettings("1,23")},
+                    {"Float", new RawSettings("1,23", "Float")},
                 });
             var binder = Container.GetInstance<ISettingsBinder<AttributedClassByProps>>();
             var result = binder.Bind(settings);
@@ -185,16 +186,16 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_bind_to_Struct_of_primitives_considering_struct_attributes()
         {
             var settings = new RawSettings(
-                new Dictionary<string, RawSettings>
+                new OrderedDictionary
                 {
-                    {"Ints", new RawSettings(new List<RawSettings>
+                    {"Ints", new RawSettings(new OrderedDictionary
                     {
-                        new RawSettings("1"),
-                        new RawSettings("2"),
-                    })},
-                    {"Long", new RawSettings("123456789012")},
-                    {"String", new RawSettings("str")},
-                    {"Float", new RawSettings("not float number")},
+                        ["1"] = new RawSettings("1"),
+                        ["2"] = new RawSettings("2"),
+                    }, "Ints")},
+                    {"Long", new RawSettings("123456789012", "Long")},
+                    {"String", new RawSettings("str", "String")},
+                    {"Float", new RawSettings("not float number", "Float")},
                 });
             var binder = Container.GetInstance<ISettingsBinder<AttributedClasGlobal>>();
             var result = binder.Bind(settings);
@@ -208,9 +209,9 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_throw_exception_if_requred_value_has_wrong_value()
         {
             var settings = new RawSettings(
-                new Dictionary<string, RawSettings>
+                new OrderedDictionary
                 {
-                    {"Float", new RawSettings("not float number")},
+                    {"Float", new RawSettings("not float number", "Float")},
                 });
             var binder = Container.GetInstance<ISettingsBinder<AttributedClassByProps>>();
             new Action(() => binder.Bind(settings)).Should().Throw<Exception>();
@@ -220,9 +221,9 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_throw_exception_if_requred_value_has_no_value_in_settings()
         {
             var settings = new RawSettings(
-                new Dictionary<string, RawSettings>
+                new OrderedDictionary
                 {
-                    {"wrong_key_name", new RawSettings("1.23")},
+                    {"wrong_key_name", new RawSettings("1.23", "wrong_key_name")},
                 });
             var binder = Container.GetInstance<ISettingsBinder<AttributedClassByProps>>();
             new Action(() => binder.Bind(settings)).Should().Throw<Exception>();
@@ -232,9 +233,9 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_throw_exception_if_requred_value_has_null_value()
         {
             var settings = new RawSettings(
-                new Dictionary<string, RawSettings>
+                new OrderedDictionary
                 {
-                    {"Float", new RawSettings(null)},
+                    {"Float", new RawSettings(null, "Float")},
                 });
             var binder = Container.GetInstance<ISettingsBinder<AttributedClassByProps>>();
             new Action(() => binder.Bind(settings)).Should().Throw<Exception>();

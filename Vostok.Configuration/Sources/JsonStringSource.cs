@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using Newtonsoft.Json.Linq;
@@ -12,8 +12,8 @@ namespace Vostok.Configuration.Sources
     /// </summary>
     public class JsonStringSource : IConfigurationSource
     {
-        private readonly RawSettings currentSettings;
-        private readonly BehaviorSubject<RawSettings> observers;
+        private readonly IRawSettings currentSettings;
+        private readonly BehaviorSubject<IRawSettings> observers;
 
         /// <summary>
         /// <para>Creates a <see cref="JsonFileSource"/> instance using given string in <paramref name="json"/> parameter</para>
@@ -23,23 +23,23 @@ namespace Vostok.Configuration.Sources
         /// <exception cref="Exception">Json has wrong format</exception>
         public JsonStringSource(string json)
         {
-            observers = new BehaviorSubject<RawSettings>(currentSettings);
-            currentSettings = string.IsNullOrWhiteSpace(json) ? null : ParseJson(JObject.Parse(json));
+            observers = new BehaviorSubject<IRawSettings>(currentSettings);
+            currentSettings = string.IsNullOrWhiteSpace(json) ? null : ParseJson(JObject.Parse(json), "root");
         }
 
         /// <inheritdoc />
         /// <summary>
-        /// Returns previously parsed <see cref="RawSettings"/> tree.
+        /// Returns previously parsed <see cref="IRawSettings"/> tree.
         /// </summary>
-        public RawSettings Get() => currentSettings;
+        public IRawSettings Get() => currentSettings;
 
         /// <inheritdoc />
         /// <summary>
-        /// <para>Subscribtion to <see cref="RawSettings"/> tree changes.</para>
+        /// <para>Subscribtion to <see cref="IRawSettings"/> tree changes.</para>
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
-        public IObservable<RawSettings> Observe() =>
-            Observable.Create<RawSettings>(observer =>
+        public IObservable<IRawSettings> Observe() =>
+            Observable.Create<IRawSettings>(observer =>
                 observers.Select(settings => currentSettings).Subscribe(observer));
 
         public void Dispose()
@@ -47,60 +47,61 @@ namespace Vostok.Configuration.Sources
             observers.Dispose();
         }
 
-        private RawSettings ParseJson(JObject jObject)
+        private IRawSettings ParseJson(JObject jObject, string tokenKey)
         {
-            Dictionary<string, RawSettings> dict = null;
-            if (jObject.Count > 0)
-                dict = new Dictionary<string, RawSettings>();
+            if (jObject.Count <= 0)
+                return new RawSettings((OrderedDictionary)null, tokenKey);
 
+            var dict = new OrderedDictionary();
             foreach (var token in jObject)
-            {
                 switch (token.Value.Type)
                 {
                     case JTokenType.Null:
-                        dict.Add(token.Key, new RawSettings(null));
+                        dict.Add(token.Key, new RawSettings(null, token.Key));
                         break;
                     case JTokenType.Object:
-                        dict.Add(token.Key, ParseJson((JObject)token.Value));
+                        dict.Add(token.Key, ParseJson((JObject)token.Value, token.Key));
                         break;
                     case JTokenType.Array:
-                        dict.Add(token.Key, ParseJson((JArray)token.Value));
+                        dict.Add(token.Key, ParseJson((JArray)token.Value, token.Key));
                         break;
                     default:
-                        dict.Add(token.Key, new RawSettings(token.Value.ToString()));
+                        dict.Add(token.Key, new RawSettings(token.Value.ToString(), token.Key));
                         break;
                 }
-            }
 
-            return new RawSettings(dict);
+            return new RawSettings(dict, tokenKey);
         }
 
-        private RawSettings ParseJson(JArray jArray)
+        private RawSettings ParseJson(JArray jArray, string tokenKey)
         {
-            List<RawSettings> list = null;
-            if (jArray.Count > 0)
-                list = new List<RawSettings>(jArray.Count);
+            if (jArray.Count <= 0)
+                return new RawSettings((OrderedDictionary)null, tokenKey);
 
+            var dict = new OrderedDictionary();
+            var i = 0;
             foreach (var item in jArray)
             {
+                object obj;
                 switch (item.Type)
                 {
                     case JTokenType.Null:
-                        list.Add(new RawSettings(null));
+                        obj = new RawSettings(null, i.ToString());
                         break;
                     case JTokenType.Object:
-                        list.Add(ParseJson((JObject)item));
+                        obj = ParseJson((JObject)item, i.ToString());
                         break;
                     case JTokenType.Array:
-                        list.Add(ParseJson((JArray)item));
+                        obj = ParseJson((JArray)item, i.ToString());
                         break;
                     default:
-                        list.Add(new RawSettings(item.ToString()));
+                        obj = new RawSettings(item.ToString(), i.ToString());
                         break;
                 }
+                dict.Add(i++, obj);
             }
 
-            return new RawSettings(list);
+            return new RawSettings(dict, tokenKey);
         }
     }
 }

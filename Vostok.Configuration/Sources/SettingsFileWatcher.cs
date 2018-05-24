@@ -1,43 +1,150 @@
 ﻿using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reactive.Disposables;
-using System.Reactive.Linq;
+using System.Reflection;
+using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Vostok.Commons.Conversions;
-using Vostok.Commons.ThreadManagment;
 
 namespace Vostok.Configuration.Sources
 {
-    /// <summary>
+    internal class SingleFileWatcher : IObservable<string>
+    {
+        private const string DefaultSettingsValue = "\u0001";
+        private readonly int watcherPeriod = 5.Seconds().Milliseconds;
+
+        private readonly string filePath;
+        private readonly List<IObserver<string>> observers;
+        private readonly FileSystemWatcher watcher;
+        private string current;
+        private Task task;
+        private CancellationToken token;
+        private CancellationTokenSource tokenSource;
+        private static object locker;
+
+        public SingleFileWatcher([NotNull] string filePath)
+        {
+            this.filePath = filePath;
+            observers = new List<IObserver<string>>();
+            current = DefaultSettingsValue;
+            locker = new object();
+
+            var path = Path.GetDirectoryName(filePath);
+            if (string.IsNullOrEmpty(path))
+                path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            watcher = new FileSystemWatcher(path, Path.GetFileName(filePath));
+        }
+
+        public IDisposable Subscribe(IObserver<string> observer)
+        {
+            lock (locker)
+            {
+                if (!observers.Contains(observer))
+                    observers.Add(observer);
+                if (task == null)
+                {
+                    tokenSource = new CancellationTokenSource();
+                    token = tokenSource.Token;
+                    task = new Task(WachFile, token);
+                    task.Start();
+                }
+            }
+            
+            return Disposable.Create(
+                () =>
+                {
+                    lock (locker)
+                    {
+                        if (observers.Contains(observer))
+                            observers.Remove(observer);
+                        if (observers.Count == 0)
+                            Stop();
+                    }
+                });
+        }
+
+        private void Stop() => tokenSource.Cancel();
+
+        private void WachFile()
+        {
+            while (true)
+            {
+                if (token.IsCancellationRequested) break;
+
+                try
+                {
+                    lock (locker)
+                        if (CheckFile(out var changes))
+                        {
+                            foreach (var observer in observers.ToArray())
+                                observer.OnNext(changes);
+//                            observers.ForEach(o => o.OnNext(changes));
+                            current = changes;
+                        }
+                }
+                catch (Exception e)
+                {
+                    lock (locker)
+                    {
+                        foreach (var observer in observers.ToArray())
+                            observer.OnError(e);
+//                        observers.ForEach(o => o.OnError(e));
+                    }
+                }
+
+                if (token.IsCancellationRequested) break;
+                watcher.WaitForChanged(WatcherChangeTypes.All, watcherPeriod);
+            }
+        }
+
+        private bool CheckFile(out string changes)
+        {
+            var fileExists = File.Exists(filePath);
+            changes = null;
+
+            if (!fileExists && current != null)
+                return true;
+            else if (fileExists)
+            {
+                using (var fileStream = new FileStream(filePath, FileMode.Open))
+                using (var reader = new StreamReader(fileStream, Encoding.UTF8))
+                    changes = reader.ReadToEnd();
+
+                if (current != changes)
+                    return true;
+            }
+
+            return false;
+        }
+    }
+
+    /*/// <summary>
     /// Watchs for changes in files by <see cref="IConfigurationSource"/>.
     /// </summary>
     internal static class SettingsFileWatcher
     {
-        private static readonly TimeSpan MinObservationPeriod = 100.Milliseconds();
         private const string DefaultSettingsValue = "\u0001";
+        private static readonly TimeSpan MinObservationPeriod = 100.Milliseconds();
 
-        private static ConcurrentDictionary<IConfigurationSource, IObserver<string>> observersInfo;
+        private static ConcurrentDictionary<string, IObserver<string>> observersInfo;
         private static ConcurrentDictionary<IConfigurationSource, FileInfo> filesInfo;
         private static bool needStop;
         private static Thread watcherThread;
         private static object locker;
 
         /// <summary>
-        /// Subscribtion to <paramref name="file" /> for specified <paramref name="source"/> with <paramref name="observationPeriod"/>
+        /// Subscribtion to <paramref name="file" /> for specified <paramref name="source"/>
         /// </summary>
         /// <param name="file">Watching file path</param>
         /// <param name="source">Subscribing source</param>
-        /// <param name="observationPeriod">Observation period for <paramref name="file"/></param>
-        /// <param name="callBack">Callback in case of any exception while reading the file</param>
         /// <returns>Subscriber receiving file text. Receive null if file not exists.</returns>
         public static IObservable<string> WatchFile(
             [NotNull] string file,
-            [NotNull] IConfigurationSource source,
-            TimeSpan observationPeriod = default,
-            [CanBeNull] Action<Exception> callBack = null)
+            [NotNull] IConfigurationSource source)
         {
             if (locker == null)
                 locker = new object();
@@ -46,7 +153,7 @@ namespace Vostok.Configuration.Sources
             {
                 if (observersInfo == null)
                     PrepareFileWatcher();
-                AddFileInfo(file, source, observationPeriod, callBack);
+                AddFileInfo(file, source);
             }
 
             var subscribtion = Observable.Create<string>(
@@ -54,32 +161,33 @@ namespace Vostok.Configuration.Sources
                 {
                     lock (locker)
                     {
-                        observersInfo.AddOrUpdate(source, observer, (s, o) => observer);
+                        observersInfo.AddOrUpdate(file, observer, (s, o) => observer);
                         if (filesInfo.TryGetValue(source, out var fileInfo) && fileInfo.CurrentValue != DefaultSettingsValue)
                             observer.OnNext(fileInfo.CurrentValue);
                     }
-                    
+
                     return Disposable.Create(
                         () =>
                         {
                             lock (locker)
-                            {
-                                observersInfo.TryRemove(source, out var _);
-                                if (!observersInfo.Any())
-                                    StopAndClear();
-                            }
+                                if (observersInfo != null)
+                                {
+                                    observersInfo.TryRemove(file, out var _);
+                                    if (!observersInfo.Any())
+                                        StopAndClear();
+                                }
                         });
                 });
 
             lock (locker)
 
-            return subscribtion;
+                return subscribtion;
         }
 
         private static void PrepareFileWatcher()
         {
             if (observersInfo == null)
-                observersInfo = new ConcurrentDictionary<IConfigurationSource, IObserver<string>>();
+                observersInfo = new ConcurrentDictionary<string, IObserver<string>>();
             if (filesInfo == null)
                 filesInfo = new ConcurrentDictionary<IConfigurationSource, FileInfo>();
             needStop = false;
@@ -87,8 +195,8 @@ namespace Vostok.Configuration.Sources
             if (watcherThread == null)
                 watcherThread = ThreadRunner.Run(WatchFile);
         }
-        
-        private static void AddFileInfo(string filePath, IConfigurationSource source, TimeSpan observationPeriod = default, Action<Exception> callBack = null)
+
+        private static void AddFileInfo(string filePath, IConfigurationSource source, TimeSpan observationPeriod = default)
         {
             var info = new FileInfo
             {
@@ -96,7 +204,6 @@ namespace Vostok.Configuration.Sources
                 ObservationPeriod = observationPeriod < MinObservationPeriod ? MinObservationPeriod : observationPeriod,
                 NextCheck = DateTime.UtcNow.AddMinutes(-1),
                 CurrentValue = DefaultSettingsValue,
-                OnError = callBack,
             };
             filesInfo.AddOrUpdate(source, info, (cs, fi) => info);
         }
@@ -122,8 +229,8 @@ namespace Vostok.Configuration.Sources
                     }
                     catch (Exception e)
                     {
-                        foreach (var file in filesByPath)
-                            file.Value.OnError?.Invoke(e);
+                        if (observersInfo.TryGetValue(filePath, out var observer))
+                            observer?.OnError(e);
                     }
                 }
             }
@@ -140,7 +247,9 @@ namespace Vostok.Configuration.Sources
                 return true;
             else if (fileExists)
             {
-                changes = File.ReadAllText(filePath);
+                using (var fileStream = new FileStream(filePath, FileMode.Open))
+                using (var reader = new StreamReader(fileStream, Encoding.UTF8))
+                    changes = reader.ReadToEnd();
 
                 if (currentValue != changes)
                     return true;
@@ -153,7 +262,7 @@ namespace Vostok.Configuration.Sources
         {
             foreach (var source in filesInfo.Where(i => i.Value.FilePath == filePath).Select(i => i.Key))
             {
-                if (observersInfo.TryGetValue(source, out var observer))
+                if (observersInfo.TryGetValue(filePath, out var observer))
                     observer?.OnNext(changes);
                 if (filesInfo.TryGetValue(source, out var info) && info != null)
                     info.CurrentValue = changes;
@@ -176,7 +285,6 @@ namespace Vostok.Configuration.Sources
             public DateTime NextCheck { get; set; }
             public TimeSpan ObservationPeriod { get; set; }
             public string CurrentValue { get; set; }
-            public Action<Exception> OnError { get; set; }
         }
-    }
+    }*/
 }

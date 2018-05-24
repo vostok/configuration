@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
+using Vostok.Configuration.Extensions;
 
 namespace Vostok.Configuration.Binders
 {
@@ -13,7 +14,7 @@ namespace Vostok.Configuration.Binders
             this.binderFactory = binderFactory;
         }
 
-        public T Bind(RawSettings settings)
+        public T Bind(IRawSettings settings)
         {
             var type = typeof(T);
             var instance = Activator.CreateInstance(type);
@@ -38,7 +39,7 @@ namespace Vostok.Configuration.Binders
             return (T)instance;
         }
 
-        private object GetValue(Type type, string name, BinderAttribute binderAttribute, RawSettings settings)
+        private object GetValue(Type type, string name, BinderAttribute binderAttribute, IRawSettings settings)
         {
             object SetDefault(Type t) =>
                 t.IsClass || t.IsNullable() ? null : Activator.CreateInstance(t);
@@ -48,12 +49,12 @@ namespace Vostok.Configuration.Binders
             RawSettings.CheckSettings(settings, false);
 
             var binder = binderFactory.CreateForType(type, binderAttribute);
-            if (settings.ChildrenByKey == null || !settings.ChildrenByKey.ContainsKey(name))
+            if (settings[name] == null)
                 return DefautByOptionalOrThrow(binderAttribute, type, $"Required key \"{name}\" is absent");
             else
             {
-                var rs = settings.ChildrenByKey[name];
-                if ((type.IsNullable() || type.IsClass) && rs.IsEmpty())
+                var rs = (RawSettings)settings[name];
+                if ((type.IsNullable() || type.IsClass) && rs.Value == null && !rs.Children.Any())
                     return DefautByOptionalOrThrow(binderAttribute, type, $"Not nullable required value of field/property \"{name}\" is null");
                 else
                     return binder.Bind(rs);

@@ -47,7 +47,7 @@ namespace Vostok.Configuration
         /// <typeparam name="TSettings">Type to</typeparam>
         /// <param name="settings">Settings tree</param>
         /// <returns></returns>
-        public TSettings Bind<TSettings>(RawSettings settings)
+        public TSettings Bind<TSettings>(IRawSettings settings)
         {
             var factory = container.GetInstance<ISettingsBinderFactory>();
             var binder = factory.CreateFor<TSettings>();

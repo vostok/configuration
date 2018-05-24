@@ -17,7 +17,8 @@ namespace Vostok.Configuration.Tests.Sources
             using (var evs = new EnvironmentVariablesSource())
             {
                 var res = evs.Get();
-                res.ChildrenByKey.Keys.Should().Contain("Path").And.Contain("APPDATA");
+                res["Path"].Should().NotBeNull();
+                res["APPDATA"].Should().NotBeNull();
             }
         }
 
@@ -36,7 +37,7 @@ namespace Vostok.Configuration.Tests.Sources
             {
                 var sub = evs.Observe().Subscribe(settings =>
                 {
-                    if (settings.ChildrenByKey.ContainsKey(testVar) && read)
+                    if (settings[testVar] != null && read)
                         val = true;
                     read = true;
                 });

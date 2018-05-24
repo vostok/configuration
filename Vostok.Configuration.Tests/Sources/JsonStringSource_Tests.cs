@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Globalization;
 using FluentAssertions;
 using FluentAssertions.Extensions;
@@ -29,10 +29,10 @@ namespace Vostok.Configuration.Tests.Sources
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
                     new RawSettings(
-                        new Dictionary<string, RawSettings>
+                        new OrderedDictionary
                         {
-                            { "StringValue", new RawSettings("string") }
-                        }));
+                            { "StringValue", new RawSettings("string", "StringValue") }
+                        }, "root"));
         }
 
         [Test]
@@ -43,10 +43,10 @@ namespace Vostok.Configuration.Tests.Sources
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
                     new RawSettings(
-                        new Dictionary<string, RawSettings>
+                        new OrderedDictionary
                         {
-                            { "IntValue", new RawSettings("123") }
-                        }));
+                            { "IntValue", new RawSettings("123", "IntValue") }
+                        }, "root"));
         }
 
         [Test]
@@ -57,10 +57,10 @@ namespace Vostok.Configuration.Tests.Sources
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
                     new RawSettings(
-                        new Dictionary<string, RawSettings>
+                        new OrderedDictionary
                         {
-                            { "DoubleValue", new RawSettings(123.321d.ToString(CultureInfo.CurrentCulture)) }
-                        }));
+                            { "DoubleValue", new RawSettings(123.321d.ToString(CultureInfo.CurrentCulture), "DoubleValue") }
+                        }, "root"));
         }
 
         [Test]
@@ -71,10 +71,10 @@ namespace Vostok.Configuration.Tests.Sources
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
                     new RawSettings(
-                        new Dictionary<string, RawSettings>
+                        new OrderedDictionary
                         {
-                            { "BooleanValue", new RawSettings("True") }
-                        }));
+                            { "BooleanValue", new RawSettings("True", "BooleanValue") }
+                        }, "root"));
         }
 
         [Test]
@@ -85,10 +85,10 @@ namespace Vostok.Configuration.Tests.Sources
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
                     new RawSettings(
-                        new Dictionary<string, RawSettings>
+                        new OrderedDictionary
                         {
-                            { "NullValue", new RawSettings(null) }
-                        }));
+                            { "NullValue", new RawSettings(null, "NullValue") }
+                        }, "root"));
         }
 
         [Test]
@@ -97,17 +97,20 @@ namespace Vostok.Configuration.Tests.Sources
             const string value = "{ \"IntArray\": [1, 2, 3] }";
 
             using (var jss = new JsonStringSource(value))
-                jss.Get().Should().BeEquivalentTo(
+            {
+                var result = jss.Get();
+                result.Should().BeEquivalentTo(
                     new RawSettings(
-                        new Dictionary<string, RawSettings>
+                        new OrderedDictionary
                         {
-                            { "IntArray", new RawSettings(new List<RawSettings>
+                            { "IntArray", new RawSettings(new OrderedDictionary
                             {
-                                new RawSettings("1"),
-                                new RawSettings("2"),
-                                new RawSettings("3"),
-                            }) }
-                        }));
+                                [(object)0] = new RawSettings("1", "0"),
+                                [(object)1] = new RawSettings("2", "1"),
+                                [(object)2] = new RawSettings("3", "2"),
+                            }, "IntArray") }
+                        }, "root"));
+            }
         }
 
         [Test]
@@ -118,14 +121,14 @@ namespace Vostok.Configuration.Tests.Sources
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
                     new RawSettings(
-                        new Dictionary<string, RawSettings>
+                        new OrderedDictionary
                         {
                             { "Object", new RawSettings(
-                                new Dictionary<string, RawSettings>
+                                new OrderedDictionary
                                 {
-                                    { "StringValue", new RawSettings("str") }
-                                }) }
-                        }));
+                                    { "StringValue", new RawSettings("str", "StringValue") }
+                                }, "Object") }
+                        }, "root"));
         }
 
         [Test]
@@ -136,21 +139,21 @@ namespace Vostok.Configuration.Tests.Sources
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
                     new RawSettings(
-                        new Dictionary<string, RawSettings>
+                        new OrderedDictionary
                         {
                             { "Array", new RawSettings(
-                                new List<RawSettings>
+                                new OrderedDictionary
                                 {
-                                    new RawSettings(new Dictionary<string, RawSettings>
+                                    [(object)0] = new RawSettings(new OrderedDictionary
                                     {
-                                        { "StringValue", new RawSettings("str") }
-                                    }),
-                                    new RawSettings(new Dictionary<string, RawSettings>
+                                        {"StringValue", new RawSettings("str", "StringValue")}
+                                    }, "0"),
+                                    [(object)1] = new RawSettings(new OrderedDictionary
                                     {
-                                        { "IntValue", new RawSettings("123") }
-                                    })
-                                }) }
-                        }));
+                                        {"IntValue", new RawSettings("123", "IntValue")}
+                                    }, "1"),
+                                }, "Array") }
+                        }, "root"));
         }
 
         [Test]
@@ -161,15 +164,15 @@ namespace Vostok.Configuration.Tests.Sources
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
                     new RawSettings(
-                        new Dictionary<string, RawSettings>
+                        new OrderedDictionary
                         {
                             { "Array", new RawSettings(
-                                new List<RawSettings>
+                                new OrderedDictionary
                                 {
-                                    new RawSettings(null),
-                                    new RawSettings(null)
-                                }) }
-                        }));
+                                    [(object)0] = new RawSettings(null, "0"),
+                                    [(object)1] = new RawSettings(null, "1")
+                                }, "Array") }
+                        }, "root"));
         }
 
         [Test]
@@ -180,22 +183,22 @@ namespace Vostok.Configuration.Tests.Sources
             using (var jss = new JsonStringSource(value))
                 jss.Get().Should().BeEquivalentTo(
                     new RawSettings(
-                        new Dictionary<string, RawSettings>
+                        new OrderedDictionary
                         {
                             { "Array", new RawSettings(
-                                new List<RawSettings>
+                                new OrderedDictionary
                                 {
-                                    new RawSettings(new List<RawSettings>
+                                    [(object)0] = new RawSettings(new OrderedDictionary
                                     {
-                                        new RawSettings("s"),
-                                        new RawSettings("t"),
-                                    }),
-                                    new RawSettings(new List<RawSettings>
+                                        [(object)0] = new RawSettings("s", "0"),
+                                        [(object)1] = new RawSettings("t", "1"),
+                                    }, "0"),
+                                    [(object)1] = new RawSettings(new OrderedDictionary
                                     {
-                                        new RawSettings("r"),
-                                    })
-                                }) }
-                        }));
+                                        [(object)0] = new RawSettings("r", "0"),
+                                    }, "1")
+                                }, "Array") }
+                        }, "root"));
         }
 
         [Test]
@@ -217,9 +220,9 @@ namespace Vostok.Configuration.Tests.Sources
                         val++;
                         settings.Should().BeEquivalentTo(
                             new RawSettings(
-                                new Dictionary<string, RawSettings>
+                                new OrderedDictionary
                                 {
-                                    {"IntValue", new RawSettings("123")}
+                                    {"IntValue", new RawSettings("123", "IntValue")}
                                 }));
                     });
                 sub.Dispose();

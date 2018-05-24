@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Specialized;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Binders;
@@ -10,10 +10,10 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_to_Array_of_primitives()
         {
-            var settings = new RawSettings(new List<RawSettings>
+            var settings = new RawSettings(new OrderedDictionary
             {
-                new RawSettings("TRUE"),
-                new RawSettings("false"),
+                ["1"] = new RawSettings("TRUE"),
+                ["2"] = new RawSettings("false"),
             });
             var binder = Container.GetInstance<ISettingsBinder<bool[]>>();
             var result = binder.Bind(settings);
@@ -23,14 +23,14 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_to_Array_of_structs()
         {
-            var settings = new RawSettings(new List<RawSettings>
+            var settings = new RawSettings(new OrderedDictionary
             {
-                new RawSettings(new Dictionary<string, RawSettings>
+                ["1"] = new RawSettings(new OrderedDictionary
                 {
                     { "Int", new RawSettings("1") },
                     { "String", new RawSettings("str1") },
                 }),
-                new RawSettings(new Dictionary<string, RawSettings>
+                ["2"] = new RawSettings(new OrderedDictionary
                 {
                     { "Int", new RawSettings("2") },
                     { "String", new RawSettings("str2") },

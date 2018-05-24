@@ -13,7 +13,7 @@ namespace Vostok.Configuration.Tests.Binders
             var binder = Container.GetInstance<ISettingsBinder<bool?>>();
             binder.Bind(settings).Should().Be(true);
 
-            settings = new RawSettings(null);
+            settings = new RawSettings(null, "");
             binder = Container.GetInstance<ISettingsBinder<bool?>>();
             binder.Bind(settings).Should().Be(null);
         }
@@ -24,7 +24,7 @@ namespace Vostok.Configuration.Tests.Binders
             var binder = Container.GetInstance<ISettingsBinder<double?>>();
             binder.Bind(settings).Should().Be(1.2345);
 
-            settings = new RawSettings(null);
+            settings = new RawSettings(null, "");
             binder = Container.GetInstance<ISettingsBinder<double?>>();
             binder.Bind(settings).Should().Be(null);
         }

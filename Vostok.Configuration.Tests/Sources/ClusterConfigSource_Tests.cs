@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Threading;
 using FluentAssertions;
 using NSubstitute;
@@ -7,7 +8,6 @@ using NUnit.Framework;
 using Vostok.Commons.Conversions;
 using Vostok.Commons.Testing;
 using Vostok.Configuration.ClusterConfig;
-using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests.Sources
 {
@@ -48,28 +48,40 @@ namespace Vostok.Configuration.Tests.Sources
         public void Should_get_all_settings()
         {
             using (var ccs = new ClusterConfigSource(null, null, clusterClient, 100.Milliseconds(), true))
-                ccs.Get().ChildrenByKey.Should().HaveCountGreaterThan(100);
+            {
+                var result = ccs.Get().Children;
+                result.Should().HaveCountGreaterThan(100);
+            }
         }
 
         [Test]
         public void Should_get_by_prefix()
         {
             using (var ccs = new ClusterConfigSource(Prefix, null, clusterClient, 100.Milliseconds(), true))
-                ccs.Get().ChildrenByKey.Should().HaveCountGreaterThan(0).And.HaveCountLessThan(100);
+            {
+                var result = ccs.Get().Children;
+                result.Should().HaveCountGreaterThan(0).And.HaveCountLessThan(100);
+            }
         }
 
         [Test]
         public void Should_get_by_key_in_whole_tree()
         {
             using (var ccs = new ClusterConfigSource(" ", FullKey, clusterClient, 100.Milliseconds(), true))
-                ccs.Get().Children.Should().HaveCount(1);
+            {
+                var result = ccs.Get().Children;
+                result.Should().HaveCount(1);
+            }
         }
 
         [Test]
         public void Should_get_by_prefix_and_key()
         {
             using (var ccs = new ClusterConfigSource(Prefix, Key, clusterClient, 100.Milliseconds(), true))
-                ccs.Get().Children.Should().HaveCount(1).And.BeEquivalentTo(new RawSettings(Value));
+            {
+                var result = ccs.Get().Children;
+                result.Should().HaveCount(1).And.BeEquivalentTo(new OrderedDictionary{ [Value] = new RawSettings(Value) });
+            }
         }
 
         [Test]
@@ -100,9 +112,9 @@ namespace Vostok.Configuration.Tests.Sources
                     if (val == 2)
                         settings.Should().BeEquivalentTo(
                             new RawSettings(
-                                new List<RawSettings>
+                                new OrderedDictionary
                                 {
-                                    new RawSettings(newValue),
+                                    ["1"] = new RawSettings(newValue),
                                 }));
                 });
 

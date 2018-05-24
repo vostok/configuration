@@ -1,19 +1,20 @@
 ﻿using System;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using System.Threading;
 
 namespace Vostok.Configuration.Sources
 {
     /// <inheritdoc />
     /// <summary>
-    /// Base class for converters to <see cref="RawSettings"/> tree from file
+    /// Base class for converters to <see cref="IRawSettings"/> tree from file
     /// </summary>
     public class BaseFileSource : IConfigurationSource
     {
-        private readonly BehaviorSubject<RawSettings> observers;
-        private readonly IDisposable fileWatcherSubscribtion;
-        private RawSettings current;
+        //        private readonly BehaviorSubject<RawSettings> observers;
+        //        private readonly IDisposable fileWatcherSubscribtion;
+        private readonly IObservable<IRawSettings> fileWatcher;
+        private IRawSettings current;
+        private AutoResetEvent msg;
 
         /// <summary>
         /// <para>Creates a <see cref="BaseFileSource"/> instance.</para>
@@ -21,14 +22,30 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         /// <param name="filePath">File name with settings</param>
         /// <param name="parseSettings">"Get" method invocation for string source</param>
-        /// <param name="observationPeriod">Observe period in ms (min 100, default 10000)</param>
-        /// <param name="onError">Callback on error</param>
-        protected BaseFileSource(string filePath, Func<string, RawSettings> parseSettings, TimeSpan observationPeriod = default, Action<Exception> onError = null)
+        protected BaseFileSource(string filePath, Func<string, IRawSettings> parseSettings)
         {
-            observers = new BehaviorSubject<RawSettings>(current);
+            //            observers = new BehaviorSubject<RawSettings>(current);
 
-            var fileWatcher = SettingsFileWatcher.WatchFile(filePath, this, observationPeriod, onError);
-            var msg = new AutoResetEvent(false);
+            msg = new AutoResetEvent(false);
+            fileWatcher = new SingleFileWatcher(filePath).Select(
+                str =>
+                {
+                    msg?.Set();
+                    msg = null;
+
+                    current = parseSettings(str);
+                    return current;
+                });
+            /*fileWatcher = SettingsFileWatcher.WatchFile(filePath, this).Select(
+                str =>
+                {
+                    msg.Set();
+                    msg = null;
+
+                    current = parseSettings(str);
+                    return current;
+                });*/
+            /*var msg = new AutoResetEvent(false);
             fileWatcherSubscribtion = fileWatcher.Subscribe(
                 str =>
                 {
@@ -36,28 +53,32 @@ namespace Vostok.Configuration.Sources
                     observers.OnNext(current);
                     msg.Set();
                 });
-            msg.WaitOne();
+            msg.WaitOne();*/
         }
 
         /// <inheritdoc />
         /// <summary>
-        /// Returns previously parsed <see cref="RawSettings"/> tree.
+        /// Returns previously parsed <see cref="IRawSettings"/> tree.
         /// </summary>
-        public RawSettings Get() => current;
+        public IRawSettings Get()
+        {
+            msg?.WaitOne();
+            return current;
+        }
 
         /// <inheritdoc />
         /// <summary>
-        /// <para>Subscribtion to <see cref="RawSettings"/> tree changes.</para>
+        /// <para>Subscribtion to <see cref="IRawSettings"/> tree changes.</para>
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
-        public IObservable<RawSettings> Observe() =>
-            Observable.Create<RawSettings>(observer =>
-                observers.Select(settings => current).Subscribe(observer));
+        public IObservable<IRawSettings> Observe() => fileWatcher;
+//            Observable.Create<RawSettings>(observer =>
+//                observers.Select(settings => current).Subscribe(observer));
 
         public void Dispose()
         {
-            observers.Dispose();
-            fileWatcherSubscribtion?.Dispose();
+            //            observers.Dispose();
+            //            fileWatcherSubscribtion?.Dispose();
         }
     }
 }

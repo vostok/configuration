@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Specialized;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Binders;
@@ -10,10 +11,10 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_to_HashSet_of_primitives()
         {
-            var settings = new RawSettings(new List<RawSettings>
+            var settings = new RawSettings(new OrderedDictionary
             {
-                new RawSettings("10"),
-                new RawSettings("20"),
+                ["1"] = new RawSettings("10"),
+                ["2"] = new RawSettings("20"),
             });
             var binder = Container.GetInstance<ISettingsBinder<HashSet<short>>>();
             var result = binder.Bind(settings);
@@ -23,10 +24,10 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_to_ISet_of_primitives()
         {
-            var settings = new RawSettings(new List<RawSettings>
+            var settings = new RawSettings(new OrderedDictionary
             {
-                new RawSettings("10"),
-                new RawSettings("20"),
+                ["1"] = new RawSettings("10"),
+                ["2"] = new RawSettings("20"),
             });
             var binder = Container.GetInstance<ISettingsBinder<ISet<ushort>>>();
             var result = binder.Bind(settings);
@@ -36,15 +37,15 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_to_hashset_of_hashsets_of_primitives()
         {
-            var settings = new RawSettings(new List<RawSettings>
+            var settings = new RawSettings(new OrderedDictionary
             {
-                new RawSettings(new List<RawSettings>
+                ["1"] = new RawSettings(new OrderedDictionary
                 {
-                    new RawSettings("10"),
+                    ["1"] = new RawSettings("10"),
                 }),
-                new RawSettings(new List<RawSettings>
+                ["2"] = new RawSettings(new OrderedDictionary
                 {
-                    new RawSettings("12"),
+                    ["2"] = new RawSettings("12"),
                 }),
             });
             var binder = Container.GetInstance<ISettingsBinder<HashSet<HashSet<int>>>>();

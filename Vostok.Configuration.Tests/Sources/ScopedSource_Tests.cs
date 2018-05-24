@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Threading;
 using FluentAssertions;
@@ -27,11 +28,11 @@ namespace Vostok.Configuration.Tests.Sources
                 file.WriteLine(text);
         }
 
-        [Test]
+        /*[Test]
         public void Should_return_null_if_file_not_exists()
         {
             
-        }
+        }*/
 
         [Test]
         public void Should_return_full_tree()
@@ -40,7 +41,7 @@ namespace Vostok.Configuration.Tests.Sources
             using (var jfs = new JsonFileSource(TestFileName))
             using (var ss = new ScopedSource(jfs))
                 ss.Get().Should().BeEquivalentTo(new RawSettings(
-                    new Dictionary<string, RawSettings>
+                    new OrderedDictionary
                     {
                         { "value", new RawSettings("1") },
                     }));
@@ -54,7 +55,7 @@ namespace Vostok.Configuration.Tests.Sources
             {
                 using (var ss = new ScopedSource(jfs, "value 1", "value 2"))
                     ss.Get().Should().BeEquivalentTo(new RawSettings(
-                        new Dictionary<string, RawSettings>
+                        new OrderedDictionary
                         {
                             { "value 3", new RawSettings("1") },
                         }));
@@ -73,10 +74,10 @@ namespace Vostok.Configuration.Tests.Sources
                 using (var ss = new ScopedSource(jfs, "value", "[0]"))
                     ss.Get()
                         .Should().BeEquivalentTo(new RawSettings(
-                            new List<RawSettings>
+                            new OrderedDictionary
                             {
-                                new RawSettings("1"),
-                                new RawSettings("2"),
+                                [(object)0] = new RawSettings("1"),
+                                [(object)1] = new RawSettings("2"),
                             }));
 
                 using (var ss = new ScopedSource(jfs, "value", "[1]", "[2]"))
@@ -115,12 +116,12 @@ namespace Vostok.Configuration.Tests.Sources
             )).ShouldPassIn(1.Seconds());
         }
 
-        private List<RawSettings> ShouldObserveFileTest_ReturnsReceivedSubtrees()
+        private List<IRawSettings> ShouldObserveFileTest_ReturnsReceivedSubtrees()
         {
             CreateTextFile("{ \"value\": { \"list\": [1,2] } }");
-            using (var jfs = new JsonFileSource(TestFileName, 100.Milliseconds()))
+            using (var jfs = new JsonFileSource(TestFileName))
             {
-                var rsList = new List<RawSettings>();
+                var rsList = new List<IRawSettings>();
 
                 using (var ss = new ScopedSource(jfs, "value", "list", "[1]"))
                 {

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Net;
 using FluentAssertions;
 using NUnit.Framework;
@@ -42,7 +42,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_to_Primitive_from_single_dictionary_value()
         {
-            var settings = new RawSettings(new Dictionary<string, RawSettings>
+            var settings = new RawSettings(new OrderedDictionary
             {
                 { "key", new RawSettings("123") }
             });

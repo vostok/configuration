@@ -2,7 +2,7 @@
 
 namespace Vostok.Configuration.ClusterConfig
 {
-    internal interface IClusterConfigClientProxy
+    public interface IClusterConfigClientProxy
     {
         Dictionary<string, List<string>> GetAll();
         List<string> GetByKey(string key);

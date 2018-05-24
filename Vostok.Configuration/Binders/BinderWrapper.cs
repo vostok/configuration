@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Vostok.Configuration.Extensions;
 
 namespace Vostok.Configuration.Binders
 {
@@ -13,7 +14,7 @@ namespace Vostok.Configuration.Binders
             this.binderAttribute = binderAttribute;
         }
 
-        public object Bind(RawSettings rawSettings)
+        public object Bind(IRawSettings rawSettings)
         {
             var method = binder.GetType().GetMethods().First(m => m.Name == nameof(Bind));
 

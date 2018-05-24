@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Specialized;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using NUnit.Framework;
@@ -72,11 +72,11 @@ namespace Vostok.Configuration.Tests.Sources
             using (var iss = new IniStringSource(value))
                 iss.Get().Should().BeEquivalentTo(
                     new RawSettings(
-                        new Dictionary<string, RawSettings>
+                        new OrderedDictionary
                         {
-                            { "value", new RawSettings("123") },
-                            { "value2", new RawSettings("321") },
-                        }));
+                            { "value", new RawSettings("123", "value") },
+                            { "value2", new RawSettings("321", "value2") },
+                        }, "root"));
         }
         
         [Test]
@@ -87,46 +87,46 @@ namespace Vostok.Configuration.Tests.Sources
             using (var iss = new IniStringSource(value))
                 iss.Get().Should().BeEquivalentTo(
                     new RawSettings(
-                        new Dictionary<string, RawSettings>
+                        new OrderedDictionary
                         {
                             { "section1", new RawSettings(
-                                new Dictionary<string, RawSettings>
+                                new OrderedDictionary
                                 {
-                                    { "value", new RawSettings("123") },
-                                })
+                                    { "value", new RawSettings("123", "value") },
+                                }, "section1")
                             },
                             { "section2", new RawSettings(
-                                new Dictionary<string, RawSettings>
+                                new OrderedDictionary
                                 {
-                                    { "value1", new RawSettings("123") },
-                                    { "value2", new RawSettings("321") },
-                                })
+                                    { "value1", new RawSettings("123", "value1") },
+                                    { "value2", new RawSettings("321", "value2") },
+                                }, "section2")
                             }
-                        }));
+                        }, "root"));
         }
 
-        [TestCase("a=0 \r a.b.c=2 \r a.b=1")]
-        [TestCase("a=0 \r a.b=1 \r a.b.c=2")]
-        [TestCase("a.b.c=2 \r a.b=1 \r a=0")]
+        [TestCase("a=0 \r a.b.c=2 \r a.b=1", TestName = "Order #1")]
+        [TestCase("a=0 \r a.b=1 \r a.b.c=2", TestName = "Order #2")]
+        [TestCase("a.b.c=2 \r a.b=1 \r a=0", TestName = "Order #3")]
         public void Should_deep_parse_keys_with_different_order(string value)
         {
             using (var iss = new IniStringSource(value))
                 iss.Get().Should().BeEquivalentTo(
                     new RawSettings(
-                        new Dictionary<string, RawSettings>
+                        new OrderedDictionary
                         {
                             { "a", new RawSettings(
-                                new Dictionary<string, RawSettings>
+                                new OrderedDictionary
                                 {
                                     { "b", new RawSettings(
-                                        new Dictionary<string, RawSettings>
+                                        new OrderedDictionary
                                         {
-                                            { "c", new RawSettings("2") },
-                                        }, "1")
+                                            { "c", new RawSettings("2", "c") },
+                                        }, "b", "1")
                                     },
-                                }, "0")
+                                }, "a", "0")
                             },
-                        }));
+                        }, "root"));
         }
 
         [Test]
@@ -148,7 +148,7 @@ namespace Vostok.Configuration.Tests.Sources
                         val++;
                         settings.Should().BeEquivalentTo(
                             new RawSettings(
-                                new Dictionary<string, RawSettings>
+                                new OrderedDictionary
                                 {
                                     { "value", new RawSettings("123") },
                                     { "value2", new RawSettings("321") },

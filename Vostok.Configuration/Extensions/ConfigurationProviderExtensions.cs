@@ -1,6 +1,6 @@
 using Vostok.Configuration.Sources;
 
-namespace Vostok.Configuration
+namespace Vostok.Configuration.Extensions
 {
     public static class ConfigurationProviderExtensions
     {
