@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using JetBrains.Annotations;
 
 namespace Vostok.Configuration.Sources
@@ -12,9 +12,13 @@ namespace Vostok.Configuration.Sources
     /// </summary>
     public class ScopedSource : IConfigurationSource
     {
-        private readonly BehaviorSubject<IRawSettings> observers;
-        private readonly IDisposable watcher;
-        private IRawSettings currentSettings;
+        private readonly IRawSettings incomeSettings;
+        private readonly IConfigurationSource source;
+        private readonly string[] scope;
+        private readonly TaskSource taskSource;
+        private IDisposable watcher;
+        private IRawSettings currentValue;
+        private bool firstRequest = true;
 
         /// <summary>
         /// Creates a <see cref="ScopedSource"/> instance for <see cref="source"/> to search in by <see cref="scope"/>
@@ -26,23 +30,13 @@ namespace Vostok.Configuration.Sources
             [NotNull] IConfigurationSource source,
             [NotNull] params string[] scope)
         {
-            observers = new BehaviorSubject<IRawSettings>(currentSettings);
-            currentSettings = InnerScope(source.Get(), scope);
-            watcher = source.Observe()
-                .Subscribe(
-                    settings =>
-                    {
-                        var newSettings = InnerScope(settings, scope);
-                        if (!Equals(newSettings, currentSettings))
-                        {
-                            currentSettings = newSettings;
-                            observers.OnNext(currentSettings);
-                        }
-                    });
+            this.source = source;
+            this.scope = scope;
+            taskSource = new TaskSource();
         }
 
         /// <summary>
-        /// <para>Creates a <see cref="ScopedSource"/> instance for <see cref="settings"/> to search in by <see cref="scope"/></para> 
+        /// <para>Creates a <see cref="ScopedSource"/> instance for <see cref="incomeSettings"/> to search in by <see cref="scope"/></para> 
         /// <para>You can use "[n]" format in <see cref="InnerScope"/> to get n-th index of list.</para>
         /// </summary>
         /// <param name="settings">Tree to search in</param>
@@ -51,8 +45,9 @@ namespace Vostok.Configuration.Sources
             [NotNull] IRawSettings settings,
             [NotNull] params string[] scope)
         {
-            observers = new BehaviorSubject<IRawSettings>(currentSettings);
-            currentSettings = InnerScope(settings, scope);
+            incomeSettings = settings;
+            this.scope = scope;
+            taskSource = new TaskSource();
         }
 
         /// <inheritdoc />
@@ -60,7 +55,7 @@ namespace Vostok.Configuration.Sources
         /// Gets part of RawSettings tree by specified scope.
         /// </summary>
         /// <returns>Part of RawSettings tree</returns>
-        public IRawSettings Get() => currentSettings;
+        public IRawSettings Get() => taskSource.Get(Observe());
 
         /// <inheritdoc />
         /// <summary>
@@ -71,11 +66,35 @@ namespace Vostok.Configuration.Sources
         /// <returns>Event with new RawSettings tree</returns>
         public IObservable<IRawSettings> Observe() =>
             Observable.Create<IRawSettings>(
-                observer => observers.Select(settings => currentSettings).Subscribe(observer));
+                observer =>
+                {
+                    if (watcher == null && source != null)
+                    {
+                        watcher = source.Observe()
+                            .Subscribe(
+                                settings =>
+                                {
+                                    var newSettings = InnerScope(settings, scope);
+                                    if (!Equals(newSettings, currentValue))
+                                        currentValue = newSettings;
+                                    observer.OnNext(currentValue);
+                                });
+                    }
+
+                    if (watcher != null) return watcher;
+
+                    if (firstRequest)
+                    {
+                        firstRequest = false;
+                        currentValue = source != null ? InnerScope(source.Get(), scope) : InnerScope(incomeSettings, scope);
+                    }
+                    observer.OnNext(currentValue);
+
+                    return Disposable.Empty;
+                });
 
         public void Dispose()
         {
-            observers.Dispose();
             watcher?.Dispose();
         }
 
@@ -97,7 +116,7 @@ namespace Vostok.Configuration.Sources
                          scope[i].StartsWith("[") && scope[i].EndsWith("]") && scope[i].Length > 2)
                 {
                     var num = scope[i].Substring(1, scope[i].Length - 2);
-                    if (int.TryParse(num, out var index) && index <= settings.Children.Count() && /*settings.Children.ElementAt(index) != null && */settings.Children.ElementAt(index)?.Name == index.ToString())
+                    if (int.TryParse(num, out var index) && index <= settings.Children.Count() && settings.Children.ElementAt(index)?.Name == index.ToString())
                     {
                         if (i == scope.Length - 1)
                             return settings.Children.ElementAt(index);

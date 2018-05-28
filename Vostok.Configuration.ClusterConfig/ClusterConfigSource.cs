@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Threading;
@@ -17,7 +18,7 @@ namespace Vostok.Configuration.ClusterConfig
     {
         private readonly TimeSpan minObservationPeriod = 1.Minutes();
         private readonly TimeSpan checkPeriod = 100.Milliseconds();
-        private readonly List<IObserver<IRawSettings>> observers;
+        private readonly IList<IObserver<IRawSettings>> observers;
         private readonly TimeSpan observationPeriod;
         private readonly string prefix;
         private readonly string key;

@@ -25,7 +25,7 @@ namespace Vostok.Configuration.Sources
         private readonly FileSystemWatcher fileWatcher;
         private Task task;
         private CancellationTokenSource tokenSource;
-        private string current;
+        private string currentValue;
         private CancellationToken token;
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace Vostok.Configuration.Sources
         {
             this.filePath = filePath;
             observers = new List<IObserver<string>>();
-            current = DefaultSettingsValue;
+            currentValue = DefaultSettingsValue;
 
             var path = Path.GetDirectoryName(filePath);
             if (string.IsNullOrEmpty(path))
@@ -55,8 +55,8 @@ namespace Vostok.Configuration.Sources
                 task = new Task(WatchFile, token);
                 task.Start();
             }
-            else if (current != DefaultSettingsValue)
-                observer.OnNext(current);
+            else if (currentValue != DefaultSettingsValue)
+                observer.OnNext(currentValue);
 
             return Disposable.Create(
                 () =>
@@ -86,9 +86,9 @@ namespace Vostok.Configuration.Sources
                 {
                     if (CheckFile(out var changes))
                     {
-                        current = changes;
+                        currentValue = changes;
                         foreach (var observer in observers.ToArray())
-                            observer.OnNext(current);
+                            observer.OnNext(currentValue);
                     }
                 }
                 catch (IOException)
@@ -110,7 +110,7 @@ namespace Vostok.Configuration.Sources
             var fileExists = File.Exists(filePath);
             changes = null;
 
-            if (!fileExists && current != null)
+            if (!fileExists && currentValue != null)
                 return true;
             else if (fileExists)
             {
@@ -118,7 +118,7 @@ namespace Vostok.Configuration.Sources
                 using (var reader = new StreamReader(fileStream, Encoding.UTF8))
                     changes = reader.ReadToEnd();
 
-                if (current != changes)
+                if (currentValue != changes)
                     return true;
             }
 

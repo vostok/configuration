@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -51,19 +52,31 @@ namespace Vostok.Configuration.Tests.Sources
             File.Delete(TestFileName5);
         }
 
-        /*[Test]
-        public void Should_return_null_if_file_not_exists()
-        {
-            
-        }*/
-
         [Test]
-        public void Should_return_full_tree()
+        public void Should_return_full_tree_by_source()
         {
             DeleteFiles();
             CreateTextFile("{ \"value\": 1 }");
             using (var jfs = new JsonFileSource(TestFileName1))
             using (var ss = new ScopedSource(jfs))
+            {
+                var result = ss.Get();
+                result["value"].Value.Should().Be("1");
+            }
+        }
+
+        [Test]
+        public void Should_return_full_tree_by_tree()
+        {
+            DeleteFiles();
+            CreateTextFile("{ \"value\": 1 }");
+
+            var tree = new RawSettings(new OrderedDictionary
+            {
+                ["value"] = new RawSettings("1"),
+            });
+
+            using (var ss = new ScopedSource(tree))
             {
                 var result = ss.Get();
                 result["value"].Value.Should().Be("1");

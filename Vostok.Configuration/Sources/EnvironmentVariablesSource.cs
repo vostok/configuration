@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Vostok.Commons.Conversions;
-using Vostok.Commons.ThreadManagment;
 
 namespace Vostok.Configuration.Sources
 {
@@ -17,11 +19,14 @@ namespace Vostok.Configuration.Sources
     {
         private readonly TimeSpan minObservationPeriod = 100.Milliseconds();
         private readonly TimeSpan defaultObservationPeriod = 1.Minutes();
-        private bool needStop;
-        private readonly BehaviorSubject<IRawSettings> observers;
+        private readonly IList<IObserver<IRawSettings>> observers;
         private readonly TimeSpan observationPeriod;
-        private readonly AutoResetEvent firstRead;
-        private IRawSettings currentSettings;
+        private readonly object locker;
+        private readonly TaskSource taskSource;
+        private IRawSettings currentValue;
+        private CancellationTokenSource tokenSource;
+        private CancellationToken token;
+        private Task task;
 
         /// <inheritdoc />
         /// <summary>
@@ -35,20 +40,20 @@ namespace Vostok.Configuration.Sources
                 : (observationPeriod < minObservationPeriod
                     ? minObservationPeriod
                     : observationPeriod);
-            needStop = false;
-            observers = new BehaviorSubject<IRawSettings>(currentSettings);
 
-            firstRead = new AutoResetEvent(false);
-            ThreadRunner.Run(WatchVariables);
-            firstRead.WaitOne();
-            firstRead = null;
+            locker = new object();
+            lock (locker)
+            {
+                observers = new List<IObserver<IRawSettings>>();
+                taskSource = new TaskSource();
+            }
         }
 
         /// <inheritdoc />
         /// <summary>
         /// Returns previously parsed <see cref="IRawSettings"/> tree.
         /// </summary>
-        public IRawSettings Get() => currentSettings;
+        public IRawSettings Get() => taskSource.Get(Observe());
 
         /// <inheritdoc />
         /// <summary>
@@ -57,12 +62,45 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         public IObservable<IRawSettings> Observe() =>
             Observable.Create<IRawSettings>(
-                observer => observers.Select(settings => currentSettings).Subscribe(observer));
+                observer =>
+                {
+                    lock (locker)
+                    {
+                        if (!observers.Contains(observer))
+                            observers.Add(observer);
+                        if (tokenSource == null)
+                        {
+                            tokenSource = new CancellationTokenSource();
+                            token = tokenSource.Token;
+                            task = new Task(WatchVariables, token);
+                            task.Start();
+                        }
+                        else
+                            observer.OnNext(currentValue);
+                    }
+
+                    return Disposable.Create(
+                        () =>
+                        {
+                            lock (locker)
+                            {
+                                if (observers.Contains(observer))
+                                    observers.Remove(observer);
+                                if (observers.Count == 0)
+                                    StopTask();
+                            }
+                        });
+                });
 
         public void Dispose()
         {
-            needStop = true;
-            observers.Dispose();
+            StopTask();
+        }
+
+        private void StopTask()
+        {
+            if (tokenSource != null && !tokenSource.IsCancellationRequested)
+                tokenSource.Cancel();
         }
 
         private static IRawSettings GetSettings(string vars)
@@ -83,16 +121,25 @@ namespace Vostok.Configuration.Sources
         {
             var nextCheck = DateTime.UtcNow.AddMinutes(-1);
 
-            while (!needStop)
+            while (true)
             {
-                if (nextCheck <= DateTime.UtcNow)
-                {
-                    currentSettings = GetSettings(GetVariables());
-                    nextCheck = DateTime.UtcNow + observationPeriod;
-                    observers.OnNext(currentSettings);
-                    firstRead?.Set();
-                }
+                if (token.IsCancellationRequested) break;
 
+                if (nextCheck <= DateTime.UtcNow)
+                    try
+                    {
+                        currentValue = GetSettings(GetVariables());
+                        nextCheck = DateTime.UtcNow + observationPeriod;
+                        foreach (var observer in observers.ToArray())
+                            observer.OnNext(currentValue);
+                    }
+                    catch (Exception e)
+                    {
+                        foreach (var observer in observers.ToArray())
+                            observer.OnError(e);
+                    }
+
+                if (token.IsCancellationRequested) break;
                 Thread.Sleep(minObservationPeriod);
             }
         }
