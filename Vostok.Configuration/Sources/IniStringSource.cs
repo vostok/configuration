@@ -134,9 +134,9 @@ namespace Vostok.Configuration.Sources
                 Name = name;
             }
 
-            public string Name { get; set; }
+            private string Name { get; }
             public string Value { get; set; }
-            public IOrderedDictionary Children { get; set; }
+            public IOrderedDictionary Children { get; }
 
             public static explicit operator RawSettings(RawSettingsEditable settings)
             {

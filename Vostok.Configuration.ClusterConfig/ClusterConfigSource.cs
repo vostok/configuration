@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using System.Threading;
+using System.Threading.Tasks;
 using Vostok.Commons.Conversions;
-using Vostok.Commons.ThreadManagment;
 using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.ClusterConfig
@@ -17,14 +17,17 @@ namespace Vostok.Configuration.ClusterConfig
     {
         private readonly TimeSpan minObservationPeriod = 1.Minutes();
         private readonly TimeSpan checkPeriod = 100.Milliseconds();
-        private readonly BehaviorSubject<IRawSettings> observers;
+        private readonly List<IObserver<IRawSettings>> observers;
         private readonly TimeSpan observationPeriod;
-        private readonly AutoResetEvent firstRead;
         private readonly string prefix;
         private readonly string key;
         private readonly IClusterConfigClientProxy clusterConfigClient;
-        private bool needStop;
-        private IRawSettings currentSettings;
+        private readonly object locker;
+        private readonly TaskSource taskSource;
+        private IRawSettings currentValue;
+        private CancellationTokenSource tokenSource;
+        private CancellationToken token;
+        private Task task;
 
         /// <inheritdoc />
         /// <summary>
@@ -60,22 +63,22 @@ namespace Vostok.Configuration.ClusterConfig
             else
                 this.observationPeriod = observationPeriod;
 
-            needStop = false;
-            observers = new BehaviorSubject<IRawSettings>(currentSettings);
-
-            firstRead = new AutoResetEvent(false);
-            ThreadRunner.Run(WatchClusterConfig);
-            if (!firstRead.WaitOne(1.Seconds(), false))
-                throw new TimeoutException();
-            firstRead = null;
+            locker = new object();
+            lock (locker)
+            {
+                observers = new List<IObserver<IRawSettings>>();
+                taskSource = new TaskSource();
+            }
         }
 
         /// <inheritdoc />
         /// <summary>
-        /// Returns previously parsed configurations. Null if sources where not specified.
+        /// <para>Returns last parsed configurations</para>
+        /// <para>Waits for first read.</para>
         /// </summary>
+        /// <exception cref="Exception">Only on first read. Otherwise returns last parsed value.</exception>
         /// <returns>Combine as RawSettings tree</returns>
-        public IRawSettings Get() => currentSettings;
+        public IRawSettings Get() => taskSource.Get(Observe());
 
         /// <inheritdoc />
         /// <summary>
@@ -85,12 +88,46 @@ namespace Vostok.Configuration.ClusterConfig
         /// <returns>Event with new RawSettings tree</returns>
         public IObservable<IRawSettings> Observe() =>
             Observable.Create<IRawSettings>(
-                observer => observers.Select(settings => currentSettings).Subscribe(observer));
+                observer =>
+                {
+                    lock (locker)
+                    {
+                        if (!observers.Contains(observer))
+                            observers.Add(observer);
+                        if (tokenSource == null)
+                        {
+                            tokenSource = new CancellationTokenSource();
+                            token = tokenSource.Token;
+                            task = new Task(WatchClusterConfig, token);
+                            task.Start();
+                        }
+                        else
+                            observer.OnNext(currentValue);
+                    }
+
+                    return Disposable.Create(
+                        () =>
+                        {
+                            lock (locker)
+                            {
+                                if (observers.Contains(observer))
+                                    observers.Remove(observer);
+                                if (observers.Count == 0)
+                                    StopTask();
+                            }
+                        });
+                });
 
         public void Dispose()
         {
-            needStop = true;
-            observers.Dispose();
+            StopTask();
+            tokenSource?.Dispose();
+        }
+
+        private void StopTask()
+        {
+            if (tokenSource != null && !tokenSource.IsCancellationRequested)
+                tokenSource.Cancel();
         }
 
         private RawSettings ReadSettings()
@@ -123,33 +160,36 @@ namespace Vostok.Configuration.ClusterConfig
 
         private void WatchClusterConfig()
         {
-            var nextCheck = DateTime.UtcNow.AddMinutes(-1);
+            var nextCheck = DateTime.UtcNow.AddDays(-1);
 
-            while (!needStop)
+            while (true)
             {
+                if (token.IsCancellationRequested) break;
+
                 if (nextCheck <= DateTime.UtcNow)
                 {
                     try
                     {
                         var newSettings = ReadSettings();
-                        if (!Equals(newSettings, currentSettings))
+                        if (!Equals(newSettings, currentValue))
                         {
-                            currentSettings = newSettings;
-                            observers.OnNext(currentSettings);
+                            currentValue = newSettings;
+                            foreach (var observer in observers.ToArray())
+                                observer.OnNext(currentValue);
                         }
                     }
                     catch (Exception e)
                     {
-                        firstRead?.Set();
-                        Thread.CurrentThread.Abort(e);
+                        foreach (var observer in observers.ToArray())
+                            observer.OnError(e);
                     }
                     finally
                     {
                         nextCheck = DateTime.UtcNow + observationPeriod;
-                        firstRead?.Set();
                     }
                 }
 
+                if (token.IsCancellationRequested) break;
                 Thread.Sleep(checkPeriod);
             }
         }

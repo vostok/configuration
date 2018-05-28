@@ -18,7 +18,7 @@ namespace Vostok.Configuration.Sources
 
         /// <summary>
         /// Creates a <see cref="ScopedSource"/> instance for <see cref="source"/> to search in by <see cref="scope"/>
-        /// <para>You can use "[n]" format in <see cref="Scope"/> to get n-th index of list.</para>
+        /// <para>You can use "[n]" format in <see cref="InnerScope"/> to get n-th index of list.</para>
         /// </summary>
         /// <param name="source">Source of <see cref="IRawSettings"/> tree</param>
         /// <param name="scope">Search path</param>
@@ -27,12 +27,12 @@ namespace Vostok.Configuration.Sources
             [NotNull] params string[] scope)
         {
             observers = new BehaviorSubject<IRawSettings>(currentSettings);
-            currentSettings = Scope(source.Get(), scope);
+            currentSettings = InnerScope(source.Get(), scope);
             watcher = source.Observe()
                 .Subscribe(
                     settings =>
                     {
-                        var newSettings = Scope(settings, scope);
+                        var newSettings = InnerScope(settings, scope);
                         if (!Equals(newSettings, currentSettings))
                         {
                             currentSettings = newSettings;
@@ -43,7 +43,7 @@ namespace Vostok.Configuration.Sources
 
         /// <summary>
         /// <para>Creates a <see cref="ScopedSource"/> instance for <see cref="settings"/> to search in by <see cref="scope"/></para> 
-        /// <para>You can use "[n]" format in <see cref="Scope"/> to get n-th index of list.</para>
+        /// <para>You can use "[n]" format in <see cref="InnerScope"/> to get n-th index of list.</para>
         /// </summary>
         /// <param name="settings">Tree to search in</param>
         /// <param name="scope">Search path</param>
@@ -52,7 +52,7 @@ namespace Vostok.Configuration.Sources
             [NotNull] params string[] scope)
         {
             observers = new BehaviorSubject<IRawSettings>(currentSettings);
-            currentSettings = Scope(settings, scope);
+            currentSettings = InnerScope(settings, scope);
         }
 
         /// <inheritdoc />
@@ -79,7 +79,7 @@ namespace Vostok.Configuration.Sources
             watcher?.Dispose();
         }
 
-        private static IRawSettings Scope(IRawSettings settings, params string[] scope)
+        private static IRawSettings InnerScope(IRawSettings settings, params string[] scope)
         {
             if (scope.Length == 0)
                 return settings;
@@ -97,7 +97,7 @@ namespace Vostok.Configuration.Sources
                          scope[i].StartsWith("[") && scope[i].EndsWith("]") && scope[i].Length > 2)
                 {
                     var num = scope[i].Substring(1, scope[i].Length - 2);
-                    if (int.TryParse(num, out var index) && index <= settings.Children.Count() && settings[index.ToString()] != null)
+                    if (int.TryParse(num, out var index) && index <= settings.Children.Count() && /*settings.Children.ElementAt(index) != null && */settings.Children.ElementAt(index)?.Name == index.ToString())
                     {
                         if (i == scope.Length - 1)
                             return settings.Children.ElementAt(index);

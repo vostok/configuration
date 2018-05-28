@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Reactive.Linq;
-using System.Threading;
 
 namespace Vostok.Configuration.Sources
 {
@@ -10,11 +9,11 @@ namespace Vostok.Configuration.Sources
     /// </summary>
     public class BaseFileSource : IConfigurationSource
     {
-        //        private readonly BehaviorSubject<RawSettings> observers;
-        //        private readonly IDisposable fileWatcherSubscribtion;
-        private readonly IObservable<IRawSettings> fileWatcher;
-        private IRawSettings current;
-        private AutoResetEvent msg;
+        private readonly string filePath;
+        private readonly Func<string, IRawSettings> parseSettings;
+        private readonly TaskSource taskSource;
+        private IObservable<IRawSettings> fileObserver;
+        private IRawSettings currentValue;
 
         /// <summary>
         /// <para>Creates a <see cref="BaseFileSource"/> instance.</para>
@@ -24,61 +23,41 @@ namespace Vostok.Configuration.Sources
         /// <param name="parseSettings">"Get" method invocation for string source</param>
         protected BaseFileSource(string filePath, Func<string, IRawSettings> parseSettings)
         {
-            //            observers = new BehaviorSubject<RawSettings>(current);
-
-            msg = new AutoResetEvent(false);
-            fileWatcher = new SingleFileWatcher(filePath).Select(
-                str =>
-                {
-                    msg?.Set();
-                    msg = null;
-
-                    current = parseSettings(str);
-                    return current;
-                });
-            /*fileWatcher = SettingsFileWatcher.WatchFile(filePath, this).Select(
-                str =>
-                {
-                    msg.Set();
-                    msg = null;
-
-                    current = parseSettings(str);
-                    return current;
-                });*/
-            /*var msg = new AutoResetEvent(false);
-            fileWatcherSubscribtion = fileWatcher.Subscribe(
-                str =>
-                {
-                    current = parseSettings(str);
-                    observers.OnNext(current);
-                    msg.Set();
-                });
-            msg.WaitOne();*/
+            this.filePath = filePath;
+            this.parseSettings = parseSettings;
+            taskSource = new TaskSource();
         }
 
         /// <inheritdoc />
         /// <summary>
-        /// Returns previously parsed <see cref="IRawSettings"/> tree.
+        /// <para>Returns last parsed <see cref="IRawSettings"/> tree.</para>
+        /// <para>Waits for first read.</para>
         /// </summary>
-        public IRawSettings Get()
-        {
-            msg?.WaitOne();
-            return current;
-        }
+        /// <exception cref="Exception">Only on first read. Otherwise returns last parsed value.</exception>
+        public IRawSettings Get() => taskSource.Get(Observe());
 
         /// <inheritdoc />
         /// <summary>
         /// <para>Subscribtion to <see cref="IRawSettings"/> tree changes.</para>
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
-        public IObservable<IRawSettings> Observe() => fileWatcher;
-//            Observable.Create<RawSettings>(observer =>
-//                observers.Select(settings => current).Subscribe(observer));
+        public IObservable<IRawSettings> Observe()
+        {
+            if (fileObserver != null) return fileObserver;
+
+            var fileWatcher = SettingsFileWatcher.WatchFile(filePath);
+            fileObserver = fileWatcher.Select(
+                str =>
+                {
+                    currentValue = parseSettings(str);
+                    return currentValue;
+                });
+
+            return fileObserver;
+        }
 
         public void Dispose()
         {
-            //            observers.Dispose();
-            //            fileWatcherSubscribtion?.Dispose();
         }
     }
 }

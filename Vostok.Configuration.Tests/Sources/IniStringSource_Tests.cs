@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Specialized;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using NUnit.Framework;
@@ -70,13 +69,11 @@ namespace Vostok.Configuration.Tests.Sources
             const string value = "value = 123 \n value2 = 321";
 
             using (var iss = new IniStringSource(value))
-                iss.Get().Should().BeEquivalentTo(
-                    new RawSettings(
-                        new OrderedDictionary
-                        {
-                            { "value", new RawSettings("123", "value") },
-                            { "value2", new RawSettings("321", "value2") },
-                        }, "root"));
+            {
+                var result = iss.Get();
+                result["value"].Value.Should().Be("123");
+                result["value2"].Value.Should().Be("321");
+            }
         }
         
         [Test]
@@ -85,24 +82,12 @@ namespace Vostok.Configuration.Tests.Sources
             const string value = "[section1]\rvalue=123 \r [section2]\rvalue1=123\rvalue2=321";
 
             using (var iss = new IniStringSource(value))
-                iss.Get().Should().BeEquivalentTo(
-                    new RawSettings(
-                        new OrderedDictionary
-                        {
-                            { "section1", new RawSettings(
-                                new OrderedDictionary
-                                {
-                                    { "value", new RawSettings("123", "value") },
-                                }, "section1")
-                            },
-                            { "section2", new RawSettings(
-                                new OrderedDictionary
-                                {
-                                    { "value1", new RawSettings("123", "value1") },
-                                    { "value2", new RawSettings("321", "value2") },
-                                }, "section2")
-                            }
-                        }, "root"));
+            {
+                var result = iss.Get();
+                result["section1"]["value"].Value.Should().Be("123");
+                result["section2"]["value1"].Value.Should().Be("123");
+                result["section2"]["value2"].Value.Should().Be("321");
+            }
         }
 
         [TestCase("a=0 \r a.b.c=2 \r a.b=1", TestName = "Order #1")]
@@ -111,22 +96,12 @@ namespace Vostok.Configuration.Tests.Sources
         public void Should_deep_parse_keys_with_different_order(string value)
         {
             using (var iss = new IniStringSource(value))
-                iss.Get().Should().BeEquivalentTo(
-                    new RawSettings(
-                        new OrderedDictionary
-                        {
-                            { "a", new RawSettings(
-                                new OrderedDictionary
-                                {
-                                    { "b", new RawSettings(
-                                        new OrderedDictionary
-                                        {
-                                            { "c", new RawSettings("2", "c") },
-                                        }, "b", "1")
-                                    },
-                                }, "a", "0")
-                            },
-                        }, "root"));
+            {
+                var result = iss.Get();
+                result["a"].Value.Should().Be("0");
+                result["a"]["b"].Value.Should().Be("1");
+                result["a"]["b"]["c"].Value.Should().Be("2");
+            }
         }
 
         [Test]
@@ -146,13 +121,8 @@ namespace Vostok.Configuration.Tests.Sources
                     settings =>
                     {
                         val++;
-                        settings.Should().BeEquivalentTo(
-                            new RawSettings(
-                                new OrderedDictionary
-                                {
-                                    { "value", new RawSettings("123") },
-                                    { "value2", new RawSettings("321") },
-                                }));
+                        settings["value"].Should().Be("123");
+                        settings["value2"].Should().Be("321");
                     });
                 sub.Dispose();
             }

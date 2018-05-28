@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
+using System.Linq;
 using System.Threading;
 using FluentAssertions;
 using NSubstitute;
@@ -19,8 +19,8 @@ namespace Vostok.Configuration.Tests.Sources
         private const string Prefix = "banana/core";
         private const string Key = "houstontimeout";
         private const string Value = "1 minute";
-        private Dictionary<string, List<string>>  fullDict;
-        private Dictionary<string, List<string>>  shortDict;
+        private Dictionary<string, List<string>> fullDict;
+        private Dictionary<string, List<string>> shortDict;
         private List<string> keyList;
 
         [SetUp]
@@ -80,7 +80,8 @@ namespace Vostok.Configuration.Tests.Sources
             using (var ccs = new ClusterConfigSource(Prefix, Key, clusterClient, 100.Milliseconds(), true))
             {
                 var result = ccs.Get().Children;
-                result.Should().HaveCount(1).And.BeEquivalentTo(new OrderedDictionary{ [Value] = new RawSettings(Value) });
+                result.Should().HaveCount(1);
+                result.First().Value.Should().Be(Value);
             }
         }
 
@@ -89,8 +90,9 @@ namespace Vostok.Configuration.Tests.Sources
         {
             new Action(() =>
             {
-                using (new ClusterConfigSource(null, "wrong key", clusterClient, 100.Milliseconds(), true)) { }
-            }).Should().Throw<ArgumentException>();
+                using (var ccs = new ClusterConfigSource(null, "wrong key", clusterClient, 100.Milliseconds(), true))
+                    ccs.Get();
+            }).Should().Throw<Exception>();
         }
 
         [Test]
@@ -110,12 +112,7 @@ namespace Vostok.Configuration.Tests.Sources
                     if (settings == null) return;
                     val++;
                     if (val == 2)
-                        settings.Should().BeEquivalentTo(
-                            new RawSettings(
-                                new OrderedDictionary
-                                {
-                                    ["1"] = new RawSettings(newValue),
-                                }));
+                        settings["1"].Value.Should().Be(newValue);
                 });
 
                 fullDict.Add("_", new List<string>{ "a", "b" });

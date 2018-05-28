@@ -8,7 +8,7 @@ namespace Vostok.Configuration.Sources
 {
     /// <inheritdoc />
     /// <summary>
-    /// Json converter to <see cref="RawSettings"/> tree from string
+    /// Json converter to <see cref="IRawSettings"/> tree from string
     /// </summary>
     public class JsonStringSource : IConfigurationSource
     {
@@ -39,8 +39,9 @@ namespace Vostok.Configuration.Sources
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
         public IObservable<IRawSettings> Observe() =>
-            Observable.Create<IRawSettings>(observer =>
-                observers.Select(settings => currentSettings).Subscribe(observer));
+            Observable.Create<IRawSettings>(
+                observer =>
+                    observers.Select(settings => currentSettings).Subscribe(observer));
 
         public void Dispose()
         {
@@ -98,6 +99,7 @@ namespace Vostok.Configuration.Sources
                         obj = new RawSettings(item.ToString(), i.ToString());
                         break;
                 }
+
                 dict.Add(i++, obj);
             }
 

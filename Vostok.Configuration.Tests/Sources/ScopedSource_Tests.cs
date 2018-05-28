@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using FluentAssertions;
 using NUnit.Framework;
@@ -14,18 +14,41 @@ namespace Vostok.Configuration.Tests.Sources
     [TestFixture]
     public class ScopedSource_Tests
     {
-        private const string TestFileName = "test_ScopedSource.json";
+        private const string TestFileName1 = "test_ScopedSource_1.json";
+        private const string TestFileName2 = "test_ScopedSource_2.json";
+        private const string TestFileName3 = "test_ScopedSource_3.json";
+        private const string TestFileName4 = "test_ScopedSource_4.json";
+        private const string TestFileName5 = "test_ScopedSource_5.json";
 
         [TearDown]
         public void Cleanup()
         {
-            File.Delete(TestFileName);
+            DeleteFiles();
         }
 
-        private static void CreateTextFile(string text)
+        private static void CreateTextFile(string text, int n = 1)
         {
-            using (var file = new StreamWriter(TestFileName, false))
+            var name = string.Empty;
+            switch (n)
+            {
+                case 1: name = TestFileName1; break;
+                case 2: name = TestFileName2; break;
+                case 3: name = TestFileName3; break;
+                case 4: name = TestFileName4; break;
+                case 5: name = TestFileName5; break;
+            }
+
+            using (var file = new StreamWriter(name, false))
                 file.WriteLine(text);
+        }
+
+        private static void DeleteFiles()
+        {
+            File.Delete(TestFileName1);
+            File.Delete(TestFileName2);
+            File.Delete(TestFileName3);
+            File.Delete(TestFileName4);
+            File.Delete(TestFileName5);
         }
 
         /*[Test]
@@ -37,59 +60,63 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_return_full_tree()
         {
+            DeleteFiles();
             CreateTextFile("{ \"value\": 1 }");
-            using (var jfs = new JsonFileSource(TestFileName))
+            using (var jfs = new JsonFileSource(TestFileName1))
             using (var ss = new ScopedSource(jfs))
-                ss.Get().Should().BeEquivalentTo(new RawSettings(
-                    new OrderedDictionary
-                    {
-                        { "value", new RawSettings("1") },
-                    }));
+            {
+                var result = ss.Get();
+                result["value"].Value.Should().Be("1");
+            }
         }
 
         [Test]
         public void Should_scope_by_dictionaries_keys()
         {
-            CreateTextFile("{ \"value 1\": { \"value 2\": { \"value 3\": 1 } } }");
-            using (var jfs = new JsonFileSource(TestFileName))
+            DeleteFiles();
+            CreateTextFile("{ \"value 1\": { \"value 2\": { \"value 3\": 1 } } }", 2);
+            using (var jfs = new JsonFileSource(TestFileName2))
             {
                 using (var ss = new ScopedSource(jfs, "value 1", "value 2"))
-                    ss.Get().Should().BeEquivalentTo(new RawSettings(
-                        new OrderedDictionary
-                        {
-                            { "value 3", new RawSettings("1") },
-                        }));
+                {
+                    var result = ss.Get();
+                    result["value 3"].Value.Should().Be("1");
+                }
 
                 using (var ss = new ScopedSource(jfs, "value 1", "value 2", "value 3"))
-                    ss.Get().Should().BeEquivalentTo(new RawSettings("1"));
+                {
+                    var result = ss.Get();
+                    result.Value.Should().Be("1");
+                }
             }
         }
 
         [Test]
         public void Should_scope_by_list_indexes()
         {
-            CreateTextFile("{ \"value\": [[1,2], [3,4,5]] }");
-            using (var jfs = new JsonFileSource(TestFileName))
+            CreateTextFile("{ \"value\": [[1,2], [3,4,5]] }", 3);
+            using (var jfs = new JsonFileSource(TestFileName3))
             {
                 using (var ss = new ScopedSource(jfs, "value", "[0]"))
-                    ss.Get()
-                        .Should().BeEquivalentTo(new RawSettings(
-                            new OrderedDictionary
-                            {
-                                [(object)0] = new RawSettings("1"),
-                                [(object)1] = new RawSettings("2"),
-                            }));
+                {
+                    var result = ss.Get();
+                    result.Children.First().Value.Should().Be("1");
+                    result.Children.Last().Value.Should().Be("2");
+                }
 
                 using (var ss = new ScopedSource(jfs, "value", "[1]", "[2]"))
-                    ss.Get().Should().BeEquivalentTo(new RawSettings("5"));
+                {
+                    var result = ss.Get();
+                    result.Value.Should().Be("5");
+                }
             }
         }
 
         [Test]
         public void Should_return_null()
         {
-            CreateTextFile("{ \"value\": { \"list\": [1,2] } }");
-            using (var jfs = new JsonFileSource(TestFileName))
+            CreateTextFile("{ \"value\": { \"list\": [1,2] } }", 4);
+            using (var jfs = new JsonFileSource(TestFileName4))
             {
                 using (var ss = new ScopedSource(jfs, "unknown value"))
                     ss.Get().Should().BeNull();
@@ -104,22 +131,19 @@ namespace Vostok.Configuration.Tests.Sources
             }
         }
 
-        [Test, Explicit("Not stable on mass tests")]
+        [Test]
         public void Should_observe_file()
         {
-            new Action(() => ShouldObserveFileTest_ReturnsReceivedSubtrees().Should().BeEquivalentTo(
-                new List<RawSettings>
-                {
-                    new RawSettings("2"),
-                    new RawSettings("4"),
-                }
-            )).ShouldPassIn(1.Seconds());
+            List<IRawSettings> result = null;
+            new Action(() => result = ShouldObserveFileTest_ReturnsReceivedSubtrees()).ShouldPassIn(1.Seconds());
+            result.First().Value.Should().Be("2");
+            result.Last().Value.Should().Be("4");
         }
 
         private List<IRawSettings> ShouldObserveFileTest_ReturnsReceivedSubtrees()
         {
-            CreateTextFile("{ \"value\": { \"list\": [1,2] } }");
-            using (var jfs = new JsonFileSource(TestFileName))
+            CreateTextFile("{ \"value\": { \"list\": [1,2] } }", 5);
+            using (var jfs = new JsonFileSource(TestFileName5))
             {
                 var rsList = new List<IRawSettings>();
 
@@ -128,7 +152,7 @@ namespace Vostok.Configuration.Tests.Sources
                     var sub = ss.Observe().Subscribe(settings => rsList.Add(settings));
 
                     Thread.Sleep(200.Milliseconds());
-                    CreateTextFile("{ \"value\": { \"list\": [3,4,5] } }");
+                    CreateTextFile("{ \"value\": { \"list\": [3,4,5] } }", 5);
                     Thread.Sleep(200.Milliseconds());
 
                     sub.Dispose();
