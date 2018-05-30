@@ -53,6 +53,7 @@ namespace Vostok.Configuration
         public string Name { get; }
         public string Value { get; }
         public IRawSettings this[string name] => children[name] as IRawSettings;
+        //todo
         public IEnumerable<IRawSettings> Children =>
             children?.Values.Cast<RawSettings>() ?? Enumerable.Empty<RawSettings>();
         

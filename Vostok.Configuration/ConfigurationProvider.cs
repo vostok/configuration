@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using Vostok.Commons.Conversions;
 using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Sources;
@@ -12,16 +11,25 @@ namespace Vostok.Configuration
 {
     public class ConfigurationProvider : IConfigurationProvider
     {
+        private const int MaxTypeCacheSize = 10;
+        private const int MaxSourceCacheSize = 10;
+
         private readonly bool throwExceptions;
         private readonly Action<Exception> onError;
         private readonly Dictionary<Type, IConfigurationSource> typeSources;
         private readonly ISettingsBinder settingsBinder;
-        private readonly TimeSpan cacheTime;
 
         private readonly ConcurrentDictionary<Type, object> typeCache;
-        private readonly ConcurrentDictionary<Type, IDisposable> typeWatchers;
-        private readonly ConcurrentDictionary<Type, BehaviorSubject<object>> typeObservers;
+        private readonly ConcurrentQueue<Type> typeCacheQueue;
+        private readonly ConcurrentDictionary<Type, IObservable<object>> typeWatchers;
+        //private readonly ConcurrentDictionary<Type, IDisposable> typeWatchers;
+        //private readonly ConcurrentDictionary<Type, IList<IObserver<object>>> typeObservers;
+        //private readonly ConcurrentDictionary<Type, BehaviorSubject<object>> typeObservers;
 
+        private readonly ConcurrentDictionary<IConfigurationSource, object> sourceCache;
+        private readonly ConcurrentQueue<IConfigurationSource> sourceCacheQueue;
+
+        //todo config
         /// <summary>
         /// Creates a <see cref="ConfigurationProvider"/> instance with given parameters <paramref name="settingsBinder"/>, <paramref name="throwExceptions"/>, and <paramref name="onError"/>
         /// </summary>
@@ -32,12 +40,16 @@ namespace Vostok.Configuration
         {
             this.throwExceptions = throwExceptions;
             this.onError = onError;
-            this.cacheTime = cacheTime != default ? cacheTime : 10.Seconds();
             this.settingsBinder = settingsBinder ?? new DefaultSettingsBinder();
             typeSources = new Dictionary<Type, IConfigurationSource>();
+            typeWatchers = new ConcurrentDictionary<Type, IObservable<object>>();
+            //typeWatchers = new ConcurrentDictionary<Type, IDisposable>();
             typeCache = new ConcurrentDictionary<Type, object>();
-            typeWatchers = new ConcurrentDictionary<Type, IDisposable>();
-            typeObservers = new ConcurrentDictionary<Type, BehaviorSubject<object>>();
+            typeCacheQueue = new ConcurrentQueue<Type>();
+            //typeObservers = new ConcurrentDictionary<Type, IList<IObserver<object>>>();
+            //typeObservers = new ConcurrentDictionary<Type, BehaviorSubject<object>>();
+            sourceCache = new ConcurrentDictionary<IConfigurationSource, object>();
+            sourceCacheQueue = new ConcurrentQueue<IConfigurationSource>();
         }
 
         /// <inheritdoc />
@@ -47,21 +59,12 @@ namespace Vostok.Configuration
         /// </summary>
         public TSettings Get<TSettings>()
         {
-            try
-            {
-                if (typeCache.TryGetValue(typeof(TSettings), out var item))
-                    return (TSettings)item;
-                if (!typeSources.TryGetValue(typeof(TSettings), out var source))
-                    throw new ArgumentException($"{nameof(IConfigurationSource)} for specified type \"{typeof(TSettings).Name}\" is absent");
-                return GetInternal<TSettings>(source.Get(), false);
-            }
-            catch (Exception e)
-            {
-                if (throwExceptions)
-                    throw;
-                onError?.Invoke(e);
-                return default;
-            }
+            var type = typeof(TSettings);
+            if (typeCache.TryGetValue(type, out var item))
+                return (TSettings)item;
+            if (!typeSources.TryGetValue(type, out var source))
+                throw new ArgumentException($"{nameof(IConfigurationSource)} for specified type \"{type.Name}\" is absent");
+            return GetInternal<TSettings>(source.Get(), false);
         }
 
         /// <inheritdoc />
@@ -70,32 +73,16 @@ namespace Vostok.Configuration
         /// </summary>
         public TSettings Get<TSettings>(IConfigurationSource source)
         {
-            try
-            {
-                //todo: one more cache for souces?
-                return GetInternal<TSettings>(source.Get());
-            }
-            catch (Exception e)
-            {
-                if (throwExceptions)
-                    throw;
-                onError?.Invoke(e);
-                return default;
-            }
-        }
-
-        private TSettings GetInternal<TSettings>(IRawSettings settings, bool cached = false)
-        {
-            // CR(iloktionov): A bug here. Suppose I set up some source for MySettings model and the perform an ordinary Get().
-            // CR(iloktionov): Result gets cached and then it's impossible to get MySettings with any other source.
-            object item = default;
-            if (cached && typeCache.TryGetValue(typeof(TSettings), out item))
+            if (sourceCache.TryGetValue(source, out var item))
                 return (TSettings)item;
 
             try
             {
-                var value = settingsBinder.Bind<TSettings>(settings);
-                typeCache[typeof(TSettings)] = value;
+                var value = settingsBinder.Bind<TSettings>(source.Get());
+                sourceCache.TryAdd(source, value);
+                sourceCacheQueue.Enqueue(source);
+                if (sourceCache.Count > MaxSourceCacheSize && sourceCacheQueue.TryDequeue(out var src))
+                    sourceCache.TryRemove(src, out var _);
                 return value;
             }
             catch (Exception e)
@@ -103,7 +90,7 @@ namespace Vostok.Configuration
                 if (throwExceptions)
                     throw;
                 onError?.Invoke(e);
-                return (TSettings)item;
+                return default;
             }
         }
 
@@ -116,27 +103,11 @@ namespace Vostok.Configuration
         public IObservable<TSettings> Observe<TSettings>()
         {
             var type = typeof(TSettings);
-            if (!typeSources.TryGetValue(type, out var source))
-                throw new ArgumentException($"{nameof(IConfigurationSource)} for specified type \"{typeof(TSettings).Name}\" is absent");
-
-            var subject = null as BehaviorSubject<object>;
-            subject = typeObservers.GetOrAdd(type, _ => subject = new BehaviorSubject<object>(null));
-            
-            return Observable.Create<TSettings>(observer =>
-                subject.Select(obj => GetInternal<TSettings>(source.Get(), true)).Subscribe(observer));
+            if (typeWatchers.TryGetValue(type, out var watcher))
+                return watcher.Select(s => (TSettings)s);
+            typeWatchers[type] = typeSources[type].Observe().Select(settings => (object)GetInternal<TSettings>(settings, true));
+            return typeWatchers[type].Select(s => (TSettings)s);
         }
-        /*{
-            if (!sources.TryGetValue(typeof(TSettings), out var source))
-                throw new ArgumentException($"{nameof(IConfigurationSource)} for specified type \"{typeof(TSettings).Name}\" is absent");
-
-            var newSubject = null as BehaviorSubject<object>;
-            var subject = typeObservers.GetOrAdd(typeof(TSettings), _ => newSubject = new BehaviorSubject<object>(null));
-
-            if (subject == newSubject)
-                source.Observe().Where(s => s != null).Select(settings => GetInternal<TSettings>(settings, true) as object).Subscribe(subject);
-
-            return subject.Where(s => s != null).Cast<TSettings>();
-        }*/
 
         /// <inheritdoc />
         /// <summary>
@@ -144,8 +115,8 @@ namespace Vostok.Configuration
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
         /// <returns>Event with new value</returns>
-        public IObservable<TSettings> Observe<TSettings>(IConfigurationSource source) => 
-            source.Observe().Select(settings => GetInternal<TSettings>(settings)).Where(s => s != null);
+        public IObservable<TSettings> Observe<TSettings>(IConfigurationSource source) =>
+            source.Observe().Select(settings => GetInternal<TSettings>(settings, false));
 
         /// <summary>
         /// Changes source to combination of source for given type <typeparamref name="TSettings"/> and <paramref name="source"/>
@@ -154,20 +125,47 @@ namespace Vostok.Configuration
         /// <param name="source">Second souce to combine with</param>
         public ConfigurationProvider SetupSourceFor<TSettings>(IConfigurationSource source)
         {
-            if (typeObservers.Any())
+            if (typeWatchers.Any())
                 throw new InvalidOperationException($"It is not allowed to add sources to a {nameof(ConfigurationProvider)} after .{nameof(Observe)}() was called.");
 
             var type = typeof(TSettings);
             if (typeSources.TryGetValue(type, out var existingSource))
-            {
                 source = existingSource.Combine(source);
-                typeWatchers[type].Dispose();
-            }
-
             typeSources[type] = source;
-            typeWatchers[type] = source.Observe().Subscribe(settings => GetInternal<TSettings>(settings, false));
 
             return this;
+        }
+
+        internal bool IsInCache(IConfigurationSource source, object value) =>
+            sourceCache.TryGetValue(source, out var x) && (Equals(x, value) || value == null);
+
+        internal bool IsInCache(Type type, object value) =>
+            typeCache.TryGetValue(type, out var x) && (Equals(x, value) || value == null);
+
+        private TSettings GetInternal<TSettings>(IRawSettings settings, bool getCached = false)
+        {
+            // CR(iloktionov): A bug here. Suppose I set up some source for MySettings model and the perform an ordinary Get().
+            // CR(iloktionov): Result gets cached and then it's impossible to get MySettings with any other source.
+            var type = typeof(TSettings);
+            if (getCached && typeCache.TryGetValue(type, out var item))
+                return (TSettings)item;
+
+            try
+            {
+                var value = settingsBinder.Bind<TSettings>(settings);
+                typeCache.TryAdd(type, value);
+                typeCacheQueue.Enqueue(type);
+                if (typeCache.Count > MaxTypeCacheSize && typeCacheQueue.TryDequeue(out var tp))
+                    typeCache.TryRemove(tp, out var _);
+                return value;
+            }
+            catch (Exception e)
+            {
+                if (throwExceptions)
+                    throw;
+                onError?.Invoke(e);
+                return default;
+            }
         }
     }
 }

@@ -19,6 +19,7 @@ namespace Vostok.Configuration.Sources
         private IDisposable watcher;
         private IRawSettings currentValue;
         private bool firstRequest = true;
+        private readonly object locker;
 
         /// <summary>
         /// Creates a <see cref="ScopedSource"/> instance for <see cref="source"/> to search in by <see cref="scope"/>
@@ -32,6 +33,7 @@ namespace Vostok.Configuration.Sources
         {
             this.source = source;
             this.scope = scope;
+            locker = new object();
             taskSource = new TaskSource();
         }
 
@@ -74,21 +76,30 @@ namespace Vostok.Configuration.Sources
                             .Subscribe(
                                 settings =>
                                 {
-                                    var newSettings = InnerScope(settings, scope);
-                                    if (!Equals(newSettings, currentValue))
-                                        currentValue = newSettings;
-                                    observer.OnNext(currentValue);
+                                    lock (locker)
+                                    {
+                                        var newSettings = InnerScope(settings, scope);
+                                        if (!Equals(newSettings, currentValue) || firstRequest)
+                                        {
+                                            firstRequest = false;
+                                            currentValue = newSettings;
+                                            observer.OnNext(currentValue);
+                                        }
+                                    }
                                 });
                     }
 
                     if (watcher != null) return watcher;
 
-                    if (firstRequest)
+                    lock (locker)
                     {
-                        firstRequest = false;
-                        currentValue = source != null ? InnerScope(source.Get(), scope) : InnerScope(incomeSettings, scope);
+                        if (firstRequest)
+                        {
+                            firstRequest = false;
+                            currentValue = source != null ? InnerScope(source.Get(), scope) : InnerScope(incomeSettings, scope);
+                        }
+                        observer.OnNext(currentValue);
                     }
-                    observer.OnNext(currentValue);
 
                     return Disposable.Empty;
                 });

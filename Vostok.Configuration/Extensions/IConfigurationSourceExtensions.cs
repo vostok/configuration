@@ -21,10 +21,11 @@ namespace Vostok.Configuration.Extensions
         /// </summary>
         /// <param name="source">First source to combine with</param>
         /// <param name="other">Second source to combine with</param>
-        /// <param name="listCombineOptions">Options how to combine lists</param>
+        /// <param name="sourceCombineOptions">Options how to combine sources</param>
+        /// <param name="combineOptions">Options how to combine sources childs</param>
         /// <returns>A <see cref="CombinedSource"/> instance</returns>
-        public static IConfigurationSource Combine(this IConfigurationSource source, IConfigurationSource other, ListCombineOptions listCombineOptions = ListCombineOptions.FirstOnly) => 
-            new CombinedSource(new [] {source, other}, listCombineOptions);
+        public static IConfigurationSource Combine(this IConfigurationSource source, IConfigurationSource other, SourceCombineOptions sourceCombineOptions = SourceCombineOptions.LastIsMain, CombineOptions combineOptions = CombineOptions.Override) => 
+            new CombinedSource(new [] {source, other}, sourceCombineOptions, combineOptions);
 
         /// <summary>
         /// <para>Creates a <see cref="CombinedSource"/> instance using given parameters <paramref name="source"/> and <paramref name="others"/></para>
