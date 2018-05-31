@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Specialized;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
-using System.Threading;
 using FluentAssertions;
 using NUnit.Framework;
-using Vostok.Commons.Conversions;
-using Vostok.Commons.Testing;
 using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests.Sources
@@ -66,9 +61,9 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_merge_sources_with_override_values()
         {
-            CreateTextFile(1, "{ \"value 1\": \"string 1\" }");
-            CreateTextFile(2, "{ \"value 2\": \"string 2\" }");
-            CreateTextFile(3, "{ \"value 2\": \"string 22\" }");
+            CreateTextFile(1, "{ 'value 1': 'string 1' }");
+            CreateTextFile(2, "{ 'value 2': 'string 2' }");
+            CreateTextFile(3, "{ 'value 2': 'string 22' }");
 
             using (var cs = CreateCombinedSource(3, SourceCombineOptions.FirstIsMain, CombineOptions.Override))
             {
@@ -91,9 +86,9 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_merge_sources_with_override_objects()
         {
-            CreateTextFile(1, "{ \"value 1\": { \"subval 1\": \"string 1\" } }");
-            CreateTextFile(2, "{ \"value 2\": { \"subval 1\": \"string 2\" } }");
-            CreateTextFile(3, "{ \"value 2\": { \"subval 2\": \"string 22\" } }");
+            CreateTextFile(1, "{ 'value 1': { 'subval 1': 'string 1' } }");
+            CreateTextFile(2, "{ 'value 2': { 'subval 1': 'string 2' } }");
+            CreateTextFile(3, "{ 'value 2': { 'subval 2': 'string 22' } }");
 
             using (var cs = CreateCombinedSource(3, SourceCombineOptions.FirstIsMain, CombineOptions.Override))
             {
@@ -112,10 +107,10 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_merge_sources_with_deep_merge_objects()
         {
-            CreateTextFile(1, "{ \"value 1\": { \"subval 1\": \"string 1\" } }");
-            CreateTextFile(2, "{ \"value 1\": { \"subval 1\": \"string 11\" } }");
-            CreateTextFile(3, "{ \"value 2\": { \"subval 1\": \"string 2\" } }");
-            CreateTextFile(4, "{ \"value 2\": { \"subval 2\": \"string 22\" } }");
+            CreateTextFile(1, "{ 'value 1': { 'subval 1': 'string 1' } }");
+            CreateTextFile(2, "{ 'value 1': { 'subval 1': 'string 11' } }");
+            CreateTextFile(3, "{ 'value 2': { 'subval 1': 'string 2' } }");
+            CreateTextFile(4, "{ 'value 2': { 'subval 2': 'string 22' } }");
 
             using (var cs = CreateCombinedSource(4, SourceCombineOptions.FirstIsMain, CombineOptions.DeepMerge))
             {
@@ -136,9 +131,9 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_merge_sources_with_override_arrays()
         {
-            CreateTextFile(1, "{ \"value 1\": [ \"1\", \"11\" ] }");
-            CreateTextFile(2, "{ \"value 2\": [ \"2\", \"22\" ] }");
-            CreateTextFile(3, "{ \"value 2\": [ \"3\", \"33\" ] }");
+            CreateTextFile(1, "{ 'value 1': [ '1', '11' ] }");
+            CreateTextFile(2, "{ 'value 2': [ '2', '22' ] }");
+            CreateTextFile(3, "{ 'value 2': [ '3', '33' ] }");
 
             using (var cs = CreateCombinedSource(3, SourceCombineOptions.FirstIsMain, CombineOptions.Override))
             {
@@ -161,9 +156,9 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_merge_sources_with_deep_merge_arrays()
         {
-            CreateTextFile(1, "{ \"value\": [ \"1\", \"2\" ] }");
-            CreateTextFile(2, "{ \"value\": [ \"3\", \"2\", \"5\" ] }");
-            CreateTextFile(3, "{ \"value\": [ \"3\", \"4\" ] }");
+            CreateTextFile(1, "{ 'value': [ '1', '2' ] }");
+            CreateTextFile(2, "{ 'value': [ '3', '2', '5' ] }");
+            CreateTextFile(3, "{ 'value': [ '3', '4' ] }");
 
             using (var cs = CreateCombinedSource(3, SourceCombineOptions.FirstIsMain, CombineOptions.DeepMerge))
             {
@@ -187,9 +182,9 @@ namespace Vostok.Configuration.Tests.Sources
         /*[Test]
         public void Should_merge_simple_lists_FirstOnly()
         {
-            CreateTextFile(1, "{ \"value\": [1,2,3] }");
-            CreateTextFile(2, "{ \"value\": [4,5] }");
-            CreateTextFile(3, "{ \"value\": [1,2] }");
+            CreateTextFile(1, "{ 'value': [1,2,3] }");
+            CreateTextFile(2, "{ 'value': [4,5] }");
+            CreateTextFile(3, "{ 'value': [1,2] }");
 
             using (var cs = CreateCombinedSource(3, ListCombineOptions.FirstOnly))
                 cs.Get().Should().BeEquivalentTo(
@@ -210,9 +205,9 @@ namespace Vostok.Configuration.Tests.Sources
         /*[Test]
         public void Should_merge_simple_lists_UnionDist()
         {
-            CreateTextFile(1, "{ \"value\": [1,2,3] }");
-            CreateTextFile(2, "{ \"value\": [4,5] }");
-            CreateTextFile(3, "{ \"value\": [1,2] }");
+            CreateTextFile(1, "{ 'value': [1,2,3] }");
+            CreateTextFile(2, "{ 'value': [4,5] }");
+            CreateTextFile(3, "{ 'value': [1,2] }");
 
             using (var cs = CreateCombinedSource(3, ListCombineOptions.UnionAll))
                 cs.Get().Should().BeEquivalentTo(
@@ -237,9 +232,9 @@ namespace Vostok.Configuration.Tests.Sources
         /*[Test]
         public void Should_merge_dictionaries_of_objects()
         {
-            CreateTextFile(1, "{ \"value\": { \"ObjValue\": 1, \"ObjArray\": [1,2] } }");
-            CreateTextFile(2, "{ \"value\": { \"ObjValue\": 2, \"ObjArray\": [3,4] } }");
-            CreateTextFile(3, "{ \"value\": { \"ObjValue 2\": 3, \"ObjArray\": [5,6] } }");
+            CreateTextFile(1, "{ 'value': { 'ObjValue': 1, 'ObjArray': [1,2] } }");
+            CreateTextFile(2, "{ 'value': { 'ObjValue': 2, 'ObjArray': [3,4] } }");
+            CreateTextFile(3, "{ 'value': { 'ObjValue 2': 3, 'ObjArray': [5,6] } }");
 
             using (var cs = CreateCombinedSource(3, ListCombineOptions.UnionAll))
             {
@@ -271,8 +266,8 @@ namespace Vostok.Configuration.Tests.Sources
         /*[Test]
         public void Should_merge_lists_of_objects_FirstOnly()
         {
-            CreateTextFile(1, "{ \"value\": [ { \"Obj_1_Value\": 1 }, { \"Obj_2_Value\": 1 } ] }");
-            CreateTextFile(2, "{ \"value\": [ { \"Obj_1_Value\": 2 }, { \"Obj_2_Value\": 2 } ] }");
+            CreateTextFile(1, "{ 'value': [ { 'Obj_1_Value': 1 }, { 'Obj_2_Value': 1 } ] }");
+            CreateTextFile(2, "{ 'value': [ { 'Obj_1_Value': 2 }, { 'Obj_2_Value': 2 } ] }");
 
             using (var cs = CreateCombinedSource(2, ListCombineOptions.FirstOnly))
             {
@@ -302,8 +297,8 @@ namespace Vostok.Configuration.Tests.Sources
         /*[Test]
         public void Should_merge_lists_of_objects_UnionDist()
         {
-            CreateTextFile(1, "{ \"value\": [ { \"Obj_1_Value\": 1 }, { \"Obj_2_Value\": 1 } ] }");
-            CreateTextFile(2, "{ \"value\": [ { \"Obj_1_Value\": 2 }, { \"Obj_2_Value\": 2 } ] }");
+            CreateTextFile(1, "{ 'value': [ { 'Obj_1_Value': 1 }, { 'Obj_2_Value': 1 } ] }");
+            CreateTextFile(2, "{ 'value': [ { 'Obj_1_Value': 2 }, { 'Obj_2_Value': 2 } ] }");
 
             using (var cs = CreateCombinedSource(2, ListCombineOptions.UnionAll))
                 cs.Get().Should().BeEquivalentTo(
@@ -341,8 +336,8 @@ namespace Vostok.Configuration.Tests.Sources
         /*[Test]
         public void Should_merge_lists_of_lists_FirstOnly()
         {
-            CreateTextFile(1, "{ \"value\": [ [1,2], [3,4] ] }");
-            CreateTextFile(2, "{ \"value\": [ [5,6], [1,2] ] }");
+            CreateTextFile(1, "{ 'value': [ [1,2], [3,4] ] }");
+            CreateTextFile(2, "{ 'value': [ [5,6], [1,2] ] }");
 
             using (var cs = CreateCombinedSource(2, ListCombineOptions.FirstOnly))
                 cs.Get().Should().BeEquivalentTo(
@@ -372,8 +367,8 @@ namespace Vostok.Configuration.Tests.Sources
         /*[Test]
         public void Should_merge_lists_of_lists_UnionAll()
         {
-            CreateTextFile(1, "{ \"value\": [ [1,2], [3,4] ] }");
-            CreateTextFile(2, "{ \"value\": [ [5,6], [1,2] ] }");
+            CreateTextFile(1, "{ 'value': [ [1,2], [3,4] ] }");
+            CreateTextFile(2, "{ 'value': [ [5,6], [1,2] ] }");
 
             using (var cs = CreateCombinedSource(2, ListCombineOptions.UnionAll))
                 cs.Get().Should().BeEquivalentTo(
@@ -419,8 +414,8 @@ namespace Vostok.Configuration.Tests.Sources
         }
         private int ShouldObserveFileTest_ReturnsCountOfReceives()
         {
-            CreateTextFile(1, "{ \"value 1\": 1, \"list\": [1,2] }");
-            CreateTextFile(2, "{ \"value 2\": 2 }");
+            CreateTextFile(1, "{ 'value 1': 1, 'list': [1,2] }");
+            CreateTextFile(2, "{ 'value 2': 2 }");
             var val = 0;
 
             using (var ccs = CreateCombinedSource(2, ListCombineOptions.FirstOnly))
@@ -444,7 +439,7 @@ namespace Vostok.Configuration.Tests.Sources
                 });
 
                 Thread.Sleep(200.Milliseconds());
-                CreateTextFile(2, "{ \"value 2\": 2, \"list\": [3,4] }");
+                CreateTextFile(2, "{ 'value 2': 2, 'list': [3,4] }");
                 Thread.Sleep(200.Milliseconds());
 
                 sub.Dispose();

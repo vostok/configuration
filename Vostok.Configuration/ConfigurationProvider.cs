@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
-using Vostok.Commons.Conversions;
 using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Sources;
 
@@ -13,41 +11,30 @@ namespace Vostok.Configuration
     {
         private const int MaxTypeCacheSize = 10;
         private const int MaxSourceCacheSize = 10;
-
-        private readonly bool throwExceptions;
-        private readonly Action<Exception> onError;
-        private readonly Dictionary<Type, IConfigurationSource> typeSources;
-        private readonly ISettingsBinder settingsBinder;
+        private readonly ConfigurationProviderSettings settings;
 
         private readonly ConcurrentDictionary<Type, object> typeCache;
         private readonly ConcurrentQueue<Type> typeCacheQueue;
+        private readonly ConcurrentDictionary<Type, IConfigurationSource> typeSources;
         private readonly ConcurrentDictionary<Type, IObservable<object>> typeWatchers;
-        //private readonly ConcurrentDictionary<Type, IDisposable> typeWatchers;
-        //private readonly ConcurrentDictionary<Type, IList<IObserver<object>>> typeObservers;
-        //private readonly ConcurrentDictionary<Type, BehaviorSubject<object>> typeObservers;
 
         private readonly ConcurrentDictionary<IConfigurationSource, object> sourceCache;
         private readonly ConcurrentQueue<IConfigurationSource> sourceCacheQueue;
 
-        //todo config
         /// <summary>
-        /// Creates a <see cref="ConfigurationProvider"/> instance with given parameters <paramref name="settingsBinder"/>, <paramref name="throwExceptions"/>, and <paramref name="onError"/>
+        /// Creates a <see cref="ConfigurationProvider"/> instance with given settings <paramref name="configurationProviderSettings"/>
         /// </summary>
-        /// <param name="settingsBinder">Binder for using here</param>
-        /// <param name="throwExceptions">Exception reaction</param>
-        /// <param name="onError">Action on exception</param>
-        public ConfigurationProvider(ISettingsBinder settingsBinder = null, bool throwExceptions = true, Action<Exception> onError = null)
+        /// <param name="configurationProviderSettings">Provider settings</param>
+        public ConfigurationProvider(ConfigurationProviderSettings configurationProviderSettings = null)
         {
-            this.throwExceptions = throwExceptions;
-            this.onError = onError;
-            this.settingsBinder = settingsBinder ?? new DefaultSettingsBinder();
-            typeSources = new Dictionary<Type, IConfigurationSource>();
+            settings = configurationProviderSettings ?? new ConfigurationProviderSettings {Binder = new DefaultSettingsBinder()};
+            if (settings.Binder == null)
+                settings.Binder = new DefaultSettingsBinder();
+            
+            typeSources = new ConcurrentDictionary<Type, IConfigurationSource>();
             typeWatchers = new ConcurrentDictionary<Type, IObservable<object>>();
-            //typeWatchers = new ConcurrentDictionary<Type, IDisposable>();
             typeCache = new ConcurrentDictionary<Type, object>();
             typeCacheQueue = new ConcurrentQueue<Type>();
-            //typeObservers = new ConcurrentDictionary<Type, IList<IObserver<object>>>();
-            //typeObservers = new ConcurrentDictionary<Type, BehaviorSubject<object>>();
             sourceCache = new ConcurrentDictionary<IConfigurationSource, object>();
             sourceCacheQueue = new ConcurrentQueue<IConfigurationSource>();
         }
@@ -78,7 +65,7 @@ namespace Vostok.Configuration
 
             try
             {
-                var value = settingsBinder.Bind<TSettings>(source.Get());
+                var value = settings.Binder.Bind<TSettings>(source.Get());
                 sourceCache.TryAdd(source, value);
                 sourceCacheQueue.Enqueue(source);
                 if (sourceCache.Count > MaxSourceCacheSize && sourceCacheQueue.TryDequeue(out var src))
@@ -87,9 +74,9 @@ namespace Vostok.Configuration
             }
             catch (Exception e)
             {
-                if (throwExceptions)
+                if (settings.ThrowExceptions)
                     throw;
-                onError?.Invoke(e);
+                settings.OnError?.Invoke(e);
                 return default;
             }
         }
@@ -105,7 +92,7 @@ namespace Vostok.Configuration
             var type = typeof(TSettings);
             if (typeWatchers.TryGetValue(type, out var watcher))
                 return watcher.Select(s => (TSettings)s);
-            typeWatchers[type] = typeSources[type].Observe().Select(settings => (object)GetInternal<TSettings>(settings, true));
+            typeWatchers[type] = typeSources[type].Observe().Select(s => (object)GetInternal<TSettings>(s, true));
             return typeWatchers[type].Select(s => (TSettings)s);
         }
 
@@ -116,7 +103,7 @@ namespace Vostok.Configuration
         /// </summary>
         /// <returns>Event with new value</returns>
         public IObservable<TSettings> Observe<TSettings>(IConfigurationSource source) =>
-            source.Observe().Select(settings => GetInternal<TSettings>(settings, false));
+            source.Observe().Select(s => GetInternal<TSettings>(s, false));
 
         /// <summary>
         /// Changes source to combination of source for given type <typeparamref name="TSettings"/> and <paramref name="source"/>
@@ -142,17 +129,15 @@ namespace Vostok.Configuration
         internal bool IsInCache(Type type, object value) =>
             typeCache.TryGetValue(type, out var x) && (Equals(x, value) || value == null);
 
-        private TSettings GetInternal<TSettings>(IRawSettings settings, bool getCached = false)
+        private TSettings GetInternal<TSettings>(IRawSettings rawSettings, bool getCached = false)
         {
-            // CR(iloktionov): A bug here. Suppose I set up some source for MySettings model and the perform an ordinary Get().
-            // CR(iloktionov): Result gets cached and then it's impossible to get MySettings with any other source.
             var type = typeof(TSettings);
             if (getCached && typeCache.TryGetValue(type, out var item))
                 return (TSettings)item;
 
             try
             {
-                var value = settingsBinder.Bind<TSettings>(settings);
+                var value = settings.Binder.Bind<TSettings>(rawSettings);
                 typeCache.TryAdd(type, value);
                 typeCacheQueue.Enqueue(type);
                 if (typeCache.Count > MaxTypeCacheSize && typeCacheQueue.TryDequeue(out var tp))
@@ -161,9 +146,9 @@ namespace Vostok.Configuration
             }
             catch (Exception e)
             {
-                if (throwExceptions)
+                if (settings.ThrowExceptions)
                     throw;
-                onError?.Invoke(e);
+                settings.OnError?.Invoke(e);
                 return default;
             }
         }
