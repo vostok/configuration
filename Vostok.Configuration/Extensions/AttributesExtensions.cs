@@ -7,6 +7,7 @@ namespace Vostok.Configuration
 {
     internal static class AttributesExtensions
     {
+        // CR(krait): Bad method name.
         /// <summary>
         /// Gets required or optional attribute from list of <paramref name="attributes"/>. Sets <paramref name="defaultAttribute"/> if not found.
         /// </summary>
@@ -20,10 +21,9 @@ namespace Vostok.Configuration
                 { typeof(OptionalAttribute), BinderAttribute.IsOptional },
             };
             var attrs = attributes as Attribute[] ?? attributes.ToArray();
-            if (attributes != null && attrs.Any())
-                foreach (var attribute in attrs)
-                    if (attrsDict.ContainsKey(attribute.GetType()))
-                        return attrsDict[attribute.GetType()];
+            foreach (var attribute in attrs)
+                if (attrsDict.ContainsKey(attribute.GetType()))
+                    return attrsDict[attribute.GetType()];
             return defaultAttribute;
         }
     }

@@ -3,7 +3,7 @@ using Vostok.Configuration.Extensions;
 
 namespace Vostok.Configuration.Binders
 {
-    internal class BinderWrapper: ISettingsBinder<object>
+    internal class BinderWrapper : ISettingsBinder<object>
     {
         private readonly object binder;
         private readonly BinderAttribute binderAttribute;

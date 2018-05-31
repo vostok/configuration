@@ -31,6 +31,7 @@ namespace Vostok.Configuration
             container.Register(typeof(ISettingsBinder<>), typeof(SetBinder<>));
             container.RegisterConditional(typeof(ISettingsBinder<>), typeof(ArrayBinder<>),
                 c => c.ServiceType.GetGenericArguments()[0].IsArray);
+            // CR(krait): Wouldn't simple `c => !c.Handled` do the job?
             container.RegisterConditional(typeof(ISettingsBinder<>), typeof(ClassAndStructBinder<>),
                 c =>
                 {

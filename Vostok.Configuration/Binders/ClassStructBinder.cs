@@ -41,21 +41,21 @@ namespace Vostok.Configuration.Binders
 
         private object GetValue(Type type, string name, BinderAttribute binderAttribute, IRawSettings settings)
         {
-            object SetDefault(Type t) =>
+            object GetDefault(Type t) =>
                 t.IsClass || t.IsNullable() ? null : Activator.CreateInstance(t);
-            object DefautByOptionalOrThrow(BinderAttribute attr, Type t, string msg) =>
-                attr == BinderAttribute.IsOptional ? SetDefault(t) : throw new InvalidCastException(msg);
+            object GetDefaultIfOptionalOrThrow(BinderAttribute attr, Type t, string msg) =>
+                attr == BinderAttribute.IsOptional ? GetDefault(t) : throw new InvalidCastException(msg);
 
             RawSettings.CheckSettings(settings, false);
 
             var binder = binderFactory.CreateForType(type, binderAttribute);
             if (settings[name] == null)
-                return DefautByOptionalOrThrow(binderAttribute, type, $"Required key \"{name}\" is absent");
+                return GetDefaultIfOptionalOrThrow(binderAttribute, type, $"Required key \"{name}\" is absent");
             else
             {
                 var rs = (RawSettings)settings[name];
                 if ((type.IsNullable() || type.IsClass) && rs.Value == null && !rs.Children.Any())
-                    return DefautByOptionalOrThrow(binderAttribute, type, $"Not nullable required value of field/property \"{name}\" is null");
+                    return GetDefaultIfOptionalOrThrow(binderAttribute, type, $"Not nullable required value of field/property \"{name}\" is null");
                 else
                     return binder.Bind(rs);
             }

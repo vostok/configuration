@@ -8,6 +8,7 @@ using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests.Sources
 {
+    // CR(krait): Some tests fail..
     [TestFixture]
     public class EnvironmentVariablesSource_Tests
     {

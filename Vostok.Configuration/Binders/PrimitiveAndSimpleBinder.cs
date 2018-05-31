@@ -14,7 +14,7 @@ namespace Vostok.Configuration.Binders
         {
             var type = typeof(T);
             if (!PrimitiveAndSimpleParsers.Parsers.ContainsKey(type) && type != typeof(string))
-                throw new ArgumentException("Wrong type");
+                throw new ArgumentException("Wrong type"); // CR(krait): Uninformative exception message.
             RawSettings.CheckSettings(settings);
 
             string value;
@@ -23,14 +23,14 @@ namespace Vostok.Configuration.Binders
             else if (settings.Value == null && settings.Children.Count() == 1)
                 value = ((RawSettings)settings.Children.First()).Value;
             else
-                throw new ArgumentNullException("Value is null");
+                throw new ArgumentNullException("Value is null"); // CR(krait): Uninformative exception message.
 
             if (type == typeof(string))
                 return (T)(object)value;
             if (PrimitiveAndSimpleParsers.Parsers[type].TryParse(value, out var res))
                 return (T)res;
 
-            throw new InvalidCastException("Wrong type");
+            throw new InvalidCastException("Wrong type"); // CR(krait): Uninformative exception message.
         }
     }
 }

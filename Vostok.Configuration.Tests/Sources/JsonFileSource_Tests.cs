@@ -9,6 +9,7 @@ using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests.Sources
 {
+    // CR(krait): Some tests fail..
     [TestFixture]
     public class JsonFileSource_Tests
     {

@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 
 namespace Vostok.Configuration.Extensions
 {
+    // CR(krait): Dead code.
     public static class IOrderedDictionaryExtensions
     {
         /*public static IDictionary<TKey, TElement> ToDictionary<TKey, TElement>(this IOrderedDictionary source, Func<DictionaryEntry, TKey> keySelector, Func<DictionaryEntry, TElement> elementSelector)

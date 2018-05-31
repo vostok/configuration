@@ -7,6 +7,7 @@ using UriParser = Vostok.Commons.Parsers.UriParser;
 
 namespace Vostok.Configuration.Binders
 {
+    // CR(krait): Why is it static now? Why can't I set up different custom parsers for different config providers?
     internal static class PrimitiveAndSimpleParsers
     {
         public static readonly IDictionary<Type, ITypeParser> Parsers = new Dictionary<Type, ITypeParser>

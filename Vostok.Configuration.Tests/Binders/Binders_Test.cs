@@ -8,6 +8,7 @@ namespace Vostok.Configuration.Tests.Binders
     {
         protected Container Container;
 
+        // CR(krait): This will eventually diverge from the same code in DefaultSettingsBinder. Let's get rid of the copypasted code.
         [SetUp]
         public void SetUp()
         {

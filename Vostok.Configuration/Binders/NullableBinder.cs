@@ -1,6 +1,6 @@
 ﻿namespace Vostok.Configuration.Binders
 {
-    internal class NullableBinder<T> : ISettingsBinder<T?> where T: struct 
+    internal class NullableBinder<T> : ISettingsBinder<T?> where T : struct 
     {
         private readonly ISettingsBinder<T> elementBinder;
 

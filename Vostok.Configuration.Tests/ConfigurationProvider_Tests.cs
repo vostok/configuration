@@ -11,6 +11,7 @@ using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests
 {
+    // CR(krait): Cache seems to be caching items permanently.. Cache update mechanics must be covered with tests.
     [TestFixture]
     public class ConfigurationProvider_Tests
     {

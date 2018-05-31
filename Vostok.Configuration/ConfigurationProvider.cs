@@ -27,7 +27,7 @@ namespace Vostok.Configuration
         /// <param name="configurationProviderSettings">Provider settings</param>
         public ConfigurationProvider(ConfigurationProviderSettings configurationProviderSettings = null)
         {
-            settings = configurationProviderSettings ?? new ConfigurationProviderSettings {Binder = new DefaultSettingsBinder()};
+            settings = configurationProviderSettings ?? new ConfigurationProviderSettings { Binder = new DefaultSettingsBinder() };
             if (settings.Binder == null)
                 settings.Binder = new DefaultSettingsBinder();
             
@@ -47,6 +47,7 @@ namespace Vostok.Configuration
         public TSettings Get<TSettings>()
         {
             var type = typeof(TSettings);
+            // CR(krait): This caching mechanism looks broken. How will an item get updated in cache when its raw settings update in source?
             if (typeCache.TryGetValue(type, out var item))
                 return (TSettings)item;
             if (!typeSources.TryGetValue(type, out var source))
@@ -60,6 +61,8 @@ namespace Vostok.Configuration
         /// </summary>
         public TSettings Get<TSettings>(IConfigurationSource source)
         {
+            // CR(krait): This caching mechanism looks broken. How will an item get updated in cache when its raw settings update in source?
+            // CR(krait): Also, do we actually need a cache here?
             if (sourceCache.TryGetValue(source, out var item))
                 return (TSettings)item;
 
@@ -89,6 +92,7 @@ namespace Vostok.Configuration
         /// <returns>Event with new value</returns>
         public IObservable<TSettings> Observe<TSettings>()
         {
+            // CR(krait): Is there actually any profit in caching observables?
             var type = typeof(TSettings);
             if (typeWatchers.TryGetValue(type, out var watcher))
                 return watcher.Select(s => (TSettings)s);
@@ -123,6 +127,8 @@ namespace Vostok.Configuration
             return this;
         }
 
+        // CR(krait): Methods that exist only for tests are evil. Please get rid of them.
+
         internal bool IsInCache(IConfigurationSource source, object value) =>
             sourceCache.TryGetValue(source, out var x) && (Equals(x, value) || value == null);
 
@@ -140,6 +146,7 @@ namespace Vostok.Configuration
                 var value = settings.Binder.Bind<TSettings>(rawSettings);
                 typeCache.TryAdd(type, value);
                 typeCacheQueue.Enqueue(type);
+                // CR(krait): Caching looks simple: one configured source = one saved value. Why impose limits on it? How can it overflow?
                 if (typeCache.Count > MaxTypeCacheSize && typeCacheQueue.TryDequeue(out var tp))
                     typeCache.TryRemove(tp, out var _);
                 return value;
