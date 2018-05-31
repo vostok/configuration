@@ -3,27 +3,32 @@ using JetBrains.Annotations;
 
 namespace Vostok.Configuration
 {
+    /// <summary>
+    /// Represents a tree of raw settings. 'Raw' means that all values are stored as strings.
+    /// </summary>
     public interface IRawSettings
     {
+        /// <summary>
+        /// Name of the tree node.
+        /// </summary>
         [NotNull]
         string Name { get; }
 
         /// <summary>
-        /// Current value
+        /// Value of the tree node. Not null for leaf nodes only.
         /// </summary>
         [CanBeNull]
         string Value { get; }
 
         /// <summary>
-        /// Indexed child nodes for arrays, lists
+        /// A view of child nodes as an ordered collection. Used for nodes that represent lists or arrays.
         /// </summary>
         [NotNull]
         IEnumerable<IRawSettings> Children { get; }
 
         /// <summary>
-        /// Named child nodes for dictionaries, fields/properties
+        /// A view of child nodes as an indexed collection. Used for nodes that represent dictionaries or classes.
         /// </summary>
-        /// <param name="name">Key name</param>
         [CanBeNull]
         IRawSettings this[string name] { get; }
     }

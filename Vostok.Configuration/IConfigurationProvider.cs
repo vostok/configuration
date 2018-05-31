@@ -3,42 +3,34 @@ using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration
 {
-    // TODO(krait): Think of a way to merge Newtonsoft.Json into Vostok.Configuration.dll.
-
+    // TODO(krait): On error
     /// <summary>
-    /// In tests you substitute this one.
-    /// Using a per-project extension method you can get rid of generic type on Get.
+    /// Provides settings for your application, fresh and warm.
     /// </summary>
     public interface IConfigurationProvider
     {
         /// <summary>
-        /// Get binded value from sources set to same type
+        /// <para>Returns the most up-to-date value of <see cref="TSettings"/> from precofigured configuration sources.</para>
+        /// <para>The settings instance is cached, so this method is not time-consuming and can be called freely.</para>
         /// </summary>
-        /// <typeparam name="TSettings">Type of value you need to get</typeparam>
-        /// <returns>Combined value</returns>
         TSettings Get<TSettings>();
 
         /// <summary>
-        /// Get binded value from specified source
+        /// <para>Returns the most up-to-date value of <see cref="TSettings"/> from the given <paramref name="source"/>.</para>
+        /// <para>Internal caches of <see cref="IConfigurationProvider"/> are not used by this method.</para>
         /// </summary>
-        /// <typeparam name="TSettings">Type of value you need to get</typeparam>
-        /// <param name="source">Source of RawSettings tree</param>
-        /// <returns>Value from specified source</returns>
         TSettings Get<TSettings>(IConfigurationSource source);
 
         /// <summary>
-        /// Watches file changes of any of sources by specified type
+        /// <para>Returns an <see cref="IObservable{T}"/> that receives the new value of <see cref="TSettings"/> each time it is updated from its corresponding preconfigured source.</para>
+        /// <para>The current value is observed immediately after subscription.</para>
         /// </summary>
-        /// <typeparam name="TSettings">Type of value you need to get</typeparam>
-        /// <returns>Event with new combined value</returns>
         IObservable<TSettings> Observe<TSettings>();
 
         /// <summary>
-        /// Watches file changes of specified source only
+        /// <para>Returns an <see cref="IObservable{T}"/> that receives the new value of <see cref="TSettings"/> each time it is updated from the given <paramref name="source"/>.</para>
+        /// <para>The current value is observed immediately after subscription.</para>
         /// </summary>
-        /// <typeparam name="TSettings">Type of value you need to get</typeparam>
-        /// <param name="source">Source of RawSettings tree</param>
-        /// <returns>Event with new value from specified source</returns>
         IObservable<TSettings> Observe<TSettings>(IConfigurationSource source);
     }
 }
