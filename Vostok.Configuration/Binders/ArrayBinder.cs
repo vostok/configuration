@@ -7,10 +7,8 @@ namespace Vostok.Configuration.Binders
     {
         private readonly ISettingsBinderFactory binderFactory;
 
-        public ArrayBinder(ISettingsBinderFactory binderFactory)
-        {
+        public ArrayBinder(ISettingsBinderFactory binderFactory) =>
             this.binderFactory = binderFactory;
-        }
 
         public T Bind(IRawSettings settings)
         {

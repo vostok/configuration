@@ -49,6 +49,7 @@ namespace Vostok.Configuration.Sources
         {
             incomeSettings = settings;
             this.scope = scope;
+            locker = new object();
             taskSource = new TaskSource();
         }
 

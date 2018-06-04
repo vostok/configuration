@@ -1,19 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Vostok.Configuration.Extensions;
 
-namespace Vostok.Configuration
+namespace Vostok.Configuration.Extensions
 {
     internal static class AttributesExtensions
     {
-        // CR(krait): Bad method name.
         /// <summary>
         /// Gets required or optional attribute from list of <paramref name="attributes"/>. Sets <paramref name="defaultAttribute"/> if not found.
         /// </summary>
         /// <param name="attributes">List of attributes to look in.</param>
         /// <param name="defaultAttribute">Default attribute if not found in <paramref name="attributes"/></param>
-        public static BinderAttribute GetReqOptAttribute(this IEnumerable<Attribute> attributes, BinderAttribute defaultAttribute)
+        public static BinderAttribute GetBinderAttribute(this IEnumerable<Attribute> attributes, BinderAttribute defaultAttribute)
         {
             var attrsDict = new Dictionary<Type, BinderAttribute>
             {

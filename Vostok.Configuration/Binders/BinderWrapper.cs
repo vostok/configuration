@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Reflection;
 using Vostok.Configuration.Extensions;
 
 namespace Vostok.Configuration.Binders
@@ -16,16 +17,19 @@ namespace Vostok.Configuration.Binders
 
         public object Bind(IRawSettings rawSettings)
         {
-            var method = binder.GetType().GetMethods().First(m => m.Name == nameof(Bind));
+            var method = GetBinderBindMethod();
 
             if (binderAttribute == BinderAttribute.IsOptional)
                 try
                 {
                     return method.Invoke(binder, new object[] { rawSettings });
                 }
-                catch { return default; }   //todo: maybe need Default method
+                catch { return default; }   //todo: maybe need Default method (actual for nullable)
 
             return method.Invoke(binder, new object[] {rawSettings});
         }
+
+        private MethodInfo GetBinderBindMethod() =>
+            binder.GetType().GetMethods().First(m => m.Name == nameof(Bind));
     }
 }

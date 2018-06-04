@@ -3,8 +3,6 @@ using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration
 {
-    // TODO(krait): Think of a way to merge Newtonsoft.Json into Vostok.Configuration.dll.
-
     /// <summary>
     /// In tests you substitute this one.
     /// Using a per-project extension method you can get rid of generic type on Get.

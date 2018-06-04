@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 
-namespace Vostok.Configuration.Sources
+namespace Vostok.Configuration.Extensions
 {
     public static class IEnumerableExtensions
     {

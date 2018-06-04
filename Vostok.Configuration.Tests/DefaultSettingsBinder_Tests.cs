@@ -6,6 +6,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons;
 using Vostok.Commons.Parsers;
+using Vostok.Configuration.Binders;
 
 namespace Vostok.Configuration.Tests
 {
@@ -17,7 +18,7 @@ namespace Vostok.Configuration.Tests
         [SetUp]
         public void SetUp()
         {
-            binder = new DefaultSettingsBinder();
+            binder = new DefaultSettingsBinder().WithDefaultParsers();
         }
 
         [TestCase("FaLsE", false, TestName = "BoolValue")]
@@ -123,7 +124,7 @@ namespace Vostok.Configuration.Tests
         public void Should_bind_with_custom_CSTParser_over_ITypeParser()
         {
             var settings = new RawSettings("some,string");
-            var result = binder.AddCustomParser<CST>(new CommaSeparatedTextParser())
+            var result = binder.WithCustomParser<CST>(new CommaSeparatedTextParser())
                 .Bind<CST>(settings);
             result.Should().BeEquivalentTo(
                 new CST{ Strings = new [] {"some", "string"} });
@@ -133,7 +134,7 @@ namespace Vostok.Configuration.Tests
         public void Should_bind_with_custom_SSTParser_over_delegate()
         {
             var settings = new RawSettings("some;string");
-            var result = binder.AddCustomParser<SST>(TryParseSemicolonSeparatedText)
+            var result = binder.WithCustomParser<SST>(TryParseSemicolonSeparatedText)
                 .Bind<SST>(settings);
             result.Should().BeEquivalentTo(
                 new SST{ Strings = new [] {"some", "string"} });

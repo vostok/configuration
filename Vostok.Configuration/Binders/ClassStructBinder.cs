@@ -9,10 +9,8 @@ namespace Vostok.Configuration.Binders
     {
         private readonly ISettingsBinderFactory binderFactory;
 
-        public ClassAndStructBinder(ISettingsBinderFactory binderFactory)
-        {
+        public ClassAndStructBinder(ISettingsBinderFactory binderFactory) =>
             this.binderFactory = binderFactory;
-        }
 
         public T Bind(IRawSettings settings)
         {
@@ -25,13 +23,13 @@ namespace Vostok.Configuration.Binders
 
             foreach (var field in type.GetFields())
             {
-                var binderAttribute = field.GetCustomAttributes().GetReqOptAttribute(defaultAttrOption);
+                var binderAttribute = field.GetCustomAttributes().GetBinderAttribute(defaultAttrOption);
                 var res = GetValue(field.FieldType, field.Name, binderAttribute, settings);
                 field.SetValue(instance, res);
             }
             foreach (var prop in type.GetProperties().Where(p => p.CanWrite))
             {
-                var binderAttribute = prop.GetCustomAttributes().GetReqOptAttribute(defaultAttrOption);
+                var binderAttribute = prop.GetCustomAttributes().GetBinderAttribute(defaultAttrOption);
                 var res = GetValue(prop.PropertyType, prop.Name, binderAttribute, settings);
                 prop.SetValue(instance, res);
             }
@@ -50,12 +48,12 @@ namespace Vostok.Configuration.Binders
 
             var binder = binderFactory.CreateForType(type, binderAttribute);
             if (settings[name] == null)
-                return GetDefaultIfOptionalOrThrow(binderAttribute, type, $"Required key \"{name}\" is absent");
+                return GetDefaultIfOptionalOrThrow(binderAttribute, type, $"{nameof(ClassAndStructBinder<T>)}: required key \"{name}\" is absent");
             else
             {
                 var rs = (RawSettings)settings[name];
                 if ((type.IsNullable() || type.IsClass) && rs.Value == null && !rs.Children.Any())
-                    return GetDefaultIfOptionalOrThrow(binderAttribute, type, $"Not nullable required value of field/property \"{name}\" is null");
+                    return GetDefaultIfOptionalOrThrow(binderAttribute, type, $"{nameof(ClassAndStructBinder<T>)}: not nullable required value of field/property \"{name}\" is null");
                 else
                     return binder.Bind(rs);
             }

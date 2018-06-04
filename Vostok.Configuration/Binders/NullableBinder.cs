@@ -4,10 +4,8 @@
     {
         private readonly ISettingsBinder<T> elementBinder;
 
-        public NullableBinder(ISettingsBinder<T> elementBinder)
-        {
+        public NullableBinder(ISettingsBinder<T> elementBinder) =>
             this.elementBinder = elementBinder;
-        }
 
         public T? Bind(IRawSettings settings)
         {

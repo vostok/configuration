@@ -9,10 +9,8 @@ namespace Vostok.Configuration.Binders
     {
         private readonly ISettingsBinder<T> elementBinder;
 
-        public SetBinder(ISettingsBinder<T> elementBinder)
-        {
+        public SetBinder(ISettingsBinder<T> elementBinder) =>
             this.elementBinder = elementBinder;
-        }
 
         public HashSet<T> Bind(IRawSettings settings)
         {

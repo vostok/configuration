@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using Vostok.Configuration.Extensions;
 
 namespace Vostok.Configuration.Sources
 {
@@ -66,7 +67,7 @@ namespace Vostok.Configuration.Sources
                     if (pair.Length == 2 && pair[0].Length > 0 && !pair[0].Contains(" "))
                         ParsePair(pair[0], pair[1], section, currentLine);
                     else
-                        throw new FormatException($"Wrong ini file ({currentLine}): line \"{line}\"");
+                        throw new FormatException($"{nameof(IniStringSource)}: wrong ini file ({currentLine}): line \"{line}\"");
                 }
             }
 
@@ -80,7 +81,7 @@ namespace Vostok.Configuration.Sources
             section = section.Replace(" ", "");
 
             if (settings.Children[section] != null)
-                throw new FormatException($"Wrong ini file ({currentLine}): section \"{section}\" already exists");
+                throw new FormatException($"{nameof(IniStringSource)}: wrong ini file ({currentLine}): section \"{section}\" already exists");
             var res = new RawSettingsEditable(section);
             settings.Children.Add(section, res);
             return res;
@@ -99,7 +100,7 @@ namespace Vostok.Configuration.Sources
                     {
                         var child = (RawSettingsEditable)obj.Children[keys[i]];
                         if (child.Value != null)
-                            throw new FormatException($"Wrong ini file ({currentLine}): key \"{keys[i]}\" with value \"{child.Value}\" already exists");
+                            throw new FormatException($"{nameof(IniStringSource)}: wrong ini file ({currentLine}): key \"{keys[i]}\" with value \"{child.Value}\" already exists");
                         else
                             child.Value = value;
                     }

@@ -13,10 +13,8 @@ namespace Vostok.Configuration.Binders
     {
         private readonly ISettingsBinder<T> elementBinder;
 
-        public ListBinder(ISettingsBinder<T> elementBinder)
-        {
+        public ListBinder(ISettingsBinder<T> elementBinder) =>
             this.elementBinder = elementBinder;
-        }
 
         public List<T> Bind(IRawSettings settings)
         {

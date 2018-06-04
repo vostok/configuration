@@ -1,11 +1,11 @@
 ﻿using System;
-using System.IO;
 using System.Threading;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons.Conversions;
 using Vostok.Commons.Testing;
 using Vostok.Configuration.Sources;
+using Vostok.Configuration.Tests.Helper;
 
 namespace Vostok.Configuration.Tests.Sources
 {
@@ -13,47 +13,15 @@ namespace Vostok.Configuration.Tests.Sources
     [SingleThreaded]
     public class SettingsFileWatcher_Tests
     {
-        private const string TestFileName1 = "test_SettingsFileWatcher_1.json";
-        private const string TestFileName2 = "test_SettingsFileWatcher_2.json";
-        private const string TestFileName3 = "test_SettingsFileWatcher_3.json";
-        private const string TestFileName4 = "test_SettingsFileWatcher_4.json";
-
-        [SetUp]
-        public void SetUp()
-        {
-            Cleanup();
-        }
+        private const string TestName = nameof(SettingsFileWatcher);
         
         [TearDown]
         public void Cleanup()
         {
-            DeleteTextFiles();
-        }
-
-        private static void CreateTextFile(string text, int n = 1)
-        {
-            var name = string.Empty;
-            switch (n)
-            {
-                case 1: name = TestFileName1;   break;
-                case 2: name = TestFileName2;   break;
-                case 3: name = TestFileName3;   break;
-                case 4: name = TestFileName4;   break;
-            }
-            using (var file = new StreamWriter(name, false))
-                file.WriteLine(text);
-        }
-
-        private static void DeleteTextFiles()
-        {
-            File.Delete(TestFileName1);
-            File.Delete(TestFileName2);
-            File.Delete(TestFileName3);
-            File.Delete(TestFileName4);
+            TestHelper.DeleteAllFiles(TestName);
         }
 
         [Test]
-        [Order(1)]
         public void Should_create_watcher_and_read_file()
         {
             new Action(() => ReturnsIfFileWasRead().Should().BeTrue()).ShouldPassIn(1.Seconds());
@@ -62,9 +30,9 @@ namespace Vostok.Configuration.Tests.Sources
         private bool ReturnsIfFileWasRead()
         {
             const string content = "{ \"Param2\": \"set2\" }";
-            CreateTextFile(content);
+            var fileName = TestHelper.CreateFile(TestName, content);
 
-            var watcher = SettingsFileWatcher.WatchFile(TestFileName1);
+            var watcher = SettingsFileWatcher.WatchFile(fileName);
             var read = false;
             var sub = watcher.Subscribe(
                 s =>
@@ -82,11 +50,13 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_return_watcher_from_cache()
         {
-            var watcher = SettingsFileWatcher.WatchFile(TestFileName1);
-            var anotherWatcher = SettingsFileWatcher.WatchFile(TestFileName1);
+            const string fileName = "file_name";
+            var watcher = SettingsFileWatcher.WatchFile(fileName);
+            var anotherWatcher = SettingsFileWatcher.WatchFile(fileName);
             watcher.Should().Be(anotherWatcher);
         }
 
+        //todo: fails sometimes
         [Test]
         public void Should_Observe_file()
         {
@@ -97,14 +67,16 @@ namespace Vostok.Configuration.Tests.Sources
 
         private int ReturnsNumberOfSubscribeActionInvokes()
         {
+            const string fileName = TestName + "_ObserveTest.tst";
             const string content = "{ \"Param2\": \"set2\" }";
             var val1 = 0;
             var val2 = 0;
-            var sub1 = ((SingleFileWatcher)SettingsFileWatcher.WatchFile(TestFileName2)).Subscribe(
+            var sub1 = ((SingleFileWatcher)SettingsFileWatcher.WatchFile(fileName)).Subscribe(
                 s =>
                 {
                     s = s?.Trim();
                     val1++;
+                    Console.WriteLine($"{val1}: {s ?? "null"}");
                     if (val1 == 1)
                         s.Should().BeNull();
                     else
@@ -112,9 +84,9 @@ namespace Vostok.Configuration.Tests.Sources
                 });
 
             Thread.Sleep(200.Milliseconds());
-            CreateTextFile(content, 2);
+            TestHelper.CreateFile(TestName, content, fileName);
 
-            var sub2 = ((SingleFileWatcher)SettingsFileWatcher.WatchFile(TestFileName2)).Subscribe(
+            var sub2 = ((SingleFileWatcher)SettingsFileWatcher.WatchFile(fileName)).Subscribe(
                 s =>
                 {
                     s = s?.Trim();
@@ -143,10 +115,11 @@ namespace Vostok.Configuration.Tests.Sources
 
         private int ReturnsNumberOfCallbacks()
         {
+            const string fileName = TestName + "_CallbackTest.tst";
             var val = 0;
-            using (var jfs = new JsonFileSource(TestFileName3))
+            using (var jfs = new JsonFileSource(fileName))
             {
-                CreateTextFile("wrong file format", 3);
+                TestHelper.CreateFile(TestName, "wrong file format", fileName);
 
                 var sub1 = jfs.Observe().Subscribe(settings => {}, e => val++);
                 var sub2 = jfs.Observe().Subscribe(settings => {}, e => val++);
@@ -169,9 +142,9 @@ namespace Vostok.Configuration.Tests.Sources
         {
             const string content = "{ \"Param1\": \"set1\" }";
             var val = 0;
-            CreateTextFile(content, 4);
+            var fileName = TestHelper.CreateFile(TestName, content);
 
-            var sub = ((SingleFileWatcher)SettingsFileWatcher.WatchFile(TestFileName4)).Subscribe(
+            var sub = ((SingleFileWatcher)SettingsFileWatcher.WatchFile(fileName)).Subscribe(
                 s =>
                 {
                     val++;
@@ -181,7 +154,7 @@ namespace Vostok.Configuration.Tests.Sources
 
             Thread.Sleep(200.Milliseconds());
 
-            CreateTextFile("{ \"Param1\": \"set1\" }", 4);
+            TestHelper.CreateFile(TestName, "{ \"Param1\": \"set1\" }", fileName);
             Thread.Sleep(200.Milliseconds());
 
             sub.Dispose();

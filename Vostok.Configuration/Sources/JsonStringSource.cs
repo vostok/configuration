@@ -100,7 +100,7 @@ namespace Vostok.Configuration.Sources
                         break;
                 }
 
-                dict.Add(i++, obj);
+                dict.Add(i++.ToString(), obj);
             }
 
             return new RawSettings(dict, tokenKey);

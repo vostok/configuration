@@ -6,6 +6,7 @@ using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Vostok.Commons.Conversions;
+using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.ClusterConfig
@@ -153,7 +154,7 @@ namespace Vostok.Configuration.ClusterConfig
             if (tree.ContainsKey(key))
                 return ParseCcList(tree[key]);
 
-            throw new ArgumentException($"Key \"{key}\" does not exist.");
+            throw new ArgumentException($"{nameof(ClusterConfigSource)}: key \"{key}\" does not exist.");
         }
 
         private static RawSettings ParseCcList(IEnumerable<string> tree) =>

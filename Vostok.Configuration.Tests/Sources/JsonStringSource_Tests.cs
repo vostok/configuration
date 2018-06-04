@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Specialized;
 using System.Globalization;
+using System.Linq;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using NUnit.Framework;
@@ -24,181 +24,125 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_parse_String_value()
         {
-            const string value = "{ \"StringValue\": \"string\" }";
+            const string value = "{ 'StringValue': 'string' }";
 
             using (var jss = new JsonStringSource(value))
-                jss.Get().Should().BeEquivalentTo(
-                    new RawSettings(
-                        new OrderedDictionary
-                        {
-                            { "StringValue", new RawSettings("string", "StringValue") }
-                        }, "root"));
+            {
+                var result = jss.Get();
+                result["StringValue"].Value.Should().Be("string");
+            }
         }
 
         [Test]
         public void Should_parse_Integer_value()
         {
-            const string value = "{ \"IntValue\": 123 }";
+            const string value = "{ 'IntValue': 123 }";
 
             using (var jss = new JsonStringSource(value))
-                jss.Get().Should().BeEquivalentTo(
-                    new RawSettings(
-                        new OrderedDictionary
-                        {
-                            { "IntValue", new RawSettings("123", "IntValue") }
-                        }, "root"));
+            {
+                var result = jss.Get();
+                result["IntValue"].Value.Should().Be("123");
+            }
         }
 
         [Test]
         public void Should_parse_Double_value()
         {
-            const string value = "{ \"DoubleValue\": 123.321 }";
+            const string value = "{ 'DoubleValue': 123.321 }";
 
             using (var jss = new JsonStringSource(value))
-                jss.Get().Should().BeEquivalentTo(
-                    new RawSettings(
-                        new OrderedDictionary
-                        {
-                            { "DoubleValue", new RawSettings(123.321d.ToString(CultureInfo.CurrentCulture), "DoubleValue") }
-                        }, "root"));
+            {
+                var result = jss.Get();
+                result["DoubleValue"].Value.Should().Be(123.321d.ToString(CultureInfo.CurrentCulture));
+            }
         }
 
         [Test]
         public void Should_parse_Boolean_value()
         {
-            const string value = "{ \"BooleanValue\": true }";
+            const string value = "{ 'BooleanValue': true }";
 
             using (var jss = new JsonStringSource(value))
-                jss.Get().Should().BeEquivalentTo(
-                    new RawSettings(
-                        new OrderedDictionary
-                        {
-                            { "BooleanValue", new RawSettings("True", "BooleanValue") }
-                        }, "root"));
+            {
+                var result = jss.Get();
+                result["BooleanValue"].Value.Should().Be("True");
+            }
         }
 
         [Test]
         public void Should_parse_Null_value()
         {
-            const string value = "{ \"NullValue\": null }";
+            const string value = "{ 'NullValue': null }";
 
             using (var jss = new JsonStringSource(value))
-                jss.Get().Should().BeEquivalentTo(
-                    new RawSettings(
-                        new OrderedDictionary
-                        {
-                            { "NullValue", new RawSettings(null, "NullValue") }
-                        }, "root"));
+            {
+                var result = jss.Get();
+                result["NullValue"].Value.Should().Be(null);
+            }
         }
 
         [Test]
         public void Should_parse_Array_value()
         {
-            const string value = "{ \"IntArray\": [1, 2, 3] }";
+            const string value = "{ 'IntArray': [1, 2, 3] }";
 
             using (var jss = new JsonStringSource(value))
             {
                 var result = jss.Get();
-                result.Should().BeEquivalentTo(
-                    new RawSettings(
-                        new OrderedDictionary
-                        {
-                            { "IntArray", new RawSettings(new OrderedDictionary
-                            {
-                                [(object)0] = new RawSettings("1", "0"),
-                                [(object)1] = new RawSettings("2", "1"),
-                                [(object)2] = new RawSettings("3", "2"),
-                            }, "IntArray") }
-                        }, "root"));
+                result["IntArray"].Children.Select(c => c.Value).Should().Equal("1", "2", "3");
             }
         }
 
         [Test]
         public void Should_parse_Object_value()
         {
-            const string value = "{ \"Object\": { \"StringValue\": \"str\" } }";
+            const string value = "{ 'Object': { 'StringValue': 'str' } }";
 
             using (var jss = new JsonStringSource(value))
-                jss.Get().Should().BeEquivalentTo(
-                    new RawSettings(
-                        new OrderedDictionary
-                        {
-                            { "Object", new RawSettings(
-                                new OrderedDictionary
-                                {
-                                    { "StringValue", new RawSettings("str", "StringValue") }
-                                }, "Object") }
-                        }, "root"));
+            {
+                var result = jss.Get();
+                result["Object"]["StringValue"].Value.Should().Be("str");
+            }
         }
 
         [Test]
         public void Should_parse_ArrayOfObjects_value()
         {
-            const string value = "{ \"Array\": [{ \"StringValue\": \"str\" }, { \"IntValue\": 123 }] }";
+            const string value = "{ 'Array': [{ 'StringValue': 'str' }, { 'IntValue': 123 }] }";
 
             using (var jss = new JsonStringSource(value))
-                jss.Get().Should().BeEquivalentTo(
-                    new RawSettings(
-                        new OrderedDictionary
-                        {
-                            { "Array", new RawSettings(
-                                new OrderedDictionary
-                                {
-                                    [(object)0] = new RawSettings(new OrderedDictionary
-                                    {
-                                        {"StringValue", new RawSettings("str", "StringValue")}
-                                    }, "0"),
-                                    [(object)1] = new RawSettings(new OrderedDictionary
-                                    {
-                                        {"IntValue", new RawSettings("123", "IntValue")}
-                                    }, "1"),
-                                }, "Array") }
-                        }, "root"));
+            {
+                var result = jss.Get();
+                result["Array"].Children
+                    .SelectMany(c => c.Children)
+                    .Select(c => c.Value)
+                    .Should().Equal("str", "123");
+            }
         }
 
         [Test]
         public void Should_parse_ArrayOfNulls_value()
         {
-            const string value = "{ \"Array\": [null, null] }";
+            const string value = "{ 'Array': [null, null] }";
 
             using (var jss = new JsonStringSource(value))
-                jss.Get().Should().BeEquivalentTo(
-                    new RawSettings(
-                        new OrderedDictionary
-                        {
-                            { "Array", new RawSettings(
-                                new OrderedDictionary
-                                {
-                                    [(object)0] = new RawSettings(null, "0"),
-                                    [(object)1] = new RawSettings(null, "1")
-                                }, "Array") }
-                        }, "root"));
+            {
+                var result = jss.Get();
+                result["Array"].Children.Select(c => c.Value).Should().Equal(null, null);
+            }
         }
 
         [Test]
         public void Should_parse_ArrayOfArrays_value()
         {
-            const string value = "{ \"Array\": [[\"s\", \"t\"], [\"r\"]] }";
+            const string value = "{ 'Array': [['s', 't'], ['r']] }";
 
             using (var jss = new JsonStringSource(value))
-                jss.Get().Should().BeEquivalentTo(
-                    new RawSettings(
-                        new OrderedDictionary
-                        {
-                            { "Array", new RawSettings(
-                                new OrderedDictionary
-                                {
-                                    [(object)0] = new RawSettings(new OrderedDictionary
-                                    {
-                                        [(object)0] = new RawSettings("s", "0"),
-                                        [(object)1] = new RawSettings("t", "1"),
-                                    }, "0"),
-                                    [(object)1] = new RawSettings(new OrderedDictionary
-                                    {
-                                        [(object)0] = new RawSettings("r", "0"),
-                                    }, "1")
-                                }, "Array") }
-                        }, "root"));
+            {
+                var result = jss.Get();
+                result["Array"]["0"].Children.Select(c => c.Value).Should().Equal("s", "t");
+                result["Array"]["1"].Children.Select(c => c.Value).Should().Equal("r");
+            }
         }
 
         [Test]
@@ -209,7 +153,7 @@ namespace Vostok.Configuration.Tests.Sources
 
         private int ShouldSubscribeAndGetParsedTreeTest_ReturnsCountOfReceives()
         {
-            const string value = "{ \"IntValue\": 123 }";
+            const string value = "{ 'IntValue': 123 }";
             var val = 0;
 
             using (var jss = new JsonStringSource(value))
@@ -218,12 +162,7 @@ namespace Vostok.Configuration.Tests.Sources
                     settings =>
                     {
                         val++;
-                        settings.Should().BeEquivalentTo(
-                            new RawSettings(
-                                new OrderedDictionary
-                                {
-                                    {"IntValue", new RawSettings("123", "IntValue")}
-                                }));
+                        settings["IntValue"].Should().Be("123");
                     });
                 sub.Dispose();
             }

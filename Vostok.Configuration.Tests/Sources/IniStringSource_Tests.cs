@@ -23,7 +23,7 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_ignore_comments()
         {
-            var value = ";comment 1\r\n# comment 2";
+            const string value = ";comment 1\r\n# comment 2";
 
             using (var iss = new IniStringSource(value))
                 iss.Get().Should().BeNull();

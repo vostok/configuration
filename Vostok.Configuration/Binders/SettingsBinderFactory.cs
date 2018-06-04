@@ -8,10 +8,8 @@ namespace Vostok.Configuration.Binders
     {
         private readonly Container container;
 
-        public SettingsBinderFactory(Container container)
-        {
+        public SettingsBinderFactory(Container container) =>
             this.container = container;
-        }
 
         public ISettingsBinder<T> CreateFor<T>() =>
             container.GetInstance<ISettingsBinder<T>>();

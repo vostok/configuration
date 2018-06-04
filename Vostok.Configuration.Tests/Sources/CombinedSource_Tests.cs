@@ -1,71 +1,49 @@
-﻿using System.IO;
-using System.Linq;
+﻿using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Sources;
+using Vostok.Configuration.Tests.Helper;
 
 namespace Vostok.Configuration.Tests.Sources
 {
     [TestFixture, SingleThreaded]
     public class CombinedSource_Tests
     {
-        private const string TestFile1Name = "test1_CombinedSource.json";
-        private const string TestFile2Name = "test2_CombinedSource.json";
-        private const string TestFile3Name = "test3_CombinedSource.json";
-        private const string TestFile4Name = "test4_CombinedSource.json";
+        private const string TestName = nameof(CombinedSource);
 
         [TearDown]
         public void Cleanup()
         {
-            File.Delete(TestFile1Name);
-            File.Delete(TestFile2Name);
-            File.Delete(TestFile3Name);
-            File.Delete(TestFile4Name);
+            TestHelper.DeleteAllFiles(TestName);
         }
 
-        private static void CreateTextFile(int n, string text)
+        private static CombinedSource CreateCombinedSource(string[] fileNames, SourceCombineOptions sourceCombineOptions = SourceCombineOptions.LastIsMain, CombineOptions combineOptions = CombineOptions.Override)
         {
-            var fileName = string.Empty;
-            switch (n)
-            {
-                case 1: fileName = TestFile1Name;   break;
-                case 2: fileName = TestFile2Name;   break;
-                case 3: fileName = TestFile3Name;   break;
-                case 4: fileName = TestFile4Name;   break;
-            }
-            using (var file = new StreamWriter(fileName, false))
-                file.WriteLine(text);
-        }
+            if (fileNames == null || !fileNames.Any())
+                return new CombinedSource();
 
-        private static CombinedSource CreateCombinedSource(int cnt, SourceCombineOptions sourceCombineOptions = SourceCombineOptions.LastIsMain, CombineOptions combineOptions = CombineOptions.Override)
-        {
-            var list = new IConfigurationSource[]
-            {
-                new JsonFileSource(TestFile1Name),
-                new JsonFileSource(TestFile2Name),
-                new JsonFileSource(TestFile3Name),
-                new JsonFileSource(TestFile4Name),
-            };
-            if (cnt > 0 && cnt <= 4)
-                return new CombinedSource(list.Take(cnt).ToArray(), sourceCombineOptions, combineOptions);
-            return new CombinedSource();
+            var list = fileNames.Select(n => new JsonFileSource(n)).ToList();
+            return new CombinedSource(list, sourceCombineOptions, combineOptions);
         }
 
         [Test]
         public void Should_return_null_if_no_sources()
         {
-            using (var cs = CreateCombinedSource(0))
+            using (var cs = CreateCombinedSource(null))
                 cs.Get().Should().BeNull();
         }
 
         [Test]
         public void Should_merge_sources_with_override_values()
         {
-            CreateTextFile(1, "{ 'value 1': 'string 1' }");
-            CreateTextFile(2, "{ 'value 2': 'string 2' }");
-            CreateTextFile(3, "{ 'value 2': 'string 22' }");
+            var fileNames = new[]
+            {
+                TestHelper.CreateFile(TestName, "{ 'value 1': 'string 1' }"),
+                TestHelper.CreateFile(TestName, "{ 'value 2': 'string 2' }"),
+                TestHelper.CreateFile(TestName, "{ 'value 2': 'string 22' }"),
+            };
 
-            using (var cs = CreateCombinedSource(3, SourceCombineOptions.FirstIsMain, CombineOptions.Override))
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.FirstIsMain, CombineOptions.Override))
             {
                 var result = cs.Get();
                 result["value 1"].Value.Should().Be("string 1");
@@ -73,7 +51,7 @@ namespace Vostok.Configuration.Tests.Sources
                 result.Children.First().Value.Should().Be("string 1");
                 result.Children.Last().Value.Should().Be("string 2");
             }
-            using (var cs = CreateCombinedSource(3, SourceCombineOptions.LastIsMain, CombineOptions.Override))
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.LastIsMain, CombineOptions.Override))
             {
                 var result = cs.Get();
                 result["value 1"].Value.Should().Be("string 1");
@@ -86,17 +64,20 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_merge_sources_with_override_objects()
         {
-            CreateTextFile(1, "{ 'value 1': { 'subval 1': 'string 1' } }");
-            CreateTextFile(2, "{ 'value 2': { 'subval 1': 'string 2' } }");
-            CreateTextFile(3, "{ 'value 2': { 'subval 2': 'string 22' } }");
+            var fileNames = new[]
+            {
+                TestHelper.CreateFile(TestName, "{ 'value 1': { 'subval 1': 'string 1' } }"),
+                TestHelper.CreateFile(TestName, "{ 'value 2': { 'subval 1': 'string 2' } }"),
+                TestHelper.CreateFile(TestName, "{ 'value 2': { 'subval 2': 'string 22' } }"),
+            };
 
-            using (var cs = CreateCombinedSource(3, SourceCombineOptions.FirstIsMain, CombineOptions.Override))
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.FirstIsMain, CombineOptions.Override))
             {
                 var result = cs.Get();
                 result["value 1"]["subval 1"].Value.Should().Be("string 1");
                 result["value 2"]["subval 1"].Value.Should().Be("string 2");
             }
-            using (var cs = CreateCombinedSource(3, SourceCombineOptions.LastIsMain, CombineOptions.Override))
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.LastIsMain, CombineOptions.Override))
             {
                 var result = cs.Get();
                 result["value 1"]["subval 1"].Value.Should().Be("string 1");
@@ -107,19 +88,22 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_merge_sources_with_deep_merge_objects()
         {
-            CreateTextFile(1, "{ 'value 1': { 'subval 1': 'string 1' } }");
-            CreateTextFile(2, "{ 'value 1': { 'subval 1': 'string 11' } }");
-            CreateTextFile(3, "{ 'value 2': { 'subval 1': 'string 2' } }");
-            CreateTextFile(4, "{ 'value 2': { 'subval 2': 'string 22' } }");
+            var fileNames = new[]
+            {
+                TestHelper.CreateFile(TestName, "{ 'value 1': { 'subval 1': 'string 1' } }"),
+                TestHelper.CreateFile(TestName, "{ 'value 1': { 'subval 1': 'string 11' } }"),
+                TestHelper.CreateFile(TestName, "{ 'value 2': { 'subval 1': 'string 2' } }"),
+                TestHelper.CreateFile(TestName, "{ 'value 2': { 'subval 2': 'string 22' } }"),
+            };
 
-            using (var cs = CreateCombinedSource(4, SourceCombineOptions.FirstIsMain, CombineOptions.DeepMerge))
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.FirstIsMain, CombineOptions.DeepMerge))
             {
                 var result = cs.Get();
                 result["value 1"]["subval 1"].Value.Should().Be("string 1");
                 result["value 2"]["subval 1"].Value.Should().Be("string 2");
                 result["value 2"]["subval 2"].Value.Should().Be("string 22");
             }
-            using (var cs = CreateCombinedSource(4, SourceCombineOptions.LastIsMain, CombineOptions.DeepMerge))
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.LastIsMain, CombineOptions.DeepMerge))
             {
                 var result = cs.Get();
                 result["value 1"]["subval 1"].Value.Should().Be("string 11");
@@ -131,11 +115,14 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_merge_sources_with_override_arrays()
         {
-            CreateTextFile(1, "{ 'value 1': [ '1', '11' ] }");
-            CreateTextFile(2, "{ 'value 2': [ '2', '22' ] }");
-            CreateTextFile(3, "{ 'value 2': [ '3', '33' ] }");
+            var fileNames = new[]
+            {
+                TestHelper.CreateFile(TestName, "{ 'value 1': [ '1', '11' ] }"),
+                TestHelper.CreateFile(TestName, "{ 'value 2': [ '2', '22' ] }"),
+                TestHelper.CreateFile(TestName, "{ 'value 2': [ '3', '33' ] }"),
+            };
 
-            using (var cs = CreateCombinedSource(3, SourceCombineOptions.FirstIsMain, CombineOptions.Override))
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.FirstIsMain, CombineOptions.Override))
             {
                 var result = cs.Get();
                 result["value 1"].Children.First().Value.Should().Be("1");
@@ -143,7 +130,7 @@ namespace Vostok.Configuration.Tests.Sources
                 result["value 2"].Children.First().Value.Should().Be("2");
                 result["value 2"].Children.Last().Value.Should().Be("22");
             }
-            using (var cs = CreateCombinedSource(3, SourceCombineOptions.LastIsMain, CombineOptions.Override))
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.LastIsMain, CombineOptions.Override))
             {
                 var result = cs.Get();
                 result["value 1"].Children.First().Value.Should().Be("1");
@@ -156,11 +143,14 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_merge_sources_with_deep_merge_arrays()
         {
-            CreateTextFile(1, "{ 'value': [ '1', '2' ] }");
-            CreateTextFile(2, "{ 'value': [ '3', '2', '5' ] }");
-            CreateTextFile(3, "{ 'value': [ '3', '4' ] }");
+            var fileNames = new[]
+            {
+                TestHelper.CreateFile(TestName, "{ 'value': [ '1', '2' ] }"),
+                TestHelper.CreateFile(TestName, "{ 'value': [ '3', '2', '5' ] }"),
+                TestHelper.CreateFile(TestName, "{ 'value': [ '3', '4' ] }"),
+            };
 
-            using (var cs = CreateCombinedSource(3, SourceCombineOptions.FirstIsMain, CombineOptions.DeepMerge))
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.FirstIsMain, CombineOptions.DeepMerge))
             {
                 var result = cs.Get();
                 result["value"].Children.ElementAt(0).Value.Should().Be("1");
@@ -170,7 +160,7 @@ namespace Vostok.Configuration.Tests.Sources
 //                result["value 2"]["subval 1"].Value.Should().Be("string 2");
 //                result["value 2"]["subval 2"].Value.Should().Be("string 22");
             }
-            using (var cs = CreateCombinedSource(3, SourceCombineOptions.LastIsMain, CombineOptions.DeepMerge))
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.LastIsMain, CombineOptions.DeepMerge))
             {
                 var result = cs.Get();
                 result["value 1"]["subval 1"].Value.Should().Be("string 11");

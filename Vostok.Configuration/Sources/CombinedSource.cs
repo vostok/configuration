@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using JetBrains.Annotations;
+using Vostok.Configuration.Extensions;
 
 namespace Vostok.Configuration.Sources
 {
@@ -116,7 +117,7 @@ namespace Vostok.Configuration.Sources
                                                 currentValue = Merge(sourcesSettings.Values.Cast<IRawSettings>());
                                                 observer.OnNext(currentValue);
                                             }
-                                            if (neverMerged)
+                                            if (neverMerged && currentValue != null)
                                                 observer.OnNext(currentValue);
                                         }
                                     });
@@ -149,7 +150,7 @@ namespace Vostok.Configuration.Sources
             neverMerged = false;
 
             var sets = settingses as RawSettings[] ?? settingses.ToArray();
-            if (!sets.Any()) return null;
+            if (!sets.Any() || sets.Any(s => s == null)) return null;
 
             var datas = sets.Select(s => s.Children.ToArray()).ToArray();
             var lookup = datas.SelectMany(d => d).ToLookup(d => d.Name);
