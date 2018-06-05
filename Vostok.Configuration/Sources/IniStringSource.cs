@@ -2,8 +2,8 @@
 using System.Collections;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using Vostok.Configuration.Extensions;
 
 namespace Vostok.Configuration.Sources
@@ -14,8 +14,10 @@ namespace Vostok.Configuration.Sources
     /// </summary>
     public class IniStringSource : IConfigurationSource
     {
-        private readonly IRawSettings currentSettings;
-        private readonly BehaviorSubject<IRawSettings> observers;
+        private readonly string ini;
+        private readonly TaskSource taskSource;
+        private IRawSettings currentSettings;
+        private bool neverParsed;
 
         /// <summary>
         /// <para>Creates a <see cref="JsonFileSource"/> instance using given string in <paramref name="ini"/> parameter</para>
@@ -25,24 +27,41 @@ namespace Vostok.Configuration.Sources
         /// <exception cref="Exception">Ini has wrong format</exception>
         public IniStringSource(string ini)
         {
-            observers = new BehaviorSubject<IRawSettings>(currentSettings);
-            currentSettings = string.IsNullOrWhiteSpace(ini) ? null : ParseIni(ini, "root");
+            this.ini = ini;
+            taskSource = new TaskSource();
+            neverParsed = true;
         }
 
         /// <inheritdoc />
         /// <summary>
         /// Returns previously parsed <see cref="IRawSettings"/> tree.
         /// </summary>
-        public IRawSettings Get() => currentSettings;
+        public IRawSettings Get() => taskSource.Get(Observe());
 
         /// <inheritdoc />
         /// <summary>
         /// <para>Subscribtion to <see cref="RawSettings"/> tree changes.</para>
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
-        public IObservable<IRawSettings> Observe() => 
-            Observable.Create<IRawSettings>(
-                observer => observers.Select(settings => currentSettings).Subscribe(observer));
+        public IObservable<IRawSettings> Observe()
+        {
+            if (neverParsed)
+            {
+                neverParsed = false;
+                currentSettings = string.IsNullOrWhiteSpace(ini) ? null : ParseIni(ini, "root");
+            }
+
+            return Observable.Create<IRawSettings>(
+                observer =>
+                {
+                    observer.OnNext(currentSettings);
+                    return Disposable.Empty;
+                });
+        }
+
+        public void Dispose()
+        {
+        }
 
         private static IRawSettings ParseIni(string text, string name)
         {
@@ -114,12 +133,11 @@ namespace Vostok.Configuration.Sources
                     obj = newObj;
                 }
                 else
-                    obj = (RawSettingsEditable) obj.Children[keys[i]];
+                    obj = (RawSettingsEditable)obj.Children[keys[i]];
+
                 isObj = !isObj;
             }
         }
-
-        public void Dispose() { }
 
         private class RawSettingsEditable
         {
@@ -128,6 +146,7 @@ namespace Vostok.Configuration.Sources
                 Children = new OrderedDictionary();
                 Name = name;
             }
+
             public RawSettingsEditable(string value, string name = "")
             {
                 Children = new OrderedDictionary();
@@ -135,9 +154,10 @@ namespace Vostok.Configuration.Sources
                 Name = name;
             }
 
-            private string Name { get; }
             public string Value { get; set; }
             public IOrderedDictionary Children { get; }
+
+            private string Name { get; }
 
             public static explicit operator RawSettings(RawSettingsEditable settings)
             {

@@ -162,7 +162,7 @@ namespace Vostok.Configuration.Tests.Sources
                     settings =>
                     {
                         val++;
-                        settings["IntValue"].Should().Be("123");
+                        settings["IntValue"].Value.Should().Be("123");
                     });
                 sub.Dispose();
             }

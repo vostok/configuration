@@ -2,6 +2,7 @@
 
 namespace Vostok.Configuration.Sources
 {
+    /// <inheritdoc />
     /// <summary>
     /// File converter to RawSettings tree
     /// </summary>

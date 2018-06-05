@@ -10,9 +10,9 @@ namespace Vostok.Configuration
 {
     public class ConfigurationProvider : IConfigurationProvider
     {
-        private static readonly string UnknownTypeExceptionMsg = $"{nameof(IConfigurationSource)} for specified type \"typeName\" is absent. User {nameof(SetupSourceFor)} to add source.";
         private const int MaxTypeCacheSize = 10;
         private const int MaxSourceCacheSize = 10;
+        private static readonly string UnknownTypeExceptionMsg = $"{nameof(IConfigurationSource)} for specified type \"typeName\" is absent. User {nameof(SetupSourceFor)} to add source.";
         private readonly ConfigurationProviderSettings settings;
 
         private readonly ConcurrentDictionary<Type, object> typeCache;
@@ -27,12 +27,17 @@ namespace Vostok.Configuration
         /// <summary>
         /// Creates a <see cref="ConfigurationProvider"/> instance with given settings <paramref name="configurationProviderSettings"/>
         /// </summary>
-        /// <param name="configurationProviderSettings">Provider settings</param>
+        /// <param name="configurationProviderSettings">Provider settings. Uses <see cref="DefaultSettingsBinder"/> if <see cref="ConfigurationProviderSettings.Binder"/> is null.</param>
         public ConfigurationProvider(ConfigurationProviderSettings configurationProviderSettings = null)
         {
-            settings = configurationProviderSettings ?? new ConfigurationProviderSettings { Binder = new DefaultSettingsBinder(), ThrowExceptions = true };
+            settings = configurationProviderSettings
+                       ?? new ConfigurationProviderSettings
+                       {
+                           Binder = new DefaultSettingsBinder().WithDefaultParsers(),
+                           ThrowExceptions = true
+                       };
             if (settings.Binder == null)
-                settings.Binder = new DefaultSettingsBinder();
+                settings.Binder = new DefaultSettingsBinder().WithDefaultParsers();
 
             typeSources = new ConcurrentDictionary<Type, IConfigurationSource>();
             typeWatchers = new ConcurrentDictionary<Type, IObservable<object>>();
@@ -100,20 +105,21 @@ namespace Vostok.Configuration
                                 });
 
                     if (typeWatchers.TryGetValue(type, out var watcher))
-                        return watcher.Select(value =>
-                            {
-                                try
+                        return watcher.Select(
+                                value =>
                                 {
-                                    return (TSettings)value;
-                                }
-                                catch (Exception e)
-                                {
-                                    if (settings.ThrowExceptions)
-                                        throw;
-                                    settings.OnError?.Invoke(e);
-                                    return typeCache.TryGetValue(type, out var val) ? (TSettings)val: default;
-                                }
-                            })
+                                    try
+                                    {
+                                        return (TSettings)value;
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        if (settings.ThrowExceptions)
+                                            throw;
+                                        settings.OnError?.Invoke(e);
+                                        return typeCache.TryGetValue(type, out var val) ? (TSettings)val : default;
+                                    }
+                                })
                             .Subscribe(
                                 value =>
                                 {

@@ -58,10 +58,14 @@ namespace Vostok.Configuration.Tests.Sources
             }
         }
 
-        [Test, Explicit("Not stable on mass tests")]
+        //todo: fails sometimes
+        [Test]
         public void Should_Observe_file()
         {
-            new Action(() => ShouldObserveFileTest().Should().Be(2)).ShouldPassIn(1.Seconds());
+            var result = 0;
+            new Action(() => result = ShouldObserveFileTest()).ShouldPassIn(1.Seconds());
+            Console.WriteLine(result);
+            result.Should().Be(3);
         }
 
         private int ShouldObserveFileTest()
@@ -73,7 +77,8 @@ namespace Vostok.Configuration.Tests.Sources
             {
                 var sub1 = jfs.Observe().Subscribe(settings =>
                 {
-                    val++;
+                    val++;  //on create file
+                    Console.WriteLine("#1");
                     settings["Param2"].Value.Should().Be("set2");
                 });
 
@@ -81,11 +86,12 @@ namespace Vostok.Configuration.Tests.Sources
 
                 var sub2 = jfs.Observe().Subscribe(settings =>
                 {
-                    val++;
+                    val++;  //on create file and on observe
+                    Console.WriteLine("#2");
                     settings["Param2"].Value.Should().Be("set2");
                 });
 
-                Thread.Sleep(200.Milliseconds());
+                Thread.Sleep(500.Milliseconds());
 
                 sub1.Dispose();
                 sub2.Dispose();
@@ -93,7 +99,7 @@ namespace Vostok.Configuration.Tests.Sources
             return val;
         }
 
-        [Test, Explicit("Not stable on mass tests")]
+        [Test]
         public void Should_not_Observe_file_twice()
         {
             new Action(() => ShouldNotObserveFileTwiceTest_ReturnsCountOfReceives().Should().Be(1)).ShouldPassIn(1.Seconds());
@@ -141,7 +147,7 @@ namespace Vostok.Configuration.Tests.Sources
                 result["Key"].Value.Should().Be("value");
 
                 TestHelper.CreateFile(TestName, "wrong file format", fileName);
-                Thread.Sleep(300.Milliseconds());
+                Thread.Sleep(500.Milliseconds());
 
                 result = jfs.Get();
                 result["Key"].Value.Should().Be("value");

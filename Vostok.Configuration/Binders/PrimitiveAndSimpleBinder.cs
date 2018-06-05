@@ -16,14 +16,14 @@ namespace Vostok.Configuration.Binders
         {
             var type = typeof(T);
             if (!parsers.ContainsKey(type) && type != typeof(string))
-                throw new ArgumentException($"{nameof(PrimitiveAndSimpleBinder<T>)}: have no parser for the type \"{typeof(T).Name}\"");
+                throw new ArgumentException($"{nameof(PrimitiveAndSimpleBinder<T>)}: have no parser for the type \"{type.Name}\"");
             RawSettings.CheckSettings(settings);
 
             string value;
             if (!string.IsNullOrWhiteSpace(settings.Value))
                 value = settings.Value;
             else if (settings.Value == null && settings.Children.Count() == 1)
-                value = ((RawSettings)settings.Children.First()).Value;
+                value = settings.Children.First().Value;
             else
                 throw new ArgumentNullException($"{nameof(PrimitiveAndSimpleBinder<T>)}: settings value is null. Can't parse.");
 
@@ -32,7 +32,7 @@ namespace Vostok.Configuration.Binders
             if (parsers[type].TryParse(value, out var res))
                 return (T)res;
 
-            throw new InvalidCastException($"{nameof(PrimitiveAndSimpleBinder<T>)}: can't parse into specified type \"{typeof(T).Name}\"");
+            throw new InvalidCastException($"{nameof(PrimitiveAndSimpleBinder<T>)}: can't parse into specified type \"{type.Name}\"");
         }
     }
 }

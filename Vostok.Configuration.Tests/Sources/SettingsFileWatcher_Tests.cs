@@ -10,7 +10,6 @@ using Vostok.Configuration.Tests.Helper;
 namespace Vostok.Configuration.Tests.Sources
 {
     [TestFixture]
-    [SingleThreaded]
     public class SettingsFileWatcher_Tests
     {
         private const string TestName = nameof(SettingsFileWatcher);

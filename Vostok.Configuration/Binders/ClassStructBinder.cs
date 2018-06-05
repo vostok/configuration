@@ -24,13 +24,14 @@ namespace Vostok.Configuration.Binders
             foreach (var field in type.GetFields())
             {
                 var binderAttribute = field.GetCustomAttributes().GetBinderAttribute(defaultAttrOption);
-                var res = GetValue(field.FieldType, field.Name, binderAttribute, settings, field.GetValue(instance) ?? field.FieldType.Default());  //todo: or default field value
+                var res = GetValue(field.FieldType, field.Name, binderAttribute, settings, field.GetValue(instance) ?? field.FieldType.Default());
                 field.SetValue(instance, res);
             }
+
             foreach (var prop in type.GetProperties().Where(p => p.CanWrite))
             {
                 var binderAttribute = prop.GetCustomAttributes().GetBinderAttribute(defaultAttrOption);
-                var res = GetValue(prop.PropertyType, prop.Name, binderAttribute, settings, prop.GetValue(instance) ?? prop.PropertyType.Default());   //todo: or default prop value
+                var res = GetValue(prop.PropertyType, prop.Name, binderAttribute, settings, prop.GetValue(instance) ?? prop.PropertyType.Default());
                 prop.SetValue(instance, res);
             }
 
@@ -39,25 +40,22 @@ namespace Vostok.Configuration.Binders
 
         private object GetValue(Type type, string name, BinderAttribute binderAttribute, IRawSettings settings, object defaultValue)
         {
-            object GetDefault(Type t) =>
-                t.IsClass || t.IsNullable() ? null : Activator.CreateInstance(t);
             object GetDefaultIfOptionalOrThrow(BinderAttribute attr, Type t, string msg) =>
-                attr == BinderAttribute.IsOptional ? GetDefault(t) : throw new InvalidCastException(msg);
+                attr == BinderAttribute.IsOptional ? t.Default() : throw new InvalidCastException(msg);
 
             RawSettings.CheckSettings(settings, false);
 
-            var binder = binderFactory.CreateForType(type);
             if (settings[name] == null)
                 return GetDefaultIfOptionalOrThrow(binderAttribute, type, $"{nameof(ClassAndStructBinder<T>)}: required key \"{name}\" is absent");
             else
             {
-                var rs = (RawSettings)settings[name];
-                if ((type.IsNullable() || type.IsClass) && rs.Value == null && !rs.Children.Any())
+                var rs = settings[name];
+                if ((type.IsNullable() || !type.IsValueType) && rs.Value == null && !rs.Children.Any())
                     return GetDefaultIfOptionalOrThrow(binderAttribute, type, $"{nameof(ClassAndStructBinder<T>)}: not nullable required value of field/property \"{name}\" is null");
                 else
                     try
                     {
-                        return binder.Bind(rs);
+                        return binderFactory.CreateForType(type).Bind(rs);
                     }
                     catch
                     {
