@@ -183,6 +183,24 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
+        public void Should_get_default_value_is_cannot_parse_value()
+        {
+            var settings = new RawSettings(
+                new OrderedDictionary
+                {
+                    {"Int", new RawSettings("wrong value", "Int")},
+                    {"Long", new RawSettings("wrong value")},
+                    {"Bools", new RawSettings(new OrderedDictionary
+                    {
+                        ["0"] = new RawSettings("wrong value"),
+                    })},
+                });
+            var binder = Container.GetInstance<ISettingsBinder<ClassWithDefaults>>();
+            var result = binder.Bind(settings);
+            result.Should().BeEquivalentTo(new ClassWithDefaults());
+        }
+
+        [Test]
         public void Should_bind_to_Struct_of_primitives_considering_struct_attributes()
         {
             var settings = new RawSettings(
@@ -273,6 +291,13 @@ namespace Vostok.Configuration.Tests.Binders
             public string String { get; set; }
             [Optional]
             public float Float;
+        }
+
+        private class ClassWithDefaults
+        {
+            public int Int { get; set; } = 123;
+            public long? Long = 321;
+            public List<bool> Bools { get; set; } = new List<bool> { true };
         }
     }
 }

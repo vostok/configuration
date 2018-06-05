@@ -24,20 +24,20 @@ namespace Vostok.Configuration.Binders
             foreach (var field in type.GetFields())
             {
                 var binderAttribute = field.GetCustomAttributes().GetBinderAttribute(defaultAttrOption);
-                var res = GetValue(field.FieldType, field.Name, binderAttribute, settings);
+                var res = GetValue(field.FieldType, field.Name, binderAttribute, settings, field.GetValue(instance) ?? field.FieldType.Default());  //todo: or default field value
                 field.SetValue(instance, res);
             }
             foreach (var prop in type.GetProperties().Where(p => p.CanWrite))
             {
                 var binderAttribute = prop.GetCustomAttributes().GetBinderAttribute(defaultAttrOption);
-                var res = GetValue(prop.PropertyType, prop.Name, binderAttribute, settings);
+                var res = GetValue(prop.PropertyType, prop.Name, binderAttribute, settings, prop.GetValue(instance) ?? prop.PropertyType.Default());   //todo: or default prop value
                 prop.SetValue(instance, res);
             }
 
             return (T)instance;
         }
 
-        private object GetValue(Type type, string name, BinderAttribute binderAttribute, IRawSettings settings)
+        private object GetValue(Type type, string name, BinderAttribute binderAttribute, IRawSettings settings, object defaultValue)
         {
             object GetDefault(Type t) =>
                 t.IsClass || t.IsNullable() ? null : Activator.CreateInstance(t);
@@ -46,7 +46,7 @@ namespace Vostok.Configuration.Binders
 
             RawSettings.CheckSettings(settings, false);
 
-            var binder = binderFactory.CreateForType(type, binderAttribute);
+            var binder = binderFactory.CreateForType(type);
             if (settings[name] == null)
                 return GetDefaultIfOptionalOrThrow(binderAttribute, type, $"{nameof(ClassAndStructBinder<T>)}: required key \"{name}\" is absent");
             else
@@ -55,7 +55,16 @@ namespace Vostok.Configuration.Binders
                 if ((type.IsNullable() || type.IsClass) && rs.Value == null && !rs.Children.Any())
                     return GetDefaultIfOptionalOrThrow(binderAttribute, type, $"{nameof(ClassAndStructBinder<T>)}: not nullable required value of field/property \"{name}\" is null");
                 else
-                    return binder.Bind(rs);
+                    try
+                    {
+                        return binder.Bind(rs);
+                    }
+                    catch
+                    {
+                        if (binderAttribute == BinderAttribute.IsOptional)
+                            return defaultValue;
+                        throw;
+                    }
             }
         }
     }
