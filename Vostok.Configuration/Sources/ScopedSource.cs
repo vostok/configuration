@@ -16,10 +16,10 @@ namespace Vostok.Configuration.Sources
         private readonly IConfigurationSource source;
         private readonly string[] scope;
         private readonly TaskSource taskSource;
+        private readonly object locker;
         private IDisposable watcher;
         private IRawSettings currentValue;
         private bool firstRequest = true;
-        private readonly object locker;
 
         /// <summary>
         /// Creates a <see cref="ScopedSource"/> instance for <see cref="source"/> to search in by <see cref="scope"/>
@@ -99,6 +99,7 @@ namespace Vostok.Configuration.Sources
                             firstRequest = false;
                             currentValue = source != null ? InnerScope(source.Get(), scope) : InnerScope(incomeSettings, scope);
                         }
+
                         observer.OnNext(currentValue);
                     }
 

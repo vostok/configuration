@@ -12,20 +12,18 @@ namespace Vostok.Configuration.Tests.Sources
     public class EnvironmentVariablesSource_Tests
     {
         [Test]
-        [Order(2)]
         public void Should_return_correct_values()
         {
             using (var evs = new EnvironmentVariablesSource())
             {
                 var res = evs.Get();
-                res["Path"].Value.Should().NotBeNull();
-                res["APPDATA"].Value.Should().NotBeNull();
+                res["pAtH"].Value.Should().NotBeNull();
+                res["APPdata"].Value.Should().NotBeNull();
             }
         }
 
         //todo: fails sometimes
         [Test]
-        [Order(1)]
         public void Should_observe_variables()
         {
             new Action(() => ShouldObserveVariablesTest_ReturnsIfValueWasReceived().Should().BeTrue()).ShouldPassIn(1.Seconds());

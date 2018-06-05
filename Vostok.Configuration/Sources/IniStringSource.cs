@@ -166,7 +166,7 @@ namespace Vostok.Configuration.Sources
                     dict = null;
                 else
                     dict = settings.Children.Cast<DictionaryEntry>()
-                        .ToOrderedDictionary(p => p.Key, p => (RawSettings)(RawSettingsEditable)p.Value);
+                        .ToOrderedDictionary(p => p.Key, p => (RawSettings)(RawSettingsEditable)p.Value, new ChildrenKeysComparer());
 
                 return new RawSettings(dict, settings.Name, settings.Value);
             }
