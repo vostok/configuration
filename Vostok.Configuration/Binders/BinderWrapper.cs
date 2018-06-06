@@ -1,31 +1,19 @@
 ﻿using System.Linq;
-using Vostok.Configuration.Extensions;
+using System.Reflection;
 
 namespace Vostok.Configuration.Binders
 {
-    internal class BinderWrapper: ISettingsBinder<object>
+    internal class BinderWrapper : ISettingsBinder<object>
     {
         private readonly object binder;
-        private readonly BinderAttribute binderAttribute;
 
-        public BinderWrapper(object binder, BinderAttribute binderAttribute)
-        {
+        public BinderWrapper(object binder) =>
             this.binder = binder;
-            this.binderAttribute = binderAttribute;
-        }
 
-        public object Bind(IRawSettings rawSettings)
-        {
-            var method = binder.GetType().GetMethods().First(m => m.Name == nameof(Bind));
+        public object Bind(IRawSettings rawSettings) =>
+            GetBinderBindMethod().Invoke(binder, new object[] {rawSettings});
 
-            if (binderAttribute == BinderAttribute.IsOptional)
-                try
-                {
-                    return method.Invoke(binder, new object[] { rawSettings });
-                }
-                catch { return default; }   //todo: maybe need Default method
-
-            return method.Invoke(binder, new object[] {rawSettings});
-        }
+        private MethodInfo GetBinderBindMethod() =>
+            binder.GetType().GetMethods().First(m => m.Name == nameof(Bind));
     }
 }

@@ -21,9 +21,9 @@ namespace Vostok.Configuration
         public static void CheckSettings(IRawSettings settings, bool checkValues = true)
         {
             if (settings == null)
-                throw new ArgumentNullException($"Parameter \"{nameof(settings)}\" is null");
+                throw new ArgumentNullException($"{nameof(RawSettings)} checker: parameter \"{nameof(settings)}\" is null");
             if (checkValues && settings.Value == null && !settings.Children.Any())
-                throw new ArgumentNullException($"Parameter \"{nameof(settings)}\" is empty");
+                throw new ArgumentNullException($"{nameof(RawSettings)} checker: parameter \"{nameof(settings)}\" is empty");
         }
 
         /// <summary>
@@ -53,6 +53,7 @@ namespace Vostok.Configuration
         public string Name { get; }
         public string Value { get; }
         public IRawSettings this[string name] => children[name] as IRawSettings;
+        //todo
         public IEnumerable<IRawSettings> Children =>
             children?.Values.Cast<RawSettings>() ?? Enumerable.Empty<RawSettings>();
         

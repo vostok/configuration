@@ -1,8 +1,10 @@
-﻿using SimpleInjector;
+﻿using System;
+using System.Collections.Generic;
+using SimpleInjector;
 using Vostok.Commons.Parsers;
-using Vostok.Configuration.Binders;
+using Vostok.Configuration.Extensions;
 
-namespace Vostok.Configuration
+namespace Vostok.Configuration.Binders
 {
     public delegate bool TryParse<T>(string s, out T value);
 
@@ -12,32 +14,36 @@ namespace Vostok.Configuration
     /// </summary>
     public class DefaultSettingsBinder : ISettingsBinder
     {
-        private readonly Container container;
+        internal readonly Container Container;
+        private readonly IDictionary<Type, ITypeParser> parsers;
 
         /// <summary>
         /// Creates a <see cref="DefaultSettingsBinder"/> instance
         /// </summary>
         public DefaultSettingsBinder()
         {
-            container = new Container();
-            container.RegisterConditional(typeof(ISettingsBinder<>), typeof(PrimitiveAndSimpleBinder<>),
-                c => PrimitiveAndSimpleBinder<bool>.IsAvailableType(c.ServiceType.GetGenericArguments()[0]));
-            container.RegisterConditional(typeof(ISettingsBinder<>), typeof(NullableBinder<>),
-                c => c.ServiceType.GetGenericArguments()[0].IsNullable());
-            container.RegisterConditional(typeof(ISettingsBinder<>), typeof(EnumBinder<>),
-                c => c.ServiceType.GetGenericArguments()[0].IsEnum);
-            container.Register(typeof(ISettingsBinder<>), typeof(ListBinder<>));
-            container.Register(typeof(ISettingsBinder<>), typeof(DictionaryBinder<,>));
-            container.Register(typeof(ISettingsBinder<>), typeof(SetBinder<>));
-            container.RegisterConditional(typeof(ISettingsBinder<>), typeof(ArrayBinder<>),
-                c => c.ServiceType.GetGenericArguments()[0].IsArray);
-            container.RegisterConditional(typeof(ISettingsBinder<>), typeof(ClassAndStructBinder<>),
+            parsers = new Dictionary<Type, ITypeParser>();
+            
+            Container = new Container();
+            Container.RegisterConditional(typeof(ISettingsBinder<>), typeof(PrimitiveAndSimpleBinder<>),
                 c =>
                 {
                     var type = c.ServiceType.GetGenericArguments()[0];
-                    return type.IsValueType && !type.IsPrimitive && !type.IsGenericType && !type.IsEnum && !PrimitiveAndSimpleBinder<bool>.IsAvailableType(type) || !c.Handled;
+                    return type.IsPrimitive() || type == typeof(string) || parsers.ContainsKey(type);
                 });
-            container.Register<ISettingsBinderFactory>(() => new SettingsBinderFactory(container));
+            Container.RegisterConditional(typeof(ISettingsBinder<>), typeof(NullableBinder<>),
+                c => c.ServiceType.GetGenericArguments()[0].IsNullable());
+            Container.RegisterConditional(typeof(ISettingsBinder<>), typeof(EnumBinder<>),
+                c => c.ServiceType.GetGenericArguments()[0].IsEnum);
+            Container.Register(typeof(ISettingsBinder<>), typeof(ListBinder<>));
+            Container.Register(typeof(ISettingsBinder<>), typeof(DictionaryBinder<,>));
+            Container.Register(typeof(ISettingsBinder<>), typeof(SetBinder<>));
+            Container.RegisterConditional(typeof(ISettingsBinder<>), typeof(ArrayBinder<>),
+                c => c.ServiceType.GetGenericArguments()[0].IsArray);
+            Container.RegisterConditional(typeof(ISettingsBinder<>), typeof(ClassAndStructBinder<>),
+                c => !c.Handled);
+            Container.Register<ISettingsBinderFactory>(() => new SettingsBinderFactory(Container));
+            Container.RegisterInstance(typeof(IDictionary<Type, ITypeParser>), parsers);
         }
 
         /// <inheritdoc />
@@ -49,9 +55,19 @@ namespace Vostok.Configuration
         /// <returns></returns>
         public TSettings Bind<TSettings>(IRawSettings settings)
         {
-            var factory = container.GetInstance<ISettingsBinderFactory>();
+            var factory = Container.GetInstance<ISettingsBinderFactory>();
             var binder = factory.CreateFor<TSettings>();
             return binder.Bind(settings);
+        }
+
+        /// <summary>
+        /// Adds default parsers which can parse from string value to bunch of types
+        /// </summary>
+        /// <returns>This binder with new default parsers</returns>
+        public DefaultSettingsBinder WithDefaultParsers()
+        {
+            parsers.AddDefaultParsers();
+            return this;
         }
 
         /// <summary>
@@ -60,9 +76,9 @@ namespace Vostok.Configuration
         /// <typeparam name="T">Type we need to parse in</typeparam>
         /// <param name="parser">Class with method implemented TryParse&lt;T&gt; delegate</param>
         /// <returns>This binder with new parser</returns>
-        public DefaultSettingsBinder AddCustomParser<T>(ITypeParser parser)
+        public DefaultSettingsBinder WithCustomParser<T>(ITypeParser parser)
         {
-            PrimitiveAndSimpleParsers.AddCustomParser<T>(parser);
+            parsers.AddCustomParser<T>(parser);
             return this;
         }
 
@@ -72,9 +88,9 @@ namespace Vostok.Configuration
         /// <typeparam name="T">Type we need to parse in</typeparam>
         /// <param name="parseMethod">Method implemented TryParse&lt;T&gt; delegate</param>
         /// <returns>This binder with new parser</returns>
-        public DefaultSettingsBinder AddCustomParser<T>(TryParse<T> parseMethod)
+        public DefaultSettingsBinder WithCustomParser<T>(TryParse<T> parseMethod)
         {
-            PrimitiveAndSimpleParsers.AddCustomParser(parseMethod);
+            parsers.AddCustomParser(parseMethod);
             return this;
         }
     }

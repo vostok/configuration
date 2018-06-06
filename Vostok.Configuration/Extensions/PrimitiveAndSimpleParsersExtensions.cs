@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Net;
 using Vostok.Commons;
 using Vostok.Commons.Parsers;
+using Vostok.Configuration.Binders;
 using UriParser = Vostok.Commons.Parsers.UriParser;
 
-namespace Vostok.Configuration.Binders
+namespace Vostok.Configuration.Extensions
 {
-    internal static class PrimitiveAndSimpleParsers
+    internal static class PrimitiveAndSimpleParsersExtension
     {
-        public static readonly IDictionary<Type, ITypeParser> Parsers = new Dictionary<Type, ITypeParser>
+        private static readonly IDictionary<Type, ITypeParser> DefaultParsers = new Dictionary<Type, ITypeParser>
         {
             {typeof(bool), new InlineTypeParser<bool>(bool.TryParse)},
             {typeof(byte), new InlineTypeParser<byte>(byte.TryParse)},
@@ -35,24 +36,31 @@ namespace Vostok.Configuration.Binders
             {typeof(DataRate), new InlineTypeParser<DataRate>(DataRateParser.TryParse)},
         };
 
-        public static void AddCustomParser<TParser>(ITypeParser parser)
+        public static IDictionary<Type, ITypeParser> AddDefaultParsers(this IDictionary<Type, ITypeParser> parsers)
         {
-            Parsers.Add(typeof(TParser), parser);
+            foreach (var pair in DefaultParsers)
+                parsers.Add(pair.Key, pair.Value);
+            return parsers;
         }
 
-        public static void AddCustomParser<TParser>(TryParse<TParser> parseMethod)
+        public static IDictionary<Type, ITypeParser> AddCustomParser<TParser>(this IDictionary<Type, ITypeParser> parsers, ITypeParser parser)
         {
-            Parsers.Add(typeof(TParser), new InlineTypeParser<TParser>(parseMethod));
+            parsers.Add(typeof(TParser), parser);
+            return parsers;
+        }
+
+        public static IDictionary<Type, ITypeParser> AddCustomParser<TParser>(this IDictionary<Type, ITypeParser> parsers, TryParse<TParser> parseMethod)
+        {
+            parsers.Add(typeof(TParser), new InlineTypeParser<TParser>(parseMethod));
+            return parsers;
         }
 
         private class InlineTypeParser<TI> : ITypeParser
         {
             private readonly TryParse<TI> parseMethod;
 
-            public InlineTypeParser(TryParse<TI> parseMethod)
-            {
+            public InlineTypeParser(TryParse<TI> parseMethod) =>
                 this.parseMethod = parseMethod;
-            }
 
             public bool TryParse(string s, out object value)
             {

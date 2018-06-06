@@ -10,11 +10,10 @@ namespace Vostok.Configuration.Sources
     {
         /// <inheritdoc />
         /// <summary>
-        /// Creates a <see cref="T:Vostok.Configuration.Sources.IniFileSource" /> instance using given parameters <paramref name="filePath" /> and <paramref name="observationPeriod" />
+        /// Creates a <see cref="T:Vostok.Configuration.Sources.IniFileSource" /> instance using given parameter <paramref name="filePath" />
         /// </summary>
         /// <param name="filePath">File name with settings</param>
-        public IniFileSource(
-            [NotNull] string filePath)
+        public IniFileSource([NotNull] string filePath)
             : base(filePath,
                 data =>
                 {

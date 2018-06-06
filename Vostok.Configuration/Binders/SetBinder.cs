@@ -9,16 +9,13 @@ namespace Vostok.Configuration.Binders
     {
         private readonly ISettingsBinder<T> elementBinder;
 
-        public SetBinder(ISettingsBinder<T> kelementBinder)
-        {
-            elementBinder = kelementBinder;
-        }
+        public SetBinder(ISettingsBinder<T> elementBinder) =>
+            this.elementBinder = elementBinder;
 
         public HashSet<T> Bind(IRawSettings settings)
         {
             RawSettings.CheckSettings(settings);
-            return new HashSet<T>(
-                settings.Children.Select(n => elementBinder.Bind(n)));
+            return new HashSet<T>(settings.Children.Select(n => elementBinder.Bind(n)));
         }
 
         ISet<T> ISettingsBinder<ISet<T>>.Bind(IRawSettings settings) => Bind(settings);

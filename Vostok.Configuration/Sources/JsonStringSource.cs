@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Specialized;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using Newtonsoft.Json.Linq;
 
 namespace Vostok.Configuration.Sources
@@ -12,8 +12,11 @@ namespace Vostok.Configuration.Sources
     /// </summary>
     public class JsonStringSource : IConfigurationSource
     {
-        private readonly IRawSettings currentSettings;
-        private readonly BehaviorSubject<IRawSettings> observers;
+        private readonly string json;
+        private readonly TaskSource taskSource;
+        private IRawSettings currentSettings;
+
+        private bool neverParsed;
 
         /// <summary>
         /// <para>Creates a <see cref="JsonFileSource"/> instance using given string in <paramref name="json"/> parameter</para>
@@ -23,29 +26,40 @@ namespace Vostok.Configuration.Sources
         /// <exception cref="Exception">Json has wrong format</exception>
         public JsonStringSource(string json)
         {
-            observers = new BehaviorSubject<IRawSettings>(currentSettings);
-            currentSettings = string.IsNullOrWhiteSpace(json) ? null : ParseJson(JObject.Parse(json), "root");
+            this.json = json;
+            neverParsed = true;
+            taskSource = new TaskSource();
         }
 
         /// <inheritdoc />
         /// <summary>
         /// Returns previously parsed <see cref="IRawSettings"/> tree.
         /// </summary>
-        public IRawSettings Get() => currentSettings;
+        public IRawSettings Get() => taskSource.Get(Observe());
 
         /// <inheritdoc />
         /// <summary>
         /// <para>Subscribtion to <see cref="IRawSettings"/> tree changes.</para>
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
-        public IObservable<IRawSettings> Observe() =>
-            Observable.Create<IRawSettings>(
+        public IObservable<IRawSettings> Observe()
+        {
+            if (neverParsed)
+            {
+                neverParsed = false;
+                currentSettings = string.IsNullOrWhiteSpace(json) ? null : ParseJson(JObject.Parse(json), "root");
+            }
+
+            return Observable.Create<IRawSettings>(
                 observer =>
-                    observers.Select(settings => currentSettings).Subscribe(observer));
+                {
+                    observer.OnNext(currentSettings);
+                    return Disposable.Empty;
+                });
+        }
 
         public void Dispose()
         {
-            observers.Dispose();
         }
 
         private IRawSettings ParseJson(JObject jObject, string tokenKey)
@@ -100,7 +114,7 @@ namespace Vostok.Configuration.Sources
                         break;
                 }
 
-                dict.Add(i++, obj);
+                dict.Add(i++.ToString(), obj);
             }
 
             return new RawSettings(dict, tokenKey);

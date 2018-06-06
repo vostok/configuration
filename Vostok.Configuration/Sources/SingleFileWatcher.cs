@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reactive.Disposables;
 using System.Reflection;
 using System.Text;
@@ -12,6 +11,7 @@ using Vostok.Commons.Conversions;
 
 namespace Vostok.Configuration.Sources
 {
+    /// <inheritdoc />
     /// <summary>
     /// Watching changes in as single text file
     /// </summary>
@@ -27,6 +27,7 @@ namespace Vostok.Configuration.Sources
         private CancellationTokenSource tokenSource;
         private string currentValue;
         private CancellationToken token;
+        private readonly object locker;
 
         /// <summary>
         /// Creates a <see cref="SingleFileWatcher"/> instance with given parameter <paramref name="filePath"/>
@@ -42,33 +43,36 @@ namespace Vostok.Configuration.Sources
             if (string.IsNullOrEmpty(path))
                 path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             fileWatcher = new FileSystemWatcher(path, Path.GetFileName(filePath));
+            locker = new object();
         }
 
         public IDisposable Subscribe(IObserver<string> observer)
         {
             if (!observers.Contains(observer))
                 observers.Add(observer);
-            if (tokenSource == null)
-            {
-                tokenSource = new CancellationTokenSource();
-                token = tokenSource.Token;
-                task = new Task(WatchFile, token);
-                task.Start();
-            }
-            else if (currentValue != DefaultSettingsValue)
-                observer.OnNext(currentValue);
+            lock (locker)
+                if (tokenSource == null)
+                {
+                    tokenSource = new CancellationTokenSource();
+                    token = tokenSource.Token;
+                    task = new Task(WatchFile, token);
+                    task.Start();
+                }
+                else if (currentValue != DefaultSettingsValue)
+                    observer.OnNext(currentValue);
 
             return Disposable.Create(
                 () =>
                 {
-                    if (observers.Contains(observer))
-                        observers.Remove(observer);
-                    if (observers.Count == 0)
-                        StopTask();
+                    lock (locker)
+                    {
+                        if (observers.Contains(observer))
+                            observers.Remove(observer);
+                        if (observers.Count == 0)
+                            StopTask();
+                    }
                 });
         }
-
-        public bool HasObservers() => observers.Any();
 
         private void StopTask()
         {
@@ -84,20 +88,22 @@ namespace Vostok.Configuration.Sources
 
                 try
                 {
-                    if (CheckFile(out var changes))
-                    {
-                        currentValue = changes;
-                        foreach (var observer in observers.ToArray())
-                            observer.OnNext(currentValue);
-                    }
+                    lock (locker)
+                        if (CheckFile(out var changes))
+                        {
+                            currentValue = changes;
+                            foreach (var observer in observers)
+                                observer.OnNext(currentValue);
+                        }
                 }
                 catch (IOException)
                 {
                 }
                 catch (Exception e)
                 {
-                    foreach (var observer in observers.ToArray())
-                        observer.OnError(e);
+                    lock (locker)
+                        foreach (var observer in observers)
+                            observer.OnError(e);
                 }
 
                 if (token.IsCancellationRequested) break;

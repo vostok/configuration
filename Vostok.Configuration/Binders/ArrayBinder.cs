@@ -7,10 +7,8 @@ namespace Vostok.Configuration.Binders
     {
         private readonly ISettingsBinderFactory binderFactory;
 
-        public ArrayBinder(ISettingsBinderFactory binderFactory)
-        {
+        public ArrayBinder(ISettingsBinderFactory binderFactory) =>
             this.binderFactory = binderFactory;
-        }
 
         public T Bind(IRawSettings settings)
         {
@@ -20,8 +18,7 @@ namespace Vostok.Configuration.Binders
 
             var i = 0;
             var instance = Array.CreateInstance(subType, settings.Children.Count());
-            foreach (var value in settings.Children
-                .Select(n => binder.Bind(n)))
+            foreach (var value in settings.Children.Select(n => binder.Bind(n)))
                 instance.SetValue(value, i++);
 
             return (T)(object)instance;

@@ -11,7 +11,6 @@ namespace Vostok.Configuration.Sources
     {
         private static readonly ConcurrentDictionary<string, SingleFileWatcher> Watchers =
             new ConcurrentDictionary<string, SingleFileWatcher>();
-        private static readonly object Locker = new object();
 
         /// <summary>
         /// Subscribtion to <paramref name="file" />
@@ -20,11 +19,10 @@ namespace Vostok.Configuration.Sources
         /// <returns>Subscriber receiving file text. Receive null if file not exists.</returns>
         public static IObservable<string> WatchFile([NotNull] string file)
         {
-            if (Watchers.TryGetValue(file, out var watcher) && watcher != null)
+            if (Watchers.TryGetValue(file, out var watcher))
                 return watcher;
 
-            lock (Locker)
-                watcher = new SingleFileWatcher(file);
+            watcher = new SingleFileWatcher(file);
             Watchers.TryAdd(file, watcher);
             return watcher;
         }

@@ -23,7 +23,7 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_ignore_comments()
         {
-            var value = ";comment 1\r\n# comment 2";
+            const string value = ";comment 1\r\n# comment 2";
 
             using (var iss = new IniStringSource(value))
                 iss.Get().Should().BeNull();
@@ -34,32 +34,37 @@ namespace Vostok.Configuration.Tests.Sources
         {
             var value = "???";
             new Action(() =>
-                {
-                    using (new IniStringSource(value)) { }
-                }).Should().Throw<FormatException>();
+            {
+                using (var iss = new IniStringSource(value))
+                    iss.Get();
+            }).Should().Throw<FormatException>();
 
             value = "[]";
             new Action(() =>
             {
-                using (new IniStringSource(value)) { }
+                using (var iss = new IniStringSource(value))
+                    iss.Get();
             }).Should().Throw<FormatException>();
 
             value = " = 123";
             new Action(() =>
             {
-                using (new IniStringSource(value)) { }
+                using (var iss = new IniStringSource(value))
+                    iss.Get();
             }).Should().Throw<FormatException>();
 
             value = "A.B = 123 \r A.B = 321";
             new Action(() =>
             {
-                using (new IniStringSource(value)) { }
+                using (var iss = new IniStringSource(value))
+                    iss.Get();
             }).Should().Throw<FormatException>();
 
             value = "a=0 \r a.b=1 \r a.b.c=2 \r a.b=11";
             new Action(() =>
             {
-                using (new IniStringSource(value)) { }
+                using (var iss = new IniStringSource(value))
+                    iss.Get();
             }).Should().Throw<FormatException>();
         }
         
@@ -121,8 +126,8 @@ namespace Vostok.Configuration.Tests.Sources
                     settings =>
                     {
                         val++;
-                        settings["value"].Should().Be("123");
-                        settings["value2"].Should().Be("321");
+                        settings["value"].Value.Should().Be("123");
+                        settings["value2"].Value.Should().Be("321");
                     });
                 sub.Dispose();
             }

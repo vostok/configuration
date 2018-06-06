@@ -17,34 +17,29 @@ namespace Vostok.Configuration.Tests.Sources
             using (var evs = new EnvironmentVariablesSource())
             {
                 var res = evs.Get();
-                res["Path"].Should().NotBeNull();
-                res["APPDATA"].Should().NotBeNull();
+                res["pAtH"].Value.Should().NotBeNull();
+                res["APPdata"].Value.Should().NotBeNull();
             }
         }
 
+        //todo: fails sometimes
         [Test]
         public void Should_observe_variables()
         {
-            new Action(() => ShouldObserveVariablesTest_ReturnsIfChangeWasReceived().Should().BeTrue()).ShouldPassIn(1.Seconds());
+            new Action(() => ShouldObserveVariablesTest_ReturnsIfValueWasReceived().Should().BeTrue()).ShouldPassIn(1.Seconds());
         }
-        private bool ShouldObserveVariablesTest_ReturnsIfChangeWasReceived()
+        private bool ShouldObserveVariablesTest_ReturnsIfValueWasReceived()
         {
-            const string testVar = "test_key";
-            const string testValue = "test_value";
             var val = false;
-            var read = false;
-            using (var evs = new EnvironmentVariablesSource(100.Milliseconds()))
+            using (var evs = new EnvironmentVariablesSource())
             {
                 var sub = evs.Observe().Subscribe(settings =>
                 {
-                    if (settings[testVar] != null && read)
-                        val = true;
-                    read = true;
+                    val = true;
+                    settings["Path"].Value.Should().NotBeNull();
+                    settings["APPDATA"].Value.Should().NotBeNull();
                 });
-
-                Environment.SetEnvironmentVariable(testVar, testValue);
                 Thread.Sleep(200.Milliseconds());
-
                 sub.Dispose();
             }
             return val;

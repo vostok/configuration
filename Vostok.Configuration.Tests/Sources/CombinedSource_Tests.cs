@@ -1,101 +1,180 @@
-﻿using System;
-using System.Collections.Specialized;
-using System.IO;
-using System.Threading;
+﻿using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
-using Vostok.Commons.Conversions;
-using Vostok.Commons.Testing;
 using Vostok.Configuration.Sources;
+using Vostok.Configuration.Tests.Helper;
 
 namespace Vostok.Configuration.Tests.Sources
 {
     [TestFixture, SingleThreaded]
     public class CombinedSource_Tests
     {
-        private const string TestFile1Name = "test1_CombinedSource.json";
-        private const string TestFile2Name = "test2_CombinedSource.json";
-        private const string TestFile3Name = "test3_CombinedSource.json";
+        private const string TestName = nameof(CombinedSource);
 
         [TearDown]
         public void Cleanup()
         {
-            File.Delete(TestFile1Name);
-            File.Delete(TestFile2Name);
-            File.Delete(TestFile3Name);
+            TestHelper.DeleteAllFiles(TestName);
         }
 
-        private static void CreateTextFile(int n, string text)
+        private static CombinedSource CreateCombinedSource(string[] fileNames, SourceCombineOptions sourceCombineOptions = SourceCombineOptions.LastIsMain, CombineOptions combineOptions = CombineOptions.Override)
         {
-            var fileName = string.Empty;
-            switch (n)
-            {
-                case 1:
-                    fileName = TestFile1Name;
-                    break;
-                case 2:
-                    fileName = TestFile2Name;
-                    break;
-                case 3:
-                    fileName = TestFile3Name;
-                    break;
-            }
-            using (var file = new StreamWriter(fileName, false))
-                file.WriteLine(text);
-        }
+            if (fileNames == null || !fileNames.Any())
+                return new CombinedSource();
 
-        private static CombinedSource CreateCombinedSource(int cnt, ListCombineOptions listCombineOptions = ListCombineOptions.FirstOnly)
-        {
-            var time = 100.Milliseconds();
-            switch (cnt)
-            {
-                case 1:
-                    return new CombinedSource(
-                        new IConfigurationSource[]{ new JsonFileSource(TestFile1Name) },
-                        listCombineOptions);
-                case 2:
-                    return new CombinedSource(
-                        new IConfigurationSource[] { new JsonFileSource(TestFile1Name), new JsonFileSource(TestFile2Name) },
-                        listCombineOptions);
-                case 3:
-                    return new CombinedSource(
-                        new IConfigurationSource[] { new JsonFileSource(TestFile1Name), new JsonFileSource(TestFile2Name), new JsonFileSource(TestFile3Name) },
-                        listCombineOptions);
-                default:
-                    return new CombinedSource();
-            }
+            var list = fileNames.Select(n => new JsonFileSource(n)).ToList();
+            return new CombinedSource(list, sourceCombineOptions, combineOptions);
         }
 
         [Test]
         public void Should_return_null_if_no_sources()
         {
-            using (var cs = CreateCombinedSource(0))
+            using (var cs = CreateCombinedSource(null))
                 cs.Get().Should().BeNull();
         }
 
         [Test]
-        public void Should_merge_simple_dictionaries()
+        public void Should_merge_sources_with_override_values()
         {
-            CreateTextFile(1, "{ \"value 1\": \"string 1\" }");
-            CreateTextFile(2, "{ \"value 2\": \"string 2\" }");
-            CreateTextFile(3, "{ \"value 2\": \"string 22\" }");
+            var fileNames = new[]
+            {
+                TestHelper.CreateFile(TestName, "{ 'value 1': 'string 1' }"),
+                TestHelper.CreateFile(TestName, "{ 'value 2': 'string 2' }"),
+                TestHelper.CreateFile(TestName, "{ 'value 2': 'string 22' }"),
+            };
 
-            using (var cs = CreateCombinedSource(3))
-                cs.Get().Should().BeEquivalentTo(
-                    new RawSettings(
-                        new OrderedDictionary
-                        {
-                            { "value 1", new RawSettings("string 1", "value 1") },
-                            { "value 2", new RawSettings("string 2", "value 2") },
-                        }, "root"));
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.FirstIsMain, CombineOptions.Override))
+            {
+                var result = cs.Get();
+                result["value 1"].Value.Should().Be("string 1");
+                result["value 2"].Value.Should().Be("string 2");
+                result.Children.First().Value.Should().Be("string 1");
+                result.Children.Last().Value.Should().Be("string 2");
+            }
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.LastIsMain, CombineOptions.Override))
+            {
+                var result = cs.Get();
+                result["value 1"].Value.Should().Be("string 1");
+                result["value 2"].Value.Should().Be("string 22");
+                result.Children.First().Value.Should().Be("string 1");
+                result.Children.Last().Value.Should().Be("string 22");
+            }
         }
 
         [Test]
+        public void Should_merge_sources_with_override_objects()
+        {
+            var fileNames = new[]
+            {
+                TestHelper.CreateFile(TestName, "{ 'value 1': { 'subval 1': 'string 1' } }"),
+                TestHelper.CreateFile(TestName, "{ 'value 2': { 'subval 1': 'string 2' } }"),
+                TestHelper.CreateFile(TestName, "{ 'value 2': { 'subval 2': 'string 22' } }"),
+            };
+
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.FirstIsMain, CombineOptions.Override))
+            {
+                var result = cs.Get();
+                result["value 1"]["subval 1"].Value.Should().Be("string 1");
+                result["value 2"]["subval 1"].Value.Should().Be("string 2");
+            }
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.LastIsMain, CombineOptions.Override))
+            {
+                var result = cs.Get();
+                result["value 1"]["subval 1"].Value.Should().Be("string 1");
+                result["value 2"]["subval 2"].Value.Should().Be("string 22");
+            }
+        }
+
+        [Test]
+        public void Should_merge_sources_with_deep_merge_objects()
+        {
+            var fileNames = new[]
+            {
+                TestHelper.CreateFile(TestName, "{ 'value 1': { 'subval 1': 'string 1' } }"),
+                TestHelper.CreateFile(TestName, "{ 'value 1': { 'subval 1': 'string 11' } }"),
+                TestHelper.CreateFile(TestName, "{ 'value 2': { 'subval 1': 'string 2' } }"),
+                TestHelper.CreateFile(TestName, "{ 'value 2': { 'subval 2': 'string 22' } }"),
+            };
+
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.FirstIsMain, CombineOptions.DeepMerge))
+            {
+                var result = cs.Get();
+                result["value 1"]["subval 1"].Value.Should().Be("string 1");
+                result["value 2"]["subval 1"].Value.Should().Be("string 2");
+                result["value 2"]["subval 2"].Value.Should().Be("string 22");
+            }
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.LastIsMain, CombineOptions.DeepMerge))
+            {
+                var result = cs.Get();
+                result["value 1"]["subval 1"].Value.Should().Be("string 11");
+                result["value 2"]["subval 1"].Value.Should().Be("string 2");
+                result["value 2"]["subval 2"].Value.Should().Be("string 22");
+            }
+        }
+
+        [Test]
+        public void Should_merge_sources_with_override_arrays()
+        {
+            var fileNames = new[]
+            {
+                TestHelper.CreateFile(TestName, "{ 'value 1': [ '1', '11' ] }"),
+                TestHelper.CreateFile(TestName, "{ 'value 2': [ '2', '22' ] }"),
+                TestHelper.CreateFile(TestName, "{ 'value 2': [ '3', '33' ] }"),
+            };
+
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.FirstIsMain, CombineOptions.Override))
+            {
+                var result = cs.Get();
+                result["value 1"].Children.First().Value.Should().Be("1");
+                result["value 1"].Children.Last().Value.Should().Be("11");
+                result["value 2"].Children.First().Value.Should().Be("2");
+                result["value 2"].Children.Last().Value.Should().Be("22");
+            }
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.LastIsMain, CombineOptions.Override))
+            {
+                var result = cs.Get();
+                result["value 1"].Children.First().Value.Should().Be("1");
+                result["value 1"].Children.Last().Value.Should().Be("11");
+                result["value 2"].Children.First().Value.Should().Be("3");
+                result["value 2"].Children.Last().Value.Should().Be("33");
+            }
+        }
+
+        [Test]
+        public void Should_merge_sources_with_deep_merge_arrays()
+        {
+            var fileNames = new[]
+            {
+                TestHelper.CreateFile(TestName, "{ 'value': [ '1', '2' ] }"),
+                TestHelper.CreateFile(TestName, "{ 'value': [ '3', '2', '5' ] }"),
+                TestHelper.CreateFile(TestName, "{ 'value': [ '3', '4' ] }"),
+            };
+
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.FirstIsMain, CombineOptions.DeepMerge))
+            {
+                var result = cs.Get();
+                result["value"].Children.ElementAt(0).Value.Should().Be("1");
+                result["value"].Children.ElementAt(1).Value.Should().Be("2");
+                result["value"].Children.ElementAt(2).Value.Should().Be("3");
+                result["value"].Children.ElementAt(3).Value.Should().Be("4");
+//                result["value 2"]["subval 1"].Value.Should().Be("string 2");
+//                result["value 2"]["subval 2"].Value.Should().Be("string 22");
+            }
+            using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.LastIsMain, CombineOptions.DeepMerge))
+            {
+                var result = cs.Get();
+                result["value 1"]["subval 1"].Value.Should().Be("string 11");
+                result["value 2"]["subval 1"].Value.Should().Be("string 2");
+                result["value 2"]["subval 2"].Value.Should().Be("string 22");
+            }
+        }
+
+        /*[Test]
         public void Should_merge_simple_lists_FirstOnly()
         {
-            CreateTextFile(1, "{ \"value\": [1,2,3] }");
-            CreateTextFile(2, "{ \"value\": [4,5] }");
-            CreateTextFile(3, "{ \"value\": [1,2] }");
+            CreateTextFile(1, "{ 'value': [1,2,3] }");
+            CreateTextFile(2, "{ 'value': [4,5] }");
+            CreateTextFile(3, "{ 'value': [1,2] }");
 
             using (var cs = CreateCombinedSource(3, ListCombineOptions.FirstOnly))
                 cs.Get().Should().BeEquivalentTo(
@@ -111,14 +190,14 @@ namespace Vostok.Configuration.Tests.Sources
                                 }, "value")
                             }
                         }, "root"));
-        }
+        }*/
 
-        [Test]
+        /*[Test]
         public void Should_merge_simple_lists_UnionDist()
         {
-            CreateTextFile(1, "{ \"value\": [1,2,3] }");
-            CreateTextFile(2, "{ \"value\": [4,5] }");
-            CreateTextFile(3, "{ \"value\": [1,2] }");
+            CreateTextFile(1, "{ 'value': [1,2,3] }");
+            CreateTextFile(2, "{ 'value': [4,5] }");
+            CreateTextFile(3, "{ 'value': [1,2] }");
 
             using (var cs = CreateCombinedSource(3, ListCombineOptions.UnionAll))
                 cs.Get().Should().BeEquivalentTo(
@@ -138,14 +217,14 @@ namespace Vostok.Configuration.Tests.Sources
                                 }, "value")
                             }
                         }, "root"));
-        }
+        }*/
 
-        [Test]
+        /*[Test]
         public void Should_merge_dictionaries_of_objects()
         {
-            CreateTextFile(1, "{ \"value\": { \"ObjValue\": 1, \"ObjArray\": [1,2] } }");
-            CreateTextFile(2, "{ \"value\": { \"ObjValue\": 2, \"ObjArray\": [3,4] } }");
-            CreateTextFile(3, "{ \"value\": { \"ObjValue 2\": 3, \"ObjArray\": [5,6] } }");
+            CreateTextFile(1, "{ 'value': { 'ObjValue': 1, 'ObjArray': [1,2] } }");
+            CreateTextFile(2, "{ 'value': { 'ObjValue': 2, 'ObjArray': [3,4] } }");
+            CreateTextFile(3, "{ 'value': { 'ObjValue 2': 3, 'ObjArray': [5,6] } }");
 
             using (var cs = CreateCombinedSource(3, ListCombineOptions.UnionAll))
             {
@@ -172,13 +251,13 @@ namespace Vostok.Configuration.Tests.Sources
                                     },
                                 }, "value") },
                         }, "root"));}
-        }
+        }*/
 
-        [Test]
+        /*[Test]
         public void Should_merge_lists_of_objects_FirstOnly()
         {
-            CreateTextFile(1, "{ \"value\": [ { \"Obj_1_Value\": 1 }, { \"Obj_2_Value\": 1 } ] }");
-            CreateTextFile(2, "{ \"value\": [ { \"Obj_1_Value\": 2 }, { \"Obj_2_Value\": 2 } ] }");
+            CreateTextFile(1, "{ 'value': [ { 'Obj_1_Value': 1 }, { 'Obj_2_Value': 1 } ] }");
+            CreateTextFile(2, "{ 'value': [ { 'Obj_1_Value': 2 }, { 'Obj_2_Value': 2 } ] }");
 
             using (var cs = CreateCombinedSource(2, ListCombineOptions.FirstOnly))
             {
@@ -203,13 +282,13 @@ namespace Vostok.Configuration.Tests.Sources
                                 }, "value")
                             }
                         }, "root"));}
-        }
+        }*/
 
-        [Test]
+        /*[Test]
         public void Should_merge_lists_of_objects_UnionDist()
         {
-            CreateTextFile(1, "{ \"value\": [ { \"Obj_1_Value\": 1 }, { \"Obj_2_Value\": 1 } ] }");
-            CreateTextFile(2, "{ \"value\": [ { \"Obj_1_Value\": 2 }, { \"Obj_2_Value\": 2 } ] }");
+            CreateTextFile(1, "{ 'value': [ { 'Obj_1_Value': 1 }, { 'Obj_2_Value': 1 } ] }");
+            CreateTextFile(2, "{ 'value': [ { 'Obj_1_Value': 2 }, { 'Obj_2_Value': 2 } ] }");
 
             using (var cs = CreateCombinedSource(2, ListCombineOptions.UnionAll))
                 cs.Get().Should().BeEquivalentTo(
@@ -242,13 +321,13 @@ namespace Vostok.Configuration.Tests.Sources
                                 }, "value")
                             }
                         }, "root"));
-        }
+        }*/
 
-        [Test]
+        /*[Test]
         public void Should_merge_lists_of_lists_FirstOnly()
         {
-            CreateTextFile(1, "{ \"value\": [ [1,2], [3,4] ] }");
-            CreateTextFile(2, "{ \"value\": [ [5,6], [1,2] ] }");
+            CreateTextFile(1, "{ 'value': [ [1,2], [3,4] ] }");
+            CreateTextFile(2, "{ 'value': [ [5,6], [1,2] ] }");
 
             using (var cs = CreateCombinedSource(2, ListCombineOptions.FirstOnly))
                 cs.Get().Should().BeEquivalentTo(
@@ -273,13 +352,13 @@ namespace Vostok.Configuration.Tests.Sources
                                 }, "value")
                             }
                         }, "root"));
-        }
+        }*/
 
-        [Test]
+        /*[Test]
         public void Should_merge_lists_of_lists_UnionAll()
         {
-            CreateTextFile(1, "{ \"value\": [ [1,2], [3,4] ] }");
-            CreateTextFile(2, "{ \"value\": [ [5,6], [1,2] ] }");
+            CreateTextFile(1, "{ 'value': [ [1,2], [3,4] ] }");
+            CreateTextFile(2, "{ 'value': [ [5,6], [1,2] ] }");
 
             using (var cs = CreateCombinedSource(2, ListCombineOptions.UnionAll))
                 cs.Get().Should().BeEquivalentTo(
@@ -316,17 +395,17 @@ namespace Vostok.Configuration.Tests.Sources
                                 }, "value")
                             }
                         }, "root"));
-        }
+        }*/
 
-        [Test, Explicit("Not stable on mass tests")]
+        /*[Test, Explicit("Not stable on mass tests")]
         public void Should_observe_file()
         {
             new Action(() => ShouldObserveFileTest_ReturnsCountOfReceives().Should().Be(2)).ShouldPassIn(1.Seconds());
         }
         private int ShouldObserveFileTest_ReturnsCountOfReceives()
         {
-            CreateTextFile(1, "{ \"value 1\": 1, \"list\": [1,2] }");
-            CreateTextFile(2, "{ \"value 2\": 2 }");
+            CreateTextFile(1, "{ 'value 1': 1, 'list': [1,2] }");
+            CreateTextFile(2, "{ 'value 2': 2 }");
             var val = 0;
 
             using (var ccs = CreateCombinedSource(2, ListCombineOptions.FirstOnly))
@@ -350,12 +429,12 @@ namespace Vostok.Configuration.Tests.Sources
                 });
 
                 Thread.Sleep(200.Milliseconds());
-                CreateTextFile(2, "{ \"value 2\": 2, \"list\": [3,4] }");
+                CreateTextFile(2, "{ 'value 2': 2, 'list': [3,4] }");
                 Thread.Sleep(200.Milliseconds());
 
                 sub.Dispose();
             }
             return val;
-        }
+        }*/
     }
 }

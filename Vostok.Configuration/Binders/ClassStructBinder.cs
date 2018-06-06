@@ -9,10 +9,8 @@ namespace Vostok.Configuration.Binders
     {
         private readonly ISettingsBinderFactory binderFactory;
 
-        public ClassAndStructBinder(ISettingsBinderFactory binderFactory)
-        {
+        public ClassAndStructBinder(ISettingsBinderFactory binderFactory) =>
             this.binderFactory = binderFactory;
-        }
 
         public T Bind(IRawSettings settings)
         {
@@ -25,39 +23,46 @@ namespace Vostok.Configuration.Binders
 
             foreach (var field in type.GetFields())
             {
-                var binderAttribute = field.GetCustomAttributes().GetReqOptAttribute(defaultAttrOption);
-                var res = GetValue(field.FieldType, field.Name, binderAttribute, settings);
+                var binderAttribute = field.GetCustomAttributes().GetBinderAttribute(defaultAttrOption);
+                var res = GetValue(field.FieldType, field.Name, binderAttribute, settings, field.GetValue(instance) ?? field.FieldType.Default());
                 field.SetValue(instance, res);
             }
+
             foreach (var prop in type.GetProperties().Where(p => p.CanWrite))
             {
-                var binderAttribute = prop.GetCustomAttributes().GetReqOptAttribute(defaultAttrOption);
-                var res = GetValue(prop.PropertyType, prop.Name, binderAttribute, settings);
+                var binderAttribute = prop.GetCustomAttributes().GetBinderAttribute(defaultAttrOption);
+                var res = GetValue(prop.PropertyType, prop.Name, binderAttribute, settings, prop.GetValue(instance) ?? prop.PropertyType.Default());
                 prop.SetValue(instance, res);
             }
 
             return (T)instance;
         }
 
-        private object GetValue(Type type, string name, BinderAttribute binderAttribute, IRawSettings settings)
+        private object GetValue(Type type, string name, BinderAttribute binderAttribute, IRawSettings settings, object defaultValue)
         {
-            object SetDefault(Type t) =>
-                t.IsClass || t.IsNullable() ? null : Activator.CreateInstance(t);
-            object DefautByOptionalOrThrow(BinderAttribute attr, Type t, string msg) =>
-                attr == BinderAttribute.IsOptional ? SetDefault(t) : throw new InvalidCastException(msg);
+            object GetDefaultIfOptionalOrThrow(BinderAttribute attr, Type t, string msg) =>
+                attr == BinderAttribute.IsOptional ? t.Default() : throw new InvalidCastException(msg);
 
             RawSettings.CheckSettings(settings, false);
 
-            var binder = binderFactory.CreateForType(type, binderAttribute);
             if (settings[name] == null)
-                return DefautByOptionalOrThrow(binderAttribute, type, $"Required key \"{name}\" is absent");
+                return GetDefaultIfOptionalOrThrow(binderAttribute, type, $"{nameof(ClassAndStructBinder<T>)}: required key \"{name}\" is absent");
             else
             {
-                var rs = (RawSettings)settings[name];
-                if ((type.IsNullable() || type.IsClass) && rs.Value == null && !rs.Children.Any())
-                    return DefautByOptionalOrThrow(binderAttribute, type, $"Not nullable required value of field/property \"{name}\" is null");
+                var rs = settings[name];
+                if ((type.IsNullable() || !type.IsValueType) && rs.Value == null && !rs.Children.Any())
+                    return GetDefaultIfOptionalOrThrow(binderAttribute, type, $"{nameof(ClassAndStructBinder<T>)}: not nullable required value of field/property \"{name}\" is null");
                 else
-                    return binder.Bind(rs);
+                    try
+                    {
+                        return binderFactory.CreateForType(type).Bind(rs);
+                    }
+                    catch
+                    {
+                        if (binderAttribute == BinderAttribute.IsOptional)
+                            return defaultValue;
+                        throw;
+                    }
             }
         }
     }
