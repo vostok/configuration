@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+﻿/*using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Binders;
 
@@ -29,4 +29,4 @@ namespace Vostok.Configuration.Tests.Binders
             binder.Bind(settings).Should().Be(null);
         }
     }
-}
+}*/

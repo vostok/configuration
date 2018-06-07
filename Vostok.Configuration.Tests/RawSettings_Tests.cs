@@ -1,4 +1,4 @@
-﻿using System.Collections.Specialized;
+﻿/*using System.Collections.Specialized;
 using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
@@ -258,4 +258,4 @@ namespace Vostok.Configuration.Tests
             sets["test"].Value.Should().Be("v2");
         }
     }
-}
+}*/

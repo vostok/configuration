@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using FluentAssertions;
@@ -300,4 +300,4 @@ namespace Vostok.Configuration.Tests.Binders
             public List<bool> Bools { get; set; } = new List<bool> { true };
         }
     }
-}
+}*/

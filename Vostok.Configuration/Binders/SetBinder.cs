@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Binders
 {
@@ -12,12 +13,12 @@ namespace Vostok.Configuration.Binders
         public SetBinder(ISettingsBinder<T> elementBinder) =>
             this.elementBinder = elementBinder;
 
-        public HashSet<T> Bind(IRawSettings settings)
+        public HashSet<T> Bind(ISettingsNode settings)
         {
-            RawSettings.CheckSettings(settings);
+            // RawSettings.CheckSettings(settings);
             return new HashSet<T>(settings.Children.Select(n => elementBinder.Bind(n)));
         }
 
-        ISet<T> ISettingsBinder<ISet<T>>.Bind(IRawSettings settings) => Bind(settings);
+        ISet<T> ISettingsBinder<ISet<T>>.Bind(ISettingsNode settings) => Bind(settings);
     }
 }

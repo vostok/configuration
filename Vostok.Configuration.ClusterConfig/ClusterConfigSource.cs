@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Disposables;
@@ -203,4 +203,4 @@ namespace Vostok.Configuration.ClusterConfig
             public Dictionary<string, List<string>> GetByPrefix(string prefix) => Kontur.ClusterConfig.Client.ClusterConfigClient.GetByPrefix(prefix);
         }
     }
-}
+}*/

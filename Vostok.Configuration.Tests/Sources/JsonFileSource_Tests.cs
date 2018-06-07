@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -32,7 +32,7 @@ namespace Vostok.Configuration.Tests.Sources
         }
 
         [Test]
-        public void Should_parse_String_value_NEW()
+        public void Should_parse_String_value()
         {
             const string fileName = "test.json";
             const string content = "{ 'StringValue': 'string' }";
@@ -55,7 +55,7 @@ namespace Vostok.Configuration.Tests.Sources
         }
 
         [Test]
-        public void Should_Get_file_updates_NEW()
+        public void Should_Get_file_updates()
         {
             const string fileName = "test.json";
             var content = "{ 'StringValue': 'string' }";
@@ -174,7 +174,7 @@ namespace Vostok.Configuration.Tests.Sources
         }
 
         [Test]
-        public void Should_throw_exception_if_exception_was_thrown_and_has_no_observers_NEW()
+        public void Should_throw_exception_if_exception_was_thrown_and_has_no_observers()
         {
             const string fileName = "test.json";
             const string content = "wrong file format";
@@ -192,7 +192,7 @@ namespace Vostok.Configuration.Tests.Sources
         }
 
         [Test]
-        public void Should_return_last_read_value_if_exception_was_thrown_on_next_read_and_has_no_observers_NEW()
+        public void Should_return_last_read_value_if_exception_was_thrown_on_next_read_and_has_no_observers()
         {
             const string fileName = "test.json";
             var content = "{ 'Key': 'value' }";
@@ -217,4 +217,4 @@ namespace Vostok.Configuration.Tests.Sources
             }
         }
     }
-}
+}*/

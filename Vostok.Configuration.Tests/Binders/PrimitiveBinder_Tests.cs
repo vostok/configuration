@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using System.Collections.Specialized;
 using System.Net;
 using FluentAssertions;
@@ -124,4 +124,4 @@ namespace Vostok.Configuration.Tests.Binders
             binder.Bind(settings).Should().Be("somestring");
         }
     }
-}
+}*/

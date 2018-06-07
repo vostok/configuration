@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using JetBrains.Annotations;
 
 namespace Vostok.Configuration.Sources
@@ -33,4 +33,4 @@ namespace Vostok.Configuration.Sources
                 fileWatcherCreator)
         { }
     }
-}
+}*/

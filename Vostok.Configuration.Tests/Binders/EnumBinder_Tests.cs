@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Binders;
@@ -26,4 +26,4 @@ namespace Vostok.Configuration.Tests.Binders
             new Action(() => binder.Bind(settings)).Should().Throw<InvalidCastException>();
         }
     }
-}
+}*/

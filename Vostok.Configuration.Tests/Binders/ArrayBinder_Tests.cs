@@ -1,4 +1,4 @@
-﻿using System.Collections.Specialized;
+﻿/*using System.Collections.Specialized;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Binders;
@@ -51,4 +51,4 @@ namespace Vostok.Configuration.Tests.Binders
             public string String { get; set; }
         }
     }
-}
+}*/

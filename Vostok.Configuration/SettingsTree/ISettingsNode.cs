@@ -1,9 +1,9 @@
-﻿/*using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using JetBrains.Annotations;
 
-namespace Vostok.Configuration
+namespace Vostok.Configuration.SettingsTree
 {
-    public interface IRawSettings
+    public interface ISettingsNode
     {
         [NotNull]
         string Name { get; }
@@ -18,13 +18,13 @@ namespace Vostok.Configuration
         /// Indexed child nodes for arrays, lists
         /// </summary>
         [NotNull]
-        IEnumerable<IRawSettings> Children { get; }
+        IEnumerable<ISettingsNode> Children { get; }
 
         /// <summary>
         /// Named child nodes for dictionaries, fields/properties
         /// </summary>
         /// <param name="name">Key name</param>
         [CanBeNull]
-        IRawSettings this[string name] { get; }
+        ISettingsNode this[string name] { get; }
     }
-}*/
+}

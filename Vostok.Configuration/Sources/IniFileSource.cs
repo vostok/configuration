@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+﻿/*using JetBrains.Annotations;
 
 namespace Vostok.Configuration.Sources
 {
@@ -22,4 +22,4 @@ namespace Vostok.Configuration.Sources
                 })
         { }
     }
-}
+}*/

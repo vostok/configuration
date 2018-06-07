@@ -1,4 +1,6 @@
-﻿namespace Vostok.Configuration.Binders
+﻿using Vostok.Configuration.SettingsTree;
+
+namespace Vostok.Configuration.Binders
 {
     internal class NullableBinder<T> : ISettingsBinder<T?>
         where T : struct
@@ -8,9 +10,9 @@
         public NullableBinder(ISettingsBinder<T> elementBinder) =>
             this.elementBinder = elementBinder;
 
-        public T? Bind(IRawSettings settings)
+        public T? Bind(ISettingsNode settings)
         {
-            RawSettings.CheckSettings(settings, false);
+            // RawSettings.CheckSettings(settings, false);
             return settings.Value == null ? (T?)null : elementBinder.Bind(settings);
         }
     }

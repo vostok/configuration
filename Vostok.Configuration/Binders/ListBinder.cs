@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Binders
 {
@@ -16,19 +17,19 @@ namespace Vostok.Configuration.Binders
         public ListBinder(ISettingsBinder<T> elementBinder) =>
             this.elementBinder = elementBinder;
 
-        public List<T> Bind(IRawSettings settings)
+        public List<T> Bind(ISettingsNode settings)
         {
-            RawSettings.CheckSettings(settings);
+            // RawSettings.CheckSettings(settings);
 
             return settings.Children
                 .Select(n => elementBinder.Bind(n))
                 .ToList();
         }
 
-        IList<T> ISettingsBinder<IList<T>>.Bind(IRawSettings settings) => Bind(settings);
-        IEnumerable<T> ISettingsBinder<IEnumerable<T>>.Bind(IRawSettings settings) => Bind(settings);
-        ICollection<T> ISettingsBinder<ICollection<T>>.Bind(IRawSettings settings) => Bind(settings);
-        IReadOnlyCollection<T> ISettingsBinder<IReadOnlyCollection<T>>.Bind(IRawSettings settings) => Bind(settings);
-        IReadOnlyList<T> ISettingsBinder<IReadOnlyList<T>>.Bind(IRawSettings settings) => Bind(settings);
+        IList<T> ISettingsBinder<IList<T>>.Bind(ISettingsNode settings) => Bind(settings);
+        IEnumerable<T> ISettingsBinder<IEnumerable<T>>.Bind(ISettingsNode settings) => Bind(settings);
+        ICollection<T> ISettingsBinder<ICollection<T>>.Bind(ISettingsNode settings) => Bind(settings);
+        IReadOnlyCollection<T> ISettingsBinder<IReadOnlyCollection<T>>.Bind(ISettingsNode settings) => Bind(settings);
+        IReadOnlyList<T> ISettingsBinder<IReadOnlyList<T>>.Bind(ISettingsNode settings) => Bind(settings);
     }
 }

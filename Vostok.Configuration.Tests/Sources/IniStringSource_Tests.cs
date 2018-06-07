@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using NUnit.Framework;
@@ -135,4 +135,4 @@ namespace Vostok.Configuration.Tests.Sources
             return val;
         }
     }
-}
+}*/

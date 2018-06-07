@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Reflection;
+using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Binders
 {
@@ -10,7 +11,7 @@ namespace Vostok.Configuration.Binders
         public BinderWrapper(object binder) =>
             this.binder = binder;
 
-        public object Bind(IRawSettings rawSettings) =>
+        public object Bind(ISettingsNode rawSettings) =>
             GetBinderBindMethod().Invoke(binder, new object[] {rawSettings});
 
         private MethodInfo GetBinderBindMethod() =>

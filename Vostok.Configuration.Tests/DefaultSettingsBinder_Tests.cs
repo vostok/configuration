@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Net;
@@ -771,4 +771,4 @@ namespace Vostok.Configuration.Tests
             public Dictionary<T1, T2> PublicDictProp { get; set; }
         }
     }
-}
+}*/

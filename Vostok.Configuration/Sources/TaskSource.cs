@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Sources
 {
@@ -9,20 +10,20 @@ namespace Vostok.Configuration.Sources
         private readonly ConcurrentDictionary<Type, TaskCompletionSource<object>> typeResultSources;
         private readonly ConcurrentDictionary<Type, object> typeLastValues;
         private readonly ConcurrentDictionary<Type, IDisposable> typeInnerSubscriptions;
-        private volatile TaskCompletionSource<IRawSettings> resultSource;
-        private IRawSettings lastValue;
+        private volatile TaskCompletionSource<ISettingsNode> resultSource;
+        private ISettingsNode lastValue;
         private IDisposable innerSubscription;
 
         public TaskSource()
         {
-            resultSource = new TaskCompletionSource<IRawSettings>();
+            resultSource = new TaskCompletionSource<ISettingsNode>();
             typeResultSources = new ConcurrentDictionary<Type, TaskCompletionSource<object>>();
             lastValue = null;
             typeLastValues = new ConcurrentDictionary<Type, object>();
             typeInnerSubscriptions = new ConcurrentDictionary<Type, IDisposable>();
         }
 
-        public IRawSettings Get(IObservable<IRawSettings> observable)
+        public ISettingsNode Get(IObservable<ISettingsNode> observable)
         {
             if (innerSubscription == null)
                 innerSubscription = observable.Subscribe(ResultOnNext, ResultOnError);
@@ -44,7 +45,7 @@ namespace Vostok.Configuration.Sources
             return (T)source.Task.GetAwaiter().GetResult();
         }
 
-        private void ResultOnNext(IRawSettings settings)
+        private void ResultOnNext(ISettingsNode settings)
         {
             lastValue = settings;
             if (!resultSource.Task.IsCompleted)
@@ -80,9 +81,9 @@ namespace Vostok.Configuration.Sources
                 typeResultSources[type] = NewObjectCompletedSource(typeLastValues[type]);
         }
 
-        private static TaskCompletionSource<IRawSettings> NewCompletedSource(IRawSettings value)
+        private static TaskCompletionSource<ISettingsNode> NewCompletedSource(ISettingsNode value)
         {
-            var newSource = new TaskCompletionSource<IRawSettings>();
+            var newSource = new TaskCompletionSource<ISettingsNode>();
             newSource.TrySetResult(value);
             return newSource;
         }

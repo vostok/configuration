@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Sources;
@@ -48,4 +48,4 @@ namespace Vostok.Configuration.Tests.Sources
             }).Should().Throw<Exception>();
         }
     }
-}
+}*/

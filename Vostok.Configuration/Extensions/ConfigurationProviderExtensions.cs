@@ -1,4 +1,4 @@
-using Vostok.Configuration.Sources;
+/*using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Extensions
 {
@@ -7,4 +7,4 @@ namespace Vostok.Configuration.Extensions
         public static ConfigurationProvider SetupSourcesFor<TSettings>(this ConfigurationProvider provider, params IConfigurationSource[] sources) => 
             provider.SetupSourceFor<TSettings>(new CombinedSource(sources));
     }
-}
+}*/

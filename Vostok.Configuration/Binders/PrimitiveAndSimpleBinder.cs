@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Vostok.Commons.Parsers;
+using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Binders
 {
@@ -12,12 +13,12 @@ namespace Vostok.Configuration.Binders
         public PrimitiveAndSimpleBinder(IDictionary<Type, ITypeParser> parsers) =>
             this.parsers = parsers;
 
-        public T Bind(IRawSettings settings)
+        public T Bind(ISettingsNode settings)
         {
             var type = typeof(T);
             if (!parsers.ContainsKey(type) && type != typeof(string))
                 throw new ArgumentException($"{nameof(PrimitiveAndSimpleBinder<T>)}: have no parser for the type \"{type.Name}\"");
-            RawSettings.CheckSettings(settings);
+            // RawSettings.CheckSettings(settings);
 
             string value;
             if (!string.IsNullOrWhiteSpace(settings.Value))

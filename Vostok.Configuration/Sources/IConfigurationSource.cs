@@ -1,23 +1,24 @@
 ﻿using System;
+using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Sources
 {
     /// <inheritdoc />
     /// <summary>
-    /// File converter to RawSettings tree
+    /// File converter to <see cref="ISettingsNode"/> tree
     /// </summary>
     public interface IConfigurationSource: IDisposable
     {
         /// <summary>
         /// Converts file
         /// </summary>
-        /// <returns>RawSettings tree</returns>
-        IRawSettings Get();
+        /// <returns><see cref="ISettingsNode"/> tree</returns>
+        ISettingsNode Get();
 
         /// <summary>
         /// Watches file changes
         /// </summary>
-        /// <returns>Event with new RawSettings tree</returns>
-        IObservable<IRawSettings> Observe();
+        /// <returns>Event with new <see cref="ISettingsNode"/> tree</returns>
+        IObservable<ISettingsNode> Observe();
     }
 }

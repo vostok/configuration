@@ -1,4 +1,4 @@
-using System;
+/*using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -68,7 +68,7 @@ namespace Vostok.Configuration.Sources
             }
 
             sourcesSettings = sources.ToDictionary(s => s, s => s.Get());
-            MergeIntoCurrentSettings(sourcesSettings.Values.ToArray());*/
+            MergeIntoCurrentSettings(sourcesSettings.Values.ToArray());#1#
         }
 
         /// <inheritdoc />
@@ -168,4 +168,4 @@ namespace Vostok.Configuration.Sources
             return new RawSettings(dict, name);
         }
     }
-}
+}*/

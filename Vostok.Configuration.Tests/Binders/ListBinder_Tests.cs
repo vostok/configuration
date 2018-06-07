@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿/*using System.Collections.Generic;
 using System.Collections.Specialized;
 using FluentAssertions;
 using NUnit.Framework;
@@ -105,4 +105,4 @@ namespace Vostok.Configuration.Tests.Binders
             result.Should().BeEquivalentTo(new List<List<int>> { new List<int> {10}, new List<int> {12} });
         }
     }
-}
+}*/

@@ -1,4 +1,6 @@
-﻿namespace Vostok.Configuration
+﻿using Vostok.Configuration.SettingsTree;
+
+namespace Vostok.Configuration
 {
     /// <summary>
     /// Not static to be configured with custom type parsers.
@@ -9,7 +11,7 @@
         /// Bindes <paramref name="rawSettings"/> tree to specified type
         /// </summary>
         /// <typeparam name="TSettings">Data type you need to get</typeparam>
-        /// <param name="rawSettings"><see cref="IRawSettings"/> tree</param>
-        TSettings Bind<TSettings>(IRawSettings rawSettings);
+        /// <param name="rawSettings"><see cref="ISettingsNode"/> tree</param>
+        TSettings Bind<TSettings>(ISettingsNode rawSettings);
     }
 }

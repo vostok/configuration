@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using SimpleInjector;
 using Vostok.Commons.Parsers;
 using Vostok.Configuration.Extensions;
+using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Binders
 {
@@ -53,7 +54,7 @@ namespace Vostok.Configuration.Binders
         /// <typeparam name="TSettings">Type to</typeparam>
         /// <param name="settings">Settings tree</param>
         /// <returns></returns>
-        public TSettings Bind<TSettings>(IRawSettings settings)
+        public TSettings Bind<TSettings>(ISettingsNode settings)
         {
             var factory = Container.GetInstance<ISettingsBinderFactory>();
             var binder = factory.CreateFor<TSettings>();

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿/*using System.Collections.Generic;
 using System.Collections.Specialized;
 using FluentAssertions;
 using NUnit.Framework;
@@ -53,4 +53,4 @@ namespace Vostok.Configuration.Tests.Binders
             result.Should().BeEquivalentTo(new HashSet<HashSet<int>> { new HashSet<int> { 10 }, new HashSet<int> { 12 } });
         }
     }
-}
+}*/

@@ -1,7 +1,9 @@
-﻿namespace Vostok.Configuration.Binders
+﻿using Vostok.Configuration.SettingsTree;
+
+namespace Vostok.Configuration.Binders
 {
     public interface ISettingsBinder<out T>
     {
-        T Bind(IRawSettings rawSettings);
+        T Bind(ISettingsNode rawSettings);
     }
 }

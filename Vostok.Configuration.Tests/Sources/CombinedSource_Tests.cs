@@ -1,4 +1,4 @@
-﻿using System.Linq;
+﻿/*using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Sources;
@@ -190,7 +190,7 @@ namespace Vostok.Configuration.Tests.Sources
                                 }, "value")
                             }
                         }, "root"));
-        }*/
+        }#1#
 
         /*[Test]
         public void Should_merge_simple_lists_UnionDist()
@@ -217,7 +217,7 @@ namespace Vostok.Configuration.Tests.Sources
                                 }, "value")
                             }
                         }, "root"));
-        }*/
+        }#1#
 
         /*[Test]
         public void Should_merge_dictionaries_of_objects()
@@ -251,7 +251,7 @@ namespace Vostok.Configuration.Tests.Sources
                                     },
                                 }, "value") },
                         }, "root"));}
-        }*/
+        }#1#
 
         /*[Test]
         public void Should_merge_lists_of_objects_FirstOnly()
@@ -282,7 +282,7 @@ namespace Vostok.Configuration.Tests.Sources
                                 }, "value")
                             }
                         }, "root"));}
-        }*/
+        }#1#
 
         /*[Test]
         public void Should_merge_lists_of_objects_UnionDist()
@@ -321,7 +321,7 @@ namespace Vostok.Configuration.Tests.Sources
                                 }, "value")
                             }
                         }, "root"));
-        }*/
+        }#1#
 
         /*[Test]
         public void Should_merge_lists_of_lists_FirstOnly()
@@ -352,7 +352,7 @@ namespace Vostok.Configuration.Tests.Sources
                                 }, "value")
                             }
                         }, "root"));
-        }*/
+        }#1#
 
         /*[Test]
         public void Should_merge_lists_of_lists_UnionAll()
@@ -395,7 +395,7 @@ namespace Vostok.Configuration.Tests.Sources
                                 }, "value")
                             }
                         }, "root"));
-        }*/
+        }#1#
 
         /*[Test, Explicit("Not stable on mass tests")]
         public void Should_observe_file()
@@ -435,6 +435,6 @@ namespace Vostok.Configuration.Tests.Sources
                 sub.Dispose();
             }
             return val;
-        }*/
+        }#1#
     }
-}
+}*/

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Binders
 {
@@ -17,10 +18,10 @@ namespace Vostok.Configuration.Binders
             this.valueBinder = valueBinder;
         }
 
-        public Dictionary<T1, T2> Bind(IRawSettings settings) =>
-            settings.Children.ToDictionary(n => keyBinder.Bind(new RawSettings(n.Name)), n => valueBinder.Bind(n));
+        public Dictionary<T1, T2> Bind(ISettingsNode settings) =>
+            settings.Children.ToDictionary(n => keyBinder.Bind(new ValueNode(n.Name)), n => valueBinder.Bind(n));
 
-        IDictionary<T1, T2> ISettingsBinder<IDictionary<T1, T2>>.Bind(IRawSettings settings) => Bind(settings);
-        IReadOnlyDictionary<T1, T2> ISettingsBinder<IReadOnlyDictionary<T1, T2>>.Bind(IRawSettings settings) => Bind(settings);
+        IDictionary<T1, T2> ISettingsBinder<IDictionary<T1, T2>>.Bind(ISettingsNode settings) => Bind(settings);
+        IReadOnlyDictionary<T1, T2> ISettingsBinder<IReadOnlyDictionary<T1, T2>>.Bind(ISettingsNode settings) => Bind(settings);
     }
 }

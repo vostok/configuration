@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using System.Threading;
 using FluentAssertions;
 using NUnit.Framework;
@@ -402,4 +402,4 @@ namespace Vostok.Configuration.Tests
             public override string ToString() => Value.ToString();
         }
     }
-}
+}*/

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿/*using System.Collections.Generic;
 using System.Collections.Specialized;
 using FluentAssertions;
 using NUnit.Framework;
@@ -76,4 +76,4 @@ namespace Vostok.Configuration.Tests.Binders
             });
         }
     }
-}
+}*/

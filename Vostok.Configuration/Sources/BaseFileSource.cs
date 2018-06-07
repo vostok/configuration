@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using System.Reactive.Linq;
 
 namespace Vostok.Configuration.Sources
@@ -67,4 +67,4 @@ namespace Vostok.Configuration.Sources
         {
         }
     }
-}
+}*/
