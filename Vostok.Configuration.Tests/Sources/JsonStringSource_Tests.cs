@@ -128,7 +128,7 @@ namespace Vostok.Configuration.Tests.Sources
             using (var jss = new JsonStringSource(value))
             {
                 var result = jss.Get();
-                result["Array"].Children.Select(c => c.Value).Should().Equal(null, null);
+                result["array"].Children.Select(c => c.Value).Should().Equal(null, null);
             }
         }
 

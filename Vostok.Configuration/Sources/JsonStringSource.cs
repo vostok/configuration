@@ -67,7 +67,7 @@ namespace Vostok.Configuration.Sources
             if (jObject.Count <= 0)
                 return new RawSettings((OrderedDictionary)null, tokenKey);
 
-            var dict = new OrderedDictionary();
+            var dict = new OrderedDictionary(new ChildrenKeysComparer());
             foreach (var token in jObject)
                 switch (token.Value.Type)
                 {
@@ -93,7 +93,7 @@ namespace Vostok.Configuration.Sources
             if (jArray.Count <= 0)
                 return new RawSettings((OrderedDictionary)null, tokenKey);
 
-            var dict = new OrderedDictionary();
+            var dict = new OrderedDictionary(new ChildrenKeysComparer());
             var i = 0;
             foreach (var item in jArray)
             {

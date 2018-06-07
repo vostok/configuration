@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons.Conversions;
@@ -24,34 +25,66 @@ namespace Vostok.Configuration.Tests.Sources
         public void Should_return_null_if_file_not_exists()
         {
             using (var jfs = new JsonFileSource("some_file"))
+            {
                 jfs.Get().Should().BeNull();
+                jfs.Get().Should().BeNull("should work and return last value");
+            }
         }
 
         [Test]
-        public void Should_parse_String_value()
+        public void Should_parse_String_value_NEW()
         {
-            var fileName = TestHelper.CreateFile(TestName, "{ 'StringValue': 'string' }");
+            const string fileName = "test.json";
+            const string content = "{ 'StringValue': 'string' }";
+            SingleFileWatcherSubstitute watcher = null;
 
-            using (var jfs = new JsonFileSource(fileName))
+            using (var jfs = new JsonFileSource(fileName, f =>
             {
+                watcher = new SingleFileWatcherSubstitute(f);
+                return watcher;
+            }))
+            {
+                Task.Run(() =>
+                {
+                    while (watcher == null) Thread.Sleep(20);
+                    watcher.GetUpdate(content);
+                });
                 var result = jfs.Get();
                 result["StringValue"].Value.Should().Be("string");
             }
         }
 
         [Test]
-        public void Should_Get_file_updates()
+        public void Should_Get_file_updates_NEW()
         {
-            var fileName = TestHelper.CreateFile(TestName, "{ 'StringValue': 'string' }");
+            const string fileName = "test.json";
+            var content = "{ 'StringValue': 'string' }";
+            SingleFileWatcherSubstitute watcher = null;
 
-            using (var jfs = new JsonFileSource(fileName))
+            using (var jfs = new JsonFileSource(fileName, f =>
             {
+                watcher = new SingleFileWatcherSubstitute(f);
+                return watcher;
+            }))
+            {
+                //create file
+                Task.Run(() =>
+                {
+                    while (watcher == null) Thread.Sleep(20);
+                    watcher.GetUpdate(content);
+                });
                 var result = jfs.Get();
                 result["StringValue"].Value.Should().Be("string");
 
-                TestHelper.CreateFile(TestName, "{ 'StringValue': 'string2' }", fileName);
+                content = "{ 'StringValue': 'string2' }";
+                //update file
+                Task.Run(() =>
+                {
+                    Thread.Sleep(100);
+                    watcher.GetUpdate(content);
+                });
                 result["StringValue"].Value.Should().Be("string", "did not get updates yet");
-                Thread.Sleep(300.Milliseconds());
+                Thread.Sleep(150.Milliseconds());
 
                 result = jfs.Get();
                 result["StringValue"].Value.Should().Be("string2");
@@ -64,34 +97,38 @@ namespace Vostok.Configuration.Tests.Sources
         {
             var result = 0;
             new Action(() => result = ShouldObserveFileTest()).ShouldPassIn(1.Seconds());
-            Console.WriteLine(result);
-            result.Should().Be(3);
+            result.Should().Be(2);
         }
 
         private int ShouldObserveFileTest()
         {
-            const string fileName = TestName + "_ObserveTest.tst";
+            const string fileName = "test.json";
+            const string content = "{ 'Param2': 'set2' }";
+            SingleFileWatcherSubstitute watcher = null;
 
             var val = 0;
-            using (var jfs = new JsonFileSource(fileName))
+            using (var jfs = new JsonFileSource(fileName, f =>
+            {
+                watcher = new SingleFileWatcherSubstitute(f);
+                return watcher;
+            }))
             {
                 var sub1 = jfs.Observe().Subscribe(settings =>
                 {
-                    val++;  //on create file
-                    Console.WriteLine("#1");
-                    settings["Param2"].Value.Should().Be("set2");
+                    val++;
+                    settings["Param2"].Value.Should().Be("set2", "#1 on create file");
                 });
 
-                TestHelper.CreateFile(TestName, "{ 'Param2': 'set2' }", fileName);
-
+                //create file
+                watcher.GetUpdate(content);
+                
                 var sub2 = jfs.Observe().Subscribe(settings =>
                 {
-                    val++;  //on create file and on observe
-                    Console.WriteLine("#2");
-                    settings["Param2"].Value.Should().Be("set2");
+                    val++;
+                    settings["Param2"].Value.Should().Be("set2", "#2 on create file");
                 });
 
-                Thread.Sleep(500.Milliseconds());
+                Thread.Sleep(100.Milliseconds());
 
                 sub1.Dispose();
                 sub2.Dispose();
@@ -102,15 +139,24 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_not_Observe_file_twice()
         {
-            new Action(() => ShouldNotObserveFileTwiceTest_ReturnsCountOfReceives().Should().Be(1)).ShouldPassIn(1.Seconds());
+            var res = 0;
+            new Action(() => res = ShouldObserveFileTwiceTest_ReturnsCountOfReceives()).ShouldPassIn(1.Seconds());
+            res.Should().Be(2);
         }
 
-        private int ShouldNotObserveFileTwiceTest_ReturnsCountOfReceives()
+        private int ShouldObserveFileTwiceTest_ReturnsCountOfReceives()
         {
             var val = 0;
-            var fileName = TestHelper.CreateFile(TestName, "{ 'Param1': 'set1' }");
-
-            using (var jfs = new JsonFileSource(fileName))
+            const string fileName = "test.json";
+            var content = "{ 'Param': 'set1' }";
+            SingleFileWatcherSubstitute watcher = null;
+            
+            using (var jfs = new JsonFileSource(fileName, f =>
+            {
+                watcher = new SingleFileWatcherSubstitute(f);
+                watcher.GetUpdate(content); //create file
+                return watcher;
+            }))
             {
                 var sub = jfs.Observe().Subscribe(settings =>
                 {
@@ -118,8 +164,9 @@ namespace Vostok.Configuration.Tests.Sources
                     settings["Param"].Value.Should().Be("set1");
                 });
 
-                TestHelper.CreateFile(TestName, "{ 'Param1': 'set1' }", fileName);
-                Thread.Sleep(200.Milliseconds());
+                content = "{ 'Param': 'set1' }";
+                //update file
+                watcher.GetUpdate(content, true);
 
                 sub.Dispose();
             }
@@ -127,27 +174,43 @@ namespace Vostok.Configuration.Tests.Sources
         }
 
         [Test]
-        public void Should_throw_exception_if_exception_was_thrown_and_has_no_observers()
+        public void Should_throw_exception_if_exception_was_thrown_and_has_no_observers_NEW()
         {
-            var fileName = TestHelper.CreateFile(TestName, "wrong file format");
+            const string fileName = "test.json";
+            const string content = "wrong file format";
+
             new Action(() =>
             {
-                using (var jfs = new JsonFileSource(fileName))
+                using (var jfs = new JsonFileSource(fileName, f =>
+                {
+                    var watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                }))
                     jfs.Get();
             }).Should().Throw<Exception>();
         }
 
         [Test]
-        public void Should_return_last_read_value_if_exception_was_thrown_on_next_read_and_has_no_observers()
+        public void Should_return_last_read_value_if_exception_was_thrown_on_next_read_and_has_no_observers_NEW()
         {
-            var fileName = TestHelper.CreateFile(TestName, "{ 'Key': 'value' }");
-            using (var jfs = new JsonFileSource(fileName))
+            const string fileName = "test.json";
+            var content = "{ 'Key': 'value' }";
+            SingleFileWatcherSubstitute watcher = null;
+
+            using (var jfs = new JsonFileSource(fileName, f =>
+            {
+                watcher = new SingleFileWatcherSubstitute(f);
+                watcher.GetUpdate(content); //create file
+                return watcher;
+            }))
             {
                 var result = jfs.Get();
                 result["Key"].Value.Should().Be("value");
 
-                TestHelper.CreateFile(TestName, "wrong file format", fileName);
-                Thread.Sleep(500.Milliseconds());
+                content = "wrong file format";
+                //update file
+                watcher.GetUpdate(content);
 
                 result = jfs.Get();
                 result["Key"].Value.Should().Be("value");

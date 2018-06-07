@@ -1,4 +1,5 @@
 ﻿using System.Collections.Specialized;
+using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -236,6 +237,25 @@ namespace Vostok.Configuration.Tests
                 "name",
                 "str");
             sets1.GetHashCode().Should().NotBe(sets2.GetHashCode());
+        }
+
+        [Test]
+        public void Keys_should_be_case_insensitive()
+        {
+            var sets = new RawSettings(
+                new OrderedDictionary(new ChildrenKeysComparer())
+                {
+                    ["qwe"] = new RawSettings("v0"),
+                    ["QWE"] = new RawSettings("v1"),    //rewrites
+                    ["TeSt"] = new RawSettings("v2"),
+                });
+
+            sets.Children.Count().Should().Be(2, "v0 was rewrited");
+
+            sets["qwe"].Value.Should().Be("v1");
+            sets["QWE"].Value.Should().Be("v1");
+            sets["TEST"].Value.Should().Be("v2");
+            sets["test"].Value.Should().Be("v2");
         }
     }
 }

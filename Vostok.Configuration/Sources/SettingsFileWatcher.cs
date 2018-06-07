@@ -9,21 +9,25 @@ namespace Vostok.Configuration.Sources
     /// </summary>
     internal static class SettingsFileWatcher
     {
-        private static readonly ConcurrentDictionary<string, SingleFileWatcher> Watchers =
-            new ConcurrentDictionary<string, SingleFileWatcher>();
+        private static readonly ConcurrentDictionary<string, IObservable<string>> Watchers =
+            new ConcurrentDictionary<string, IObservable<string>>();
 
         /// <summary>
         /// Subscribtion to <paramref name="file" />
         /// </summary>
         /// <param name="file">Full file path</param>
         /// <returns>Subscriber receiving file text. Receive null if file not exists.</returns>
-        public static IObservable<string> WatchFile([NotNull] string file)
+        public static IObservable<string> WatchFile([NotNull] string file) =>
+            WatchFile(file, f => new SingleFileWatcher(f), true);
+
+        internal static IObservable<string> WatchFile([NotNull] string file, Func<string, IObservable<string>> watcherCreator, bool useCache = false)
         {
-            if (Watchers.TryGetValue(file, out var watcher))
+            if (useCache && Watchers.TryGetValue(file, out var watcher))
                 return watcher;
 
-            watcher = new SingleFileWatcher(file);
-            Watchers.TryAdd(file, watcher);
+            watcher = watcherCreator?.Invoke(file) ?? new SingleFileWatcher(file);
+            if (useCache)
+                Watchers.TryAdd(file, watcher);
             return watcher;
         }
     }

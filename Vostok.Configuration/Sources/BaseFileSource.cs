@@ -11,6 +11,7 @@ namespace Vostok.Configuration.Sources
     {
         private readonly string filePath;
         private readonly Func<string, IRawSettings> parseSettings;
+        private readonly Func<string, IObservable<string>> fileWatcherCreator;
         private readonly TaskSource taskSource;
         private IObservable<IRawSettings> fileObserver;
         private IRawSettings currentValue;
@@ -22,9 +23,15 @@ namespace Vostok.Configuration.Sources
         /// <param name="filePath">File name with settings</param>
         /// <param name="parseSettings">"Get" method invocation for string source</param>
         protected BaseFileSource(string filePath, Func<string, IRawSettings> parseSettings)
+            : this(filePath, parseSettings, SettingsFileWatcher.WatchFile)
+        {
+        }
+
+        internal BaseFileSource(string filePath, Func<string, IRawSettings> parseSettings, Func<string, IObservable<string>> fileWatcherCreator)
         {
             this.filePath = filePath;
             this.parseSettings = parseSettings;
+            this.fileWatcherCreator = fileWatcherCreator;
             taskSource = new TaskSource();
         }
 
@@ -45,7 +52,7 @@ namespace Vostok.Configuration.Sources
         {
             if (fileObserver != null) return fileObserver;
 
-            var fileWatcher = SettingsFileWatcher.WatchFile(filePath);
+            var fileWatcher = SettingsFileWatcher.WatchFile(filePath, fileWatcherCreator);
             fileObserver = fileWatcher.Select(
                 str =>
                 {

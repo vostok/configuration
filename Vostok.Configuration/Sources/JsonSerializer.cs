@@ -10,7 +10,7 @@ namespace Vostok.Configuration.Sources
         Readable,
     }
 
-    public class JsonSerializer
+    public static class JsonSerializer
     {
         public static string Serialize(object obj, SerializeOption serializeOption = SerializeOption.Short)
         {

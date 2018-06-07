@@ -53,7 +53,7 @@ namespace Vostok.Configuration.Sources
             taskSource = new TaskSource();
             watchers = new ConcurrentBag<IDisposable>();
             observers = new List<IObserver<IRawSettings>>();
-            sourcesSettings = new OrderedDictionary(sources.Count);
+            sourcesSettings = new OrderedDictionary(sources.Count, new ChildrenKeysComparer());
             /*foreach (var source in sources)
             {
                 var src = source;

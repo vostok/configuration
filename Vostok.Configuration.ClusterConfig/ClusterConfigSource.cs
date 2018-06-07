@@ -66,11 +66,8 @@ namespace Vostok.Configuration.ClusterConfig
                 this.observationPeriod = observationPeriod;
 
             locker = new object();
-            lock (locker)
-            {
-                observers = new List<IObserver<IRawSettings>>();
-                taskSource = new TaskSource();
-            }
+            observers = new List<IObserver<IRawSettings>>();
+            taskSource = new TaskSource();
         }
 
         /// <inheritdoc />
@@ -172,12 +169,15 @@ namespace Vostok.Configuration.ClusterConfig
                 {
                     try
                     {
-                        var newSettings = ReadSettings();
-                        if (!Equals(newSettings, currentValue))
+                        lock (locker)
                         {
-                            currentValue = newSettings;
-                            foreach (var observer in observers.ToArray())
-                                observer.OnNext(currentValue);
+                            var newSettings = ReadSettings();
+                            if (!Equals(newSettings, currentValue))
+                            {
+                                currentValue = newSettings;
+                                foreach (var observer in observers.ToArray())
+                                    observer.OnNext(currentValue);
+                            }
                         }
                     }
                     catch (Exception e)

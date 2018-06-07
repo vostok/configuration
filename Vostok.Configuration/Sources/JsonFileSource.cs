@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using System;
+using JetBrains.Annotations;
 
 namespace Vostok.Configuration.Sources
 {
@@ -20,6 +21,16 @@ namespace Vostok.Configuration.Sources
                     using (var source = new JsonStringSource(data))
                         return source.Get();
                 })
+        { }
+
+        internal JsonFileSource([NotNull] string filePath, Func<string, IObservable<string>> fileWatcherCreator)
+            : base(filePath,
+                data =>
+                {
+                    using (var source = new JsonStringSource(data))
+                        return source.Get();
+                },
+                fileWatcherCreator)
         { }
     }
 }
