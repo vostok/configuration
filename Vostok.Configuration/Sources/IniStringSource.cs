@@ -10,13 +10,13 @@ namespace Vostok.Configuration.Sources
 {
     /// <inheritdoc />
     /// <summary>
-    /// Ini converter to <see cref="IRawSettings"/> tree from string
+    /// Ini converter to <see cref="ISettingsNode"/> tree from string
     /// </summary>
     public class IniStringSource : IConfigurationSource
     {
         private readonly string ini;
         private readonly TaskSource taskSource;
-        private IRawSettings currentSettings;
+        private ISettingsNode currentSettings;
         private bool neverParsed;
 
         /// <summary>
@@ -34,16 +34,16 @@ namespace Vostok.Configuration.Sources
 
         /// <inheritdoc />
         /// <summary>
-        /// Returns previously parsed <see cref="IRawSettings"/> tree.
+        /// Returns previously parsed <see cref="ISettingsNode"/> tree.
         /// </summary>
-        public IRawSettings Get() => taskSource.Get(Observe());
+        public ISettingsNode Get() => taskSource.Get(Observe());
 
         /// <inheritdoc />
         /// <summary>
-        /// <para>Subscribtion to <see cref="RawSettings"/> tree changes.</para>
+        /// <para>Subscribtion to <see cref="SettingsNode"/> tree changes.</para>
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
-        public IObservable<IRawSettings> Observe()
+        public IObservable<ISettingsNode> Observe()
         {
             if (neverParsed)
             {
@@ -51,7 +51,7 @@ namespace Vostok.Configuration.Sources
                 currentSettings = string.IsNullOrWhiteSpace(ini) ? null : ParseIni(ini, "root");
             }
 
-            return Observable.Create<IRawSettings>(
+            return Observable.Create<ISettingsNode>(
                 observer =>
                 {
                     observer.OnNext(currentSettings);
@@ -63,7 +63,7 @@ namespace Vostok.Configuration.Sources
         {
         }
 
-        private static IRawSettings ParseIni(string text, string name)
+        private static ISettingsNode ParseIni(string text, string name)
         {
             var res = new RawSettingsEditable(name);
             var section = res;
@@ -92,7 +92,7 @@ namespace Vostok.Configuration.Sources
 
             if (res.Children.Count == 0 && res.Value == null)
                 return null;
-            return (RawSettings)res;
+            return (SettingsNode)res;
         }
 
         private static RawSettingsEditable ParseSection(string section, RawSettingsEditable settings, int currentLine)
@@ -159,16 +159,16 @@ namespace Vostok.Configuration.Sources
 
             private string Name { get; }
 
-            public static explicit operator RawSettings(RawSettingsEditable settings)
+            public static explicit operator SettingsNode(RawSettingsEditable settings)
             {
                 IOrderedDictionary dict;
                 if (settings.Children.Count == 0)
                     dict = null;
                 else
                     dict = settings.Children.Cast<DictionaryEntry>()
-                        .ToOrderedDictionary(p => p.Key, p => (RawSettings)(RawSettingsEditable)p.Value, new ChildrenKeysComparer());
+                        .ToOrderedDictionary(p => p.Key, p => (SettingsNode)(RawSettingsEditable)p.Value, new ChildrenKeysComparer());
 
-                return new RawSettings(dict, settings.Name, settings.Value);
+                return new SettingsNode(dict, settings.Name, settings.Value);
             }
         }
     }

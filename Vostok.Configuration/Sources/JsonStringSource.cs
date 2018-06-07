@@ -8,13 +8,13 @@ namespace Vostok.Configuration.Sources
 {
     /// <inheritdoc />
     /// <summary>
-    /// Json converter to <see cref="IRawSettings"/> tree from string
+    /// Json converter to <see cref="ISettingsNode"/> tree from string
     /// </summary>
     public class JsonStringSource : IConfigurationSource
     {
         private readonly string json;
         private readonly TaskSource taskSource;
-        private IRawSettings currentSettings;
+        private ISettingsNode currentSettings;
 
         private bool neverParsed;
 
@@ -33,16 +33,16 @@ namespace Vostok.Configuration.Sources
 
         /// <inheritdoc />
         /// <summary>
-        /// Returns previously parsed <see cref="IRawSettings"/> tree.
+        /// Returns previously parsed <see cref="ISettingsNode"/> tree.
         /// </summary>
-        public IRawSettings Get() => taskSource.Get(Observe());
+        public ISettingsNode Get() => taskSource.Get(Observe());
 
         /// <inheritdoc />
         /// <summary>
-        /// <para>Subscribtion to <see cref="IRawSettings"/> tree changes.</para>
+        /// <para>Subscribtion to <see cref="ISettingsNode"/> tree changes.</para>
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
-        public IObservable<IRawSettings> Observe()
+        public IObservable<ISettingsNode> Observe()
         {
             if (neverParsed)
             {
@@ -50,7 +50,7 @@ namespace Vostok.Configuration.Sources
                 currentSettings = string.IsNullOrWhiteSpace(json) ? null : ParseJson(JObject.Parse(json), "root");
             }
 
-            return Observable.Create<IRawSettings>(
+            return Observable.Create<ISettingsNode>(
                 observer =>
                 {
                     observer.OnNext(currentSettings);
@@ -62,17 +62,17 @@ namespace Vostok.Configuration.Sources
         {
         }
 
-        private IRawSettings ParseJson(JObject jObject, string tokenKey)
+        private ISettingsNode ParseJson(JObject jObject, string tokenKey)
         {
             if (jObject.Count <= 0)
-                return new RawSettings((OrderedDictionary)null, tokenKey);
+                return new SettingsNode((OrderedDictionary)null, tokenKey);
 
             var dict = new OrderedDictionary();
             foreach (var token in jObject)
                 switch (token.Value.Type)
                 {
                     case JTokenType.Null:
-                        dict.Add(token.Key, new RawSettings(null, token.Key));
+                        dict.Add(token.Key, new SettingsNode(null, token.Key));
                         break;
                     case JTokenType.Object:
                         dict.Add(token.Key, ParseJson((JObject)token.Value, token.Key));
@@ -81,17 +81,17 @@ namespace Vostok.Configuration.Sources
                         dict.Add(token.Key, ParseJson((JArray)token.Value, token.Key));
                         break;
                     default:
-                        dict.Add(token.Key, new RawSettings(token.Value.ToString(), token.Key));
+                        dict.Add(token.Key, new SettingsNode(token.Value.ToString(), token.Key));
                         break;
                 }
 
-            return new RawSettings(dict, tokenKey);
+            return new SettingsNode(dict, tokenKey);
         }
 
-        private RawSettings ParseJson(JArray jArray, string tokenKey)
+        private SettingsNode ParseJson(JArray jArray, string tokenKey)
         {
             if (jArray.Count <= 0)
-                return new RawSettings((OrderedDictionary)null, tokenKey);
+                return new SettingsNode((OrderedDictionary)null, tokenKey);
 
             var dict = new OrderedDictionary();
             var i = 0;
@@ -101,7 +101,7 @@ namespace Vostok.Configuration.Sources
                 switch (item.Type)
                 {
                     case JTokenType.Null:
-                        obj = new RawSettings(null, i.ToString());
+                        obj = new SettingsNode(null, i.ToString());
                         break;
                     case JTokenType.Object:
                         obj = ParseJson((JObject)item, i.ToString());
@@ -110,14 +110,14 @@ namespace Vostok.Configuration.Sources
                         obj = ParseJson((JArray)item, i.ToString());
                         break;
                     default:
-                        obj = new RawSettings(item.ToString(), i.ToString());
+                        obj = new SettingsNode(item.ToString(), i.ToString());
                         break;
                 }
 
                 dict.Add(i++.ToString(), obj);
             }
 
-            return new RawSettings(dict, tokenKey);
+            return new SettingsNode(dict, tokenKey);
         }
     }
 }

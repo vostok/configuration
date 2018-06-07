@@ -12,7 +12,7 @@ namespace Vostok.Configuration.Binders
         public ClassAndStructBinder(ISettingsBinderFactory binderFactory) =>
             this.binderFactory = binderFactory;
 
-        public T Bind(IRawSettings settings)
+        public T Bind(ISettingsNode settings)
         {
             var type = typeof(T);
             var instance = Activator.CreateInstance(type);
@@ -38,12 +38,12 @@ namespace Vostok.Configuration.Binders
             return (T)instance;
         }
 
-        private object GetValue(Type type, string name, BinderAttribute binderAttribute, IRawSettings settings, object defaultValue)
+        private object GetValue(Type type, string name, BinderAttribute binderAttribute, ISettingsNode settings, object defaultValue)
         {
             object GetDefaultIfOptionalOrThrow(BinderAttribute attr, Type t, string msg) =>
                 attr == BinderAttribute.IsOptional ? t.Default() : throw new InvalidCastException(msg);
 
-            RawSettings.CheckSettings(settings, false);
+            SettingsNode.CheckSettings(settings, false);
 
             if (settings[name] == null)
                 return GetDefaultIfOptionalOrThrow(binderAttribute, type, $"{nameof(ClassAndStructBinder<T>)}: required key \"{name}\" is absent");

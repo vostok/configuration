@@ -38,9 +38,9 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_return_full_tree_by_tree()
         {
-            var tree = new RawSettings(new OrderedDictionary
+            var tree = new SettingsNode(new OrderedDictionary
             {
-                ["value"] = new RawSettings("1"),
+                ["value"] = new SettingsNode("1"),
             });
 
             using (var ss = new ScopedSource(tree))
@@ -114,17 +114,17 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_observe_file()
         {
-            List<IRawSettings> result = null;
+            List<ISettingsNode> result = null;
             new Action(() => result = ShouldObserveFileTest_ReturnsReceivedSubtrees()).ShouldPassIn(1.Seconds());
             result.Select(r => r.Value).Should().Equal("2", "4");
         }
 
-        private List<IRawSettings> ShouldObserveFileTest_ReturnsReceivedSubtrees()
+        private List<ISettingsNode> ShouldObserveFileTest_ReturnsReceivedSubtrees()
         {
             var fileName = TestHelper.CreateFile(TestName, "{ \"value\": { \"list\": [1,2] } }");
             using (var jfs = new JsonFileSource(fileName))
             {
-                var rsList = new List<IRawSettings>();
+                var rsList = new List<ISettingsNode>();
 
                 using (var ss = new ScopedSource(jfs, "value", "list", "[1]"))
                 {

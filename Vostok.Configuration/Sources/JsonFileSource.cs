@@ -4,7 +4,7 @@ namespace Vostok.Configuration.Sources
 {
     /// <inheritdoc />
     /// <summary>
-    /// Json converter to <see cref="RawSettings"/> tree from file
+    /// Json converter to <see cref="SettingsNode"/> tree from file
     /// </summary>
     public class JsonFileSource : BaseFileSource
     {

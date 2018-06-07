@@ -8,24 +8,24 @@ namespace Vostok.Configuration.Sources
 {
     /// <inheritdoc />
     /// <summary>
-    /// Searches subtree in <see cref="IRawSettings"/> tree.
+    /// Searches subtree in <see cref="ISettingsNode"/> tree.
     /// </summary>
     public class ScopedSource : IConfigurationSource
     {
-        private readonly IRawSettings incomeSettings;
+        private readonly ISettingsNode incomeSettings;
         private readonly IConfigurationSource source;
         private readonly string[] scope;
         private readonly TaskSource taskSource;
         private readonly object locker;
         private IDisposable watcher;
-        private IRawSettings currentValue;
+        private ISettingsNode currentValue;
         private bool firstRequest = true;
 
         /// <summary>
         /// Creates a <see cref="ScopedSource"/> instance for <see cref="source"/> to search in by <see cref="scope"/>
         /// <para>You can use "[n]" format in <see cref="InnerScope"/> to get n-th index of list.</para>
         /// </summary>
-        /// <param name="source">Source of <see cref="IRawSettings"/> tree</param>
+        /// <param name="source">Source of <see cref="ISettingsNode"/> tree</param>
         /// <param name="scope">Search path</param>
         public ScopedSource(
             [NotNull] IConfigurationSource source,
@@ -44,7 +44,7 @@ namespace Vostok.Configuration.Sources
         /// <param name="settings">Tree to search in</param>
         /// <param name="scope">Search path</param>
         public ScopedSource(
-            [NotNull] IRawSettings settings,
+            [NotNull] ISettingsNode settings,
             [NotNull] params string[] scope)
         {
             incomeSettings = settings;
@@ -58,17 +58,17 @@ namespace Vostok.Configuration.Sources
         /// Gets part of RawSettings tree by specified scope.
         /// </summary>
         /// <returns>Part of RawSettings tree</returns>
-        public IRawSettings Get() => taskSource.Get(Observe());
+        public ISettingsNode Get() => taskSource.Get(Observe());
 
         /// <inheritdoc />
         /// <summary>
-        /// <para>Subscribtion to see <see cref="IRawSettings"/> scoped subtree changes.</para>
+        /// <para>Subscribtion to see <see cref="ISettingsNode"/> scoped subtree changes.</para>
         /// <para>Returns current value immediately on subscribtion.</para>
         /// <para>You can get update only if you used scope by source.</para>
         /// </summary>
         /// <returns>Event with new RawSettings tree</returns>
-        public IObservable<IRawSettings> Observe() =>
-            Observable.Create<IRawSettings>(
+        public IObservable<ISettingsNode> Observe() =>
+            Observable.Create<ISettingsNode>(
                 observer =>
                 {
                     if (watcher == null && source != null)
@@ -111,7 +111,7 @@ namespace Vostok.Configuration.Sources
             watcher?.Dispose();
         }
 
-        private static IRawSettings InnerScope(IRawSettings settings, params string[] scope)
+        private static ISettingsNode InnerScope(ISettingsNode settings, params string[] scope)
         {
             if (scope.Length == 0)
                 return settings;

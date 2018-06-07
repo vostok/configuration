@@ -10,10 +10,10 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_to_Array_of_primitives()
         {
-            var settings = new RawSettings(new OrderedDictionary
+            var settings = new SettingsNode(new OrderedDictionary
             {
-                ["1"] = new RawSettings("TRUE"),
-                ["2"] = new RawSettings("false"),
+                ["1"] = new SettingsNode("TRUE"),
+                ["2"] = new SettingsNode("false"),
             });
             var binder = Container.GetInstance<ISettingsBinder<bool[]>>();
             var result = binder.Bind(settings);
@@ -23,17 +23,17 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_to_Array_of_structs()
         {
-            var settings = new RawSettings(new OrderedDictionary
+            var settings = new SettingsNode(new OrderedDictionary
             {
-                ["1"] = new RawSettings(new OrderedDictionary
+                ["1"] = new SettingsNode(new OrderedDictionary
                 {
-                    { "Int", new RawSettings("1") },
-                    { "String", new RawSettings("str1") },
+                    { "Int", new SettingsNode("1") },
+                    { "String", new SettingsNode("str1") },
                 }),
-                ["2"] = new RawSettings(new OrderedDictionary
+                ["2"] = new SettingsNode(new OrderedDictionary
                 {
-                    { "Int", new RawSettings("2") },
-                    { "String", new RawSettings("str2") },
+                    { "Int", new SettingsNode("2") },
+                    { "String", new SettingsNode("str2") },
                 }),
             });
             var binder = Container.GetInstance<ISettingsBinder<SimpleStruct[]>>();

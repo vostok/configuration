@@ -11,10 +11,10 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_to_List_of_primitives()
         {
-            var settings = new RawSettings(new OrderedDictionary
+            var settings = new SettingsNode(new OrderedDictionary
             {
-                ["1"] = new RawSettings("1"),
-                ["2"] = new RawSettings("2"),
+                ["1"] = new SettingsNode("1"),
+                ["2"] = new SettingsNode("2"),
             });
             var binder = Container.GetInstance<ISettingsBinder<List<int>>>();
             var result = binder.Bind(settings);
@@ -24,10 +24,10 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_to_ICollection_of_primitives()
         {
-            var settings = new RawSettings(new OrderedDictionary
+            var settings = new SettingsNode(new OrderedDictionary
             {
-                ["1"] = new RawSettings("1"),
-                ["2"] = new RawSettings("2"),
+                ["1"] = new SettingsNode("1"),
+                ["2"] = new SettingsNode("2"),
             });
             var binder = Container.GetInstance<ISettingsBinder<ICollection<int>>>();
             var result = binder.Bind(settings);
@@ -37,10 +37,10 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_to_IEnumerable_of_primitives()
         {
-            var settings = new RawSettings(new OrderedDictionary
+            var settings = new SettingsNode(new OrderedDictionary
             {
-                ["1"] = new RawSettings("1"),
-                ["2"] = new RawSettings("2"),
+                ["1"] = new SettingsNode("1"),
+                ["2"] = new SettingsNode("2"),
             });
             var binder = Container.GetInstance<ISettingsBinder<IEnumerable<int>>>();
             var result = binder.Bind(settings);
@@ -50,10 +50,10 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_to_IList_of_primitives()
         {
-            var settings = new RawSettings(new OrderedDictionary
+            var settings = new SettingsNode(new OrderedDictionary
             {
-                ["1"] = new RawSettings("1"),
-                ["2"] = new RawSettings("2"),
+                ["1"] = new SettingsNode("1"),
+                ["2"] = new SettingsNode("2"),
             });
             var binder = Container.GetInstance<ISettingsBinder<IList<int>>>();
             var result = binder.Bind(settings);
@@ -63,10 +63,10 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_to_IReadOnlyList_of_primitives()
         {
-            var settings = new RawSettings(new OrderedDictionary
+            var settings = new SettingsNode(new OrderedDictionary
             {
-                ["1"] = new RawSettings("1"),
-                ["2"] = new RawSettings("2"),
+                ["1"] = new SettingsNode("1"),
+                ["2"] = new SettingsNode("2"),
             });
             var binder = Container.GetInstance<ISettingsBinder<IReadOnlyList<int>>>();
             var result = binder.Bind(settings);
@@ -76,10 +76,10 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_to_IReadOnlyCollection_of_primitives()
         {
-            var settings = new RawSettings(new OrderedDictionary
+            var settings = new SettingsNode(new OrderedDictionary
             {
-                ["1"] = new RawSettings("1"),
-                ["2"] = new RawSettings("2"),
+                ["1"] = new SettingsNode("1"),
+                ["2"] = new SettingsNode("2"),
             });
             var binder = Container.GetInstance<ISettingsBinder<IReadOnlyCollection<int>>>();
             var result = binder.Bind(settings);
@@ -89,15 +89,15 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_to_list_of_lists_of_primitives()
         {
-            var settings = new RawSettings(new OrderedDictionary
+            var settings = new SettingsNode(new OrderedDictionary
             {
-                ["1"] = new RawSettings(new OrderedDictionary
+                ["1"] = new SettingsNode(new OrderedDictionary
                 {
-                    ["1"] = new RawSettings("10"),
+                    ["1"] = new SettingsNode("10"),
                 }),
-                ["2"] = new RawSettings(new OrderedDictionary
+                ["2"] = new SettingsNode(new OrderedDictionary
                 {
-                    ["2"] = new RawSettings("12"),
+                    ["2"] = new SettingsNode("12"),
                 }),
             });
             var binder = Container.GetInstance<ISettingsBinder<List<List<int>>>>();

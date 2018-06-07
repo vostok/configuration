@@ -8,12 +8,12 @@ namespace Vostok.Configuration.Sources
 {
     /// <inheritdoc />
     /// <summary>
-    /// Environment variables converter to <see cref="IRawSettings"/> tree
+    /// Environment variables converter to <see cref="ISettingsNode"/> tree
     /// </summary>
     public class EnvironmentVariablesSource : IConfigurationSource
     {
         private readonly TaskSource taskSource;
-        private IRawSettings currentValue;
+        private ISettingsNode currentValue;
         private bool neverParsed;
 
         /// <inheritdoc />
@@ -28,16 +28,16 @@ namespace Vostok.Configuration.Sources
 
         /// <inheritdoc />
         /// <summary>
-        /// Returns previously parsed <see cref="IRawSettings"/> tree.
+        /// Returns previously parsed <see cref="ISettingsNode"/> tree.
         /// </summary>
-        public IRawSettings Get() => taskSource.Get(Observe());
+        public ISettingsNode Get() => taskSource.Get(Observe());
 
         /// <inheritdoc />
         /// <summary>
-        /// <para>Subscribtion to <see cref="IRawSettings"/> tree changes.</para>
+        /// <para>Subscribtion to <see cref="ISettingsNode"/> tree changes.</para>
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
-        public IObservable<IRawSettings> Observe()
+        public IObservable<ISettingsNode> Observe()
         {
             if (neverParsed)
             {
@@ -45,7 +45,7 @@ namespace Vostok.Configuration.Sources
                 currentValue = GetSettings(GetVariables());
             }
 
-            return Observable.Create<IRawSettings>(
+            return Observable.Create<ISettingsNode>(
                 observer =>
                 {
                     observer.OnNext(currentValue);
@@ -57,7 +57,7 @@ namespace Vostok.Configuration.Sources
         {
         }
 
-        private static IRawSettings GetSettings(string vars)
+        private static ISettingsNode GetSettings(string vars)
         {
             using (var source = new IniStringSource(vars))
                 return source.Get();

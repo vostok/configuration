@@ -13,20 +13,20 @@ namespace Vostok.Configuration.ClusterConfig
 {
     /// <inheritdoc />
     /// <summary>
-    /// Cluster config converter to <see cref="IRawSettings"/> tree
+    /// Cluster config converter to <see cref="ISettingsNode"/> tree
     /// </summary>
     public class ClusterConfigSource : IConfigurationSource
     {
         private readonly TimeSpan minObservationPeriod = 1.Minutes();
         private readonly TimeSpan checkPeriod = 100.Milliseconds();
-        private readonly IList<IObserver<IRawSettings>> observers;
+        private readonly IList<IObserver<ISettingsNode>> observers;
         private readonly TimeSpan observationPeriod;
         private readonly string prefix;
         private readonly string key;
         private readonly IClusterConfigClientProxy clusterConfigClient;
         private readonly object locker;
         private readonly TaskSource taskSource;
-        private IRawSettings currentValue;
+        private ISettingsNode currentValue;
         private CancellationTokenSource tokenSource;
         private CancellationToken token;
         private Task task;
@@ -68,7 +68,7 @@ namespace Vostok.Configuration.ClusterConfig
             locker = new object();
             lock (locker)
             {
-                observers = new List<IObserver<IRawSettings>>();
+                observers = new List<IObserver<ISettingsNode>>();
                 taskSource = new TaskSource();
             }
         }
@@ -80,16 +80,16 @@ namespace Vostok.Configuration.ClusterConfig
         /// </summary>
         /// <exception cref="Exception">Only on first read. Otherwise returns last parsed value.</exception>
         /// <returns>Combine as RawSettings tree</returns>
-        public IRawSettings Get() => taskSource.Get(Observe());
+        public ISettingsNode Get() => taskSource.Get(Observe());
 
         /// <inheritdoc />
         /// <summary>
-        /// <para>Subscribtion to see <see cref="IRawSettings"/> changes in source.</para>
+        /// <para>Subscribtion to see <see cref="ISettingsNode"/> changes in source.</para>
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
         /// <returns>Event with new RawSettings tree</returns>
-        public IObservable<IRawSettings> Observe() =>
-            Observable.Create<IRawSettings>(
+        public IObservable<ISettingsNode> Observe() =>
+            Observable.Create<ISettingsNode>(
                 observer =>
                 {
                     lock (locker)
@@ -132,7 +132,7 @@ namespace Vostok.Configuration.ClusterConfig
                 tokenSource.Cancel();
         }
 
-        private RawSettings ReadSettings()
+        private SettingsNode ReadSettings()
         {
             var emptyPrefix = string.IsNullOrWhiteSpace(prefix);
             var emptyKey = string.IsNullOrWhiteSpace(key);
@@ -147,18 +147,18 @@ namespace Vostok.Configuration.ClusterConfig
                 return ParseCcTree(clusterConfigClient.GetAll(), true);
         }
 
-        private RawSettings ParseCcTree(IReadOnlyDictionary<string, List<string>> tree, bool byKey = false)
+        private SettingsNode ParseCcTree(IReadOnlyDictionary<string, List<string>> tree, bool byKey = false)
         {
             if (!byKey)
-                return new RawSettings(tree.ToOrderedDictionary(pair => pair.Key, pair => ParseCcList(pair.Value)));
+                return new SettingsNode(tree.ToOrderedDictionary(pair => pair.Key, pair => ParseCcList(pair.Value)));
             if (tree.ContainsKey(key))
                 return ParseCcList(tree[key]);
 
             throw new ArgumentException($"{nameof(ClusterConfigSource)}: key \"{key}\" does not exist.");
         }
 
-        private static RawSettings ParseCcList(IEnumerable<string> tree) =>
-            new RawSettings(tree.ToOrderedDictionary(v => v, v => new RawSettings(v)));
+        private static SettingsNode ParseCcList(IEnumerable<string> tree) =>
+            new SettingsNode(tree.ToOrderedDictionary(v => v, v => new SettingsNode(v)));
 
         private void WatchClusterConfig()
         {

@@ -5,9 +5,9 @@ namespace Vostok.Configuration.Binders
     internal class EnumBinder<T> : ISettingsBinder<T>
         where T : struct
     {
-        public T Bind(IRawSettings settings)
+        public T Bind(ISettingsNode settings)
         {
-            RawSettings.CheckSettings(settings);
+            SettingsNode.CheckSettings(settings);
 
             if (Enum.TryParse<T>(settings.Value, true, out var result))
                 return result;

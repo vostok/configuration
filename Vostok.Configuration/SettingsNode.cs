@@ -9,7 +9,7 @@ namespace Vostok.Configuration
     /// <summary>
     /// Tree of settings
     /// </summary>
-    public sealed class RawSettings : IRawSettings, IEquatable<RawSettings>
+    public sealed class SettingsNode : IRawSettings, IEquatable<SettingsNode>
     {
         /// <summary>
         /// Checks <see cref="settings"/>. Throws exeption if something is wrong.
@@ -21,9 +21,9 @@ namespace Vostok.Configuration
         public static void CheckSettings(IRawSettings settings, bool checkValues = true)
         {
             if (settings == null)
-                throw new ArgumentNullException($"{nameof(RawSettings)} checker: parameter \"{nameof(settings)}\" is null");
+                throw new ArgumentNullException($"{nameof(SettingsNode)} checker: parameter \"{nameof(settings)}\" is null");
             if (checkValues && settings.Value == null && !settings.Children.Any())
-                throw new ArgumentNullException($"{nameof(RawSettings)} checker: parameter \"{nameof(settings)}\" is empty");
+                throw new ArgumentNullException($"{nameof(SettingsNode)} checker: parameter \"{nameof(settings)}\" is empty");
         }
 
         /// <summary>
@@ -32,18 +32,18 @@ namespace Vostok.Configuration
         private readonly IOrderedDictionary children = new OrderedDictionary();
 
         /// <summary>
-        /// Creates <see cref="RawSettings"/> instance with <paramref name="value"/>
+        /// Creates <see cref="SettingsNode"/> instance with <paramref name="value"/>
         /// </summary>
-        public RawSettings(string value, string name = "")
+        public SettingsNode(string value, string name = "")
         {
             Value = value;
             Name = name == "" ? value : name;
         }
 
         /// <summary>
-        /// Creates <see cref="RawSettings"/> instance with parameters <paramref name="children"/> and <paramref name="value"/>
+        /// Creates <see cref="SettingsNode"/> instance with parameters <paramref name="children"/> and <paramref name="value"/>
         /// </summary>
-        public RawSettings(IOrderedDictionary children, string name = "", string value = null)
+        public SettingsNode(IOrderedDictionary children, string name = "", string value = null)
         {
             this.children = children;
             Name = name;
@@ -55,13 +55,13 @@ namespace Vostok.Configuration
         public IRawSettings this[string name] => children[name] as IRawSettings;
         //todo
         public IEnumerable<IRawSettings> Children =>
-            children?.Values.Cast<RawSettings>() ?? Enumerable.Empty<RawSettings>();
+            children?.Values.Cast<SettingsNode>() ?? Enumerable.Empty<SettingsNode>();
         
         #region Equality
 
-        public override bool Equals(object obj) => Equals(obj as RawSettings);
+        public override bool Equals(object obj) => Equals(obj as SettingsNode);
 
-        public bool Equals(RawSettings other)
+        public bool Equals(SettingsNode other)
         {
             if (other == null)
                 return false;
@@ -76,7 +76,7 @@ namespace Vostok.Configuration
 
             if (thisChExists &&
                 (!new HashSet<object>(children.Keys.Cast<object>()).SetEquals(other.children.Keys.Cast<object>()) ||
-                 !new HashSet<RawSettings>(children.Values.Cast<RawSettings>()).SetEquals(other.children.Values.Cast<RawSettings>())))
+                 !new HashSet<SettingsNode>(children.Values.Cast<SettingsNode>()).SetEquals(other.children.Values.Cast<SettingsNode>())))
                 return false;
 
             return true;
@@ -97,7 +97,7 @@ namespace Vostok.Configuration
                 var keysRes = children.Keys.OfType<string>()
                     .Select(k => k.GetHashCode())
                     .Aggregate(0, (a, b) => unchecked(a + b));
-                var valsRes = children.Values.Cast<RawSettings>()
+                var valsRes = children.Values.Cast<SettingsNode>()
                     .Select(v => v.GetHashCode())
                     .Aggregate(0, (a, b) => unchecked(a + b));
                 return unchecked (keysRes * 195) ^ valsRes;

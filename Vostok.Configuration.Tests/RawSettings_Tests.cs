@@ -10,63 +10,63 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Equals_returns_false_by_null_in_params()
         {
-            Equals(null, new RawSettings(null, "")).Should().BeFalse();
+            Equals(null, new SettingsNode(null, "")).Should().BeFalse();
         }
 
         [Test]
         public void Equals_returns_false_by_value()
         {
-            var sets1 = new RawSettings("val 1");
-            var sets2 = new RawSettings("val 2");
+            var sets1 = new SettingsNode("val 1");
+            var sets2 = new SettingsNode("val 2");
             Equals(sets1, sets2).Should().BeFalse();
         }
 
         [Test]
         public void Equals_returns_false_by_existence_of_dictionaries()
         {
-            var sets1 = new RawSettings(new OrderedDictionary());
-            var sets2 = new RawSettings(null, "");
+            var sets1 = new SettingsNode(new OrderedDictionary());
+            var sets2 = new SettingsNode(null, "");
             Equals(sets1, sets2).Should().BeFalse();
         }
 
         [Test]
         public void Equals_returns_false_by_dictionary_keys()
         {
-            var sets1 = new RawSettings(
+            var sets1 = new SettingsNode(
                 new OrderedDictionary
                 {
-                    { "key 1", new RawSettings("val 1") }
+                    { "key 1", new SettingsNode("val 1") }
                 });
-            var sets2 = new RawSettings(
+            var sets2 = new SettingsNode(
                 new OrderedDictionary
                 {
-                    { "key 2", new RawSettings("val 1") }
-                });
-            Equals(sets1, sets2).Should().BeFalse();
-
-            sets1 = new RawSettings(
-                new OrderedDictionary
-                {
-                    { "key 1", new RawSettings("val 1") },
-                });
-            sets2 = new RawSettings(
-                new OrderedDictionary
-                {
-                    { "key 1", new RawSettings("val 1") },
-                    { "key 2", new RawSettings("val 2") },
+                    { "key 2", new SettingsNode("val 1") }
                 });
             Equals(sets1, sets2).Should().BeFalse();
 
-            sets1 = new RawSettings(
+            sets1 = new SettingsNode(
                 new OrderedDictionary
                 {
-                    { "key 1", new RawSettings("val 1") },
-                    { "key 2", new RawSettings("val 2") },
+                    { "key 1", new SettingsNode("val 1") },
                 });
-            sets2 = new RawSettings(
+            sets2 = new SettingsNode(
                 new OrderedDictionary
                 {
-                    { "key 1", new RawSettings("val 1") },
+                    { "key 1", new SettingsNode("val 1") },
+                    { "key 2", new SettingsNode("val 2") },
+                });
+            Equals(sets1, sets2).Should().BeFalse();
+
+            sets1 = new SettingsNode(
+                new OrderedDictionary
+                {
+                    { "key 1", new SettingsNode("val 1") },
+                    { "key 2", new SettingsNode("val 2") },
+                });
+            sets2 = new SettingsNode(
+                new OrderedDictionary
+                {
+                    { "key 1", new SettingsNode("val 1") },
                 });
             Equals(sets1, sets2).Should().BeFalse();
         }
@@ -74,17 +74,17 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Equals_returns_false_by_dictionary_values()
         {
-            var sets1 = new RawSettings(
+            var sets1 = new SettingsNode(
                 new OrderedDictionary
                 {
-                    { "key 1", new RawSettings("val 1") },
-                    { "key 2", new RawSettings("val 2") },
+                    { "key 1", new SettingsNode("val 1") },
+                    { "key 2", new SettingsNode("val 2") },
                 });
-            var sets2 = new RawSettings(
+            var sets2 = new SettingsNode(
                 new OrderedDictionary
                 {
-                    { "key 1", new RawSettings("val 1") },
-                    { "key 2", new RawSettings("val _") },
+                    { "key 1", new SettingsNode("val 1") },
+                    { "key 2", new SettingsNode("val _") },
                 });
             Equals(sets1, sets2).Should().BeFalse();
         }
@@ -92,32 +92,32 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Equals_returns_false_by_existence_of_lists()
         {
-            var sets1 = new RawSettings(new OrderedDictionary());
-            var sets2 = new RawSettings(null, "");
+            var sets1 = new SettingsNode(new OrderedDictionary());
+            var sets2 = new SettingsNode(null, "");
             Equals(sets1, sets2).Should().BeFalse();
         }
 
         [Test]
         public void Equals_returns_false_by_names()
         {
-            var sets1 = new RawSettings("value", "name");
-            var sets2 = new RawSettings("value", "name_");
+            var sets1 = new SettingsNode("value", "name");
+            var sets2 = new SettingsNode("value", "name_");
             Equals(sets1, sets2).Should().BeFalse();
         }
 
         [Test]
         public void Equals_returns_false_by_lists_sizes()
         {
-            var sets1 = new RawSettings(
+            var sets1 = new SettingsNode(
                 new OrderedDictionary
                 {
-                    ["1"] = new RawSettings("val 1"),
-                    ["2"] = new RawSettings("val 2"),
+                    ["1"] = new SettingsNode("val 1"),
+                    ["2"] = new SettingsNode("val 2"),
                 });
-            var sets2 = new RawSettings(
+            var sets2 = new SettingsNode(
                 new OrderedDictionary
                 {
-                    ["1"] = new RawSettings("val 1"),
+                    ["1"] = new SettingsNode("val 1"),
                 });
             Equals(sets1, sets2).Should().BeFalse();
         }
@@ -125,17 +125,17 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Equals_returns_false_by_lists_values()
         {
-            var sets1 = new RawSettings(
+            var sets1 = new SettingsNode(
                 new OrderedDictionary
                 {
-                    ["1"] = new RawSettings("val 1"),
-                    ["2"] = new RawSettings("val 2"),
+                    ["1"] = new SettingsNode("val 1"),
+                    ["2"] = new SettingsNode("val 2"),
                 });
-            var sets2 = new RawSettings(
+            var sets2 = new SettingsNode(
                 new OrderedDictionary
                 {
-                    ["1"] = new RawSettings("val 1"),
-                    ["2"] = new RawSettings("val _"),
+                    ["1"] = new SettingsNode("val 1"),
+                    ["2"] = new SettingsNode("val _"),
                 });
             Equals(sets1, sets2).Should().BeFalse();
         }
@@ -143,49 +143,49 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Equals_returns_true_for_trees()
         {
-            var sets1 = new RawSettings(
+            var sets1 = new SettingsNode(
                 new OrderedDictionary
                 {
-                    ["1"] = new RawSettings(
+                    ["1"] = new SettingsNode(
                         new OrderedDictionary
                         {
-                            { "key 1", new RawSettings("val 1") },
-                            { "key 2", new RawSettings("val 2") },
+                            { "key 1", new SettingsNode("val 1") },
+                            { "key 2", new SettingsNode("val 2") },
                         }),
-                    ["2"] = new RawSettings(
+                    ["2"] = new SettingsNode(
                         new OrderedDictionary
                         {
-                            { "key 3", new RawSettings("val 3") },
-                            { "key 4", new RawSettings(
+                            { "key 3", new SettingsNode("val 3") },
+                            { "key 4", new SettingsNode(
                                 new OrderedDictionary
                                 {
-                                    ["1"] = new RawSettings("x1"),
-                                    ["2"] = new RawSettings("x2"),
+                                    ["1"] = new SettingsNode("x1"),
+                                    ["2"] = new SettingsNode("x2"),
                                 }) },
                         }),
-                    ["3"] = new RawSettings("5"),
+                    ["3"] = new SettingsNode("5"),
                 });
-            var sets2 = new RawSettings(
+            var sets2 = new SettingsNode(
                 new OrderedDictionary
                 {
-                    ["1"] = new RawSettings(
+                    ["1"] = new SettingsNode(
                         new OrderedDictionary
                         {
-                            { "key 1", new RawSettings("val 1") },
-                            { "key 2", new RawSettings("val 2") },
+                            { "key 1", new SettingsNode("val 1") },
+                            { "key 2", new SettingsNode("val 2") },
                         }),
-                    ["2"] = new RawSettings(
+                    ["2"] = new SettingsNode(
                         new OrderedDictionary
                         {
-                            { "key 3", new RawSettings("val 3") },
-                            { "key 4", new RawSettings(
+                            { "key 3", new SettingsNode("val 3") },
+                            { "key 4", new SettingsNode(
                                 new OrderedDictionary
                                 {
-                                    ["1"] = new RawSettings("x1"),
-                                    ["2"] = new RawSettings("x2"),
+                                    ["1"] = new SettingsNode("x1"),
+                                    ["2"] = new SettingsNode("x2"),
                                 }) },
                         }),
-                    ["3"] = new RawSettings("5"),
+                    ["3"] = new SettingsNode("5"),
                 });
             Equals(sets1, sets2).Should().BeTrue();
         }
@@ -193,20 +193,20 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Hashes_should_be_equal_for_equal_instances()
         {
-            var sets1 = new RawSettings("qwe");
-            var sets2 = new RawSettings("qwe");
+            var sets1 = new SettingsNode("qwe");
+            var sets2 = new SettingsNode("qwe");
             sets1.GetHashCode().Should().Be(sets2.GetHashCode());
 
-            sets1 = new RawSettings(new OrderedDictionary { {"qwe", new RawSettings("ewq")} });
-            sets2 = new RawSettings(new OrderedDictionary { {"qwe", new RawSettings("ewq")} });
+            sets1 = new SettingsNode(new OrderedDictionary { {"qwe", new SettingsNode("ewq")} });
+            sets2 = new SettingsNode(new OrderedDictionary { {"qwe", new SettingsNode("ewq")} });
             sets1.GetHashCode().Should().Be(sets2.GetHashCode());
 
-            sets1 = new RawSettings(
-                new OrderedDictionary { { "qwe", new RawSettings("ewq") } },
+            sets1 = new SettingsNode(
+                new OrderedDictionary { { "qwe", new SettingsNode("ewq") } },
                 "name",
                 "str");
-            sets2 = new RawSettings(
-                new OrderedDictionary { { "qwe", new RawSettings("ewq") } },
+            sets2 = new SettingsNode(
+                new OrderedDictionary { { "qwe", new SettingsNode("ewq") } },
                 "name",
                 "str");
             sets1.GetHashCode().Should().Be(sets2.GetHashCode());
@@ -215,24 +215,24 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Hashes_should_not_be_equal_for_not_equal_instances()
         {
-            var sets1 = new RawSettings("qwe");
-            var sets2 = new RawSettings("qwe_");
+            var sets1 = new SettingsNode("qwe");
+            var sets2 = new SettingsNode("qwe_");
             sets1.GetHashCode().Should().NotBe(sets2.GetHashCode());
 
-            sets1 = new RawSettings("qwe", "name");
-            sets2 = new RawSettings("qwe", "name_");
+            sets1 = new SettingsNode("qwe", "name");
+            sets2 = new SettingsNode("qwe", "name_");
             sets1.GetHashCode().Should().NotBe(sets2.GetHashCode());
 
-            sets1 = new RawSettings(new OrderedDictionary { {"qwe", new RawSettings("ewq")} });
-            sets2 = new RawSettings(new OrderedDictionary { {"qwe", new RawSettings("ewq_")} });
+            sets1 = new SettingsNode(new OrderedDictionary { {"qwe", new SettingsNode("ewq")} });
+            sets2 = new SettingsNode(new OrderedDictionary { {"qwe", new SettingsNode("ewq_")} });
             sets1.GetHashCode().Should().NotBe(sets2.GetHashCode());
 
-            sets1 = new RawSettings(
-                new OrderedDictionary { { "qwe", new RawSettings("ewq") } },
+            sets1 = new SettingsNode(
+                new OrderedDictionary { { "qwe", new SettingsNode("ewq") } },
                 "name",
                 "str");
-            sets2 = new RawSettings(
-                new OrderedDictionary { { "qwe_", new RawSettings("ewq") } },
+            sets2 = new SettingsNode(
+                new OrderedDictionary { { "qwe_", new SettingsNode("ewq") } },
                 "name",
                 "str");
             sets1.GetHashCode().Should().NotBe(sets2.GetHashCode());

@@ -8,9 +8,9 @@
         public NullableBinder(ISettingsBinder<T> elementBinder) =>
             this.elementBinder = elementBinder;
 
-        public T? Bind(IRawSettings settings)
+        public T? Bind(ISettingsNode settings)
         {
-            RawSettings.CheckSettings(settings, false);
+            SettingsNode.CheckSettings(settings, false);
             return settings.Value == null ? (T?)null : elementBinder.Bind(settings);
         }
     }
