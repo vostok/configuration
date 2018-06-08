@@ -1,49 +1,51 @@
-﻿/*using System;
-using System.Collections;
-using System.Collections.Specialized;
+﻿using System;
 using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using Vostok.Configuration.Extensions;
+using Vostok.Configuration.SettingsTree;
+using Vostok.Configuration.SettingsTree.Changable;
 
 namespace Vostok.Configuration.Sources
 {
     /// <inheritdoc />
     /// <summary>
-    /// Ini converter to <see cref="IRawSettings"/> tree from string
+    /// Ini converter to <see cref="ISettingsNode"/> tree from string
     /// </summary>
     public class IniStringSource : IConfigurationSource
     {
         private readonly string ini;
+        private readonly bool allowMultiLevelValues;
         private readonly TaskSource taskSource;
-        private IRawSettings currentSettings;
+        private ISettingsNode currentSettings;
         private bool neverParsed;
 
         /// <summary>
-        /// <para>Creates a <see cref="JsonFileSource"/> instance using given string in <paramref name="ini"/> parameter</para>
+        /// <para>Creates a <see cref="IniStringSource"/> instance using given string in <paramref name="ini"/> parameter</para>
         /// <para>Parsing is here.</para>
         /// </summary>
         /// <param name="ini">ini data in string</param>
+        /// <param name="allowMultiLevelValues">Allow interpret point divided values as fields of inner objects</param>
         /// <exception cref="Exception">Ini has wrong format</exception>
-        public IniStringSource(string ini)
+        public IniStringSource(string ini, bool allowMultiLevelValues = true)
         {
             this.ini = ini;
+            this.allowMultiLevelValues = allowMultiLevelValues;
             taskSource = new TaskSource();
             neverParsed = true;
         }
 
         /// <inheritdoc />
         /// <summary>
-        /// Returns previously parsed <see cref="IRawSettings"/> tree.
+        /// Returns previously parsed <see cref="ISettingsNode"/> tree.
         /// </summary>
-        public IRawSettings Get() => taskSource.Get(Observe());
+        public ISettingsNode Get() => taskSource.Get(Observe());
 
         /// <inheritdoc />
         /// <summary>
-        /// <para>Subscribtion to <see cref="RawSettings"/> tree changes.</para>
+        /// <para>Subscribtion to <see cref="ISettingsNode"/> tree changes.</para>
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
-        public IObservable<IRawSettings> Observe()
+        public IObservable<ISettingsNode> Observe()
         {
             if (neverParsed)
             {
@@ -51,7 +53,7 @@ namespace Vostok.Configuration.Sources
                 currentSettings = string.IsNullOrWhiteSpace(ini) ? null : ParseIni(ini, "root");
             }
 
-            return Observable.Create<IRawSettings>(
+            return Observable.Create<ISettingsNode>(
                 observer =>
                 {
                     observer.OnNext(currentSettings);
@@ -63,9 +65,9 @@ namespace Vostok.Configuration.Sources
         {
         }
 
-        private static IRawSettings ParseIni(string text, string name)
+        private ISettingsNode ParseIni(string text, string name)
         {
-            var res = new RawSettingsEditable(name);
+            var res = new UniversalNode(name);
             var section = res;
             var currentLine = -1;
 
@@ -90,86 +92,51 @@ namespace Vostok.Configuration.Sources
                 }
             }
 
-            if (res.Children.Count == 0 && res.Value == null)
-                return null;
-            return (RawSettings)res;
+            return !res.ChildrenDict.Any() ? null : (ObjectNode)res;
         }
 
-        private static RawSettingsEditable ParseSection(string section, RawSettingsEditable settings, int currentLine)
+        private UniversalNode ParseSection(string section, UniversalNode settings, int currentLine)
         {
             section = section.Replace(" ", "");
 
-            if (settings.Children[section] != null)
+            if (settings[section] != null)
                 throw new FormatException($"{nameof(IniStringSource)}: wrong ini file ({currentLine}): section \"{section}\" already exists");
-            var res = new RawSettingsEditable(section);
-            settings.Children.Add(section, res);
+            var res = new UniversalNode(section);
+            settings.Add(section, res);
             return res;
         }
 
-        private static void ParsePair(string key, string value, RawSettingsEditable settings, int currentLine)
+        private void ParsePair(string key, string value, UniversalNode settings, int currentLine)
         {
-            var keys = key.Replace(" ", "").Split('.');
+            var keys = allowMultiLevelValues ? key.Replace(" ", "").Split('.') : new[] {key.Replace(" ", "")};
             var isObj = false;
             var obj = settings;
             for (var i = 0; i < keys.Length; i++)
             {
                 if (i == keys.Length - 1)
                 {
-                    if (obj.Children[keys[i]] != null)
+                    if (obj[keys[i]] != null)
                     {
-                        var child = (RawSettingsEditable)obj.Children[keys[i]];
+                        var child = (UniversalNode)obj[keys[i]];
                         if (child.Value != null)
                             throw new FormatException($"{nameof(IniStringSource)}: wrong ini file ({currentLine}): key \"{keys[i]}\" with value \"{child.Value}\" already exists");
                         else
                             child.Value = value;
                     }
                     else
-                        obj.Children.Add(keys[i], new RawSettingsEditable(value, keys[i]));
+                        obj.Add(keys[i], new UniversalNode(value, keys[i]));
                 }
-                else if (obj.Children[keys[i]] == null)
+                else if (obj[keys[i]] == null)
                 {
-                    var newObj = new RawSettingsEditable(keys[i]);
-                    obj.Children.Add(keys[i], newObj);
+                    var newObj = new UniversalNode(keys[i]);
+                    obj.Add(keys[i], newObj);
                     obj = newObj;
                 }
                 else
-                    obj = (RawSettingsEditable)obj.Children[keys[i]];
+                    obj = (UniversalNode)obj[keys[i]];
 
                 isObj = !isObj;
             }
         }
-
-        private class RawSettingsEditable
-        {
-            public RawSettingsEditable(string name = "")
-            {
-                Children = new OrderedDictionary();
-                Name = name;
-            }
-
-            public RawSettingsEditable(string value, string name = "")
-            {
-                Children = new OrderedDictionary();
-                Value = value;
-                Name = name;
-            }
-
-            public string Value { get; set; }
-            public IOrderedDictionary Children { get; }
-
-            private string Name { get; }
-
-            public static explicit operator RawSettings(RawSettingsEditable settings)
-            {
-                IOrderedDictionary dict;
-                if (settings.Children.Count == 0)
-                    dict = null;
-                else
-                    dict = settings.Children.Cast<DictionaryEntry>()
-                        .ToOrderedDictionary(p => p.Key, p => (RawSettings)(RawSettingsEditable)p.Value, new ChildrenKeysComparer());
-
-                return new RawSettings(dict, settings.Name, settings.Value);
-            }
-        }
     }
-}*/
+}

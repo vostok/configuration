@@ -1,20 +1,21 @@
-﻿/*using System;
+﻿using System;
 using System.Reactive.Linq;
+using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Sources
 {
     /// <inheritdoc />
     /// <summary>
-    /// Base class for converters to <see cref="IRawSettings"/> tree from file
+    /// Base class for converters to <see cref="ISettingsNode"/> tree from file
     /// </summary>
     public class BaseFileSource : IConfigurationSource
     {
         private readonly string filePath;
-        private readonly Func<string, IRawSettings> parseSettings;
+        private readonly Func<string, ISettingsNode> parseSettings;
         private readonly Func<string, IObservable<string>> fileWatcherCreator;
         private readonly TaskSource taskSource;
-        private IObservable<IRawSettings> fileObserver;
-        private IRawSettings currentValue;
+        private IObservable<ISettingsNode> fileObserver;
+        private ISettingsNode currentValue;
 
         /// <summary>
         /// <para>Creates a <see cref="BaseFileSource"/> instance.</para>
@@ -22,12 +23,12 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         /// <param name="filePath">File name with settings</param>
         /// <param name="parseSettings">"Get" method invocation for string source</param>
-        protected BaseFileSource(string filePath, Func<string, IRawSettings> parseSettings)
+        protected BaseFileSource(string filePath, Func<string, ISettingsNode> parseSettings)
             : this(filePath, parseSettings, SettingsFileWatcher.WatchFile)
         {
         }
 
-        internal BaseFileSource(string filePath, Func<string, IRawSettings> parseSettings, Func<string, IObservable<string>> fileWatcherCreator)
+        internal BaseFileSource(string filePath, Func<string, ISettingsNode> parseSettings, Func<string, IObservable<string>> fileWatcherCreator)
         {
             this.filePath = filePath;
             this.parseSettings = parseSettings;
@@ -37,18 +38,18 @@ namespace Vostok.Configuration.Sources
 
         /// <inheritdoc />
         /// <summary>
-        /// <para>Returns last parsed <see cref="IRawSettings"/> tree.</para>
+        /// <para>Returns last parsed <see cref="ISettingsNode"/> tree.</para>
         /// <para>Waits for first read.</para>
         /// </summary>
         /// <exception cref="Exception">Only on first read. Otherwise returns last parsed value.</exception>
-        public IRawSettings Get() => taskSource.Get(Observe());
+        public ISettingsNode Get() => taskSource.Get(Observe());
 
         /// <inheritdoc />
         /// <summary>
-        /// <para>Subscribtion to <see cref="IRawSettings"/> tree changes.</para>
+        /// <para>Subscribtion to <see cref="ISettingsNode"/> tree changes.</para>
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
-        public IObservable<IRawSettings> Observe()
+        public IObservable<ISettingsNode> Observe()
         {
             if (fileObserver != null) return fileObserver;
 
@@ -67,4 +68,4 @@ namespace Vostok.Configuration.Sources
         {
         }
     }
-}*/
+}

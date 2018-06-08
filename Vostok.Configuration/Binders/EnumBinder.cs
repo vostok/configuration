@@ -8,7 +8,7 @@ namespace Vostok.Configuration.Binders
     {
         public T Bind(ISettingsNode settings)
         {
-            // RawSettings.CheckSettings(settings);
+            SettingsNode.CheckSettings(settings);
 
             if (Enum.TryParse<T>(settings.Value, true, out var result))
                 return result;

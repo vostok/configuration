@@ -12,7 +12,7 @@ namespace Vostok.Configuration.Binders
 
         public T? Bind(ISettingsNode settings)
         {
-            // RawSettings.CheckSettings(settings, false);
+            SettingsNode.CheckSettings(settings);
             return settings.Value == null ? (T?)null : elementBinder.Bind(settings);
         }
     }

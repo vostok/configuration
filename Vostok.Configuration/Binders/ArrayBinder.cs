@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Vostok.Configuration.Extensions;
 using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Binders
@@ -15,7 +16,7 @@ namespace Vostok.Configuration.Binders
         {
             var subType = typeof(T).GetElementType();
             var binder = binderFactory.CreateForType(subType);
-            // RawSettings.CheckSettings(settings);
+            SettingsNode.CheckSettings(settings);
 
             var i = 0;
             var instance = Array.CreateInstance(subType, settings.Children.Count());

@@ -18,7 +18,7 @@ namespace Vostok.Configuration.Binders
             var type = typeof(T);
             if (!parsers.ContainsKey(type) && type != typeof(string))
                 throw new ArgumentException($"{nameof(PrimitiveAndSimpleBinder<T>)}: have no parser for the type \"{type.Name}\"");
-            // RawSettings.CheckSettings(settings);
+            SettingsNode.CheckSettings(settings);
 
             string value;
             if (!string.IsNullOrWhiteSpace(settings.Value))

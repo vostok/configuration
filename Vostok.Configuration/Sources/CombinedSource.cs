@@ -7,6 +7,7 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using JetBrains.Annotations;
 using Vostok.Configuration.Extensions;
+using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Sources
 {
@@ -20,13 +21,13 @@ namespace Vostok.Configuration.Sources
         private readonly IReadOnlyCollection<IConfigurationSource> sources;
         private readonly SourceCombineOptions sourceCombineOptions;
         private readonly CombineOptions combineOptions;
-        private readonly IList<IObserver<IRawSettings>> observers;
-//        private readonly BehaviorSubject<IRawSettings> observers;
+        private readonly IList<IObserver<ISettingsNode>> observers;
+//        private readonly BehaviorSubject<ISettingsNode> observers;
         private readonly ConcurrentBag<IDisposable> watchers;
 //        private readonly ConcurrentBag<IDisposable> watchers;
 //        private readonly IList<IDisposable> watchers;
-        private readonly IOrderedDictionary sourcesSettings;
-        private IRawSettings currentValue;
+        private readonly IDictionary<string, ISettingsNode> sourcesSettings;
+        private ISettingsNode currentValue;
         private readonly TaskSource taskSource;
         private readonly object locker;
         private bool neverMerged = true;
@@ -47,12 +48,12 @@ namespace Vostok.Configuration.Sources
             this.sourceCombineOptions = sourceCombineOptions;
             this.combineOptions = combineOptions;
             locker = new object();
-//            sourcesSettings = new Dictionary<IConfigurationSource, IRawSettings>();
-//            observers = new BehaviorSubject<IRawSettings>(currentSettings);
+//            sourcesSettings = new Dictionary<IConfigurationSource, ISettingsNode>();
+//            observers = new BehaviorSubject<ISettingsNode>(currentSettings);
 //            watchers = new List<IDisposable>(sources.Count);
             taskSource = new TaskSource();
             watchers = new ConcurrentBag<IDisposable>();
-            observers = new List<IObserver<IRawSettings>>();
+            observers = new List<IObserver<ISettingsNode>>();
             sourcesSettings = new OrderedDictionary(sources.Count, new ChildrenKeysComparer());
             /*foreach (var source in sources)
             {
@@ -87,16 +88,16 @@ namespace Vostok.Configuration.Sources
         /// Returns previously combined configurations. Null if sources where not specified.
         /// </summary>
         /// <returns>Combine as RawSettings tree</returns>
-        public IRawSettings Get() => taskSource.Get(Observe());
+        public ISettingsNode Get() => taskSource.Get(Observe());
 
         /// <inheritdoc />
         /// <summary>
-        /// <para>Subscribtion to see <see cref="IRawSettings"/> changes in any of sources.</para>
+        /// <para>Subscribtion to see <see cref="ISettingsNode"/> changes in any of sources.</para>
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
         /// <returns>Event with new RawSettings tree</returns>
-        public IObservable<IRawSettings> Observe() =>
-            Observable.Create<IRawSettings>(
+        public IObservable<ISettingsNode> Observe() =>
+            Observable.Create<ISettingsNode>(
                 observer =>
                 {
                     if (!watchers.Any())
@@ -114,7 +115,7 @@ namespace Vostok.Configuration.Sources
                                             if (!Equals(newSettings, sourcesSettings[src]))
                                             {
                                                 sourcesSettings[src] = newSettings;
-                                                currentValue = Merge(sourcesSettings.Values.Cast<IRawSettings>());
+                                                currentValue = Merge(sourcesSettings.Values.Cast<ISettingsNode>());
                                                 observer.OnNext(currentValue);
                                             }
                                             if (neverMerged && currentValue != null)
@@ -124,7 +125,7 @@ namespace Vostok.Configuration.Sources
                             watchers.Add(watcher);
                         }
 
-                        currentValue = Merge(sourcesSettings.Values.Cast<IRawSettings>());
+                        currentValue = Merge(sourcesSettings.Values.Cast<ISettingsNode>());
                     }
 
                     if (!observers.Contains(observer))
@@ -145,7 +146,7 @@ namespace Vostok.Configuration.Sources
                 watcher.Dispose();
         }
 
-        private RawSettings Merge(IEnumerable<IRawSettings> settingses, string name = "root")
+        private RawSettings Merge(IEnumerable<ISettingsNode> settingses, string name = "root")
         {
             neverMerged = false;
 

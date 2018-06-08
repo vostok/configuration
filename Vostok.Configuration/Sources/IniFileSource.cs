@@ -1,10 +1,11 @@
-﻿/*using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
+using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Sources
 {
     /// <inheritdoc />
     /// <summary>
-    /// Ini converter to <see cref="RawSettings"/> tree from file
+    /// Ini converter to <see cref="ISettingsNode"/> tree from file
     /// </summary>
     public class IniFileSource : BaseFileSource
     {
@@ -22,4 +23,4 @@ namespace Vostok.Configuration.Sources
                 })
         { }
     }
-}*/
+}

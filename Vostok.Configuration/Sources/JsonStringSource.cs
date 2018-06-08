@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Newtonsoft.Json.Linq;
@@ -21,7 +20,7 @@ namespace Vostok.Configuration.Sources
         private bool neverParsed;
 
         /// <summary>
-        /// <para>Creates a <see cref="JsonFileSource"/> instance using given string in <paramref name="json"/> parameter</para>
+        /// <para>Creates a <see cref="JsonStringSource"/> instance using given string in <paramref name="json"/> parameter</para>
         /// <para>Parsing is here.</para>
         /// </summary>
         /// <param name="json">Json data in string</param>

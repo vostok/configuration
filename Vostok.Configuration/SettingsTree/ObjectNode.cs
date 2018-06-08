@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Vostok.Configuration.SettingsTree
 {
-    public sealed class ObjectNode : ISettingsNode//, IEquatable<RawSettings>
+    internal sealed class ObjectNode : ISettingsNode //, IEquatable<RawSettings>
     {
         private readonly IReadOnlyDictionary<string, ISettingsNode> children;
 
@@ -14,15 +14,15 @@ namespace Vostok.Configuration.SettingsTree
         }
 
         public ObjectNode(IReadOnlyDictionary<string, ISettingsNode> children, string name = null)
-            :this(name, children)
+            : this(name, children)
         {
         }
 
         public string Name { get; }
-        string ISettingsNode.Value { get; } = null;
-        public ISettingsNode this[string name] => children.TryGetValue(name, out var res) ? res : null;
         public IEnumerable<ISettingsNode> Children => children?.Values ?? Enumerable.Empty<ObjectNode>();
-        
+        public ISettingsNode this[string name] => children.TryGetValue(name, out var res) ? res : null;
+        string ISettingsNode.Value { get; } = null;
+
         #region Equality
 
         /*public override bool Equals(object obj) => Equals(obj as RawSettings);

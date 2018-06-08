@@ -1,11 +1,12 @@
-﻿/*using System;
+﻿using System;
 using JetBrains.Annotations;
+using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Sources
 {
     /// <inheritdoc />
     /// <summary>
-    /// Json converter to <see cref="RawSettings"/> tree from file
+    /// Json converter to <see cref="ISettingsNode"/> tree from file
     /// </summary>
     public class JsonFileSource : BaseFileSource
     {
@@ -33,4 +34,4 @@ namespace Vostok.Configuration.Sources
                 fileWatcherCreator)
         { }
     }
-}*/
+}

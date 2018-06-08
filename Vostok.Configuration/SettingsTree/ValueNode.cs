@@ -1,10 +1,9 @@
-﻿
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace Vostok.Configuration.SettingsTree
 {
-    public sealed class ValueNode : ISettingsNode
+    internal sealed class ValueNode : ISettingsNode
     {
         public ValueNode(string value, string name = null)
         {
@@ -14,7 +13,7 @@ namespace Vostok.Configuration.SettingsTree
 
         public string Name { get; }
         public string Value { get; }
-        ISettingsNode ISettingsNode.this[string name] => null;
         IEnumerable<ISettingsNode> ISettingsNode.Children => Enumerable.Empty<ArrayNode>();
+        ISettingsNode ISettingsNode.this[string name] => null;
     }
 }

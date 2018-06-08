@@ -1,4 +1,4 @@
-﻿/*using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -13,14 +13,6 @@ namespace Vostok.Configuration.Tests.Sources
     [TestFixture]
     public class JsonFileSource_Tests
     {
-        private const string TestName = nameof(JsonFileSource);
-        
-        [TearDown]
-        public void Cleanup()
-        {
-            TestHelper.DeleteAllFiles(TestName);
-        }
-
         [Test]
         public void Should_return_null_if_file_not_exists()
         {
@@ -217,4 +209,4 @@ namespace Vostok.Configuration.Tests.Sources
             }
         }
     }
-}*/
+}

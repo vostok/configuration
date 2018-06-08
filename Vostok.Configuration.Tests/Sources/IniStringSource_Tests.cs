@@ -1,4 +1,4 @@
-﻿/*using System;
+﻿using System;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using NUnit.Framework;
@@ -95,17 +95,43 @@ namespace Vostok.Configuration.Tests.Sources
             }
         }
 
-        [TestCase("a=0 \r a.b.c=2 \r a.b=1", TestName = "Order #1")]
-        [TestCase("a=0 \r a.b=1 \r a.b.c=2", TestName = "Order #2")]
-        [TestCase("a.b.c=2 \r a.b=1 \r a=0", TestName = "Order #3")]
-        public void Should_deep_parse_keys_with_different_order(string value)
+        [Test]
+        public void Should_deep_parse_keys()
         {
-            using (var iss = new IniStringSource(value))
+            using (var iss = new IniStringSource("a=0 \r a.b=1"))
             {
                 var result = iss.Get();
-                result["a"].Value.Should().Be("0");
+                result["a"].Value.Should().BeNull("rewritten with b");
                 result["a"]["b"].Value.Should().Be("1");
+            }
+
+            using (var iss = new IniStringSource("a=0 \r a.b=1 \r a.b.c=2"))
+            {
+                var result = iss.Get();
+                result["a"].Value.Should().BeNull("rewritten with b");
+                result["a"]["b"].Value.Should().BeNull("rewritten with c");
                 result["a"]["b"]["c"].Value.Should().Be("2");
+            }
+        }
+
+        [Test]
+        public void Should_throw_if_key_already_exists_while_deep_parsing()
+        {
+            new Action(() => {
+                using (var iss = new IniStringSource("a=0 \r a.b.c=2 \r a.b=1"))
+                    iss.Get();
+            }).Should().Throw<FormatException>();
+        }
+
+        [Test]
+        public void Should_not_parse_in_deep_id_turned_off()
+        {
+            using (var iss = new IniStringSource("a.b.c=2 \r a.b=1 \r a=0", false))
+            {
+                var result = iss.Get();
+                result["a.b.c"].Value.Should().Be("2");
+                result["a.b"].Value.Should().Be("1");
+                result["a"].Value.Should().Be("0");
             }
         }
 
@@ -135,4 +161,4 @@ namespace Vostok.Configuration.Tests.Sources
             return val;
         }
     }
-}*/
+}
