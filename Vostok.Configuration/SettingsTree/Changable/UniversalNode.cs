@@ -44,6 +44,7 @@ namespace Vostok.Configuration.SettingsTree.Changable
         }
         IEnumerable<ISettingsNode> ISettingsNode.Children => Enumerable.Empty<UniversalNode>();
         ISettingsNode ISettingsNode.this[string name] => null;
+        public ISettingsNode Merge(ISettingsNode other, SettingsMergeOptions options) => null;
 
         public void Add(ISettingsNode value) => childrenList.Add(value);
         public void Add(string key, ISettingsNode value) => childrenDict.Add(key, value);

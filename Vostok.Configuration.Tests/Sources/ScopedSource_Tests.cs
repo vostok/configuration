@@ -1,12 +1,13 @@
-﻿/*using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons.Conversions;
 using Vostok.Commons.Testing;
+using Vostok.Configuration.SettingsTree;
 using Vostok.Configuration.Sources;
 using Vostok.Configuration.Tests.Helper;
 
@@ -15,19 +16,18 @@ namespace Vostok.Configuration.Tests.Sources
     [TestFixture]
     public class ScopedSource_Tests
     {
-        private const string TestName = nameof(ScopedSource);
-
-        [TearDown]
-        public void Cleanup()
-        {
-            TestHelper.DeleteAllFiles(TestName);
-        }
-
         [Test]
         public void Should_return_full_tree_by_source()
         {
-            var fileName = TestHelper.CreateFile(TestName, "{ \"value\": 1 }");
-            using (var jfs = new JsonFileSource(fileName))
+            const string fileName = "test.json";
+            const string content = "{ 'value': 1 }";
+
+            using (var jfs = new JsonFileSource(fileName, f =>
+            {
+                var watcher = new SingleFileWatcherSubstitute(f);
+                watcher.GetUpdate(content); //create file
+                return watcher;
+            }))
             using (var ss = new ScopedSource(jfs))
             {
                 var result = ss.Get();
@@ -38,9 +38,9 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_return_full_tree_by_tree()
         {
-            var tree = new RawSettings(new OrderedDictionary
+            var tree = new ObjectNode(new SortedDictionary<string, ISettingsNode>
             {
-                ["value"] = new RawSettings("1"),
+                ["value"] = new ValueNode("1"),
             });
 
             using (var ss = new ScopedSource(tree))
@@ -53,8 +53,15 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_scope_by_dictionaries_keys()
         {
-            var fileName = TestHelper.CreateFile(TestName, "{ \"value 1\": { \"value 2\": { \"value 3\": 1 } } }");
-            using (var jfs = new JsonFileSource(fileName))
+            const string fileName = "test.json";
+            const string content = "{ 'value 1': { 'value 2': { 'value 3': 1 } } }";
+
+            using (var jfs = new JsonFileSource(fileName, f =>
+            {
+                var watcher = new SingleFileWatcherSubstitute(f);
+                watcher.GetUpdate(content); //create file
+                return watcher;
+            }))
             {
                 using (var ss = new ScopedSource(jfs, "value 1", "value 2"))
                 {
@@ -73,8 +80,15 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_scope_by_list_indexes()
         {
-            var fileName = TestHelper.CreateFile(TestName, "{ \"value\": [[1,2], [3,4,5]] }");
-            using (var jfs = new JsonFileSource(fileName))
+            const string fileName = "test.json";
+            const string content = "{ 'value': [[1,2], [3,4,5]] }";
+
+            using (var jfs = new JsonFileSource(fileName, f =>
+            {
+                var watcher = new SingleFileWatcherSubstitute(f);
+                watcher.GetUpdate(content); //create file
+                return watcher;
+            }))
             {
                 using (var ss = new ScopedSource(jfs, "value", "[0]"))
                 {
@@ -94,8 +108,15 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_return_null()
         {
-            var fileName = TestHelper.CreateFile(TestName, "{ \"value\": { \"list\": [1,2] } }");
-            using (var jfs = new JsonFileSource(fileName))
+            const string fileName = "test.json";
+            const string content = "{ 'value': { 'list': [1,2] } }";
+
+            using (var jfs = new JsonFileSource(fileName, f =>
+            {
+                var watcher = new SingleFileWatcherSubstitute(f);
+                watcher.GetUpdate(content); //create file
+                return watcher;
+            }))
             {
                 using (var ss = new ScopedSource(jfs, "unknown value"))
                     ss.Get().Should().BeNull();
@@ -110,29 +131,41 @@ namespace Vostok.Configuration.Tests.Sources
             }
         }
 
-        //todo: fails sometimes
         [Test]
         public void Should_observe_file()
         {
-            List<IRawSettings> result = null;
+            List<ISettingsNode> result = null;
             new Action(() => result = ShouldObserveFileTest_ReturnsReceivedSubtrees()).ShouldPassIn(1.Seconds());
             result.Select(r => r.Value).Should().Equal("2", "4");
         }
 
-        private List<IRawSettings> ShouldObserveFileTest_ReturnsReceivedSubtrees()
+        private List<ISettingsNode> ShouldObserveFileTest_ReturnsReceivedSubtrees()
         {
-            var fileName = TestHelper.CreateFile(TestName, "{ \"value\": { \"list\": [1,2] } }");
-            using (var jfs = new JsonFileSource(fileName))
+            const string fileName = "test.json";
+            var content = "{ 'value': { 'list': [1,2] } }";
+            SingleFileWatcherSubstitute watcher = null;
+
+            using (var jfs = new JsonFileSource(fileName, f =>
             {
-                var rsList = new List<IRawSettings>();
+                watcher = new SingleFileWatcherSubstitute(f);
+                watcher.GetUpdate(content); //create file
+                return watcher;
+            }))
+            {
+                var rsList = new List<ISettingsNode>();
 
                 using (var ss = new ScopedSource(jfs, "value", "list", "[1]"))
                 {
                     var sub = ss.Observe().Subscribe(settings => rsList.Add(settings));
 
-                    Thread.Sleep(200.Milliseconds());
-                    TestHelper.CreateFile(TestName, "{ \"value\": { \"list\": [3,4,5] } }", fileName);
-                    Thread.Sleep(200.Milliseconds());
+                    content = "{ 'value': { 'list': [3,4,5] } }";
+                    //update file
+                    Task.Run(() =>
+                    {
+                        Thread.Sleep(50);
+                        watcher.GetUpdate(content);
+                    });
+                    Thread.Sleep(150.Milliseconds());
 
                     sub.Dispose();
                 }
@@ -141,4 +174,4 @@ namespace Vostok.Configuration.Tests.Sources
             }
         }
     }
-}*/
+}

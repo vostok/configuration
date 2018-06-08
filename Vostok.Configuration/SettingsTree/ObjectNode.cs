@@ -21,6 +21,16 @@ namespace Vostok.Configuration.SettingsTree
         public string Name { get; }
         public IEnumerable<ISettingsNode> Children => children?.Values ?? Enumerable.Empty<ObjectNode>();
         public ISettingsNode this[string name] => children.TryGetValue(name, out var res) ? res : null;
+        public ISettingsNode Merge(ISettingsNode other, SettingsMergeOptions options)
+        {
+            return other;
+            /*if (options.TreeMergeStyle == TreeMergeStyle.Shallow)
+                return other;
+            if (options.TreeMergeStyle == TreeMergeStyle.Deep)*/
+            // shallow: если хотя бы как-то отличаются дети, то заменяем новым. Если полностью совпадают, то рекурсивно стыкуем их детей.
+            // deep: объединяем, с одинаковыми именами заменяем новым
+        }
+
         string ISettingsNode.Value { get; } = null;
 
         #region Equality

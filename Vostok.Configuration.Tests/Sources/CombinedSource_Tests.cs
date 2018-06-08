@@ -157,15 +157,14 @@ namespace Vostok.Configuration.Tests.Sources
                 result["value"].Children.ElementAt(1).Value.Should().Be("2");
                 result["value"].Children.ElementAt(2).Value.Should().Be("3");
                 result["value"].Children.ElementAt(3).Value.Should().Be("4");
-//                result["value 2"]["subval 1"].Value.Should().Be("string 2");
-//                result["value 2"]["subval 2"].Value.Should().Be("string 22");
             }
             using (var cs = CreateCombinedSource(fileNames, SourceCombineOptions.LastIsMain, CombineOptions.DeepMerge))
             {
                 var result = cs.Get();
-                result["value 1"]["subval 1"].Value.Should().Be("string 11");
-                result["value 2"]["subval 1"].Value.Should().Be("string 2");
-                result["value 2"]["subval 2"].Value.Should().Be("string 22");
+                result["value"].Children.ElementAt(0).Value.Should().Be("1");
+                result["value"].Children.ElementAt(1).Value.Should().Be("2");
+                result["value"].Children.ElementAt(2).Value.Should().Be("3");
+                result["value"].Children.ElementAt(3).Value.Should().Be("4");
             }
         }
 

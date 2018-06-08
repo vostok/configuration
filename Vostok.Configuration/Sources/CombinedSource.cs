@@ -26,7 +26,7 @@ namespace Vostok.Configuration.Sources
         private readonly ConcurrentBag<IDisposable> watchers;
 //        private readonly ConcurrentBag<IDisposable> watchers;
 //        private readonly IList<IDisposable> watchers;
-        private readonly IDictionary<string, ISettingsNode> sourcesSettings;
+        private readonly IDictionary<IConfigurationSource, ISettingsNode> sourcesSettings;
         private ISettingsNode currentValue;
         private readonly TaskSource taskSource;
         private readonly object locker;
@@ -54,7 +54,7 @@ namespace Vostok.Configuration.Sources
             taskSource = new TaskSource();
             watchers = new ConcurrentBag<IDisposable>();
             observers = new List<IObserver<ISettingsNode>>();
-            sourcesSettings = new OrderedDictionary(sources.Count, new ChildrenKeysComparer());
+            sourcesSettings = new Dictionary<IConfigurationSource, ISettingsNode>();
             /*foreach (var source in sources)
             {
                 var src = source;
@@ -115,7 +115,7 @@ namespace Vostok.Configuration.Sources
                                             if (!Equals(newSettings, sourcesSettings[src]))
                                             {
                                                 sourcesSettings[src] = newSettings;
-                                                currentValue = Merge(sourcesSettings.Values.Cast<ISettingsNode>());
+                                                currentValue = Merge(sourcesSettings.Values);
                                                 observer.OnNext(currentValue);
                                             }
                                             if (neverMerged && currentValue != null)
@@ -146,27 +146,28 @@ namespace Vostok.Configuration.Sources
                 watcher.Dispose();
         }
 
-        private RawSettings Merge(IEnumerable<ISettingsNode> settingses, string name = "root")
+        private ISettingsNode Merge(IEnumerable<ISettingsNode> settingses, string name = "root")
         {
             neverMerged = false;
 
-            var sets = settingses as RawSettings[] ?? settingses.ToArray();
+            var sets = settingses as ISettingsNode[] ?? settingses.ToArray();
             if (!sets.Any() || sets.Any(s => s == null)) return null;
 
             var datas = sets.Select(s => s.Children.ToArray()).ToArray();
             var lookup = datas.SelectMany(d => d).ToLookup(d => d.Name);
 
-            IOrderedDictionary dict = null;
+            SortedDictionary<string, ISettingsNode> dict = null;
             if (combineOptions == CombineOptions.Override)
-                dict = lookup.ToOrderedDictionary(l => l.Key,
-                    l => sourceCombineOptions == SourceCombineOptions.FirstIsMain ? l.First() : l.Last());
+                dict = lookup.ToSortedDictionary(l => l.Key,
+                    l => sourceCombineOptions == SourceCombineOptions.FirstIsMain ? l.First() : l.Last(), new ChildrenKeysComparer());
             else if (combineOptions == CombineOptions.DeepMerge)
-                dict = lookup.ToOrderedDictionary(l => l.Key,
+                dict = lookup.ToSortedDictionary(l => l.Key,
                     l => l.All(s => !s.Children.Any())
                         ? (sourceCombineOptions == SourceCombineOptions.FirstIsMain ? l.First() : l.Last())
-                        : Merge(l, l.Key));
+                        : Merge(l, l.Key),
+                    new ChildrenKeysComparer());
 
-            return new RawSettings(dict, name);
+            return new ObjectNode(dict, name);
         }
     }
 }*/

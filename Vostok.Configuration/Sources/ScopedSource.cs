@@ -127,10 +127,10 @@ namespace Vostok.Configuration.Sources
                         settings = settings[scope[i]];
                 }
                 else if (settings.Children.Any() &&
-                         scope[i].StartsWith("[") && scope[i].EndsWith("]") && scope[i].Length > 2)
+                         scope[i].StartsWith("[") && scope[i].EndsWith("]") && scope[i].Length > 2 && settings is ArrayNode)
                 {
                     var num = scope[i].Substring(1, scope[i].Length - 2);
-                    if (int.TryParse(num, out var index) && index <= settings.Children.Count() && settings.Children.ElementAt(index)?.Name == index.ToString())
+                    if (int.TryParse(num, out var index) && index < settings.Children.Count())
                     {
                         if (i == scope.Length - 1)
                             return settings.Children.ElementAt(index);

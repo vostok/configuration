@@ -19,7 +19,7 @@ namespace Vostok.Configuration.Tests.Sources
             using (var jfs = new JsonFileSource("some_file"))
             {
                 jfs.Get().Should().BeNull();
-                jfs.Get().Should().BeNull("should work and return last value");
+                jfs.Get().Should().BeNull("should work and return same value");
             }
         }
 

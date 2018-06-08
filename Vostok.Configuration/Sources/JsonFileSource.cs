@@ -16,22 +16,19 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         /// <param name="filePath">File name with settings</param>
         public JsonFileSource([NotNull] string filePath)
-            : base(filePath,
-                data =>
-                {
-                    using (var source = new JsonStringSource(data))
-                        return source.Get();
-                })
-        { }
+            : base(filePath, ParseSettings)
+        {
+        }
 
         internal JsonFileSource([NotNull] string filePath, Func<string, IObservable<string>> fileWatcherCreator)
-            : base(filePath,
-                data =>
-                {
-                    using (var source = new JsonStringSource(data))
-                        return source.Get();
-                },
-                fileWatcherCreator)
-        { }
+            : base(filePath, ParseSettings, fileWatcherCreator)
+        {
+        }
+
+        private static ISettingsNode ParseSettings(string str)
+        {
+            using (var source = new JsonStringSource(str))
+                return source.Get();
+        }
     }
 }

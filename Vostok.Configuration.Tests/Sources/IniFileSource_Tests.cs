@@ -9,13 +9,13 @@ namespace Vostok.Configuration.Tests.Sources
     [TestFixture]
     public class IniFileSource_Tests
     {
-        private const string TestName = nameof(IniFileSource);
+        /*private const string TestName = nameof(IniFileSource);
         
         [TearDown]
         public void Cleanup()
         {
             TestHelper.DeleteAllFiles(TestName);
-        }
+        }*/
 
         [Test]
         public void Should_return_null_if_file_not_exists()
@@ -27,9 +27,15 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_parse_simple()
         {
-            var fileName = TestHelper.CreateFile(TestName, "value = 123 \n value2 = 321");
+            const string fileName = "test.ini";
+            const string content = "value = 123 \n value2 = 321";
 
-            using (var ifs = new IniFileSource(fileName))
+            using (var ifs = new IniFileSource(fileName, f =>
+            {
+                var watcher = new SingleFileWatcherSubstitute(f);
+                watcher.GetUpdate(content); //create file
+                return watcher;
+            }))
             {
                 var result = ifs.Get();
                 result["value"].Value.Should().Be("123");
@@ -40,10 +46,17 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_throw_exception_if_exception_was_thrown_and_has_no_observers()
         {
-            var fileName = TestHelper.CreateFile(TestName, "wrong file format");
+            const string fileName = "test.ini";
+            const string content = "wrong file format";
+
             new Action(() =>
             {
-                using (var ifs = new IniFileSource(fileName))
+                using (var ifs = new IniFileSource(fileName, f =>
+                {
+                    var watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                }))
                     ifs.Get();
             }).Should().Throw<Exception>();
         }

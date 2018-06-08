@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using System;
+using JetBrains.Annotations;
 using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Sources
@@ -15,12 +16,19 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         /// <param name="filePath">File name with settings</param>
         public IniFileSource([NotNull] string filePath)
-            : base(filePath,
-                data =>
-                {
-                    using (var source = new IniStringSource(data))
-                        return source.Get();
-                })
-        { }
+            : base(filePath, ParseSettings)
+        {
+        }
+
+        internal IniFileSource([NotNull] string filePath, Func<string, IObservable<string>> fileWatcherCreator)
+            : base(filePath, ParseSettings, fileWatcherCreator)
+        {
+        }
+
+        private static ISettingsNode ParseSettings(string str)
+        {
+            using (var source = new IniStringSource(str))
+                return source.Get();
+        }
     }
 }
