@@ -83,7 +83,6 @@ namespace Vostok.Configuration.Tests.Sources
             }
         }
 
-        //todo: fails sometimes
         [Test]
         public void Should_Observe_file()
         {

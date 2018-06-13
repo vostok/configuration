@@ -1,4 +1,4 @@
-﻿/*using System;
+﻿using System;
 using System.Threading;
 using FluentAssertions;
 using NUnit.Framework;
@@ -55,8 +55,7 @@ namespace Vostok.Configuration.Tests.Sources
             watcher.Should().Be(anotherWatcher);
         }
 
-        //todo: fails sometimes
-        [Test]
+        [Test, Explicit("Unstable on mass start")]
         public void Should_Observe_file()
         {
             var res = 0;
@@ -161,4 +160,4 @@ namespace Vostok.Configuration.Tests.Sources
             return val;
         }
     }
-}*/
+}

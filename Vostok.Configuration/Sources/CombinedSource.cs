@@ -1,12 +1,10 @@
-/*using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using JetBrains.Annotations;
-using Vostok.Configuration.Extensions;
 using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Sources
@@ -19,17 +17,13 @@ namespace Vostok.Configuration.Sources
     {
         [NotNull]
         private readonly IReadOnlyCollection<IConfigurationSource> sources;
-        private readonly SourceCombineOptions sourceCombineOptions;
-        private readonly CombineOptions combineOptions;
+        private readonly SettingsMergeOptions options;
         private readonly IList<IObserver<ISettingsNode>> observers;
-//        private readonly BehaviorSubject<ISettingsNode> observers;
         private readonly ConcurrentBag<IDisposable> watchers;
-//        private readonly ConcurrentBag<IDisposable> watchers;
-//        private readonly IList<IDisposable> watchers;
         private readonly IDictionary<IConfigurationSource, ISettingsNode> sourcesSettings;
-        private ISettingsNode currentValue;
         private readonly TaskSource taskSource;
         private readonly object locker;
+        private ISettingsNode currentValue;
         private bool neverMerged = true;
 
         /// <summary>
@@ -37,39 +31,18 @@ namespace Vostok.Configuration.Sources
         /// <para>Combines sources here.</para>
         /// </summary>
         /// <param name="sources">Configuration sources to combine</param>
-        /// <param name="sourceCombineOptions">Options for source combining</param>
-        /// <param name="combineOptions">Options for lists combining</param>
+        /// <param name="options"></param>
         public CombinedSource(
             [NotNull] IReadOnlyCollection<IConfigurationSource> sources,
-            SourceCombineOptions sourceCombineOptions,
-            CombineOptions combineOptions)
+            SettingsMergeOptions options)
         {
             this.sources = sources;
-            this.sourceCombineOptions = sourceCombineOptions;
-            this.combineOptions = combineOptions;
+            this.options = options;
             locker = new object();
-//            sourcesSettings = new Dictionary<IConfigurationSource, ISettingsNode>();
-//            observers = new BehaviorSubject<ISettingsNode>(currentSettings);
-//            watchers = new List<IDisposable>(sources.Count);
             taskSource = new TaskSource();
             watchers = new ConcurrentBag<IDisposable>();
             observers = new List<IObserver<ISettingsNode>>();
             sourcesSettings = new Dictionary<IConfigurationSource, ISettingsNode>();
-            /*foreach (var source in sources)
-            {
-                var src = source;
-                var watcher = source.Observe().Subscribe(
-                    settings =>
-                    {
-                        sourcesSettings[src] = settings;
-                        MergeIntoCurrentSettings(sourcesSettings.Values.ToArray());
-                        observers.OnNext(currentSettings);
-                    });
-                watchers.Add(watcher);
-            }
-
-            sourcesSettings = sources.ToDictionary(s => s, s => s.Get());
-            MergeIntoCurrentSettings(sourcesSettings.Values.ToArray());#1#
         }
 
         /// <inheritdoc />
@@ -79,7 +52,7 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         /// <param name="sources">Configurations</param>
         public CombinedSource(params IConfigurationSource[] sources)
-            : this(sources.ToArray(), SourceCombineOptions.LastIsMain, CombineOptions.Override)
+            : this(sources.ToArray(), SettingsMergeOptions.Default())
         {
         }
 
@@ -118,6 +91,7 @@ namespace Vostok.Configuration.Sources
                                                 currentValue = Merge(sourcesSettings.Values);
                                                 observer.OnNext(currentValue);
                                             }
+
                                             if (neverMerged && currentValue != null)
                                                 observer.OnNext(currentValue);
                                         }
@@ -125,7 +99,7 @@ namespace Vostok.Configuration.Sources
                             watchers.Add(watcher);
                         }
 
-                        currentValue = Merge(sourcesSettings.Values.Cast<ISettingsNode>());
+                        currentValue = Merge(sourcesSettings.Values);
                     }
 
                     if (!observers.Contains(observer))
@@ -146,28 +120,19 @@ namespace Vostok.Configuration.Sources
                 watcher.Dispose();
         }
 
-        private ISettingsNode Merge(IEnumerable<ISettingsNode> settingses, string name = "root")
+        private ISettingsNode Merge(IEnumerable<ISettingsNode> settingses)
         {
             neverMerged = false;
 
             var sets = settingses as ISettingsNode[] ?? settingses.ToArray();
             if (!sets.Any() || sets.Any(s => s == null)) return null;
+            if (sets.Length == 1) return sets[0];
 
-            var datas = sets.Select(s => s.Children.ToArray()).ToArray();
-            var lookup = datas.SelectMany(d => d).ToLookup(d => d.Name);
+            var merge = sets[0];
+            for (var i = 1; i < sets.Length; i++)
+                merge = merge.Merge(sets[i], options);
 
-            SortedDictionary<string, ISettingsNode> dict = null;
-            if (combineOptions == CombineOptions.Override)
-                dict = lookup.ToSortedDictionary(l => l.Key,
-                    l => sourceCombineOptions == SourceCombineOptions.FirstIsMain ? l.First() : l.Last(), new ChildrenKeysComparer());
-            else if (combineOptions == CombineOptions.DeepMerge)
-                dict = lookup.ToSortedDictionary(l => l.Key,
-                    l => l.All(s => !s.Children.Any())
-                        ? (sourceCombineOptions == SourceCombineOptions.FirstIsMain ? l.First() : l.Last())
-                        : Merge(l, l.Key),
-                    new ChildrenKeysComparer());
-
-            return new ObjectNode(dict, name);
+            return merge;
         }
     }
-}*/
+}

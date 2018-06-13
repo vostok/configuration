@@ -9,14 +9,6 @@ namespace Vostok.Configuration.Tests.Sources
     [TestFixture]
     public class IniFileSource_Tests
     {
-        /*private const string TestName = nameof(IniFileSource);
-        
-        [TearDown]
-        public void Cleanup()
-        {
-            TestHelper.DeleteAllFiles(TestName);
-        }*/
-
         [Test]
         public void Should_return_null_if_file_not_exists()
         {

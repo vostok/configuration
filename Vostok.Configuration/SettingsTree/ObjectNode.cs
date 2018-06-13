@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Vostok.Configuration.SettingsTree
 {
-    internal sealed class ObjectNode : ISettingsNode //, IEquatable<RawSettings>
+    internal sealed class ObjectNode : ISettingsNode, IEquatable<ObjectNode>
     {
         private readonly IReadOnlyDictionary<string, ISettingsNode> children;
 
@@ -21,23 +22,53 @@ namespace Vostok.Configuration.SettingsTree
         public string Name { get; }
         public IEnumerable<ISettingsNode> Children => children?.Values ?? Enumerable.Empty<ObjectNode>();
         public ISettingsNode this[string name] => children.TryGetValue(name, out var res) ? res : null;
-        public ISettingsNode Merge(ISettingsNode other, SettingsMergeOptions options)
-        {
-            return other;
-            /*if (options.TreeMergeStyle == TreeMergeStyle.Shallow)
-                return other;
-            if (options.TreeMergeStyle == TreeMergeStyle.Deep)*/
-            // shallow: если хотя бы как-то отличаются дети, то заменяем новым. Если полностью совпадают, то рекурсивно стыкуем их детей.
-            // deep: объединяем, с одинаковыми именами заменяем новым
-        }
 
         string ISettingsNode.Value { get; } = null;
 
+        public ISettingsNode Merge(ISettingsNode other, SettingsMergeOptions options)
+        {
+            if (!(other is ObjectNode))
+                return other;
+
+            if (options == null)
+                options = SettingsMergeOptions.Default();
+
+            if (options.TreeMergeStyle == TreeMergeStyle.Shallow)
+            {
+                var thisChildren = children.Keys.OrderBy(k => k).ToArray();
+                var otherChildren = other.Children.Select(c => c.Name).OrderBy(k => k).ToArray();
+                if (!thisChildren.SequenceEqual(otherChildren, new ChildrenDictKeysComparer()))
+                    return other;
+                var dict = new SortedDictionary<string, ISettingsNode>();
+                foreach (var name in thisChildren)
+                    dict.Add(name, this[name].Merge(other[name], options));
+                return new ObjectNode(dict, other.Name);
+            }
+            else if (options.TreeMergeStyle == TreeMergeStyle.Deep)
+            {
+                var thisChildren = children.Keys.ToArray();
+                var otherChildren = other.Children.Select(c => c.Name).ToArray();
+                var duplicates = otherChildren.Intersect(thisChildren, new ChildrenDictKeysComparer()).ToArray();
+                var unique1 = otherChildren.Except(thisChildren, new ChildrenDictKeysComparer());
+                var unique2 = thisChildren.Except(otherChildren, new ChildrenDictKeysComparer());
+                var unique = unique1.Concat(unique2).ToArray();
+
+                var dict = new SortedDictionary<string, ISettingsNode>(new ChildrenKeysComparer());
+                foreach (var name in unique)
+                    dict.Add(name, this[name] ?? other[name]);
+                foreach (var name in duplicates)
+                    dict.Add(name, this[name].Merge(other[name], options));
+                return new ObjectNode(dict, other.Name);
+            }
+
+            return null;
+        }
+
         #region Equality
 
-        /*public override bool Equals(object obj) => Equals(obj as RawSettings);
+        public override bool Equals(object obj) => Equals(obj as ObjectNode);
 
-        public bool Equals(RawSettings other)
+        public bool Equals(ObjectNode other)
         {
             if (other == null)
                 return false;
@@ -45,14 +76,13 @@ namespace Vostok.Configuration.SettingsTree
             var thisChExists = children != null;
             var otherChExists = other.children != null;
 
-            if (Value != other.Value ||
-                Name != other.Name ||
+            if (Name != other.Name ||
                 thisChExists != otherChExists)
                 return false;
 
             if (thisChExists &&
-                (!new HashSet<object>(children.Keys.Cast<object>()).SetEquals(other.children.Keys.Cast<object>()) ||
-                 !new HashSet<RawSettings>(children.Values.Cast<RawSettings>()).SetEquals(other.children.Values.Cast<RawSettings>())))
+                (!new HashSet<string>(children.Keys).SetEquals(other.children.Keys) ||
+                 !new HashSet<ISettingsNode>(children.Values).SetEquals(other.children.Values)))
                 return false;
 
             return true;
@@ -62,23 +92,22 @@ namespace Vostok.Configuration.SettingsTree
         {
             unchecked
             {
-                var valueHashCode = Value != null ? Value.GetHashCode() : 0;
-                var nameHashCode = Name.GetHashCode();
-                var hashCode = ((valueHashCode + nameHashCode) * 397) ^ (children != null ? ChildrenHash() : 0);
+                var nameHashCode = Name?.GetHashCode() ?? 0;
+                var hashCode = (nameHashCode * 397) ^ (children != null ? ChildrenHash() : 0);
                 return hashCode;
             }
 
             int ChildrenHash()
             {
-                var keysRes = children.Keys.OfType<string>()
+                var keysRes = children.Keys
                     .Select(k => k.GetHashCode())
                     .Aggregate(0, (a, b) => unchecked(a + b));
-                var valsRes = children.Values.Cast<RawSettings>()
+                var valsRes = children.Values
                     .Select(v => v.GetHashCode())
                     .Aggregate(0, (a, b) => unchecked(a + b));
-                return unchecked (keysRes * 195) ^ valsRes;
+                return unchecked(keysRes * 599) ^ valsRes;
             }
-        }*/
+        }
 
         #endregion
     }

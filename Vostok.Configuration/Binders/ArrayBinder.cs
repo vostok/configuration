@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using Vostok.Configuration.Extensions;
 using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Binders

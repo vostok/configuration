@@ -1,6 +1,7 @@
-﻿/*using FluentAssertions;
+﻿using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Binders;
+using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Tests.Binders
 {
@@ -9,24 +10,24 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_to_Nullable_Bool()
         {
-            var settings = new RawSettings("true");
+            var settings = new ValueNode("true");
             var binder = Container.GetInstance<ISettingsBinder<bool?>>();
             binder.Bind(settings).Should().Be(true);
 
-            settings = new RawSettings(null, "");
+            settings = new ValueNode(null, "");
             binder = Container.GetInstance<ISettingsBinder<bool?>>();
             binder.Bind(settings).Should().Be(null);
         }
         [Test]
         public void Should_bind_to_Nullable_Double()
         {
-            var settings = new RawSettings("1.2345");
+            var settings = new ValueNode("1.2345");
             var binder = Container.GetInstance<ISettingsBinder<double?>>();
             binder.Bind(settings).Should().Be(1.2345);
 
-            settings = new RawSettings(null, "");
+            settings = new ValueNode(null, "");
             binder = Container.GetInstance<ISettingsBinder<double?>>();
             binder.Bind(settings).Should().Be(null);
         }
     }
-}*/
+}

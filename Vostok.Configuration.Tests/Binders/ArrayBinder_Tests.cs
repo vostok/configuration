@@ -1,7 +1,8 @@
-﻿/*using System.Collections.Specialized;
+﻿using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Binders;
+using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Tests.Binders
 {
@@ -10,10 +11,10 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_to_Array_of_primitives()
         {
-            var settings = new RawSettings(new OrderedDictionary
+            var settings = new ArrayNode(new List<ISettingsNode>
             {
-                ["1"] = new RawSettings("TRUE"),
-                ["2"] = new RawSettings("false"),
+                new ValueNode("TRUE"),
+                new ValueNode("false"),
             });
             var binder = Container.GetInstance<ISettingsBinder<bool[]>>();
             var result = binder.Bind(settings);
@@ -23,17 +24,17 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_to_Array_of_structs()
         {
-            var settings = new RawSettings(new OrderedDictionary
+            var settings = new ArrayNode(new List<ISettingsNode>
             {
-                ["1"] = new RawSettings(new OrderedDictionary
+                new ObjectNode(new SortedDictionary<string, ISettingsNode>
                 {
-                    { "Int", new RawSettings("1") },
-                    { "String", new RawSettings("str1") },
+                    ["Int"] = new ValueNode("1"),
+                    ["String"] = new ValueNode("str1"),
                 }),
-                ["2"] = new RawSettings(new OrderedDictionary
+                new ObjectNode(new SortedDictionary<string, ISettingsNode>
                 {
-                    { "Int", new RawSettings("2") },
-                    { "String", new RawSettings("str2") },
+                    ["Int"] = new ValueNode("2"),
+                    ["String"] = new ValueNode("str2"),
                 }),
             });
             var binder = Container.GetInstance<ISettingsBinder<SimpleStruct[]>>();
@@ -51,4 +52,4 @@ namespace Vostok.Configuration.Tests.Binders
             public string String { get; set; }
         }
     }
-}*/
+}

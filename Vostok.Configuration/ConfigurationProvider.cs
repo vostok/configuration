@@ -1,4 +1,4 @@
-/*using System;
+using System;
 using System.Collections.Concurrent;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -185,4 +185,4 @@ namespace Vostok.Configuration
             return this;
         }
     }
-}*/
+}

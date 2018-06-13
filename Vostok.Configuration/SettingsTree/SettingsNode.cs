@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Vostok.Configuration.SettingsTree
 {
-    public class SettingsNode
+    public static class SettingsNode
     {
         /// <summary>
         /// Checks <see cref="settings"/>. Throws exeption if something is wrong.
