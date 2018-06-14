@@ -1,4 +1,4 @@
-﻿namespace Vostok.Configuration
+﻿namespace Vostok.Configuration.MergeOptions
 {
     /// <summary>
     /// Specifies the way array nodes are merged.

@@ -1,5 +1,6 @@
-﻿/*using System;
+﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons.Conversions;
@@ -12,19 +13,22 @@ namespace Vostok.Configuration.Tests
     [TestFixture]
     public class ConfigurationProvider_Tests
     {
-        private const string TestName = nameof(ConfigurationProvider);
-        
         public class ByType
         {
-            [TearDown]
-            public void Cleanup() => TestHelper.DeleteAllFiles(TestName);
-
             [Test]
             public void Get_WithSourceFor_should_work_correctly()
             {
-                var fileName = TestHelper.CreateFile(TestName, "{ 'Value': 123 }");
+                const string fileName = "test.json";
+                const string content = "{ 'Value': 123 }";
+
+                var source = new JsonFileSource(fileName, f =>
+                    {
+                        var watcher = new SingleFileWatcherSubstitute(f);
+                        watcher.GetUpdate(content); //create file
+                        return watcher;
+                    });
                 var provider = new ConfigurationProvider()
-                    .SetupSourceFor<MyClass>(new JsonFileSource(fileName));
+                    .SetupSourceFor<MyClass>(source);
 
                 var result = provider.Get<MyClass>();
                 result.Should().BeEquivalentTo(new MyClass {Value = 123});
@@ -33,15 +37,23 @@ namespace Vostok.Configuration.Tests
             [Test]
             public void SetupSourceFor_should_throw_if_add_source_for_type_which_Get_was_invoked()
             {
-                var fileName = TestHelper.CreateFile(TestName, "{ 'Value': 123 }");
+                const string fileName = "test.json";
+                const string content = "{ 'Value': 123 }";
+                SingleFileWatcherSubstitute watcher = null;
+
                 var provider = new ConfigurationProvider();
-                var source = new JsonFileSource(fileName);
+                var source = new JsonFileSource(fileName, f =>
+                {
+                    watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                });
 
                 provider.SetupSourceFor<MyClass>(source); //new type
                 provider.Get<MyClass>();
                 provider.SetupSourceFor<int>(source); //new type
 
-                var source2 = new JsonFileSource(fileName);
+                var source2 = new JsonFileSource(fileName, f => watcher);
                 provider.SetupSourceFor<int>(source2); //no Get() or Observe()
                 new Action(() => provider.SetupSourceFor<MyClass>(source2)).Should().Throw<InvalidOperationException>(); //was Get()
             }
@@ -49,15 +61,23 @@ namespace Vostok.Configuration.Tests
             [Test]
             public void SetupSourceFor_should_throw_if_add_source_for_type_which_Observe_was_invoked()
             {
-                var fileName = TestHelper.CreateFile(TestName, "{ 'Value': 123 }");
+                const string fileName = "test.json";
+                const string content = "{ 'Value': 123 }";
+                SingleFileWatcherSubstitute watcher = null;
+
                 var provider = new ConfigurationProvider();
-                var source = new JsonFileSource(fileName);
+                var source = new JsonFileSource(fileName, f =>
+                {
+                    watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                });
 
                 provider.SetupSourceFor<MyClass>(source); //new type
                 provider.Observe<MyClass>().Subscribe();
                 provider.SetupSourceFor<int>(source); //new type
 
-                var source2 = new JsonFileSource(fileName);
+                var source2 = new JsonFileSource(fileName, f => watcher);
                 provider.SetupSourceFor<int>(source2); //no Get() or Observe()
                 new Action(() => provider.SetupSourceFor<MyClass>(source2)).Should().Throw<InvalidOperationException>(); //was Observe()
             }
@@ -65,20 +85,34 @@ namespace Vostok.Configuration.Tests
             [Test]
             public void Should_update_value_in_cache_on_file_change()
             {
-                var fileName = TestHelper.CreateFile(TestName, "{ 'Value': 123 }");
+                const string fileName = "test.json";
+                var content = "{ 'Value': 123 }";
+                SingleFileWatcherSubstitute watcher = null;
+
                 var provider = new ConfigurationProvider();
-                var source = new JsonFileSource(fileName);
+                var source = new JsonFileSource(fileName, f =>
+                {
+                    watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                });
 
                 provider.SetupSourceFor<MyClass>(source);
                 var result1 = provider.Get<MyClass>();
                 result1.Should().BeEquivalentTo(new MyClass {Value = 123});
 
-                TestHelper.CreateFile(TestName, "{ 'Value': 321 }", fileName);
+                content = "{ 'Value': 321 }";
+                //update file
+                Task.Run(() =>
+                {
+                    Thread.Sleep(100);
+                    watcher.GetUpdate(content);
+                });
                 var result2 = provider.Get<MyClass>();
                 result2.Should().BeEquivalentTo(new MyClass {Value = 123}, "cache is not updated yet");
                 result1.Should().Be(result2, "read from cache");
 
-                Thread.Sleep(200.Milliseconds());
+                Thread.Sleep(150.Milliseconds());
 
                 result2 = provider.Get<MyClass>();
                 result2.Should().BeEquivalentTo(new MyClass {Value = 321}, "cache was updated");
@@ -87,7 +121,10 @@ namespace Vostok.Configuration.Tests
             [Test]
             public void Get_should_throw_on_no_needed_sources()
             {
-                var fileName = TestHelper.CreateFile(TestName, "{ 'Value': 123 }");
+                const string fileName = "test.json";
+                const string content = "{ 'Value': 123 }";
+                var watcher = new SingleFileWatcherSubstitute(fileName);
+                watcher.GetUpdate(content); //create file
 
                 new Action(() => new ConfigurationProvider()
                     .Get<MyClass>())
@@ -111,12 +148,26 @@ namespace Vostok.Configuration.Tests
 
             private (int vClass1, int vClass2) CountOnNextCallsForTwoSources()
             {
-                var fileName1 = TestHelper.CreateFile(TestName, "{ 'Value': 1 }");
-                var fileName2 = TestHelper.CreateFile(TestName, "{ 'Value': 123 }");
+                const string fileName1 = "test1.json";
+                const string fileName2 = "test2.json";
+                var content1 = "{ 'Value': 1 }";
+                const string content2 = "{ 'Value': 123 }";
+                SingleFileWatcherSubstitute watcher1 = null, watcher2;
+
                 var vClass1 = 0;
                 var vClass2 = 0;
-                using (var jcs1 = new JsonFileSource(fileName1))
-                using (var jcs2 = new JsonFileSource(fileName2))
+                using (var jcs1 = new JsonFileSource(fileName1, f =>
+                {
+                    watcher1 = new SingleFileWatcherSubstitute(f);
+                    watcher1.GetUpdate(content1); //create file
+                    return watcher1;
+                }))
+                using (var jcs2 = new JsonFileSource(fileName2, f =>
+                {
+                    watcher2 = new SingleFileWatcherSubstitute(f);
+                    watcher2.GetUpdate(content2); //create file
+                    return watcher2;
+                }))
                 {
                     var cp = new ConfigurationProvider()
                         .SetupSourceFor<MyClass>(jcs1)
@@ -131,9 +182,14 @@ namespace Vostok.Configuration.Tests
                             });
                     var sub2 = cp.Observe<MyClass2>().Subscribe(val => vClass2++);
 
-                    Thread.Sleep(200.Milliseconds());
-                    TestHelper.CreateFile(TestName, "{ 'Value': 2 }", fileName1);
-                    Thread.Sleep(200.Milliseconds());
+                    content1 = "{ 'Value': 2 }";
+                    //update file
+                    Task.Run(() =>
+                    {
+                        Thread.Sleep(50);
+                        watcher1.GetUpdate(content1);
+                    });
+                    Thread.Sleep(100.Milliseconds());
 
                     sub1.Dispose();
                     sub2.Dispose();
@@ -145,10 +201,24 @@ namespace Vostok.Configuration.Tests
             [Test]
             public void Should_read_from_cache_for_multiple_sources()
             {
-                var fileName1 = TestHelper.CreateFile(TestName, "{ 'Value': 123 }");
-                var fileName2 = TestHelper.CreateFile(TestName, "{ 'Value': 321 }");
-                var source1 = new JsonFileSource(fileName1);
-                var source2 = new JsonFileSource(fileName2);
+                const string fileName1 = "test1.json";
+                const string fileName2 = "test2.json";
+                const string content1 = "{ 'Value': 123 }";
+                const string content2 = "{ 'Value': 321 }";
+                SingleFileWatcherSubstitute watcher1, watcher2;
+
+                var source1 = new JsonFileSource(fileName1, f =>
+                {
+                    watcher1 = new SingleFileWatcherSubstitute(f);
+                    watcher1.GetUpdate(content1); //create file
+                    return watcher1;
+                });
+                var source2 = new JsonFileSource(fileName2, f =>
+                {
+                    watcher2 = new SingleFileWatcherSubstitute(f);
+                    watcher2.GetUpdate(content2); //create file
+                    return watcher2;
+                });
 
                 var cp = new ConfigurationProvider()
                     .SetupSourceFor<MyClass>(source1)
@@ -167,8 +237,15 @@ namespace Vostok.Configuration.Tests
             [Test]
             public void Should_throw_exception_on_Get_with_default_settings()
             {
-                var fileName = TestHelper.CreateFile(TestName, "{ 'Value': 'str' }");
-                var source = new JsonFileSource(fileName);
+                const string fileName = "test.json";
+                const string content = "{ 'Value': 'str' }";
+
+                var source = new JsonFileSource(fileName, f =>
+                {
+                    var watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                });
                 var cp = new ConfigurationProvider()
                     .SetupSourceFor<int>(source);
                 new Action(() => cp.Get<int>()).Should().Throw<Exception>();
@@ -177,8 +254,15 @@ namespace Vostok.Configuration.Tests
             [Test]
             public void Should_return_default_value_if_disabled_throwing_exceptions()
             {
-                var fileName = TestHelper.CreateFile(TestName, "{ 'Value': 'str' }");
-                var source = new JsonFileSource(fileName);
+                const string fileName = "test.json";
+                const string content = "{ 'Value': 'str' }";
+
+                var source = new JsonFileSource(fileName, f =>
+                {
+                    var watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                });
                 var cp = new ConfigurationProvider(new ConfigurationProviderSettings{ ThrowExceptions = false })
                     .SetupSourceFor<int>(source);
                 cp.Get<int>().Should().Be(default);
@@ -187,8 +271,15 @@ namespace Vostok.Configuration.Tests
             [Test]
             public void Should_return_default_value_and_invoke_OnError_by_settings()
             {
-                var fileName = TestHelper.CreateFile(TestName, "{ 'Value': 'str' }");
-                var source = new JsonFileSource(fileName);
+                const string fileName = "test.json";
+                const string content = "{ 'Value': 'str' }";
+
+                var source = new JsonFileSource(fileName, f =>
+                {
+                    var watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                });
                 var msg = string.Empty;
                 var cp = new ConfigurationProvider(new ConfigurationProviderSettings
                     {
@@ -203,8 +294,16 @@ namespace Vostok.Configuration.Tests
             [Test]
             public void Should_read_from_cache_in_case_of_exception_if_disabled_throwing_exceptions()
             {
-                var fileName = TestHelper.CreateFile(TestName, "{ 'Value': 123 }");
-                var source = new JsonFileSource(fileName);
+                const string fileName = "test.json";
+                var content = "{ 'Value': 123 }";
+                SingleFileWatcherSubstitute watcher = null;
+
+                var source = new JsonFileSource(fileName, f =>
+                {
+                    watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                });
                 var msg = string.Empty;
                 var cp = new ConfigurationProvider(new ConfigurationProviderSettings
                     {
@@ -214,8 +313,14 @@ namespace Vostok.Configuration.Tests
                     .SetupSourceFor<int>(source);
                 cp.Get<int>().Should().Be(123);
 
-                TestHelper.CreateFile(TestName, "{ 'Value': 'str' }", fileName);
-                Thread.Sleep(200.Milliseconds());
+                content = "{ 'Value': 'str' }";
+                //update file
+                Task.Run(() =>
+                {
+                    Thread.Sleep(50);
+                    watcher.GetUpdate(content);
+                });
+                Thread.Sleep(100.Milliseconds());
 
                 cp.Get<int>().Should().Be(123);
                 msg.Should().NotBeNullOrWhiteSpace();
@@ -224,15 +329,19 @@ namespace Vostok.Configuration.Tests
 
         public class BySource
         {
-            [TearDown]
-            public void Cleanup() => TestHelper.DeleteAllFiles(TestName);
-
             [Test]
             public void Get_from_source_should_work_correctly()
             {
-                var fileName = TestHelper.CreateFile(TestName, "{ 'Value': 123 }");
+                const string fileName = "test.json";
+                const string content = "{ 'Value': 123 }";
+
                 var provider = new ConfigurationProvider();
-                var source = new JsonFileSource(fileName);
+                var source = new JsonFileSource(fileName, f =>
+                {
+                    var watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                });
 
                 var result = provider.Get<MyClass>(source);
                 result.Should().BeEquivalentTo(new MyClass {Value = 123});
@@ -241,19 +350,33 @@ namespace Vostok.Configuration.Tests
             [Test]
             public void Should_update_value_in_cache_on_file_change()
             {
-                var fileName = TestHelper.CreateFile(TestName, "{ 'Value': 123 }");
+                const string fileName = "test.json";
+                var content = "{ 'Value': 123 }";
+                SingleFileWatcherSubstitute watcher = null;
+
                 var provider = new ConfigurationProvider();
-                var source = new JsonFileSource(fileName);
+                var source = new JsonFileSource(fileName, f =>
+                {
+                    watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                });
 
                 var result1 = provider.Get<MyClass>(source);
                 result1.Should().BeEquivalentTo(new MyClass {Value = 123});
 
-                TestHelper.CreateFile(TestName, "{ 'Value': 321 }", fileName);
+                content = "{ 'Value': 321 }";
+                //update file
+                Task.Run(() =>
+                {
+                    Thread.Sleep(100);
+                    watcher.GetUpdate(content);
+                });
                 var result2 = provider.Get<MyClass>(source);
                 result2.Should().BeEquivalentTo(new MyClass {Value = 123}, "cache is not updated yet");
                 result1.Should().Be(result2, "read from cache");
 
-                Thread.Sleep(200.Milliseconds());
+                Thread.Sleep(150.Milliseconds());
 
                 result2 = provider.Get<MyClass>(source);
                 result2.Should().BeEquivalentTo(new MyClass {Value = 321}, "cache was updated");
@@ -269,12 +392,26 @@ namespace Vostok.Configuration.Tests
 
             private (int vClass1, int vClass2) CountOnNextCallsForTwoSources()
             {
-                var fileName1 = TestHelper.CreateFile(TestName, "{ 'Value': 1 }");
-                var fileName2 = TestHelper.CreateFile(TestName, "{ 'Value': 123 }");
+                const string fileName1 = "test1.json";
+                const string fileName2 = "test2.json";
+                var content1 = "{ 'Value': 1 }";
+                const string content2 = "{ 'Value': 123 }";
+                SingleFileWatcherSubstitute watcher1 = null, watcher2;
+
                 var vClass1 = 0;
                 var vClass2 = 0;
-                using (var jcs1 = new JsonFileSource(fileName1))
-                using (var jcs2 = new JsonFileSource(fileName2))
+                using (var jcs1 = new JsonFileSource(fileName1, f =>
+                {
+                    watcher1 = new SingleFileWatcherSubstitute(f);
+                    watcher1.GetUpdate(content1); //create file
+                    return watcher1;
+                }))
+                using (var jcs2 = new JsonFileSource(fileName2, f =>
+                {
+                    watcher2 = new SingleFileWatcherSubstitute(f);
+                    watcher2.GetUpdate(content2); //create file
+                    return watcher2;
+                }))
                 {
                     var cp = new ConfigurationProvider();
 
@@ -287,9 +424,14 @@ namespace Vostok.Configuration.Tests
                             });
                     var sub2 = cp.Observe<MyClass2>(jcs2).Subscribe(val => vClass2++);
 
-                    Thread.Sleep(200.Milliseconds());
-                    TestHelper.CreateFile(TestName, "{ 'Value': 2 }", fileName1);
-                    Thread.Sleep(200.Milliseconds());
+                    content1 = "{ 'Value': 2 }";
+                    //update file
+                    Task.Run(() =>
+                    {
+                        Thread.Sleep(50);
+                        watcher1.GetUpdate(content1);
+                    });
+                    Thread.Sleep(100.Milliseconds());
 
                     sub1.Dispose();
                     sub2.Dispose();
@@ -301,16 +443,23 @@ namespace Vostok.Configuration.Tests
             [Test]
             public void Should_Observe_file()
             {
-                new Action(() =>
-                    ObserveFile().Should().Be(1))
+                new Action(() => ObserveFile().Should().Be(1))
                 .ShouldPassIn(1.Seconds());
             }
 
             private static int ObserveFile()
             {
-                var fileName = TestHelper.CreateFile(TestName, "{ 'Value': 0 }");
+                const string fileName = "test.json";
+                var content = "{ 'Value': 0 }";
+                SingleFileWatcherSubstitute watcher = null;
+
                 var val = 0;
-                using (var jcs = new JsonFileSource(fileName))
+                using (var jcs = new JsonFileSource(fileName, f =>
+                {
+                    watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                }))
                 {
                     var cp = new ConfigurationProvider();
                     var sub = cp.Observe<MyClass>(jcs)
@@ -321,14 +470,25 @@ namespace Vostok.Configuration.Tests
                                 cl.Value.Should().Be(val);
                             });
 
-                    Thread.Sleep(200.Milliseconds());
-                    TestHelper.CreateFile(TestName, "{ 'Value': 1 }", fileName);
-                    Thread.Sleep(200.Milliseconds());
+                    content = "{ 'Value': 1 }";
+                    //update file
+                    Task.Run(() =>
+                    {
+                        Thread.Sleep(50);
+                        watcher.GetUpdate(content);
+                    });
+                    Thread.Sleep(100.Milliseconds());
 
                     sub.Dispose();
 
-                    TestHelper.CreateFile(TestName, "{ 'Value': 2 }", fileName);
-                    Thread.Sleep(200.Milliseconds());
+                    content = "{ 'Value': 2 }";
+                    //update file
+                    Task.Run(() =>
+                    {
+                        Thread.Sleep(50);
+                        watcher.GetUpdate(content);
+                    });
+                    Thread.Sleep(100.Milliseconds());
                 }
 
                 return val;
@@ -337,8 +497,15 @@ namespace Vostok.Configuration.Tests
             [Test]
             public void Should_throw_exception_on_Get_with_default_settings()
             {
-                var fileName = TestHelper.CreateFile(TestName, "{ 'Value': 'str' }");
-                var source = new JsonFileSource(fileName);
+                const string fileName = "test.json";
+                const string content = "{ 'Value': 'str' }";
+
+                var source = new JsonFileSource(fileName, f =>
+                {
+                    var watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                });
                 var cp = new ConfigurationProvider();
                 new Action(() => cp.Get<int>(source)).Should().Throw<Exception>();
             }
@@ -346,8 +513,15 @@ namespace Vostok.Configuration.Tests
             [Test]
             public void Should_return_default_value_if_disabled_throwing_exceptions()
             {
-                var fileName = TestHelper.CreateFile(TestName, "{ 'Value': 'str' }");
-                var source = new JsonFileSource(fileName);
+                const string fileName = "test.json";
+                const string content = "{ 'Value': 'str' }";
+
+                var source = new JsonFileSource(fileName, f =>
+                {
+                    var watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                });
                 var cp = new ConfigurationProvider(new ConfigurationProviderSettings { ThrowExceptions = false });
                 cp.Get<int>(source).Should().Be(default);
             }
@@ -355,8 +529,15 @@ namespace Vostok.Configuration.Tests
             [Test]
             public void Should_return_default_value_and_invoke_OnError_by_settings()
             {
-                var fileName = TestHelper.CreateFile(TestName, "{ 'Value': 'str' }");
-                var source = new JsonFileSource(fileName);
+                const string fileName = "test.json";
+                const string content = "{ 'Value': 'str' }";
+
+                var source = new JsonFileSource(fileName, f =>
+                {
+                    var watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                });
                 var msg = string.Empty;
                 var cp = new ConfigurationProvider(
                     new ConfigurationProviderSettings
@@ -371,8 +552,16 @@ namespace Vostok.Configuration.Tests
             [Test]
             public void Should_read_from_cache_in_case_of_exception_if_disabled_throwing_exceptions()
             {
-                var fileName = TestHelper.CreateFile(TestName, "{ 'Value': 123 }");
-                var source = new JsonFileSource(fileName);
+                const string fileName = "test.json";
+                var content = "{ 'Value': 123 }";
+                SingleFileWatcherSubstitute watcher = null;
+
+                var source = new JsonFileSource(fileName, f =>
+                {
+                    watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                });
                 var msg = string.Empty;
                 var cp = new ConfigurationProvider(
                     new ConfigurationProviderSettings
@@ -382,8 +571,14 @@ namespace Vostok.Configuration.Tests
                     });
                 cp.Get<int>(source).Should().Be(123);
 
-                TestHelper.CreateFile(TestName, "{ 'Value': 'str' }", fileName);
-                Thread.Sleep(200.Milliseconds());
+                content = "{ 'Value': 'str' }";
+                //update file
+                Task.Run(() =>
+                {
+                    Thread.Sleep(50);
+                    watcher.GetUpdate(content);
+                });
+                Thread.Sleep(100.Milliseconds());
 
                 cp.Get<int>(source).Should().Be(123);
                 msg.Should().NotBeNullOrWhiteSpace();
@@ -402,4 +597,4 @@ namespace Vostok.Configuration.Tests
             public override string ToString() => Value.ToString();
         }
     }
-}*/
+}

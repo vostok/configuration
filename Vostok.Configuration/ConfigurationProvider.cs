@@ -10,7 +10,7 @@ namespace Vostok.Configuration
 {
     public class ConfigurationProvider : IConfigurationProvider
     {
-        private const int MaxTypeCacheSize = 10;
+        private const int MaxTypeCacheSize = 10; // todo(Mansiper): choose values
         private const int MaxSourceCacheSize = 10;
         private static readonly string UnknownTypeExceptionMsg = $"{nameof(IConfigurationSource)} for specified type \"typeName\" is absent. User {nameof(SetupSourceFor)} to add source.";
         private readonly ConfigurationProviderSettings settings;
@@ -84,52 +84,13 @@ namespace Vostok.Configuration
                 {
                     var type = typeof(TSettings);
                     if (!typeWatchers.ContainsKey(type) && typeSources.ContainsKey(type))
-                        typeWatchers[type] = typeSources[type]
-                            .Observe()
-                            .Select(
-                                rs =>
-                                {
-                                    if (!typeSources.TryGetValue(type, out _))
-                                        throw new ArgumentException($"{UnknownTypeExceptionMsg.Replace("typeName", type.Name)}");
-                                    try
-                                    {
-                                        return settings.Binder.Bind<TSettings>(rs);
-                                    }
-                                    catch (Exception e)
-                                    {
-                                        if (settings.ThrowExceptions)
-                                            throw;
-                                        settings.OnError?.Invoke(e);
-                                        return typeCache.TryGetValue(type, out var value) ? value : default;
-                                    }
-                                });
+                        typeWatchers[type] = typeSources[type].Observe().Select(SubscribeWatcher<TSettings>);
 
                     if (typeWatchers.TryGetValue(type, out var watcher))
-                        return watcher.Select(
-                                value =>
-                                {
-                                    try
-                                    {
-                                        return (TSettings)value;
-                                    }
-                                    catch (Exception e)
-                                    {
-                                        if (settings.ThrowExceptions)
-                                            throw;
-                                        settings.OnError?.Invoke(e);
-                                        return typeCache.TryGetValue(type, out var val) ? (TSettings)val : default;
-                                    }
-                                })
+                        return watcher
+                            .Select(PrepareWatcherValue<TSettings>)
                             .Subscribe(
-                                value =>
-                                {
-                                    if (!typeCache.ContainsKey(type))
-                                        typeCacheQueue.Enqueue(type);
-                                    typeCache.AddOrUpdate(type, value, (t, o) => value);
-                                    if (typeCache.Count > MaxTypeCacheSize && typeCacheQueue.TryDequeue(out var tp))
-                                        typeCache.TryRemove(tp, out _);
-                                    observer.OnNext(value);
-                                },
+                                value => WatcherOnNext(observer, value),
                                 observer.OnError);
 
                     return Disposable.Empty;
@@ -183,6 +144,50 @@ namespace Vostok.Configuration
             typeSources[type] = source;
 
             return this;
+        }
+
+        private void WatcherOnNext<TSettings>(IObserver<TSettings> observer, TSettings value)
+        {
+            var type = typeof(TSettings);
+            if (!typeCache.ContainsKey(type))
+                typeCacheQueue.Enqueue(type);
+            typeCache.AddOrUpdate(type, value, (t, o) => value);
+            if (typeCache.Count > MaxTypeCacheSize && typeCacheQueue.TryDequeue(out var tp))
+                typeCache.TryRemove(tp, out _);
+            observer.OnNext(value);
+        }
+
+        private TSettings PrepareWatcherValue<TSettings>(object value)
+        {
+            try
+            {
+                return (TSettings)value;
+            }
+            catch (Exception e)
+            {
+                if (settings.ThrowExceptions)
+                    throw;
+                settings.OnError?.Invoke(e);
+                return typeCache.TryGetValue(typeof(TSettings), out var val) ? (TSettings)val : default;
+            }
+        }
+
+        private object SubscribeWatcher<TSettings>(SettingsTree.ISettingsNode rs)
+        {
+            var type = typeof(TSettings);
+            if (!typeSources.TryGetValue(type, out _))
+                throw new ArgumentException($"{UnknownTypeExceptionMsg.Replace("typeName", type.Name)}");
+            try
+            {
+                return settings.Binder.Bind<TSettings>(rs);
+            }
+            catch (Exception e)
+            {
+                if (settings.ThrowExceptions)
+                    throw;
+                settings.OnError?.Invoke(e);
+                return typeCache.TryGetValue(type, out var value) ? value : default;
+            }
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Vostok.Configuration.Comparers;
+using Vostok.Configuration.MergeOptions;
 
 namespace Vostok.Configuration.SettingsTree
 {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 
-namespace Vostok.Configuration
+namespace Vostok.Configuration.Comparers
 {
     internal class ChildrenKeysComparer : IComparer<string>
     {

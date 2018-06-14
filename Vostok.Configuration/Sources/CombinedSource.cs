@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using JetBrains.Annotations;
+using Vostok.Configuration.MergeOptions;
 using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Sources
@@ -24,7 +25,7 @@ namespace Vostok.Configuration.Sources
         private readonly TaskSource taskSource;
         private readonly object locker;
         private ISettingsNode currentValue;
-        private bool neverMerged = true;
+        private bool neverMerged;
 
         /// <summary>
         /// <para>Creates a <see cref="CombinedSource"/> instance new source using combining options.</para>
@@ -38,6 +39,7 @@ namespace Vostok.Configuration.Sources
         {
             this.sources = sources;
             this.options = options;
+            neverMerged = true;
             locker = new object();
             taskSource = new TaskSource();
             watchers = new ConcurrentBag<IDisposable>();
@@ -75,30 +77,7 @@ namespace Vostok.Configuration.Sources
                 {
                     if (!watchers.Any())
                     {
-                        foreach (var source in sources)
-                        {
-                            var src = source;
-                            sourcesSettings.Add(src, src.Get());
-                            var watcher = source.Observe()
-                                .Subscribe(
-                                    newSettings =>
-                                    {
-                                        lock (locker)
-                                        {
-                                            if (!Equals(newSettings, sourcesSettings[src]))
-                                            {
-                                                sourcesSettings[src] = newSettings;
-                                                currentValue = Merge(sourcesSettings.Values);
-                                                observer.OnNext(currentValue);
-                                            }
-
-                                            if (neverMerged && currentValue != null)
-                                                observer.OnNext(currentValue);
-                                        }
-                                    });
-                            watchers.Add(watcher);
-                        }
-
+                        SubscribeWatchers(observer);
                         currentValue = Merge(sourcesSettings.Values);
                     }
 
@@ -118,6 +97,33 @@ namespace Vostok.Configuration.Sources
         {
             foreach (var watcher in watchers)
                 watcher.Dispose();
+        }
+
+        private void SubscribeWatchers(IObserver<ISettingsNode> observer)
+        {
+            foreach (var source in sources)
+            {
+                var src = source;
+                sourcesSettings.Add(src, src.Get());
+                var watcher = source.Observe()
+                    .Subscribe(
+                        newSettings =>
+                        {
+                            lock (locker)
+                            {
+                                if (!Equals(newSettings, sourcesSettings[src]))
+                                {
+                                    sourcesSettings[src] = newSettings;
+                                    currentValue = Merge(sourcesSettings.Values);
+                                    observer.OnNext(currentValue);
+                                }
+
+                                if (neverMerged && currentValue != null)
+                                    observer.OnNext(currentValue);
+                            }
+                        });
+                watchers.Add(watcher);
+            }
         }
 
         private ISettingsNode Merge(IEnumerable<ISettingsNode> settingses)

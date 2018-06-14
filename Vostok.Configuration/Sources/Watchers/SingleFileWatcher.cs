@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Vostok.Commons.Conversions;
 
-namespace Vostok.Configuration.Sources
+namespace Vostok.Configuration.Sources.Watchers
 {
     /// <inheritdoc />
     /// <summary>
@@ -18,7 +18,7 @@ namespace Vostok.Configuration.Sources
     internal class SingleFileWatcher : IObservable<string>
     {
         private const string DefaultSettingsValue = "\u0001";
-        private readonly int watcherPeriod = (int)5.Seconds().TotalMilliseconds;
+        private readonly int watcherPeriod = (int)5.Seconds().TotalMilliseconds; // todo(Mansiper): choose value
 
         private readonly string filePath;
         private readonly List<IObserver<string>> observers;

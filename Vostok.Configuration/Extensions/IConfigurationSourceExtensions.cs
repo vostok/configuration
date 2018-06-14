@@ -1,5 +1,6 @@
  using System.Linq;
  using Vostok.Commons;
+ using Vostok.Configuration.MergeOptions;
  using Vostok.Configuration.Sources;
 
  namespace Vostok.Configuration.Extensions

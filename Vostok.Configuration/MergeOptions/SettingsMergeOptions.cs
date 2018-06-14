@@ -1,4 +1,4 @@
-﻿namespace Vostok.Configuration
+﻿namespace Vostok.Configuration.MergeOptions
 {
     public class SettingsMergeOptions
     {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reactive.Linq;
 using Vostok.Configuration.SettingsTree;
+using Vostok.Configuration.Sources.Watchers;
 
 namespace Vostok.Configuration.Sources
 {

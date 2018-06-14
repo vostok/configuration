@@ -13,6 +13,11 @@ namespace Vostok.Configuration.Tests.Sources
     [TestFixture]
     public class JsonFileSource_Tests
     {
+        /*private const string TestName = nameof(JsonFileSource);
+
+        [TearDown]
+        public void Cleanup() => TestHelper.DeleteAllFiles(TestName);*/
+
         [Test]
         public void Should_return_null_if_file_not_exists()
         {
@@ -46,6 +51,22 @@ namespace Vostok.Configuration.Tests.Sources
             }
         }
 
+        /*[Test, Explicit("real file test")]
+        public void Should_parse_String_value_REAL_FILE()
+        {
+            var fileName = $"{TestName}_test.json";
+
+            using (var jfs = new JsonFileSource(fileName))
+            {
+                var val = 0;
+                jfs.Observe().Subscribe(settings =>
+                {
+                    val++;
+                });
+                // jfs.Get();
+            }
+        }*/
+        
         [Test]
         public void Should_Get_file_updates()
         {

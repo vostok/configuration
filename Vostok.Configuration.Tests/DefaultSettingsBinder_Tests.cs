@@ -1,12 +1,12 @@
-﻿/*using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Net;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons;
 using Vostok.Commons.Parsers;
 using Vostok.Configuration.Binders;
+using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Tests
 {
@@ -35,16 +35,16 @@ namespace Vostok.Configuration.Tests
         [TestCase("200", (ushort) 200, TestName = "UshortValue")]
         public void Should_bind_to_Primitive<T>(string value, T res)
         {
-            var settings = new SettingsNode(value);
+            var settings = new ValueNode(value);
             binder.Bind<T>(settings).Should().Be(res);
         }
 
         [Test]
         public void Should_bind_to_Primitive_from_single_dictionary_value()
         {
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ObjectNode(new SortedDictionary<string, ISettingsNode>
             {
-                { "key", new SettingsNode("123") }
+                { "key", new ValueNode("123") }
             });
             binder.Bind<int>(settings).Should().Be(123);
         }
@@ -52,25 +52,25 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_Decimal()
         {
-            var settings = new SettingsNode("123,456");
+            var settings = new ValueNode("123,456");
             binder.Bind<decimal>(settings).Should().Be(123.456m);
         }
 
         [Test]
         public void Should_bind_to_TimeSpan()
         {
-            var settings = new SettingsNode("1 second");
+            var settings = new ValueNode("1 second");
             binder.Bind<TimeSpan>(settings).Should().Be(new TimeSpan(0, 0, 0, 1, 0));
         }
 
         [Test]
         public void Should_bind_to_IPAddress()
         {
-            var settings = new SettingsNode("192.168.1.10");
+            var settings = new ValueNode("192.168.1.10");
             binder.Bind<IPAddress>(settings).Should().Be(
                 new IPAddress(new byte[] {192, 168, 1, 10}));
 
-            settings = new SettingsNode("2001:0db8:11a3:09d7:1f34:8a2e:07a0:765d");
+            settings = new ValueNode("2001:0db8:11a3:09d7:1f34:8a2e:07a0:765d");
             binder.Bind<IPAddress>(settings).Should().Be(
                 new IPAddress(new byte[] {32,1,  13,184,  17,163,  9,215,  31,52,  138,46,  7,160,  118,93}));
         }
@@ -78,7 +78,7 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_IPEndPoint()
         {
-            var settings = new SettingsNode("192.168.1.10:80");
+            var settings = new ValueNode("192.168.1.10:80");
             binder.Bind<IPEndPoint>(settings).Should().Be(
                 new IPEndPoint(new IPAddress(new byte[] {192, 168, 1, 10}), 80));
         }
@@ -86,7 +86,7 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_DataRate()
         {
-            var settings = new SettingsNode("10/sec");
+            var settings = new ValueNode("10/sec");
             binder.Bind<DataRate>(settings).Should().Be(
                 DataRate.FromBytesPerSecond(10));
         }
@@ -94,7 +94,7 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_DataSize()
         {
-            var settings = new SettingsNode("10 bytes");
+            var settings = new ValueNode("10 bytes");
             binder.Bind<DataSize>(settings).Should().Be(DataSize.FromBytes(10));
         }
 
@@ -102,28 +102,28 @@ namespace Vostok.Configuration.Tests
         public void Should_bind_to_Guid()
         {
             const string guid = "936DA01F-9ABD-4d9d-80C7-02AF85C822A8";
-            var settings = new SettingsNode(guid);
+            var settings = new ValueNode(guid);
             binder.Bind<Guid>(settings).Should().Be(new Guid(guid));
         }
 
         [Test]
         public void Should_bind_to_Uri()
         {
-            var settings = new SettingsNode("http://example.com");
+            var settings = new ValueNode("http://example.com");
             binder.Bind<Uri>(settings).Should().Be(new Uri("http://example.com", UriKind.Absolute));
         }
 
         [Test]
         public void Should_bind_to_String()
         {
-            var settings = new SettingsNode("somestring");
+            var settings = new ValueNode("somestring");
             binder.Bind<string>(settings).Should().Be("somestring");
         }
 
         [Test]
         public void Should_bind_with_custom_CSTParser_over_ITypeParser()
         {
-            var settings = new SettingsNode("some,string");
+            var settings = new ValueNode("some,string");
             var result = binder.WithCustomParser<CST>(new CommaSeparatedTextParser())
                 .Bind<CST>(settings);
             result.Should().BeEquivalentTo(
@@ -133,7 +133,7 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_with_custom_SSTParser_over_delegate()
         {
-            var settings = new SettingsNode("some;string");
+            var settings = new ValueNode("some;string");
             var result = binder.WithCustomParser<SST>(TryParseSemicolonSeparatedText)
                 .Bind<SST>(settings);
             result.Should().BeEquivalentTo(
@@ -143,34 +143,34 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_NullableInt()
         {
-            var settings = new SettingsNode("10");
+            var settings = new ValueNode("10");
             binder.Bind<int?>(settings).Should().Be(10);
 
-            settings = new SettingsNode(null, "");
+            settings = new ValueNode(null, "");
             binder.Bind<int?>(settings).Should().Be(null);
         }
 
         [Test]
         public void Should_bind_to_Enum_by_value_or_name()
         {
-            var settings = new SettingsNode("10");
+            var settings = new ValueNode("10");
             binder.Bind<ConsoleColor>(settings).Should().Be(ConsoleColor.Green);
 
-            settings = new SettingsNode("grEEn");
+            settings = new ValueNode("grEEn");
             binder.Bind<ConsoleColor>(settings).Should().Be(ConsoleColor.Green);
         }
 
         [Test]
         public void Should_bind_to_DateTime()
         {
-            var settings = new SettingsNode("2018-03-14T15:09:26.535");
+            var settings = new ValueNode("2018-03-14T15:09:26.535");
             binder.Bind<DateTime>(settings).Should().Be(new DateTime(2018, 3, 14, 15, 9, 26, 535).ToUniversalTime());
         }
 
         [Test]
         public void Should_bind_to_DateTimeOffset()
         {
-            var settings = new SettingsNode("2018-03-14T15:09:26.535");
+            var settings = new ValueNode("2018-03-14T15:09:26.535");
             binder.Bind<DateTimeOffset>(settings).Should().Be(new DateTimeOffset(2018, 3, 14, 15, 9, 26, 535, TimeZoneInfo.Local.GetUtcOffset(DateTime.Now)));
         }
 
@@ -189,10 +189,10 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_Struct()
         {
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ObjectNode(new SortedDictionary<string, ISettingsNode>
             {
-                { "IntValue", new SettingsNode("10") },
-                { "StringValue", new SettingsNode("str") },
+                { "IntValue", new ValueNode("10") },
+                { "StringValue", new ValueNode("str") },
             });
             binder.Bind<Struct1>(settings)
                 .Should().BeEquivalentTo(
@@ -222,11 +222,11 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_Struct_with_checking_attributes()
         {
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ObjectNode(new SortedDictionary<string, ISettingsNode>
             {
-                { "Required", new SettingsNode("1") },
-                //{ "Optional", new RawSettings("2") },
-                { "OptionalNullable", new SettingsNode(null, "") },
+                { "Required", new ValueNode("1") },
+                //{ "Optional", new ValueNode("2") },
+                { "OptionalNullable", new ValueNode(null, "") },
             });
             binder.Bind<MyRequiredStruct>(settings)
                 .Should().BeEquivalentTo(
@@ -238,11 +238,11 @@ namespace Vostok.Configuration.Tests
                     }
                 );
 
-            settings = new SettingsNode(new OrderedDictionary
+            settings = new ObjectNode(new SortedDictionary<string, ISettingsNode>
             {
-                { "Required", new SettingsNode("1") },
-                { "RequiredNullable", new SettingsNode("0") },
-                //{ "Optional", new RawSettings("2") },
+                { "Required", new ValueNode("1") },
+                { "RequiredNullable", new ValueNode("0") },
+                //{ "Optional", new ValueNode("2") },
             });
             binder.Bind<MyOptionalStruct>(settings)
                 .Should().BeEquivalentTo(
@@ -258,14 +258,14 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_StructWithStruct()
         {
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ObjectNode(new SortedDictionary<string, ISettingsNode>
             {
-                { "StringValue", new SettingsNode("strstr") },
-                { "IgnoredRoIntProp", new SettingsNode("123") },
-                { "Struct1", new SettingsNode(new OrderedDictionary
+                { "StringValue", new ValueNode("strstr") },
+                { "IgnoredRoIntProp", new ValueNode("123") },
+                { "Struct1", new ObjectNode(new SortedDictionary<string, ISettingsNode>
                     {
-                        { "IntValue", new SettingsNode("10") },
-                        { "StringValue", new SettingsNode("str") },
+                        { "IntValue", new ValueNode("10") },
+                        { "StringValue", new ValueNode("str") },
                     })
                 }
             });
@@ -286,11 +286,11 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_HashSet()
         {
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ArrayNode(new List<ISettingsNode>
             {
-                [(object)0] = new SettingsNode("val_1"),
-                [(object)1] = new SettingsNode("val_2"),
-                [(object)2] = new SettingsNode("val_3"),
+                new ValueNode("val_1"),
+                new ValueNode("val_2"),
+                new ValueNode("val_3"),
             });
             binder.Bind<HashSet<string>>(settings)
                 .Should().BeEquivalentTo(new HashSet<string> { "val_1", "val_2", "val_3" });
@@ -342,48 +342,48 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_Class()
         {
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ObjectNode(new SortedDictionary<string, ISettingsNode>
             {
-                { "privateIntField", new SettingsNode("10") },
-                { "PrivateStrGetProp", new SettingsNode("str") },
-                { "PublicDoubleSetProp", new SettingsNode("1.23") },
-                { "PublicIntReadonlyField", new SettingsNode("20") },
-                { "PrivateConstStringField", new SettingsNode("ewq") },
-                { "PublicStringStaticField", new SettingsNode("statStr") },
-                { "PublicIntStaticProp", new SettingsNode("1234") },
-                { "PublicNullableDoubleSetProp", new SettingsNode(null, "") },
-                { "PublicIntArrayProp", new SettingsNode(new OrderedDictionary
+                { "privateIntField", new ValueNode("10") },
+                { "PrivateStrGetProp", new ValueNode("str") },
+                { "PublicDoubleSetProp", new ValueNode("1.23") },
+                { "PublicIntReadonlyField", new ValueNode("20") },
+                { "PrivateConstStringField", new ValueNode("ewq") },
+                { "PublicStringStaticField", new ValueNode("statStr") },
+                { "PublicIntStaticProp", new ValueNode("1234") },
+                { "PublicNullableDoubleSetProp", new ValueNode(null, "") },
+                { "PublicIntArrayProp", new  ArrayNode(new List<ISettingsNode>
                 {
-                    [(object)0] = new SettingsNode("1"),
-                    [(object)1] = new SettingsNode("2"),
+                    new ValueNode("1"),
+                    new ValueNode("2"),
                 }) },
-                { "PublicIntArrayPropNull", new SettingsNode(null, "") },
-                { "PublicStringListProp", new SettingsNode(new OrderedDictionary
+                { "PublicIntArrayPropNull", new ValueNode(null, "") },
+                { "PublicStringListProp", new ArrayNode(new List<ISettingsNode>
                 {
-                    [(object)0] = new SettingsNode("str1"),
-                    [(object)1] = new SettingsNode("str2"),
+                    new ValueNode("str1"),
+                    new ValueNode("str2"),
                 }) },
-                { "PublicStringListPropNull", new SettingsNode(null, "") },
-                { "PublicDictionaryProp", new SettingsNode(new OrderedDictionary
+                { "PublicStringListPropNull", new ValueNode(null, "") },
+                { "PublicDictionaryProp", new ObjectNode(new SortedDictionary<string, ISettingsNode>
                 {
-                    { "1", new SettingsNode("str1", "1") },
-                    { "2", new SettingsNode("str2", "2") },
+                    { "1", new ValueNode("str1", "1") },
+                    { "2", new ValueNode("str2", "2") },
                 }) },
-                { "PublicDictionaryPropNull", new SettingsNode(null, "") },
-                { "Struct1", new SettingsNode(new OrderedDictionary
+                { "PublicDictionaryPropNull", new ValueNode(null, "") },
+                { "Struct1", new ObjectNode(new SortedDictionary<string, ISettingsNode>
                     {
-                        { "IntValue", new SettingsNode("10") },
-                        { "StringValue", new SettingsNode("structString") },
+                        { "IntValue", new ValueNode("10") },
+                        { "StringValue", new ValueNode("structString") },
                     })
                 },
-                { "Class2", new SettingsNode(new OrderedDictionary
+                { "Class2", new ObjectNode(new SortedDictionary<string, ISettingsNode>
                     {
-                        { "PublicIntProp", new SettingsNode("111") },
+                        { "PublicIntProp", new ValueNode("111") },
                     })
                 },
-                { "Class2Null", new SettingsNode(null, "") },
+                { "Class2Null", new ValueNode(null, "") },
 
-                { "GetPublicIntReadonlyProp", new SettingsNode("321") },
+                { "GetPublicIntReadonlyProp", new ValueNode("321") },
             });
             binder.Bind<MyClass>(settings)
                 .Should().BeEquivalentTo(
@@ -433,11 +433,11 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_class_with_checking_attributes()
         {
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ObjectNode(new SortedDictionary<string, ISettingsNode>
             {
-                { "Required", new SettingsNode("1") },
-                //{ "Optional", new RawSettings("2") },
-                { "OptionalNullable", new SettingsNode(null, "") },
+                { "Required", new ValueNode("1") },
+                //{ "Optional", new ValueNode("2") },
+                { "OptionalNullable", new ValueNode(null, "") },
             });
             binder.Bind<MyRequiredClass>(settings)
                 .Should().BeEquivalentTo(
@@ -449,11 +449,11 @@ namespace Vostok.Configuration.Tests
                     }
                 );
 
-            settings = new SettingsNode(new OrderedDictionary
+            settings = new ObjectNode(new SortedDictionary<string, ISettingsNode>
             {
-                { "Required", new SettingsNode("1") },
-                { "RequiredNullable", new SettingsNode("0") },
-                //{ "Optional", new RawSettings("2") },
+                { "Required", new ValueNode("1") },
+                { "RequiredNullable", new ValueNode("0") },
+                //{ "Optional", new ValueNode("2") },
             });
             binder.Bind<MyOptionalClass>(settings)
                 .Should().BeEquivalentTo(
@@ -469,10 +469,10 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_IntArray()
         {
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ArrayNode(new List<ISettingsNode>
             {
-                [(object)0] = new SettingsNode("1"),
-                [(object)1] = new SettingsNode("2"),
+                new ValueNode("1"),
+                new ValueNode("2"),
             });
             binder.Bind<int[]>(settings).Should().BeEquivalentTo(new[] { 1, 2 });
         }
@@ -480,17 +480,17 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_ArrayOfIntArrays()
         {
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ArrayNode(new List<ISettingsNode>
             {
-                [(object)0] = new SettingsNode(new OrderedDictionary
+                new ArrayNode(new List<ISettingsNode>
                 {
-                    [(object)0] = new SettingsNode("1"),
-                    [(object)1] = new SettingsNode("2"),
+                    new ValueNode("1"),
+                    new ValueNode("2"),
                 }),
-                [(object)1] = new SettingsNode(new OrderedDictionary
+                new ArrayNode(new List<ISettingsNode>
                 {
-                    [(object)0] = new SettingsNode("3"),
-                    [(object)1] = new SettingsNode("4"),
+                    new ValueNode("3"),
+                    new ValueNode("4"),
                 }),
             });
             binder.Bind<int[][]>(settings).Should().BeEquivalentTo(new [] {1,2}, new[] {3,4});
@@ -499,15 +499,15 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_ObjectArray()
         {
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ArrayNode(new List<ISettingsNode>
             {
-                [(object)0] = new SettingsNode(new OrderedDictionary
+                new ObjectNode(new SortedDictionary<string, ISettingsNode>
                 {
-                    { "PublicIntProp", new SettingsNode("1") },
+                    { "PublicIntProp", new ValueNode("1") },
                 }),
-                [(object)1] = new SettingsNode(new OrderedDictionary
+                new ObjectNode(new SortedDictionary<string, ISettingsNode>
                 {
-                    { "PublicIntProp", new SettingsNode("2") },
+                    { "PublicIntProp", new ValueNode("2") },
                 }),
             });
             binder.Bind<MyClass2[]>(settings)
@@ -519,10 +519,10 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_IntList()
         {
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ArrayNode(new List<ISettingsNode>
             {
-                [(object)0] = new SettingsNode("1"),
-                [(object)1] = new SettingsNode("2"),
+                new ValueNode("1"),
+                new ValueNode("2"),
             });
             binder.Bind<List<int>>(settings).Should().BeEquivalentTo(new List<int> { 1, 2 });
         }
@@ -530,15 +530,15 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_ObjectList()
         {
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ArrayNode(new List<ISettingsNode>
             {
-                [(object)0] = new SettingsNode(new OrderedDictionary
+                new ObjectNode(new SortedDictionary<string, ISettingsNode>
                 {
-                    { "PublicIntProp", new SettingsNode("1") },
+                    { "PublicIntProp", new ValueNode("1") },
                 }),
-                [(object)1] = new SettingsNode(new OrderedDictionary
+                new ObjectNode(new SortedDictionary<string, ISettingsNode>
                 {
-                    { "PublicIntProp", new SettingsNode("2") },
+                    { "PublicIntProp", new ValueNode("2") },
                 }),
             });
             binder.Bind<List<MyClass2>>(settings)
@@ -554,10 +554,10 @@ namespace Vostok.Configuration.Tests
         public void Should_bind_to_IntCollection()
         {
             ICollection<int> list = new List<int> { 1, 2 };
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ArrayNode(new List<ISettingsNode>
             {
-                [(object)0] = new SettingsNode("1"),
-                [(object)1] = new SettingsNode("2"),
+                new ValueNode("1"),
+                new ValueNode("2"),
             });
             binder.Bind<List<int>>(settings).Should().BeEquivalentTo(list);
         }
@@ -565,10 +565,10 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_IntIntDictionary()
         {
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ObjectNode(new SortedDictionary<string, ISettingsNode>
             {
-                { "1", new SettingsNode("10", "1") },
-                { "2", new SettingsNode("20", "2") },
+                { "1", new ValueNode("10", "1") },
+                { "2", new ValueNode("20", "2") },
             });
             binder.Bind<Dictionary<int, int>>(settings)
                 .Should().BeEquivalentTo(
@@ -578,16 +578,16 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_StringObjectDictionary()
         {
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ObjectNode(new SortedDictionary<string, ISettingsNode>
             {
-                { "key1", new SettingsNode(new OrderedDictionary
+                { "key1", new ObjectNode(new SortedDictionary<string, ISettingsNode>
                     {
-                        { "PublicIntProp", new SettingsNode("1", "PublicIntProp") },
+                        { "PublicIntProp", new ValueNode("1", "PublicIntProp") },
                     }, "key1")
                 },
-                { "key2", new SettingsNode(new OrderedDictionary
+                { "key2", new ObjectNode(new SortedDictionary<string, ISettingsNode>
                     {
-                        { "PublicIntProp", new SettingsNode("2", "PublicIntProp") },
+                        { "PublicIntProp", new ValueNode("2", "PublicIntProp") },
                     }, "key2")
                 },
             });
@@ -603,15 +603,15 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_bind_to_GenericClass()
         {
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ObjectNode(new SortedDictionary<string, ISettingsNode>
             {
-                { "PublicIntProp", new SettingsNode("10") },
-                { "PublicT1Prop", new SettingsNode("str") },
-                { "PublicT2Prop", new SettingsNode("1.23") },
-                { "PublicDictProp", new SettingsNode(new OrderedDictionary
+                { "PublicIntProp", new ValueNode("10") },
+                { "PublicT1Prop", new ValueNode("str") },
+                { "PublicT2Prop", new ValueNode("1.23") },
+                { "PublicDictProp", new ObjectNode(new SortedDictionary<string, ISettingsNode>
                 {
-                    { "key1", new SettingsNode("1,2", "key1") },
-                    { "key2", new SettingsNode("2.3", "key2") },
+                    { "key1", new ValueNode("1,2", "key1") },
+                    { "key2", new ValueNode("2.3", "key2") },
                 }) },
             });
             binder.Bind<GenericClass<string, double>>(settings)
@@ -636,7 +636,7 @@ namespace Vostok.Configuration.Tests
         [Order(0)]
         public void Should_throw_ArgumentNullException_on_unknown_data_type()
         {
-            new Action(() => binder.Bind<CST>(new SettingsNode("a,b,c"))).Should().Throw<InvalidCastException>();
+            new Action(() => binder.Bind<CST>(new ValueNode("a,b,c"))).Should().Throw<InvalidCastException>();
         }
 
         [Test]
@@ -648,70 +648,70 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_throw_ArgumentNullException_Dictionary()
         {
-            new Action(() => binder.Bind<MyRequiredStruct>(new SettingsNode(null, ""))).Should().Throw<InvalidCastException>();
+            new Action(() => binder.Bind<MyRequiredStruct>(new ValueNode(null, ""))).Should().Throw<InvalidCastException>();
         }
 
         [Test]
         public void Should_throw_ArgumentNullException_Array()
         {
-            new Action(() => binder.Bind<int[]>(new SettingsNode(null, ""))).Should().Throw<ArgumentNullException>();
+            new Action(() => binder.Bind<int[]>(new ValueNode(null, ""))).Should().Throw<ArgumentNullException>();
         }
 
         [Test]
         public void Should_throw_ArgumentNullException_List()
         {
-            new Action(() => binder.Bind<List<int>>(new SettingsNode(null, ""))).Should().Throw<ArgumentNullException>();
+            new Action(() => binder.Bind<List<int>>(new ValueNode(null, ""))).Should().Throw<ArgumentNullException>();
         }
 
         [Test]
         public void Should_throw_ArgumentNullException_Class()
         {
-            new Action(() => binder.Bind<MyRequiredClass>(new SettingsNode(null, ""))).Should().Throw<InvalidCastException>();
+            new Action(() => binder.Bind<MyRequiredClass>(new ValueNode(null, ""))).Should().Throw<InvalidCastException>();
         }
 
         [Test]
         public void Should_throw_ArgumentNullException_Struct()
         {
-            new Action(() => binder.Bind<MyRequiredStruct>(new SettingsNode(null, ""))).Should().Throw<InvalidCastException>();
+            new Action(() => binder.Bind<MyRequiredStruct>(new ValueNode(null, ""))).Should().Throw<InvalidCastException>();
         }
 
         [Test]
         public void Should_throw_InvalidCastException_Primitive_if_not_single_value_dictionary()
         {
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ObjectNode(new SortedDictionary<string, ISettingsNode>
             {
-                { "key1", new SettingsNode("123") },
-                { "key2", new SettingsNode("123") },
+                { "key1", new ValueNode("123") },
+                { "key2", new ValueNode("123") },
             });
             new Action(() => binder.Bind<int>(settings)).Should().Throw<ArgumentException>();
             
-            settings = new SettingsNode(new OrderedDictionary());
+            settings = new ObjectNode(new SortedDictionary<string, ISettingsNode>());
             new Action(() => binder.Bind<int>(settings)).Should().Throw<ArgumentException>();
         }
         
         [Test]
         public void Should_throw_InvalidCastException_Primitive_if_wrong_type()
         {
-            var settings = new SettingsNode("str");
+            var settings = new ValueNode("str");
             new Action(() => binder.Bind<int>(settings)).Should().Throw<InvalidCastException>();
         }
         
         [Test]
         public void Should_throw_InvalidCastException_Enum_if_wrong_value()
         {
-            var settings = new SettingsNode("SeroBuroMalinovy");
+            var settings = new ValueNode("SeroBuroMalinovy");
             new Action(() => binder.Bind<ConsoleColor>(settings)).Should().Throw<InvalidCastException>();
 
-            settings = new SettingsNode("1_000_000");
+            settings = new ValueNode("1_000_000");
             new Action(() => binder.Bind<ConsoleColor>(settings)).Should().Throw<InvalidCastException>();
         }
         
         [Test]
         public void Should_throw_InvalidCastException_struct_required_field_or_prop_is_absent()
         {
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ObjectNode(new SortedDictionary<string, ISettingsNode>
             {
-                { "WrongName", new SettingsNode("10") }
+                { "WrongName", new ValueNode("10") }
             });
             new Action(() => binder.Bind<MyRequiredStruct>(settings)).Should().Throw<InvalidCastException>();
         }
@@ -719,9 +719,9 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_throw_InvalidCastException_class_required_field_or_prop_is_absent()
         {
-            var settings = new SettingsNode(new OrderedDictionary
+            var settings = new ObjectNode(new SortedDictionary<string, ISettingsNode>
             {
-                { "WrongName", new SettingsNode("10") }
+                { "WrongName", new ValueNode("10") }
             });
             new Action(() => binder.Bind<MyRequiredClass>(settings)).Should().Throw<InvalidCastException>();
         }
@@ -771,4 +771,4 @@ namespace Vostok.Configuration.Tests
             public Dictionary<T1, T2> PublicDictProp { get; set; }
         }
     }
-}*/
+}

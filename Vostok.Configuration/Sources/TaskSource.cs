@@ -17,8 +17,8 @@ namespace Vostok.Configuration.Sources
         public TaskSource()
         {
             resultSource = new TaskCompletionSource<ISettingsNode>();
-            typeResultSources = new ConcurrentDictionary<Type, TaskCompletionSource<object>>();
             lastValue = null;
+            typeResultSources = new ConcurrentDictionary<Type, TaskCompletionSource<object>>();
             typeLastValues = new ConcurrentDictionary<Type, object>();
             typeInnerSubscriptions = new ConcurrentDictionary<Type, IDisposable>();
         }

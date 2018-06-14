@@ -5,6 +5,7 @@ using NUnit.Framework;
 using Vostok.Commons.Conversions;
 using Vostok.Commons.Testing;
 using Vostok.Configuration.Sources;
+using Vostok.Configuration.Sources.Watchers;
 using Vostok.Configuration.Tests.Helper;
 
 namespace Vostok.Configuration.Tests.Sources

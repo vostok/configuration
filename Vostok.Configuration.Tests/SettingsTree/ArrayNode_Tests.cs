@@ -2,6 +2,7 @@
 using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.Configuration.MergeOptions;
 using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Tests.SettingsTree

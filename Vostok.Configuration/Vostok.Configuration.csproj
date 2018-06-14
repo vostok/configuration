@@ -27,4 +27,9 @@
       <HintPath>..\..\vostok.commons\Vostok.Commons\bin\Release\netstandard2.0\Vostok.Commons.dll</HintPath>
     </Reference>
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="MergeOptions\" />
+    <Folder Include="Comparers\" />
+    <Folder Include="Sources\Watchers\" />
+  </ItemGroup>
 </Project>

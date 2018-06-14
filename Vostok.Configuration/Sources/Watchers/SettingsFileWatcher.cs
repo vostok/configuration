@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using JetBrains.Annotations;
 
-namespace Vostok.Configuration.Sources
+namespace Vostok.Configuration.Sources.Watchers
 {
     /// <summary>
     /// Watches for changes in files

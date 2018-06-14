@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using JetBrains.Annotations;
+using Vostok.Configuration.MergeOptions;
 
 namespace Vostok.Configuration.SettingsTree
 {
