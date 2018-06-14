@@ -1,4 +1,5 @@
 ﻿using System;
+using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration
 {
