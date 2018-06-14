@@ -4,7 +4,8 @@ using System.Globalization;
 
 namespace Vostok.Configuration.Comparers
 {
-    internal class ChildrenKeysEqualityComparer: IEqualityComparer<string>
+    // CR(krait): Why couldn't you just use StringComparer.InvariantCultureIgnoreCase?
+    internal class ChildrenKeysEqualityComparer : IEqualityComparer<string>
     {
         public bool Equals(string x, string y) =>
             string.Equals(x, y, StringComparison.InvariantCultureIgnoreCase);

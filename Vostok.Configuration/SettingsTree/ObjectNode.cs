@@ -6,6 +6,7 @@ using Vostok.Configuration.MergeOptions;
 
 namespace Vostok.Configuration.SettingsTree
 {
+    // CR(krait): Seems like node types must be public since they're needed to implement custom sources.
     internal sealed class ObjectNode : ISettingsNode, IEquatable<ObjectNode>
     {
         private readonly IReadOnlyDictionary<string, ISettingsNode> children;
@@ -34,6 +35,7 @@ namespace Vostok.Configuration.SettingsTree
             if (options == null)
                 options = SettingsMergeOptions.Default();
 
+            // CR(krait): Please split into methods.
             var comparer = new ChildrenKeysEqualityComparer();
             if (options.TreeMergeStyle == TreeMergeStyle.Shallow)
             {

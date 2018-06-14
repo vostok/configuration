@@ -39,7 +39,7 @@ namespace Vostok.Configuration.SettingsTree
                     return other;
                 case ListMergeStyle.Concat:
                     return new ArrayNode(children.Concat(other.Children).ToList(), Name);
-                case ListMergeStyle.Union:
+                case ListMergeStyle.Union: // CR(krait): About this case. Shouldn't we merge children with same names here? Probably we shouldn't, but still..
                     return new ArrayNode(children.Union(other.Children).ToList(), Name);
                 default:
                     return null;
