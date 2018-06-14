@@ -13,7 +13,7 @@ namespace Vostok.Configuration.Binders
         public ISettingsBinder<T> CreateFor<T>() =>
             container.GetInstance<ISettingsBinder<T>>();
 
-        public ISettingsBinder<object> CreateForType(Type type) =>
+        public ISettingsBinder<object> CreateFor(Type type) =>
             new BinderWrapper(container.GetInstance(typeof(ISettingsBinder<>).MakeGenericType(type)));
     }
 }

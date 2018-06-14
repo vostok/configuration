@@ -23,8 +23,8 @@ namespace Vostok.Configuration.Binders
             string value;
             if (!string.IsNullOrWhiteSpace(settings.Value))
                 value = settings.Value;
-            else if (settings.Value == null && settings.Children.Count() == 1)
-                value = settings.Children.First().Value;
+            else if (settings.Value == null && settings.Children.Count() == 1 && settings.Children.First() is ValueNode valueNode)
+                value = valueNode.Value;
             else
                 throw new ArgumentNullException($"{nameof(PrimitiveAndSimpleBinder<T>)}: settings value is null. Can't parse.");
 

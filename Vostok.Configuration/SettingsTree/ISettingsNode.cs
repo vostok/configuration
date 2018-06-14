@@ -35,6 +35,6 @@ namespace Vostok.Configuration.SettingsTree
         /// <summary>
         /// Merge two trees of settings by rules specified in <paramref name="options"/>.
         /// </summary>
-        ISettingsNode Merge(ISettingsNode other, SettingsMergeOptions options);
+        ISettingsNode Merge(ISettingsNode other, SettingsMergeOptions options = null);
     }
 }

@@ -14,7 +14,7 @@ namespace Vostok.Configuration.Binders
         public T Bind(ISettingsNode settings)
         {
             var subType = typeof(T).GetElementType();
-            var binder = binderFactory.CreateForType(subType);
+            var binder = binderFactory.CreateFor(subType);
             SettingsNode.CheckSettings(settings);
 
             var i = 0;

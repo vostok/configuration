@@ -4,12 +4,12 @@ using System.Globalization;
 
 namespace Vostok.Configuration
 {
-    internal class ChildrenDictKeysComparer: IEqualityComparer<string>
+    internal class ChildrenKeysEqualityComparer: IEqualityComparer<string>
     {
         public bool Equals(string x, string y) =>
-            string.Equals(x, y, StringComparison.CurrentCultureIgnoreCase);
+            string.Equals(x, y, StringComparison.InvariantCultureIgnoreCase);
 
         public int GetHashCode(string str) =>
-            str.ToLower(CultureInfo.CurrentCulture).GetHashCode();
+            str.ToLower(CultureInfo.InvariantCulture).GetHashCode();
     }
 }

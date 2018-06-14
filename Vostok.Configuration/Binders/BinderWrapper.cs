@@ -11,10 +11,10 @@ namespace Vostok.Configuration.Binders
         public BinderWrapper(object binder) =>
             this.binder = binder;
 
-        public object Bind(ISettingsNode rawSettings) =>
-            GetBinderBindMethod().Invoke(binder, new object[] {rawSettings});
-
-        private MethodInfo GetBinderBindMethod() =>
+        private MethodInfo BinderBindMethod =>
             binder.GetType().GetMethods().First(m => m.Name == nameof(Bind));
+
+        public object Bind(ISettingsNode rawSettings) =>
+            BinderBindMethod.Invoke(binder, new object[] {rawSettings});
     }
 }

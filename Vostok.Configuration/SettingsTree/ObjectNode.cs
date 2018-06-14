@@ -22,10 +22,9 @@ namespace Vostok.Configuration.SettingsTree
         public string Name { get; }
         public IEnumerable<ISettingsNode> Children => children?.Values ?? Enumerable.Empty<ObjectNode>();
         public ISettingsNode this[string name] => children.TryGetValue(name, out var res) ? res : null;
-
         string ISettingsNode.Value { get; } = null;
 
-        public ISettingsNode Merge(ISettingsNode other, SettingsMergeOptions options)
+        public ISettingsNode Merge(ISettingsNode other, SettingsMergeOptions options = null)
         {
             if (!(other is ObjectNode))
                 return other;
@@ -33,24 +32,25 @@ namespace Vostok.Configuration.SettingsTree
             if (options == null)
                 options = SettingsMergeOptions.Default();
 
+            var comparer = new ChildrenKeysEqualityComparer();
             if (options.TreeMergeStyle == TreeMergeStyle.Shallow)
             {
-                var thisChildren = children.Keys.OrderBy(k => k).ToArray();
-                var otherChildren = other.Children.Select(c => c.Name).OrderBy(k => k).ToArray();
-                if (!thisChildren.SequenceEqual(otherChildren, new ChildrenDictKeysComparer()))
+                var thisNames = children.Keys.OrderBy(k => k).ToArray();
+                var otherNames = other.Children.Select(c => c.Name).OrderBy(k => k).ToArray();
+                if (!thisNames.SequenceEqual(otherNames, comparer))
                     return other;
                 var dict = new SortedDictionary<string, ISettingsNode>();
-                foreach (var name in thisChildren)
+                foreach (var name in thisNames)
                     dict.Add(name, this[name].Merge(other[name], options));
                 return new ObjectNode(dict, other.Name);
             }
             else if (options.TreeMergeStyle == TreeMergeStyle.Deep)
             {
-                var thisChildren = children.Keys.ToArray();
-                var otherChildren = other.Children.Select(c => c.Name).ToArray();
-                var duplicates = otherChildren.Intersect(thisChildren, new ChildrenDictKeysComparer()).ToArray();
-                var unique1 = otherChildren.Except(thisChildren, new ChildrenDictKeysComparer());
-                var unique2 = thisChildren.Except(otherChildren, new ChildrenDictKeysComparer());
+                var thisNames = children.Keys.ToArray();
+                var otherNames = other.Children.Select(c => c.Name).ToArray();
+                var duplicates = otherNames.Intersect(thisNames, comparer).ToArray();
+                var unique1 = otherNames.Except(thisNames, comparer);
+                var unique2 = thisNames.Except(otherNames, comparer);
                 var unique = unique1.Concat(unique2).ToArray();
 
                 var dict = new SortedDictionary<string, ISettingsNode>(new ChildrenKeysComparer());

@@ -20,10 +20,7 @@ namespace Vostok.Configuration.Binders
         public List<T> Bind(ISettingsNode settings)
         {
             SettingsNode.CheckSettings(settings);
-
-            return settings.Children
-                .Select(n => elementBinder.Bind(n))
-                .ToList();
+            return settings.Children.Select(n => elementBinder.Bind(n)).ToList();
         }
 
         IList<T> ISettingsBinder<IList<T>>.Bind(ISettingsNode settings) => Bind(settings);
