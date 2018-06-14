@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons.Conversions;
@@ -11,23 +12,23 @@ using Vostok.Configuration.Tests.Helper;
 
 namespace Vostok.Configuration.Tests.Sources
 {
-    [TestFixture, SingleThreaded]
+    [TestFixture]
     public class CombinedSource_Tests
     {
-        private const string TestName = nameof(CombinedSource);
+        private SingleFileWatcherSubstitute[] watchers;
 
-        [TearDown]
-        public void Cleanup()
+        private CombinedSource CreateCombinedSource(string[] filesContent, SettingsMergeOptions options = null)
         {
-            TestHelper.DeleteAllFiles(TestName);
-        }
-
-        private static CombinedSource CreateCombinedSource(string[] fileNames, SettingsMergeOptions options = null)
-        {
-            if (fileNames == null || !fileNames.Any())
+            if (filesContent == null || !filesContent.Any())
                 return new CombinedSource();
 
-            var list = fileNames.Select(n => new JsonFileSource(n)).ToList();
+            watchers = new SingleFileWatcherSubstitute[filesContent.Length];
+            var list = filesContent.Select((n, i) => new JsonFileSource($"{i}.json", f =>
+                {
+                    watchers[i] = new SingleFileWatcherSubstitute(f);
+                    watchers[i].GetUpdate(n);
+                    return watchers[i];
+                })).ToList();
             return new CombinedSource(list, options);
         }
 
@@ -41,12 +42,9 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_return_alone_source()
         {
-            var fileNames = new[]
-            {
-                TestHelper.CreateFile(TestName, "{ 'value 1': 'string 1' }"),
-            };
+            var filesContent = new[] { "{ 'value 1': 'string 1' }" };
 
-            using (var cs = CreateCombinedSource(fileNames))
+            using (var cs = CreateCombinedSource(filesContent))
             {
                 var result = cs.Get();
                 result["value 1"].Value.Should().Be("string 1");
@@ -56,19 +54,19 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_merge_sources_with_override_values()
         {
-            var fileNames = new[]
+            var filesContent = new[]
             {
-                TestHelper.CreateFile(TestName, "{ 'value 1': 'string 1' }"),
-                TestHelper.CreateFile(TestName, "{ 'value 2': 'string 2' }"),
-                TestHelper.CreateFile(TestName, "{ 'value 2': 'string 22' }"),
+                "{ 'value 1': 'string 1' }",
+                "{ 'value 2': 'string 2' }",
+                "{ 'value 2': 'string 22' }",
             };
 
-            using (var cs = CreateCombinedSource(fileNames, new SettingsMergeOptions { TreeMergeStyle = TreeMergeStyle.Shallow }))
+            using (var cs = CreateCombinedSource(filesContent, new SettingsMergeOptions { TreeMergeStyle = TreeMergeStyle.Shallow }))
             {
                 var result = cs.Get();
                 result["value 2"].Value.Should().Be("string 22");
             }
-            using (var cs = CreateCombinedSource(fileNames, new SettingsMergeOptions { TreeMergeStyle = TreeMergeStyle.Deep }))
+            using (var cs = CreateCombinedSource(filesContent, new SettingsMergeOptions { TreeMergeStyle = TreeMergeStyle.Deep }))
             {
                 var result = cs.Get();
                 result["value 1"].Value.Should().Be("string 1");
@@ -84,14 +82,14 @@ namespace Vostok.Configuration.Tests.Sources
 
         private int ShouldObserveFileTest_ReturnsCountOfReceives()
         {
-            var fileNames = new[]
+            var filesContent = new[]
             {
-                TestHelper.CreateFile(TestName, "{ 'value 1': 1, 'list': [1,2] }"),
-                TestHelper.CreateFile(TestName, "{ 'value 2': 2 }"),
+                "{ 'value 1': 1, 'list': [1,2] }",
+                "{ 'value 2': 2 }",
             };
             var val = 0;
 
-            using (var ccs = CreateCombinedSource(fileNames, new SettingsMergeOptions { TreeMergeStyle = TreeMergeStyle.Deep }))
+            using (var ccs = CreateCombinedSource(filesContent, new SettingsMergeOptions { TreeMergeStyle = TreeMergeStyle.Deep }))
             {
                 var sub = ccs.Observe().Subscribe(settings =>
                 {
@@ -101,8 +99,13 @@ namespace Vostok.Configuration.Tests.Sources
                     settings["list"].Children.Select(c => c.Value).Should().ContainInOrder("1", "2");
                 });
 
-                TestHelper.CreateFile(TestName, "{ 'value 2': 2, 'list': [3,4] }", fileNames[1]);
-                Thread.Sleep(200.Milliseconds());
+                //update file
+                Task.Run(() =>
+                {
+                    Thread.Sleep(20);
+                    watchers[1].GetUpdate("{ 'value 2': 2, 'list': [3,4] }");
+                });
+                Thread.Sleep(50.Milliseconds());
 
                 sub.Dispose();
             }
