@@ -4,7 +4,6 @@
 
  namespace Vostok.Configuration.Extensions
  {
-     // ReSharper disable once InconsistentNaming
      public static class IConfigurationSourceExtensions
      {
          /// <summary>

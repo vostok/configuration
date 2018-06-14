@@ -3,15 +3,14 @@
 namespace Vostok.Configuration
 {
     /// <summary>
-    /// Not static to be configured with custom type parsers.
+    /// Implements binding of <see cref="ISettingsNode"/>s to specific models.
     /// </summary>
     public interface ISettingsBinder
     {
         /// <summary>
-        /// Bindes <paramref name="rawSettings"/> tree to specified type
+        /// <para>Binds the provided <see cref="ISettingsNode"/> instance to type <see cref="TSettings"/>.</para>
+        /// <para>An exception will be thrown if the binding fails.</para>
         /// </summary>
-        /// <typeparam name="TSettings">Data type you need to get</typeparam>
-        /// <param name="rawSettings"><see cref="ISettingsNode"/> tree</param>
         TSettings Bind<TSettings>(ISettingsNode rawSettings);
     }
 }
