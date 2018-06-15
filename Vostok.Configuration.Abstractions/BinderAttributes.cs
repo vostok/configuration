@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Vostok.Configuration
+namespace Vostok.Configuration.Abstractions
 {
     /// <inheritdoc />
     /// <summary>

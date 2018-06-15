@@ -1,5 +1,5 @@
 ﻿using System;
-using Vostok.Configuration.Binders;
+using Vostok.Configuration.Abstractions;
 
 namespace Vostok.Configuration
 {

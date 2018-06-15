@@ -4,7 +4,8 @@ using System.Net;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons;
-using Vostok.Configuration.Binders;
+using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Tests.Binders

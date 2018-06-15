@@ -1,7 +1,7 @@
 ﻿using System;
-using Vostok.Configuration.SettingsTree;
+using Vostok.Configuration.Abstractions.SettingsTree;
 
-namespace Vostok.Configuration.Sources
+namespace Vostok.Configuration.Abstractions
 {
     /// <inheritdoc />
     /// <summary>

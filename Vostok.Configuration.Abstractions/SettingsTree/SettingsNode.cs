@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace Vostok.Configuration.SettingsTree
+namespace Vostok.Configuration.Abstractions.SettingsTree
 {
     public static class SettingsNode
     {

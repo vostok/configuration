@@ -3,6 +3,8 @@ using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using JetBrains.Annotations;
+using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Sources

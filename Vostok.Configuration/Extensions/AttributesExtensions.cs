@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Vostok.Configuration.Abstractions;
 
 namespace Vostok.Configuration.Extensions
 {

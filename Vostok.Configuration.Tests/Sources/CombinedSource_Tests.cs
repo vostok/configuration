@@ -6,7 +6,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons.Conversions;
 using Vostok.Commons.Testing;
-using Vostok.Configuration.MergeOptions;
+using Vostok.Configuration.Abstractions.MergeOptions;
 using Vostok.Configuration.Sources;
 using Vostok.Configuration.Tests.Helper;
 

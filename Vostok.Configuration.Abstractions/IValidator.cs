@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Vostok.Configuration
+namespace Vostok.Configuration.Abstractions
 {
     public interface IValidator
     {

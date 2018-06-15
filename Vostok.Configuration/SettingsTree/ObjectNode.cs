@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Vostok.Configuration.Abstractions.MergeOptions;
+using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Extensions;
-using Vostok.Configuration.MergeOptions;
 
 namespace Vostok.Configuration.SettingsTree
 {

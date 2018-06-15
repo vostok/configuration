@@ -28,7 +28,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="MergeOptions\" />
     <Folder Include="Sources\Watchers\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Vostok.Configuration.Abstractions\Vostok.Configuration.Abstractions.csproj" />
   </ItemGroup>
 </Project>

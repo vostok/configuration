@@ -1,9 +1,10 @@
- using System.Linq;
- using Vostok.Commons;
- using Vostok.Configuration.MergeOptions;
- using Vostok.Configuration.Sources;
+using System.Linq;
+using Vostok.Commons;
+using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Abstractions.MergeOptions;
+using Vostok.Configuration.Sources;
 
- namespace Vostok.Configuration.Extensions
+namespace Vostok.Configuration.Extensions
  {
      public static class IConfigurationSourceExtensions
      {

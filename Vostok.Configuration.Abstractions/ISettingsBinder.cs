@@ -1,6 +1,6 @@
-﻿using Vostok.Configuration.SettingsTree;
+﻿using Vostok.Configuration.Abstractions.SettingsTree;
 
-namespace Vostok.Configuration.Binders
+namespace Vostok.Configuration.Abstractions
 {
     /// <summary>
     /// Implements binding of <see cref="ISettingsNode"/>s to specific models.

@@ -2,6 +2,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Sources;
@@ -172,7 +174,7 @@ namespace Vostok.Configuration
             }
         }
 
-        private object SubscribeWatcher<TSettings>(SettingsTree.ISettingsNode rs)
+        private object SubscribeWatcher<TSettings>(ISettingsNode rs)
         {
             var type = typeof(TSettings);
             if (!typeSources.TryGetValue(type, out _))

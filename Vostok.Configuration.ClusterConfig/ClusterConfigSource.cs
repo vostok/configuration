@@ -6,6 +6,8 @@ using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Vostok.Commons.Conversions;
+using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Extensions;
 using Vostok.Configuration.SettingsTree;
 using Vostok.Configuration.Sources;

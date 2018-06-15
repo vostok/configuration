@@ -1,3 +1,4 @@
+using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Extensions

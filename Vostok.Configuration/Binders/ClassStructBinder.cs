@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
-using System.Text;
+using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Extensions;
-using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Binders
 {

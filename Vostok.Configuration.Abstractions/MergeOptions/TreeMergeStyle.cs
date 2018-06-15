@@ -1,4 +1,4 @@
-﻿namespace Vostok.Configuration.MergeOptions
+﻿namespace Vostok.Configuration.Abstractions.MergeOptions
 {
     /// <summary>
     /// Specifies the way settings trees are merged.

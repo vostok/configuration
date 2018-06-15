@@ -1,5 +1,6 @@
 ﻿using System;
 using SimpleInjector;
+using Vostok.Configuration.Abstractions;
 
 namespace Vostok.Configuration.Binders
 {

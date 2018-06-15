@@ -5,6 +5,8 @@ using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons;
 using Vostok.Commons.Parsers;
+using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.SettingsTree;
 

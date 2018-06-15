@@ -3,7 +3,8 @@ using System.Collections;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Text;
-using Vostok.Configuration.SettingsTree;
+using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Abstractions.SettingsTree;
 
 namespace Vostok.Configuration.Sources
 {

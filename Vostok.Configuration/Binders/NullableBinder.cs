@@ -1,4 +1,5 @@
-﻿using Vostok.Configuration.SettingsTree;
+﻿using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Abstractions.SettingsTree;
 
 namespace Vostok.Configuration.Binders
 {

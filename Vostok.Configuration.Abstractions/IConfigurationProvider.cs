@@ -1,7 +1,6 @@
 ﻿using System;
-using Vostok.Configuration.Sources;
 
-namespace Vostok.Configuration
+namespace Vostok.Configuration.Abstractions
 {
     /// <summary>
     /// Provides settings for your application, fresh and warm.
