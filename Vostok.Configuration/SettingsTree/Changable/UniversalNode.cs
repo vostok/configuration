@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using Vostok.Configuration.Comparers;
 using Vostok.Configuration.Extensions;
 using Vostok.Configuration.MergeOptions;
 
@@ -9,7 +9,7 @@ namespace Vostok.Configuration.SettingsTree.Changable
     internal sealed class UniversalNode : ISettingsNode
     {
         private readonly IList<ISettingsNode> childrenList = new List<ISettingsNode>();
-        private readonly IDictionary<string, ISettingsNode> childrenDict = new SortedDictionary<string, ISettingsNode>(new ChildrenKeysComparer());
+        private readonly IDictionary<string, ISettingsNode> childrenDict = new SortedDictionary<string, ISettingsNode>(StringComparer.InvariantCultureIgnoreCase);
 
         public UniversalNode(string value, string name = null)
         {
@@ -64,7 +64,7 @@ namespace Vostok.Configuration.SettingsTree.Changable
 
         public static explicit operator ObjectNode(UniversalNode settings)
         {
-            var dict = settings.ChildrenDict.ToSortedDictionary(node => node.Name, node => ConvertNode((UniversalNode)node), new ChildrenKeysComparer());
+            var dict = settings.ChildrenDict.ToSortedDictionary(node => node.Name, node => ConvertNode((UniversalNode)node), StringComparer.InvariantCultureIgnoreCase);
             return new ObjectNode(dict, settings.Name);
         }
 

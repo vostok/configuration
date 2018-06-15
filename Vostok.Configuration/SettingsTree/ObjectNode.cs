@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Vostok.Configuration.Comparers;
+using Vostok.Configuration.Extensions;
 using Vostok.Configuration.MergeOptions;
 
 namespace Vostok.Configuration.SettingsTree
 {
-    // CR(krait): Seems like node types must be public since they're needed to implement custom sources.
-    internal sealed class ObjectNode : ISettingsNode, IEquatable<ObjectNode>
+    public sealed class ObjectNode : ISettingsNode, IEquatable<ObjectNode>
     {
         private readonly IReadOnlyDictionary<string, ISettingsNode> children;
 
@@ -33,39 +32,45 @@ namespace Vostok.Configuration.SettingsTree
                 return other;
 
             if (options == null)
-                options = SettingsMergeOptions.Default();
+                options = new SettingsMergeOptions();
 
-            // CR(krait): Please split into methods.
-            var comparer = new ChildrenKeysEqualityComparer();
-            if (options.TreeMergeStyle == TreeMergeStyle.Shallow)
+            switch (options.TreeMergeStyle)
             {
-                var thisNames = children.Keys.OrderBy(k => k).ToArray();
-                var otherNames = other.Children.Select(c => c.Name).OrderBy(k => k).ToArray();
-                if (!thisNames.SequenceEqual(otherNames, comparer))
-                    return other;
-                var dict = new SortedDictionary<string, ISettingsNode>();
-                foreach (var name in thisNames)
-                    dict.Add(name, this[name].Merge(other[name], options));
-                return new ObjectNode(dict, other.Name);
+                case TreeMergeStyle.Shallow:
+                    return ShallowMerge(other, options);
+                case TreeMergeStyle.Deep:
+                    return DeepMerge(other, options);
+                default:
+                    return null;
             }
-            else if (options.TreeMergeStyle == TreeMergeStyle.Deep)
-            {
-                var thisNames = children.Keys.ToArray();
-                var otherNames = other.Children.Select(c => c.Name).ToArray();
-                var duplicates = otherNames.Intersect(thisNames, comparer).ToArray();
-                var unique1 = otherNames.Except(thisNames, comparer);
-                var unique2 = thisNames.Except(otherNames, comparer);
-                var unique = unique1.Concat(unique2).ToArray();
+        }
 
-                var dict = new SortedDictionary<string, ISettingsNode>(new ChildrenKeysComparer());
-                foreach (var name in unique)
-                    dict.Add(name, this[name] ?? other[name]);
-                foreach (var name in duplicates)
-                    dict.Add(name, this[name].Merge(other[name], options));
-                return new ObjectNode(dict, other.Name);
-            }
+        private ISettingsNode DeepMerge(ISettingsNode other, SettingsMergeOptions options)
+        {
+            var comparer = StringComparer.InvariantCultureIgnoreCase;
+            var thisNames = children.Keys.ToArray();
+            var otherNames = other.Children.Select(c => c.Name).ToArray();
+            var duplicates = otherNames.Intersect(thisNames, comparer).ToArray();
+            var unique = thisNames.Unique(otherNames, comparer).ToArray();
 
-            return null;
+            var dict = new SortedDictionary<string, ISettingsNode>(comparer);
+            foreach (var name in unique)
+                dict.Add(name, this[name] ?? other[name]);
+            foreach (var name in duplicates)
+                dict.Add(name, this[name].Merge(other[name], options));
+            return new ObjectNode(dict, other.Name);
+        }
+
+        private ISettingsNode ShallowMerge(ISettingsNode other, SettingsMergeOptions options)
+        {
+            var thisNames = children.Keys.OrderBy(k => k).ToArray();
+            var otherNames = other.Children.Select(c => c.Name).OrderBy(k => k).ToArray();
+            if (!thisNames.SequenceEqual(otherNames, StringComparer.InvariantCultureIgnoreCase))
+                return other;
+            var dict = new SortedDictionary<string, ISettingsNode>();
+            foreach (var name in thisNames)
+                dict.Add(name, this[name].Merge(other[name], options));
+            return new ObjectNode(dict, other.Name);
         }
 
         #region Equality

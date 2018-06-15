@@ -5,7 +5,7 @@ using Vostok.Configuration.MergeOptions;
 
 namespace Vostok.Configuration.SettingsTree
 {
-    internal sealed class ValueNode : ISettingsNode, IEquatable<ValueNode>
+    public sealed class ValueNode : ISettingsNode, IEquatable<ValueNode>
     {
         public ValueNode(string value, string name = null)
         {

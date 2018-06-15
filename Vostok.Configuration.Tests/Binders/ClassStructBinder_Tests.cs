@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Binders;
@@ -257,6 +259,31 @@ namespace Vostok.Configuration.Tests.Binders
             new Action(() => binder.Bind(settings)).Should().Throw<Exception>();
         }
 
+        [Test]
+        public void Should_validate_with_ValidateBy_attribute()
+        {
+            var settings = new ObjectNode(
+                new SortedDictionary<string, ISettingsNode>
+                {
+                    {"Str", new ValueNode("")},
+                    {"Int", new ValueNode("-1")},
+                });
+            var binder = Container.GetInstance<ISettingsBinder<ValidatedClass>>();
+            new Action(() => binder.Bind(settings)).Should().Throw<FormatException>();
+
+            settings = new ObjectNode(
+                new SortedDictionary<string, ISettingsNode>
+                {
+                    {"Str", new ValueNode("qwe")},
+                    {"Int", new ValueNode("1")},
+                });
+            binder = Container.GetInstance<ISettingsBinder<ValidatedClass>>();
+            binder.Bind(settings).Should().BeEquivalentTo(new ValidatedClass {Str = "qwe", Int = 1});
+
+            var wrongBinder = Container.GetInstance<ISettingsBinder<WrongValidatedClass>>();
+            new Action(() => wrongBinder.Bind(settings)).Should().Throw<FormatException>();
+        }
+
         private class SimpleClass
         {
             public int Int { get; set; }
@@ -296,6 +323,65 @@ namespace Vostok.Configuration.Tests.Binders
             public int Int { get; set; } = 123;
             public long? Long = 321;
             public List<bool> Bools { get; set; } = new List<bool> { true };
+        }
+
+        private class MyValidator: IValidator
+        {
+            public IReadOnlyDictionary<string, string> Errors { get; private set; }
+
+            public void Validate<T>(T obj)
+            {
+                if (IsValid(obj)) return;
+
+                var sb = new StringBuilder($"{typeof(T).Name} validation exception:\r\n");
+                foreach (var pair in Errors)
+                    sb.AppendLine($"{pair.Key}: {pair.Value}");
+                throw new FormatException(sb.ToString());
+            }
+
+            public bool IsValid<T>(T obj)
+            {
+                var errors = new Dictionary<string, string>();
+                if (obj == null)
+                {
+                    errors["Null"] = "object is null";
+                    Errors = errors;
+                    return false;
+                }
+
+                if (!(obj is ValidatedClass objct))
+                {
+                    errors["Type"] = "wrong type";
+                    Errors = errors;
+                    return false;
+                }
+
+                if (string.IsNullOrEmpty(objct.Str))
+                    errors[nameof(objct.Str)] = "empty or null";
+                if (objct.Int < 0)
+                    errors[nameof(objct.Int)] = "negative";
+
+                if (errors.Any())
+                {
+                    Errors = errors;
+                    return false;
+                }
+                return true;
+            }
+        }
+
+        [ValidateBy(typeof(MyValidator))]
+        private class ValidatedClass
+        {
+            public string Str { get; set; }
+            public int Int;
+        }
+
+        [ValidateBy(typeof(MyValidator))]
+        private class WrongValidatedClass
+        {
+            public string Str { get; set; }
+            public int Int;
         }
     }
 }

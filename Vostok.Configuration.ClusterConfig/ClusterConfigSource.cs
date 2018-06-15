@@ -6,7 +6,6 @@ using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Vostok.Commons.Conversions;
-using Vostok.Configuration.Comparers;
 using Vostok.Configuration.Extensions;
 using Vostok.Configuration.SettingsTree;
 using Vostok.Configuration.Sources;
@@ -149,7 +148,7 @@ namespace Vostok.Configuration.ClusterConfig
         private ISettingsNode ParseCcTree(IReadOnlyDictionary<string, List<string>> tree, bool byKey = false)
         {
             if (!byKey)
-                return new ObjectNode(tree.ToSortedDictionary(pair => pair.Key, pair => ParseCcList(pair.Value), new ChildrenKeysComparer()));
+                return new ObjectNode(tree.ToSortedDictionary(pair => pair.Key, pair => ParseCcList(pair.Value), StringComparer.InvariantCultureIgnoreCase));
             if (tree.ContainsKey(key))
                 return ParseCcList(tree[key]);
 

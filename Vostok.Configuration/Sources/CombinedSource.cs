@@ -54,7 +54,7 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         /// <param name="sources">Configurations</param>
         public CombinedSource(params IConfigurationSource[] sources)
-            : this(sources.ToArray(), SettingsMergeOptions.Default())
+            : this(sources.ToArray(), new SettingsMergeOptions())
         {
         }
 

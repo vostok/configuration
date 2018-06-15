@@ -29,7 +29,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="MergeOptions\" />
-    <Folder Include="Comparers\" />
     <Folder Include="Sources\Watchers\" />
   </ItemGroup>
 </Project>

@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
-using Vostok.Configuration.Comparers;
 using Vostok.Configuration.MergeOptions;
 using Vostok.Configuration.SettingsTree;
 
@@ -55,7 +55,7 @@ namespace Vostok.Configuration.Tests.SettingsTree
         [Test]
         public void Keys_should_be_case_insensitive()
         {
-            var sets = new ObjectNode(new SortedDictionary<string, ISettingsNode>(new ChildrenKeysComparer())
+            var sets = new ObjectNode(new SortedDictionary<string, ISettingsNode>(StringComparer.InvariantCultureIgnoreCase)
             {
                 ["value"] = new ValueNode("v0"),
                 ["VALUE"] = new ValueNode("v1"),    //rewrites
@@ -91,7 +91,7 @@ namespace Vostok.Configuration.Tests.SettingsTree
         [Test]
         public void Should_return_other_on_shallow_merge_and_same_children_names()
         {
-            var comparer = new ChildrenKeysComparer();
+            var comparer = StringComparer.InvariantCultureIgnoreCase;
             var sets1 = new ObjectNode(new SortedDictionary<string, ISettingsNode>(comparer)
             {
                 ["value1"] = new ObjectNode(new SortedDictionary<string, ISettingsNode>(comparer)
@@ -133,7 +133,7 @@ namespace Vostok.Configuration.Tests.SettingsTree
         [Test]
         public void Should_make_deep_merge_correctly()
         {
-            var comparer = new ChildrenKeysComparer();
+            var comparer = StringComparer.InvariantCultureIgnoreCase;
             var sets1 = new ObjectNode(new SortedDictionary<string, ISettingsNode>(comparer)
             {
                 ["value1"] = new ObjectNode(new SortedDictionary<string, ISettingsNode>(comparer)

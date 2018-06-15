@@ -17,17 +17,17 @@ namespace Vostok.Configuration.Sources.Watchers
     /// </summary>
     internal class SingleFileWatcher : IObservable<string>
     {
-        private const string DefaultSettingsValue = "\u0001";
         private readonly int watcherPeriod = (int)5.Seconds().TotalMilliseconds; // todo(Mansiper): choose value
 
         private readonly string filePath;
         private readonly List<IObserver<string>> observers;
         private readonly FileSystemWatcher fileWatcher;
+        private readonly object locker;
         private Task task;
         private CancellationTokenSource tokenSource;
         private string currentValue;
+        private bool initialized;
         private CancellationToken token;
-        private readonly object locker;
 
         /// <summary>
         /// Creates a <see cref="SingleFileWatcher"/> instance with given parameter <paramref name="filePath"/>
@@ -37,7 +37,8 @@ namespace Vostok.Configuration.Sources.Watchers
         {
             this.filePath = filePath;
             observers = new List<IObserver<string>>();
-            currentValue = DefaultSettingsValue;
+            currentValue = null;
+            initialized = false;
 
             var path = Path.GetDirectoryName(filePath);
             if (string.IsNullOrEmpty(path))
@@ -58,7 +59,7 @@ namespace Vostok.Configuration.Sources.Watchers
                     task = new Task(WatchFile, token);
                     task.Start();
                 }
-                else if (currentValue != DefaultSettingsValue)
+                else if (initialized)
                     observer.OnNext(currentValue);
 
             return Disposable.Create(
@@ -91,6 +92,7 @@ namespace Vostok.Configuration.Sources.Watchers
                     lock (locker)
                         if (CheckFile(out var changes))
                         {
+                            initialized = true;
                             currentValue = changes;
                             foreach (var observer in observers)
                                 observer.OnNext(currentValue);
@@ -116,7 +118,7 @@ namespace Vostok.Configuration.Sources.Watchers
             var fileExists = File.Exists(filePath);
             changes = null;
 
-            if (!fileExists && currentValue != null)
+            if (!fileExists && (currentValue != null || !initialized))
                 return true;
             else if (fileExists)
             {

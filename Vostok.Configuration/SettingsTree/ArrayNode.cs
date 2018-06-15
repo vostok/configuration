@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Vostok.Configuration.Extensions;
 using Vostok.Configuration.MergeOptions;
 
 namespace Vostok.Configuration.SettingsTree
 {
-    internal sealed class ArrayNode : ISettingsNode, IEquatable<ArrayNode>
+    public sealed class ArrayNode : ISettingsNode, IEquatable<ArrayNode>
     {
         private readonly IReadOnlyList<ISettingsNode> children;
 
@@ -31,7 +32,7 @@ namespace Vostok.Configuration.SettingsTree
                 return other;
 
             if (options == null)
-                options = SettingsMergeOptions.Default();
+                options = new SettingsMergeOptions();
 
             switch (options.ListMergeStyle)
             {
@@ -39,7 +40,7 @@ namespace Vostok.Configuration.SettingsTree
                     return other;
                 case ListMergeStyle.Concat:
                     return new ArrayNode(children.Concat(other.Children).ToList(), Name);
-                case ListMergeStyle.Union: // CR(krait): About this case. Shouldn't we merge children with same names here? Probably we shouldn't, but still..
+                case ListMergeStyle.Union:
                     return new ArrayNode(children.Union(other.Children).ToList(), Name);
                 default:
                     return null;

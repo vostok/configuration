@@ -22,4 +22,15 @@ namespace Vostok.Configuration
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class OptionalAttribute : Attribute { }
+
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
+    public class ValidateByAttribute : Attribute
+    {
+        private readonly Type iValidatorType;
+
+        public ValidateByAttribute(Type iValidatorType) =>
+            this.iValidatorType = iValidatorType;
+
+        public IValidator Validator => Activator.CreateInstance(iValidatorType) as IValidator;
+    }
 }

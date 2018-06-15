@@ -88,5 +88,43 @@ namespace Vostok.Configuration.Tests.SettingsTree
                     break;
             }
         }
+
+        [Test]
+        public void Should_merge_wirh_different_options_right_way()
+        {
+            var sets1 = new ArrayNode(new List<ISettingsNode>
+            {
+                new ValueNode("x1"),
+                new ObjectNode(new SortedDictionary<string, ISettingsNode>
+                {
+                    ["value"] = new ValueNode("x11"),
+                }),
+                new ObjectNode(new SortedDictionary<string, ISettingsNode>
+                {
+                    ["value"] = new ValueNode("x12"),
+                }),
+            });
+            var sets2 = new ArrayNode(new List<ISettingsNode>
+            {
+                new ValueNode("x1"),
+                new ValueNode("x2"),
+                new ObjectNode(new SortedDictionary<string, ISettingsNode>
+                {
+                    ["value"] = new ValueNode("x11"),
+                }),
+                new ObjectNode(new SortedDictionary<string, ISettingsNode>
+                {
+                    ["value"] = new ValueNode("x21"),
+                }),
+            });
+
+            var merge = sets1.Merge(sets2, new SettingsMergeOptions { TreeMergeStyle = TreeMergeStyle.Shallow, ListMergeStyle = ListMergeStyle.Union });
+            var children = merge.Children.ToArray();
+            children[0].Value.Should().Be("x1");
+            children[1]["value"].Value.Should().Be("x11");
+            children[2]["value"].Value.Should().Be("x12");
+            children[3].Value.Should().Be("x2");
+            children[4]["value"].Value.Should().Be("x21");
+        }
     }
 }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Newtonsoft.Json.Linq;
-using Vostok.Configuration.Comparers;
 using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Sources
@@ -69,7 +68,7 @@ namespace Vostok.Configuration.Sources
             if (jObject.Count <= 0)
                 return new ObjectNode(tokenKey);
 
-            var dict = new SortedDictionary<string, ISettingsNode>(new ChildrenKeysComparer());
+            var dict = new SortedDictionary<string, ISettingsNode>(StringComparer.InvariantCultureIgnoreCase);
             foreach (var token in jObject)
                 switch (token.Value.Type)
                 {

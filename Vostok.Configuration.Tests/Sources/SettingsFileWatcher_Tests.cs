@@ -22,6 +22,21 @@ namespace Vostok.Configuration.Tests.Sources
         }
 
         [Test]
+        public void Should_return_null_if_file_not_exists()
+        {
+            var watcher = SettingsFileWatcher.WatchFile("file.name");
+            var read = false;
+            var sub = watcher.Subscribe(s =>
+            {
+                read = true;
+                s.Should().BeNull();
+            });
+            Thread.Sleep(50.Milliseconds());
+            sub.Dispose();
+            read.Should().BeTrue();
+        }
+
+        [Test]
         public void Should_create_watcher_and_read_file()
         {
             new Action(() => ReturnsIfFileWasRead().Should().BeTrue()).ShouldPassIn(1.Seconds());
