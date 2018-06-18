@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Configurations>Debug;Release</Configurations>
-    <Version>0.0.1</Version>
+    <Version>0.0.0</Version>
     <Authors>Vostok team</Authors>
     <Company>SKB Kontur</Company>
     <Product>Vostok</Product>
@@ -11,24 +11,19 @@
     <PackageProjectUrl>https://github.com/vostok/configuration</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/vostok/configuration/blob/master/LICENSE</PackageLicenseUrl>
     <LangVersion>7.2</LangVersion>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	  <NuspecFile>Vostok.Configuration.nuspec</NuspecFile>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="JetBrains.Annotations" Version="11.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="SimpleInjector" Version="4.2.2" />
-    <PackageReference Include="System.Reactive" Version="3.1.1" />
+    <PackageReference Include="SimpleInjector" Version="4.3.0" />
+    <PackageReference Include="System.Reactive" Version="4.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="System.Design">
-      <HintPath>..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.1\System.Design.dll</HintPath>
-    </Reference>
     <Reference Include="Vostok.Commons">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\vostok.commons\Vostok.Commons\bin\Release\netstandard2.0\Vostok.Commons.dll</HintPath>
     </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Sources\Watchers\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Vostok.Configuration.Abstractions\Vostok.Configuration.Abstractions.csproj" />
