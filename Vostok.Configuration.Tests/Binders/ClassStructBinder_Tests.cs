@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Abstractions;
@@ -326,48 +324,20 @@ namespace Vostok.Configuration.Tests.Binders
             public List<bool> Bools { get; set; } = new List<bool> { true };
         }
 
-        private class MyValidator: IValidator
+        private class MyValidator : BaseValidator
         {
-            public IReadOnlyDictionary<string, string> Errors { get; private set; }
-
-            public void Validate<T>(T obj)
+            public override bool IsValid<T>(T obj)
             {
-                if (IsValid(obj)) return;
-
-                var sb = new StringBuilder($"{typeof(T).Name} validation exception:\r\n");
-                foreach (var pair in Errors)
-                    sb.AppendLine($"{pair.Key}: {pair.Value}");
-                throw new FormatException(sb.ToString());
-            }
-
-            public bool IsValid<T>(T obj)
-            {
-                var errors = new Dictionary<string, string>();
-                if (obj == null)
-                {
-                    errors["Null"] = "object is null";
-                    Errors = errors;
+                if (!CheckNull(obj) ||
+                    !CheckType<ValidatedClass>(obj, out var objct))
                     return false;
-                }
-
-                if (!(obj is ValidatedClass objct))
-                {
-                    errors["Type"] = "wrong type";
-                    Errors = errors;
-                    return false;
-                }
 
                 if (string.IsNullOrEmpty(objct.Str))
-                    errors[nameof(objct.Str)] = "empty or null";
+                    Errors[nameof(objct.Str)] = "empty or null";
                 if (objct.Int < 0)
-                    errors[nameof(objct.Int)] = "negative";
+                    Errors[nameof(objct.Int)] = "negative";
 
-                if (errors.Any())
-                {
-                    Errors = errors;
-                    return false;
-                }
-                return true;
+                return Errors.Count == 0;
             }
         }
 
