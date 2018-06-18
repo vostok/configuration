@@ -17,8 +17,6 @@ client *default:
     configuration: Client
 
 notests:
-  deps:
-    - clusterconfig
   build:
     configuration: NoTests
 
