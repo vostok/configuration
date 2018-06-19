@@ -11,6 +11,7 @@ using Vostok.Commons.Conversions;
 
 namespace Vostok.Configuration.Sources.Watchers
 {
+
     /// <inheritdoc />
     /// <summary>
     /// Watching changes in as single text file
@@ -20,6 +21,9 @@ namespace Vostok.Configuration.Sources.Watchers
         private readonly int watcherPeriod = (int)5.Seconds().TotalMilliseconds; // todo(Mansiper): choose value
 
         private readonly string filePath;
+
+        // CR(krait): Why couldn't you just use a Subject<string> and avoid locks and half the code? Btw, if you peek inside Subject<T>, you'll see a correct way to keep a list of subscribers without locks.
+        // CR(krait): When switching to Subject<T>, please keep in mind to correctly push the current value to new subscribers.
         private readonly List<IObserver<string>> observers;
         private readonly FileSystemWatcher fileWatcher;
         private readonly object locker;
@@ -109,7 +113,7 @@ namespace Vostok.Configuration.Sources.Watchers
                 }
 
                 if (token.IsCancellationRequested) break;
-                fileWatcher.WaitForChanged(WatcherChangeTypes.All, watcherPeriod);
+                fileWatcher.WaitForChanged(WatcherChangeTypes.All, watcherPeriod); // CR(krait): Now you just spend a thread pool thread instead of you own. The idea was to sleep without consuming a thread.
             }
         }
 
@@ -123,7 +127,7 @@ namespace Vostok.Configuration.Sources.Watchers
             else if (fileExists)
             {
                 using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
-                using (var reader = new StreamReader(fileStream, Encoding.UTF8))
+                using (var reader = new StreamReader(fileStream, Encoding.UTF8)) // CR(krait): Why only UTF8?
                     changes = reader.ReadToEnd();
 
                 if (currentValue != changes)

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Text;
+using Vostok.Commons;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 
@@ -41,12 +42,13 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         public IObservable<ISettingsNode> Observe()
         {
-            if (neverParsed)
+            if (neverParsed) // CR(krait): Use AtomicBoolean from core-infra here.
             {
                 neverParsed = false;
                 currentValue = GetSettings(GetVariables());
             }
 
+            // CR(krait): Observable.Return(currentValue);
             return Observable.Create<ISettingsNode>(
                 observer =>
                 {
@@ -61,7 +63,7 @@ namespace Vostok.Configuration.Sources
 
         private static ISettingsNode GetSettings(string vars)
         {
-            using (var source = new IniStringSource(vars, false))
+            using (var source = new IniStringSource(vars, false)) // CR(krait): Why don't you allow multiple level values here? It should be possible to fill complex types using environment variables with dots in names.
                 return source.Get();
         }
 
