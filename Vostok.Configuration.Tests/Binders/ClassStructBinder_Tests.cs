@@ -223,7 +223,7 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_throw_exception_if_requred_value_has_wrong_value()
+        public void Should_throw_exception_if_required_value_has_wrong_value()
         {
             var settings = new ObjectNode(
                 new SortedDictionary<string, ISettingsNode>
@@ -235,7 +235,7 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_throw_exception_if_requred_value_has_no_value_in_settings()
+        public void Should_throw_exception_if_required_value_has_no_value_in_settings()
         {
             var settings = new ObjectNode(
                 new SortedDictionary<string, ISettingsNode>
@@ -247,7 +247,7 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_throw_exception_if_requred_value_has_null_value()
+        public void Should_throw_exception_if_required_value_has_null_value()
         {
             var settings = new ObjectNode(
                 new SortedDictionary<string, ISettingsNode>
@@ -268,7 +268,7 @@ namespace Vostok.Configuration.Tests.Binders
                     {"Int", new ValueNode("-1")},
                 });
             var binder = Container.GetInstance<ISettingsBinder<ValidatedClass>>();
-            new Action(() => binder.Bind(settings)).Should().Throw<FormatException>();
+            new Action(() => binder.Bind(settings)).Should().Throw<SettingsValidationException>();
 
             settings = new ObjectNode(
                 new SortedDictionary<string, ISettingsNode>
@@ -280,7 +280,7 @@ namespace Vostok.Configuration.Tests.Binders
             binder.Bind(settings).Should().BeEquivalentTo(new ValidatedClass {Str = "qwe", Int = 1});
 
             var wrongBinder = Container.GetInstance<ISettingsBinder<WrongValidatedClass>>();
-            new Action(() => wrongBinder.Bind(settings)).Should().Throw<FormatException>();
+            new Action(() => wrongBinder.Bind(settings)).Should().Throw<SettingsValidationException>();
         }
 
         private class SimpleClass
@@ -324,20 +324,24 @@ namespace Vostok.Configuration.Tests.Binders
             public List<bool> Bools { get; set; } = new List<bool> { true };
         }
 
-        private class MyValidator : BaseValidator
+        private class MyValidator : ISettingsValidator<ValidatedClass>
         {
-            public override bool IsValid<T>(T obj)
+            public SettingsValidationErrors Validate(ValidatedClass value)
             {
-                if (!CheckNull(obj) ||
-                    !CheckType<ValidatedClass>(obj, out var objct))
-                    return false;
+                var errors = new SettingsValidationErrors();
 
-                if (string.IsNullOrEmpty(objct.Str))
-                    Errors[nameof(objct.Str)] = "empty or null";
-                if (objct.Int < 0)
-                    Errors[nameof(objct.Int)] = "negative";
+                if (value == null)
+                {
+                    errors.ReportError("Instance must not be null.");
+                    return errors;
+                }
 
-                return Errors.Count == 0;
+                if (string.IsNullOrEmpty(value.Str))
+                    errors.ReportError($"'{nameof(value.Str)}' must be non-empty.");
+                if (value.Int < 0)
+                    errors.ReportError($"'{nameof(value.Int)}' must be non-negative.");
+
+                return errors;
             }
         }
 
