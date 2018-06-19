@@ -61,12 +61,12 @@ namespace Vostok.Configuration.Tests.Sources
                 "{ 'value 2': 'string 22' }",
             };
 
-            using (var cs = CreateCombinedSource(filesContent, new SettingsMergeOptions { TreeMergeStyle = TreeMergeStyle.Shallow }))
+            using (var cs = CreateCombinedSource(filesContent, new SettingsMergeOptions { ObjectMergeStyle = ObjectMergeStyle.Shallow }))
             {
                 var result = cs.Get();
                 result["value 2"].Value.Should().Be("string 22");
             }
-            using (var cs = CreateCombinedSource(filesContent, new SettingsMergeOptions { TreeMergeStyle = TreeMergeStyle.Deep }))
+            using (var cs = CreateCombinedSource(filesContent, new SettingsMergeOptions { ObjectMergeStyle = ObjectMergeStyle.Deep }))
             {
                 var result = cs.Get();
                 result["value 1"].Value.Should().Be("string 1");
@@ -89,7 +89,7 @@ namespace Vostok.Configuration.Tests.Sources
             };
             var val = 0;
 
-            using (var ccs = CreateCombinedSource(filesContent, new SettingsMergeOptions { TreeMergeStyle = TreeMergeStyle.Deep }))
+            using (var ccs = CreateCombinedSource(filesContent, new SettingsMergeOptions { ObjectMergeStyle = ObjectMergeStyle.Deep }))
             {
                 var sub = ccs.Observe().Subscribe(settings =>
                 {

@@ -2,7 +2,8 @@
 {
     public class SettingsMergeOptions
     {
-        public TreeMergeStyle TreeMergeStyle { get; set; } = TreeMergeStyle.Shallow;
-        public ListMergeStyle ListMergeStyle { get; set; } = ListMergeStyle.Concat;
+        public ObjectMergeStyle ObjectMergeStyle { get; set; } = ObjectMergeStyle.Deep;
+
+        public ArrayMergeStyle ArrayMergeStyle { get; set; } = ArrayMergeStyle.Concat;
     }
 }

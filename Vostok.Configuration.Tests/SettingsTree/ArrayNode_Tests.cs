@@ -57,10 +57,10 @@ namespace Vostok.Configuration.Tests.SettingsTree
             merge["0"].Value.Should().Be("x1");
         }
 
-        [TestCase(ListMergeStyle.Replace, TestName = "Replace option")]
-        [TestCase(ListMergeStyle.Concat, TestName = "Concat option")]
-        [TestCase(ListMergeStyle.Union, TestName = "Union option")]
-        public void Should_merge_with_different_options(ListMergeStyle style)
+        [TestCase(ArrayMergeStyle.Replace, TestName = "Replace option")]
+        [TestCase(ArrayMergeStyle.Concat, TestName = "Concat option")]
+        [TestCase(ArrayMergeStyle.Union, TestName = "Union option")]
+        public void Should_merge_with_different_options(ArrayMergeStyle style)
         {
             var sets1 = new ArrayNode(new List<ISettingsNode>
             {
@@ -75,16 +75,16 @@ namespace Vostok.Configuration.Tests.SettingsTree
                 new ValueNode("x5"),
             });
 
-            var merge = sets1.Merge(sets2, new SettingsMergeOptions { ListMergeStyle = style });
+            var merge = sets1.Merge(sets2, new SettingsMergeOptions { ArrayMergeStyle = style });
             switch (style)
             {
-                case ListMergeStyle.Replace:
+                case ArrayMergeStyle.Replace:
                     merge.Children.Select(c => c.Value).Should().ContainInOrder("x1", "x4", "x5");
                     break;
-                case ListMergeStyle.Concat:
+                case ArrayMergeStyle.Concat:
                     merge.Children.Select(c => c.Value).Should().ContainInOrder("x1", "x2", "x3", "x1", "x4", "x5");
                     break;
-                case ListMergeStyle.Union:
+                case ArrayMergeStyle.Union:
                     merge.Children.Select(c => c.Value).Should().ContainInOrder("x1", "x2", "x3", "x4", "x5");
                     break;
             }
@@ -119,7 +119,7 @@ namespace Vostok.Configuration.Tests.SettingsTree
                 }),
             });
 
-            var merge = sets1.Merge(sets2, new SettingsMergeOptions { TreeMergeStyle = TreeMergeStyle.Shallow, ListMergeStyle = ListMergeStyle.Union });
+            var merge = sets1.Merge(sets2, new SettingsMergeOptions { ObjectMergeStyle = ObjectMergeStyle.Shallow, ArrayMergeStyle = ArrayMergeStyle.Union });
             var children = merge.Children.ToArray();
             children[0].Value.Should().Be("x1");
             children[1]["value"].Value.Should().Be("x11");

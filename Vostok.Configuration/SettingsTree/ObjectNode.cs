@@ -35,11 +35,11 @@ namespace Vostok.Configuration.SettingsTree
             if (options == null)
                 options = new SettingsMergeOptions();
 
-            switch (options.TreeMergeStyle)
+            switch (options.ObjectMergeStyle)
             {
-                case TreeMergeStyle.Shallow:
+                case ObjectMergeStyle.Shallow:
                     return ShallowMerge(other, options);
-                case TreeMergeStyle.Deep:
+                case ObjectMergeStyle.Deep:
                     return DeepMerge(other, options);
                 default:
                     return null;

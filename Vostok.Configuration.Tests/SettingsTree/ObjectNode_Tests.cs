@@ -85,7 +85,7 @@ namespace Vostok.Configuration.Tests.SettingsTree
                 ["value3"] = new ValueNode("x2", "value3"),
             });
 
-            var merge = sets1.Merge(sets2, new SettingsMergeOptions {TreeMergeStyle = TreeMergeStyle.Shallow});
+            var merge = sets1.Merge(sets2, new SettingsMergeOptions {ObjectMergeStyle = ObjectMergeStyle.Shallow});
             merge.Should().Be(sets2);
         }
 
@@ -110,7 +110,7 @@ namespace Vostok.Configuration.Tests.SettingsTree
                 }, "VALUE1"),
             });
 
-            var merge = sets1.Merge(sets2, new SettingsMergeOptions {TreeMergeStyle = TreeMergeStyle.Shallow});
+            var merge = sets1.Merge(sets2, new SettingsMergeOptions {ObjectMergeStyle = ObjectMergeStyle.Shallow});
             merge["value2"].Value.Should().Be("x2");
             merge["value2"].Name.Should().Be("value2");
             merge["value1"].Name.Should().Be("VALUE1");
@@ -155,7 +155,7 @@ namespace Vostok.Configuration.Tests.SettingsTree
                 ["VALUE2"] = new ValueNode("x2", "VALUE2"),
             });
 
-            var merge = sets1.Merge(sets2, new SettingsMergeOptions { TreeMergeStyle = TreeMergeStyle.Deep });
+            var merge = sets1.Merge(sets2, new SettingsMergeOptions { ObjectMergeStyle = ObjectMergeStyle.Deep });
             merge["value1"]["sv1"].Value.Should().Be("sx1");
             merge["value1"]["sv2"].Value.Should().Be("sx2");
             merge["value1"]["sv3"].Value.Should().Be("sx2");

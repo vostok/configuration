@@ -34,13 +34,13 @@ namespace Vostok.Configuration.SettingsTree
             if (options == null)
                 options = new SettingsMergeOptions();
 
-            switch (options.ListMergeStyle)
+            switch (options.ArrayMergeStyle)
             {
-                case ListMergeStyle.Replace:
+                case ArrayMergeStyle.Replace:
                     return other;
-                case ListMergeStyle.Concat:
+                case ArrayMergeStyle.Concat:
                     return new ArrayNode(children.Concat(other.Children).ToList(), Name);
-                case ListMergeStyle.Union:
+                case ArrayMergeStyle.Union:
                     return new ArrayNode(children.Union(other.Children).ToList(), Name);
                 default:
                     return null;

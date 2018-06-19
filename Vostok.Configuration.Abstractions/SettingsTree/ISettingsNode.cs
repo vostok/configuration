@@ -22,19 +22,19 @@ namespace Vostok.Configuration.Abstractions.SettingsTree
         string Value { get; }
 
         /// <summary>
-        /// A view of child nodes as an ordered collection. The order is same as in the source file.
+        /// A view of child nodes as an ordered collection. The order is same as in the source.
         /// </summary>
         [NotNull]
         IEnumerable<ISettingsNode> Children { get; }
 
         /// <summary>
-        /// A view of child nodes as an indexed collection. Used for nodes that represent dictionaries or classes. Array elements cannot be accessed this way.
+        /// A view of child nodes as a collection indexed by node names. Used for nodes that represent dictionaries or classes. Array elements cannot be accessed this way.
         /// </summary>
         [CanBeNull]
         ISettingsNode this[string name] { get; }
 
         /// <summary>
-        /// Merge two trees of settings by rules specified in <paramref name="options"/>.
+        /// Merge two settings trees by rules specified in <paramref name="options"/>.
         /// </summary>
         ISettingsNode Merge(ISettingsNode other, SettingsMergeOptions options = null);
     }
