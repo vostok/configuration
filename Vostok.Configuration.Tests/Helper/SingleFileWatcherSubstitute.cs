@@ -7,15 +7,16 @@ namespace Vostok.Configuration.Tests.Helper
 {
     internal class SingleFileWatcherSubstitute : IObservable<string>
     {
-        private const string DefaultSettingsValue = "\u0001";
         private readonly List<IObserver<string>> observers;
         private string currentValue;
         private readonly object locker;
+        private bool initialized;
 
         public SingleFileWatcherSubstitute([NotNull] string filePath)
         {
             observers = new List<IObserver<string>>();
-            currentValue = DefaultSettingsValue;
+            currentValue = null;
+            initialized = false;
             locker = new object();
         }
 
@@ -24,7 +25,7 @@ namespace Vostok.Configuration.Tests.Helper
             if (!observers.Contains(observer))
                 observers.Add(observer);
             lock (locker)
-                if (currentValue != DefaultSettingsValue)
+                if (initialized)
                     observer.OnNext(currentValue);
 
             return Disposable.Create(
@@ -43,6 +44,7 @@ namespace Vostok.Configuration.Tests.Helper
         /// <param name="ignoreIfEquals">Ignore if old and new values are equal. Always send OnNext for observers</param>
         public void GetUpdate(string newValue, bool ignoreIfEquals = false)
         {
+            initialized = true;
             var isNew = newValue != currentValue;
             currentValue = newValue;
             if (isNew || ignoreIfEquals)
