@@ -131,18 +131,18 @@ namespace Vostok.Configuration.Tests.Sources
         {
             const string fileName = TestName + "_CallbackTest.tst";
             var val = 0;
-            using (var jfs = new JsonFileSource(fileName))
-            {
-                TestHelper.CreateFile(TestName, "wrong file format", fileName);
+            var jfs = new JsonFileSource(fileName);
 
-                var sub1 = jfs.Observe().Subscribe(settings => {}, e => val++);
-                var sub2 = jfs.Observe().Subscribe(settings => {}, e => val++);
+            TestHelper.CreateFile(TestName, "wrong file format", fileName);
 
-                Thread.Sleep(200.Milliseconds());
+            var sub1 = jfs.Observe().Subscribe(settings => {}, e => val++);
+            var sub2 = jfs.Observe().Subscribe(settings => {}, e => val++);
 
-                sub1.Dispose();
-                sub2.Dispose();
-            }
+            Thread.Sleep(200.Milliseconds());
+
+            sub1.Dispose();
+            sub2.Dispose();
+            
             return val;
         }
 

@@ -3,11 +3,10 @@ using Vostok.Configuration.Abstractions.SettingsTree;
 
 namespace Vostok.Configuration.Abstractions
 {
-    /// <inheritdoc />
     /// <summary>
     /// Provides configuration in the form of raw settings trees.
     /// </summary>
-    public interface IConfigurationSource : IDisposable
+    public interface IConfigurationSource
     {
         /// <summary>
         /// <para>Returns the most recent version of settings.</para>

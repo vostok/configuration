@@ -61,10 +61,6 @@ namespace Vostok.Configuration.Sources
                 });
         }
 
-        public void Dispose()
-        {
-        }
-
         private ISettingsNode ParseJson(JObject jObject, string tokenKey)
         {
             if (jObject.Count <= 0)

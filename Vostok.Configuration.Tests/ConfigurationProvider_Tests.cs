@@ -156,18 +156,18 @@ namespace Vostok.Configuration.Tests
 
                 var vClass1 = 0;
                 var vClass2 = 0;
-                using (var jcs1 = new JsonFileSource(fileName1, f =>
+                var jcs1 = new JsonFileSource(fileName1, f =>
                 {
                     watcher1 = new SingleFileWatcherSubstitute(f);
                     watcher1.GetUpdate(content1); //create file
                     return watcher1;
-                }))
-                using (var jcs2 = new JsonFileSource(fileName2, f =>
+                });
+                var jcs2 = new JsonFileSource(fileName2, f =>
                 {
                     watcher2 = new SingleFileWatcherSubstitute(f);
                     watcher2.GetUpdate(content2); //create file
                     return watcher2;
-                }))
+                });
                 {
                     var cp = new ConfigurationProvider()
                         .SetupSourceFor<MyClass>(jcs1)
@@ -229,9 +229,6 @@ namespace Vostok.Configuration.Tests
 
                 var result2 = cp.Get<MyClass>();
                 result2.Should().Be(result1, "from cache");
-
-                source1.Dispose();
-                source2.Dispose();
             }
 
             [Test]
@@ -400,18 +397,18 @@ namespace Vostok.Configuration.Tests
 
                 var vClass1 = 0;
                 var vClass2 = 0;
-                using (var jcs1 = new JsonFileSource(fileName1, f =>
+                var jcs1 = new JsonFileSource(fileName1, f =>
                 {
                     watcher1 = new SingleFileWatcherSubstitute(f);
                     watcher1.GetUpdate(content1); //create file
                     return watcher1;
-                }))
-                using (var jcs2 = new JsonFileSource(fileName2, f =>
+                });
+                var jcs2 = new JsonFileSource(fileName2, f =>
                 {
                     watcher2 = new SingleFileWatcherSubstitute(f);
                     watcher2.GetUpdate(content2); //create file
                     return watcher2;
-                }))
+                });
                 {
                     var cp = new ConfigurationProvider();
 
@@ -454,12 +451,12 @@ namespace Vostok.Configuration.Tests
                 SingleFileWatcherSubstitute watcher = null;
 
                 var val = 0;
-                using (var jcs = new JsonFileSource(fileName, f =>
+                var jcs = new JsonFileSource(fileName, f =>
                 {
                     watcher = new SingleFileWatcherSubstitute(f);
                     watcher.GetUpdate(content); //create file
                     return watcher;
-                }))
+                });
                 {
                     var cp = new ConfigurationProvider();
                     var sub = cp.Observe<MyClass>(jcs)

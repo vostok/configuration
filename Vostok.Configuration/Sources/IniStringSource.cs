@@ -63,10 +63,6 @@ namespace Vostok.Configuration.Sources
                 });
         }
 
-        public void Dispose()
-        {
-        }
-
         private ISettingsNode ParseIni(string text, string name)
         {
             var res = new UniversalNode(name);

@@ -25,10 +25,6 @@ namespace Vostok.Configuration.Sources
         {
         }
 
-        private static ISettingsNode ParseSettings(string str)
-        {
-            using (var source = new IniStringSource(str))
-                return source.Get();
-        }
+        private static ISettingsNode ParseSettings(string str) => new IniStringSource(str).Get();
     }
 }

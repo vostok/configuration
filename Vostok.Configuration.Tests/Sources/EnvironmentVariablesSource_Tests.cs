@@ -14,12 +14,10 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_return_correct_values()
         {
-            using (var evs = new EnvironmentVariablesSource())
-            {
-                var res = evs.Get();
-                res["pAtH"].Value.Should().NotBeNull();
-                res["APPdata"].Value.Should().NotBeNull();
-            }
+            var evs = new EnvironmentVariablesSource();
+            var res = evs.Get();
+            res["pAtH"].Value.Should().NotBeNull();
+            res["APPdata"].Value.Should().NotBeNull();
         }
 
         [Test]
@@ -30,17 +28,15 @@ namespace Vostok.Configuration.Tests.Sources
         private bool ShouldObserveVariablesTest_ReturnsIfValueWasReceived()
         {
             var val = false;
-            using (var evs = new EnvironmentVariablesSource())
+            var evs = new EnvironmentVariablesSource();
+            var sub = evs.Observe().Subscribe(settings =>
             {
-                var sub = evs.Observe().Subscribe(settings =>
-                {
-                    val = true;
-                    settings["Path"].Value.Should().NotBeNull();
-                    settings["APPDATA"].Value.Should().NotBeNull();
-                });
-                Thread.Sleep(200.Milliseconds());
-                sub.Dispose();
-            }
+                val = true;
+                settings["Path"].Value.Should().NotBeNull();
+                settings["APPDATA"].Value.Should().NotBeNull();
+            });
+            Thread.Sleep(200.Milliseconds());
+            sub.Dispose();
             return val;
         }
     }

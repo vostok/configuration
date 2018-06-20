@@ -23,12 +23,12 @@ namespace Vostok.Configuration.Tests.Sources
             const string fileName = "test.json";
             const string content = "{ 'value': 1 }";
 
-            using (var jfs = new JsonFileSource(fileName, f =>
+            var jfs = new JsonFileSource(fileName, f =>
             {
                 var watcher = new SingleFileWatcherSubstitute(f);
                 watcher.GetUpdate(content); //create file
                 return watcher;
-            }))
+            });
             using (var ss = new ScopedSource(jfs))
             {
                 var result = ss.Get();
@@ -57,12 +57,12 @@ namespace Vostok.Configuration.Tests.Sources
             const string fileName = "test.json";
             const string content = "{ 'value 1': { 'value 2': { 'value 3': 1 } } }";
 
-            using (var jfs = new JsonFileSource(fileName, f =>
+            var jfs = new JsonFileSource(fileName, f =>
             {
                 var watcher = new SingleFileWatcherSubstitute(f);
                 watcher.GetUpdate(content); //create file
                 return watcher;
-            }))
+            });
             {
                 using (var ss = new ScopedSource(jfs, "value 1", "value 2"))
                 {
@@ -84,12 +84,12 @@ namespace Vostok.Configuration.Tests.Sources
             const string fileName = "test.json";
             const string content = "{ 'value': [[1,2], [3,4,5]] }";
 
-            using (var jfs = new JsonFileSource(fileName, f =>
+            var jfs = new JsonFileSource(fileName, f =>
             {
                 var watcher = new SingleFileWatcherSubstitute(f);
                 watcher.GetUpdate(content); //create file
                 return watcher;
-            }))
+            });
             {
                 using (var ss = new ScopedSource(jfs, "value", "[0]"))
                 {
@@ -112,12 +112,12 @@ namespace Vostok.Configuration.Tests.Sources
             const string fileName = "test.json";
             const string content = "{ 'value': { 'list': [1,2] } }";
 
-            using (var jfs = new JsonFileSource(fileName, f =>
+            var jfs = new JsonFileSource(fileName, f =>
             {
                 var watcher = new SingleFileWatcherSubstitute(f);
                 watcher.GetUpdate(content); //create file
                 return watcher;
-            }))
+            });
             {
                 using (var ss = new ScopedSource(jfs, "unknown value"))
                     ss.Get().Should().BeNull();
@@ -146,12 +146,12 @@ namespace Vostok.Configuration.Tests.Sources
             var content = "{ 'value': { 'list': [1,2] } }";
             SingleFileWatcherSubstitute watcher = null;
 
-            using (var jfs = new JsonFileSource(fileName, f =>
+            var jfs = new JsonFileSource(fileName, f =>
             {
                 watcher = new SingleFileWatcherSubstitute(f);
                 watcher.GetUpdate(content); //create file
                 return watcher;
-            }))
+            });
             {
                 var rsList = new List<ISettingsNode>();
 

@@ -12,8 +12,8 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_return_null_if_file_not_exists()
         {
-            using (var ifs = new IniFileSource("some_file"))
-                ifs.Get().Should().BeNull();
+            var ifs = new IniFileSource("some_file");
+            ifs.Get().Should().BeNull();
         }
         
         [Test]
@@ -22,17 +22,15 @@ namespace Vostok.Configuration.Tests.Sources
             const string fileName = "test.ini";
             const string content = "value = 123 \n value2 = 321";
 
-            using (var ifs = new IniFileSource(fileName, f =>
+            var ifs = new IniFileSource(fileName, f =>
             {
                 var watcher = new SingleFileWatcherSubstitute(f);
                 watcher.GetUpdate(content); //create file
                 return watcher;
-            }))
-            {
-                var result = ifs.Get();
-                result["value"].Value.Should().Be("123");
-                result["value2"].Value.Should().Be("321");
-            }
+            });
+            var result = ifs.Get();
+            result["value"].Value.Should().Be("123");
+            result["value2"].Value.Should().Be("321");
         }
 
         [Test]
@@ -43,13 +41,13 @@ namespace Vostok.Configuration.Tests.Sources
 
             new Action(() =>
             {
-                using (var ifs = new IniFileSource(fileName, f =>
+                var ifs = new IniFileSource(fileName, f =>
                 {
                     var watcher = new SingleFileWatcherSubstitute(f);
                     watcher.GetUpdate(content); //create file
                     return watcher;
-                }))
-                    ifs.Get();
+                });
+                ifs.Get();
             }).Should().Throw<Exception>();
         }
     }

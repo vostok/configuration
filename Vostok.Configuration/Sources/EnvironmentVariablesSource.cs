@@ -57,15 +57,7 @@ namespace Vostok.Configuration.Sources
                 });
         }
 
-        public void Dispose()
-        {
-        }
-
-        private static ISettingsNode GetSettings(string vars)
-        {
-            using (var source = new IniStringSource(vars, false)) // CR(krait): Why don't you allow multiple level values here? It should be possible to fill complex types using environment variables with dots in names.
-                return source.Get();
-        }
+        private static ISettingsNode GetSettings(string vars) => new IniStringSource(vars, false).Get();    // CR(krait): Why don't you allow multiple level values here? It should be possible to fill complex types using environment variables with dots in names.
 
         private static string GetVariables()
         {

@@ -11,11 +11,10 @@ using Vostok.Configuration.Abstractions.SettingsTree;
 
 namespace Vostok.Configuration.Sources
 {
-    /// <inheritdoc />
     /// <summary>
     /// A source that combines settings from several other sources, resolving possible conflicts in favor of sources which one came earlier in the list
     /// </summary>
-    public class CombinedSource : IConfigurationSource // CR(krait): Are you sure this cannot be done a lot easier using Subject<T>?
+    public class CombinedSource : IConfigurationSource, IDisposable // CR(krait): Are you sure this cannot be done a lot easier using Subject<T>?
     {
         [NotNull]
         private readonly IReadOnlyCollection<IConfigurationSource> sources;

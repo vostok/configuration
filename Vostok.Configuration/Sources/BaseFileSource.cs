@@ -65,9 +65,5 @@ namespace Vostok.Configuration.Sources
 
             return fileObserver;
         }
-
-        public void Dispose()
-        {
-        }
     }
 }

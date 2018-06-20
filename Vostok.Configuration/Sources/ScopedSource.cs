@@ -9,11 +9,10 @@ using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Sources
 {
-    /// <inheritdoc />
     /// <summary>
     /// Searches subtree in <see cref="ISettingsNode"/> tree.
     /// </summary>
-    public class ScopedSource : IConfigurationSource
+    public class ScopedSource : IConfigurationSource, IDisposable
     {
         private readonly ISettingsNode incomeSettings;
         private readonly IConfigurationSource source;

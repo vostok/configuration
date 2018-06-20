@@ -21,11 +21,9 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_return_null_if_file_not_exists()
         {
-            using (var jfs = new JsonFileSource("some_file"))
-            {
-                jfs.Get().Should().BeNull();
-                jfs.Get().Should().BeNull("should work and return same value");
-            }
+            var jfs = new JsonFileSource("some_file");
+            jfs.Get().Should().BeNull();
+            jfs.Get().Should().BeNull("should work and return same value");
         }
 
         [Test]
@@ -35,20 +33,18 @@ namespace Vostok.Configuration.Tests.Sources
             const string content = "{ 'StringValue': 'string' }";
             SingleFileWatcherSubstitute watcher = null;
 
-            using (var jfs = new JsonFileSource(fileName, f =>
+            var jfs = new JsonFileSource(fileName, f =>
             {
                 watcher = new SingleFileWatcherSubstitute(f);
                 return watcher;
-            }))
+            });
+            Task.Run(() =>
             {
-                Task.Run(() =>
-                {
-                    while (watcher == null) Thread.Sleep(20);
-                    watcher.GetUpdate(content);
-                });
-                var result = jfs.Get();
-                result["StringValue"].Value.Should().Be("string");
-            }
+                while (watcher == null) Thread.Sleep(20);
+                watcher.GetUpdate(content);
+            });
+            var result = jfs.Get();
+            result["StringValue"].Value.Should().Be("string");
         }
 
         /*[Test, Explicit("real file test")]
@@ -74,34 +70,32 @@ namespace Vostok.Configuration.Tests.Sources
             var content = "{ 'StringValue': 'string' }";
             SingleFileWatcherSubstitute watcher = null;
 
-            using (var jfs = new JsonFileSource(fileName, f =>
+            var jfs = new JsonFileSource(fileName, f =>
             {
                 watcher = new SingleFileWatcherSubstitute(f);
                 return watcher;
-            }))
+            });
+            //create file
+            Task.Run(() =>
             {
-                //create file
-                Task.Run(() =>
-                {
-                    while (watcher == null) Thread.Sleep(20);
-                    watcher.GetUpdate(content);
-                });
-                var result = jfs.Get();
-                result["StringValue"].Value.Should().Be("string");
+                while (watcher == null) Thread.Sleep(20);
+                watcher.GetUpdate(content);
+            });
+            var result = jfs.Get();
+            result["StringValue"].Value.Should().Be("string");
 
-                content = "{ 'StringValue': 'string2' }";
-                //update file
-                Task.Run(() =>
-                {
-                    Thread.Sleep(100);
-                    watcher.GetUpdate(content);
-                });
-                result["StringValue"].Value.Should().Be("string", "did not get updates yet");
-                Thread.Sleep(150.Milliseconds());
+            content = "{ 'StringValue': 'string2' }";
+            //update file
+            Task.Run(() =>
+            {
+                Thread.Sleep(100);
+                watcher.GetUpdate(content);
+            });
+            result["StringValue"].Value.Should().Be("string", "did not get updates yet");
+            Thread.Sleep(150.Milliseconds());
 
-                result = jfs.Get();
-                result["StringValue"].Value.Should().Be("string2");
-            }
+            result = jfs.Get();
+            result["StringValue"].Value.Should().Be("string2");
         }
 
         [Test]
@@ -119,32 +113,31 @@ namespace Vostok.Configuration.Tests.Sources
             SingleFileWatcherSubstitute watcher = null;
 
             var val = 0;
-            using (var jfs = new JsonFileSource(fileName, f =>
+            var jfs = new JsonFileSource(fileName, f =>
             {
                 watcher = new SingleFileWatcherSubstitute(f);
                 return watcher;
-            }))
+            });
+            var sub1 = jfs.Observe().Subscribe(settings =>
             {
-                var sub1 = jfs.Observe().Subscribe(settings =>
-                {
-                    val++;
-                    settings["Param2"].Value.Should().Be("set2", "#1 on create file");
-                });
+                val++;
+                settings["Param2"].Value.Should().Be("set2", "#1 on create file");
+            });
 
-                //create file
-                watcher.GetUpdate(content);
-                
-                var sub2 = jfs.Observe().Subscribe(settings =>
-                {
-                    val++;
-                    settings["Param2"].Value.Should().Be("set2", "#2 on create file");
-                });
+            //create file
+            watcher.GetUpdate(content);
+            
+            var sub2 = jfs.Observe().Subscribe(settings =>
+            {
+                val++;
+                settings["Param2"].Value.Should().Be("set2", "#2 on create file");
+            });
 
-                Thread.Sleep(100.Milliseconds());
+            Thread.Sleep(100.Milliseconds());
 
-                sub1.Dispose();
-                sub2.Dispose();
-            }
+            sub1.Dispose();
+            sub2.Dispose();
+
             return val;
         }
 
@@ -163,25 +156,24 @@ namespace Vostok.Configuration.Tests.Sources
             var content = "{ 'Param': 'set1' }";
             SingleFileWatcherSubstitute watcher = null;
             
-            using (var jfs = new JsonFileSource(fileName, f =>
+            var jfs = new JsonFileSource(fileName, f =>
             {
                 watcher = new SingleFileWatcherSubstitute(f);
                 watcher.GetUpdate(content); //create file
                 return watcher;
-            }))
+            });
+            var sub = jfs.Observe().Subscribe(settings =>
             {
-                var sub = jfs.Observe().Subscribe(settings =>
-                {
-                    val++;
-                    settings["Param"].Value.Should().Be("set1");
-                });
+                val++;
+                settings["Param"].Value.Should().Be("set1");
+            });
 
-                content = "{ 'Param': 'set1' }";
-                //update file
-                watcher.GetUpdate(content, true);
+            content = "{ 'Param': 'set1' }";
+            //update file
+            watcher.GetUpdate(content, true);
 
-                sub.Dispose();
-            }
+            sub.Dispose();
+            
             return val;
         }
 
@@ -193,13 +185,13 @@ namespace Vostok.Configuration.Tests.Sources
 
             new Action(() =>
             {
-                using (var jfs = new JsonFileSource(fileName, f =>
+                var jfs = new JsonFileSource(fileName, f =>
                 {
                     var watcher = new SingleFileWatcherSubstitute(f);
                     watcher.GetUpdate(content); //create file
                     return watcher;
-                }))
-                    jfs.Get();
+                });
+                jfs.Get();
             }).Should().Throw<Exception>();
         }
 
@@ -210,23 +202,21 @@ namespace Vostok.Configuration.Tests.Sources
             var content = "{ 'Key': 'value' }";
             SingleFileWatcherSubstitute watcher = null;
 
-            using (var jfs = new JsonFileSource(fileName, f =>
+            var jfs = new JsonFileSource(fileName, f =>
             {
                 watcher = new SingleFileWatcherSubstitute(f);
                 watcher.GetUpdate(content); //create file
                 return watcher;
-            }))
-            {
-                var result = jfs.Get();
-                result["Key"].Value.Should().Be("value");
+            });
+            var result = jfs.Get();
+            result["Key"].Value.Should().Be("value");
 
-                content = "wrong file format";
-                //update file
-                watcher.GetUpdate(content);
+            content = "wrong file format";
+            //update file
+            watcher.GetUpdate(content);
 
-                result = jfs.Get();
-                result["Key"].Value.Should().Be("value");
-            }
+            result = jfs.Get();
+            result["Key"].Value.Should().Be("value");
         }
     }
 }

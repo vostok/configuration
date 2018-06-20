@@ -14,10 +14,11 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_return_null_if_null_or_whitespace_string()
         {
-            using (var iss = new IniStringSource(null))
-                iss.Get().Should().BeNull();
-            using (var iss = new IniStringSource(" "))
-                iss.Get().Should().BeNull();
+            var iss = new IniStringSource(null);
+            iss.Get().Should().BeNull();
+
+            iss = new IniStringSource(" ");
+            iss.Get().Should().BeNull();
         }
 
         [Test]
@@ -25,8 +26,8 @@ namespace Vostok.Configuration.Tests.Sources
         {
             const string value = ";comment 1\r\n# comment 2";
 
-            using (var iss = new IniStringSource(value))
-                iss.Get().Should().BeNull();
+            var iss = new IniStringSource(value);
+            iss.Get().Should().BeNull();
         }
         
         [Test]
@@ -35,36 +36,36 @@ namespace Vostok.Configuration.Tests.Sources
             var value = "???";
             new Action(() =>
             {
-                using (var iss = new IniStringSource(value))
-                    iss.Get();
+                var iss = new IniStringSource(value);
+                iss.Get();
             }).Should().Throw<FormatException>();
 
             value = "[]";
             new Action(() =>
             {
-                using (var iss = new IniStringSource(value))
-                    iss.Get();
+                var iss = new IniStringSource(value);
+                iss.Get();
             }).Should().Throw<FormatException>();
 
             value = " = 123";
             new Action(() =>
             {
-                using (var iss = new IniStringSource(value))
-                    iss.Get();
+                var iss = new IniStringSource(value);
+                iss.Get();
             }).Should().Throw<FormatException>();
 
             value = "A.B = 123 \r A.B = 321";
             new Action(() =>
             {
-                using (var iss = new IniStringSource(value))
-                    iss.Get();
+                var iss = new IniStringSource(value);
+                iss.Get();
             }).Should().Throw<FormatException>();
 
             value = "a=0 \r a.b=1 \r a.b.c=2 \r a.b=11";
             new Action(() =>
             {
-                using (var iss = new IniStringSource(value))
-                    iss.Get();
+                var iss = new IniStringSource(value);
+                iss.Get();
             }).Should().Throw<FormatException>();
         }
         
@@ -73,12 +74,10 @@ namespace Vostok.Configuration.Tests.Sources
         {
             const string value = "value = 123 \n value2 = 321";
 
-            using (var iss = new IniStringSource(value))
-            {
-                var result = iss.Get();
-                result["value"].Value.Should().Be("123");
-                result["value2"].Value.Should().Be("321");
-            }
+            var iss = new IniStringSource(value);
+            var result = iss.Get();
+            result["value"].Value.Should().Be("123");
+            result["value2"].Value.Should().Be("321");
         }
         
         [Test]
@@ -86,53 +85,45 @@ namespace Vostok.Configuration.Tests.Sources
         {
             const string value = "[section1]\rvalue=123 \r [section2]\rvalue1=123\rvalue2=321";
 
-            using (var iss = new IniStringSource(value))
-            {
-                var result = iss.Get();
-                result["section1"]["value"].Value.Should().Be("123");
-                result["section2"]["value1"].Value.Should().Be("123");
-                result["section2"]["value2"].Value.Should().Be("321");
-            }
+            var iss = new IniStringSource(value);
+            var result = iss.Get();
+            result["section1"]["value"].Value.Should().Be("123");
+            result["section2"]["value1"].Value.Should().Be("123");
+            result["section2"]["value2"].Value.Should().Be("321");
         }
 
         [Test]
         public void Should_deep_parse_keys()
         {
-            using (var iss = new IniStringSource("a=0 \r a.b=1"))
-            {
-                var result = iss.Get();
-                result["a"].Value.Should().BeNull("rewritten with b");
-                result["a"]["b"].Value.Should().Be("1");
-            }
+            var iss = new IniStringSource("a=0 \r a.b=1");
+            var result = iss.Get();
+            result["a"].Value.Should().BeNull("rewritten with b");
+            result["a"]["b"].Value.Should().Be("1");
 
-            using (var iss = new IniStringSource("a=0 \r a.b=1 \r a.b.c=2"))
-            {
-                var result = iss.Get();
-                result["a"].Value.Should().BeNull("rewritten with b");
-                result["a"]["b"].Value.Should().BeNull("rewritten with c");
-                result["a"]["b"]["c"].Value.Should().Be("2");
-            }
+            iss = new IniStringSource("a=0 \r a.b=1 \r a.b.c=2");
+            result = iss.Get();
+            result["a"].Value.Should().BeNull("rewritten with b");
+            result["a"]["b"].Value.Should().BeNull("rewritten with c");
+            result["a"]["b"]["c"].Value.Should().Be("2");
         }
 
         [Test]
         public void Should_throw_if_key_already_exists_while_deep_parsing()
         {
             new Action(() => {
-                using (var iss = new IniStringSource("a=0 \r a.b.c=2 \r a.b=1"))
-                    iss.Get();
+                var iss = new IniStringSource("a=0 \r a.b.c=2 \r a.b=1");
+                iss.Get();
             }).Should().Throw<FormatException>();
         }
 
         [Test]
         public void Should_not_parse_in_deep_id_turned_off()
         {
-            using (var iss = new IniStringSource("a.b.c=2 \r a.b=1 \r a=0", false))
-            {
-                var result = iss.Get();
-                result["a.b.c"].Value.Should().Be("2");
-                result["a.b"].Value.Should().Be("1");
-                result["a"].Value.Should().Be("0");
-            }
+            var iss = new IniStringSource("a.b.c=2 \r a.b=1 \r a=0", false);
+            var result = iss.Get();
+            result["a.b.c"].Value.Should().Be("2");
+            result["a.b"].Value.Should().Be("1");
+            result["a"].Value.Should().Be("0");
         }
 
         [Test]
@@ -146,17 +137,15 @@ namespace Vostok.Configuration.Tests.Sources
             const string value = "value = 123 \n value2 = 321";
             var val = 0;
 
-            using (var iss = new IniStringSource(value))
-            {
-                var sub = iss.Observe().Subscribe(
-                    settings =>
-                    {
-                        val++;
-                        settings["value"].Value.Should().Be("123");
-                        settings["value2"].Value.Should().Be("321");
-                    });
-                sub.Dispose();
-            }
+            var iss = new IniStringSource(value);
+            var sub = iss.Observe().Subscribe(
+                settings =>
+                {
+                    val++;
+                    settings["value"].Value.Should().Be("123");
+                    settings["value2"].Value.Should().Be("321");
+                });
+            sub.Dispose();
 
             return val;
         }
