@@ -22,9 +22,9 @@ namespace Vostok.Configuration.Tests.Sources
             const string fileName = "test.ini";
             const string content = "value = 123 \n value2 = 321";
 
-            var ifs = new IniFileSource(fileName, f =>
+            var ifs = new IniFileSource(fileName, (f, e) =>
             {
-                var watcher = new SingleFileWatcherSubstitute(f);
+                var watcher = new SingleFileWatcherSubstitute(f, e);
                 watcher.GetUpdate(content); //create file
                 return watcher;
             });
@@ -41,9 +41,9 @@ namespace Vostok.Configuration.Tests.Sources
 
             new Action(() =>
             {
-                var ifs = new IniFileSource(fileName, f =>
+                var ifs = new IniFileSource(fileName, (f, e) =>
                 {
-                    var watcher = new SingleFileWatcherSubstitute(f);
+                    var watcher = new SingleFileWatcherSubstitute(f, e);
                     watcher.GetUpdate(content); //create file
                     return watcher;
                 });

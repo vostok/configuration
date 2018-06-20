@@ -20,6 +20,9 @@
     <PackageReference Include="System.Reactive" Version="4.0.0" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="Kontur.Core">
+      <HintPath>..\..\clusterconfig\Kontur.ClusterConfig.ClientNew\bin\Release\Kontur.Core.dll</HintPath>
+    </Reference>
     <Reference Include="Vostok.Commons">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\vostok.commons\Vostok.Commons\bin\Release\netstandard2.0\Vostok.Commons.dll</HintPath>

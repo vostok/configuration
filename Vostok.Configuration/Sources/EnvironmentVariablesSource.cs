@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections;
-using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Text;
-using Vostok.Commons;
+using Kontur.Synchronization;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 
@@ -17,7 +16,7 @@ namespace Vostok.Configuration.Sources
     {
         private readonly TaskSource taskSource;
         private ISettingsNode currentValue;
-        private bool neverParsed;
+        private readonly AtomicBoolean neverParsed;
 
         /// <inheritdoc />
         /// <summary>
@@ -26,7 +25,7 @@ namespace Vostok.Configuration.Sources
         public EnvironmentVariablesSource()
         {
             taskSource = new TaskSource();
-            neverParsed = true;
+            neverParsed = new AtomicBoolean(true);
         }
 
         /// <inheritdoc />
@@ -42,22 +41,18 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         public IObservable<ISettingsNode> Observe()
         {
-            if (neverParsed) // CR(krait): Use AtomicBoolean from core-infra here.
+            if (neverParsed)
             {
-                neverParsed = false;
+                neverParsed.TrySetFalse();
                 currentValue = GetSettings(GetVariables());
             }
 
-            // CR(krait): Observable.Return(currentValue);
-            return Observable.Create<ISettingsNode>(
-                observer =>
-                {
-                    observer.OnNext(currentValue);
-                    return Disposable.Empty;
-                });
+            return Observable.Return(currentValue);
         }
 
-        private static ISettingsNode GetSettings(string vars) => new IniStringSource(vars, false).Get();    // CR(krait): Why don't you allow multiple level values here? It should be possible to fill complex types using environment variables with dots in names.
+        // CR(krait): Why don't you allow multiple level values here? It should be possible to fill complex types using environment variables with dots in names.
+        // answer: variables can be located in wrong order which can cause an exception or they can have values on every level: a, a.b, a.b.c which is not allowed.
+        private static ISettingsNode GetSettings(string vars) => new IniStringSource(vars, false).Get();
 
         private static string GetVariables()
         {

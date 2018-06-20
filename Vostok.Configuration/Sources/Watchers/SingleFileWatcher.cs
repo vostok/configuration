@@ -21,6 +21,7 @@ namespace Vostok.Configuration.Sources.Watchers
         private readonly int watcherPeriod = (int)5.Seconds().TotalMilliseconds; // todo(Mansiper): choose value
 
         private readonly string filePath;
+        private readonly Encoding encoding;
 
         // CR(krait): Why couldn't you just use a Subject<string> and avoid locks and half the code? Btw, if you peek inside Subject<T>, you'll see a correct way to keep a list of subscribers without locks.
         // CR(krait): When switching to Subject<T>, please keep in mind to correctly push the current value to new subscribers.
@@ -37,9 +38,11 @@ namespace Vostok.Configuration.Sources.Watchers
         /// Creates a <see cref="SingleFileWatcher"/> instance with given parameter <paramref name="filePath"/>
         /// </summary>
         /// <param name="filePath">Full file path</param>
-        public SingleFileWatcher([NotNull] string filePath)
+        /// <param name="encoding">File encoding</param>
+        public SingleFileWatcher([NotNull] string filePath, Encoding encoding)
         {
             this.filePath = filePath;
+            this.encoding = encoding;
             observers = new List<IObserver<string>>();
             currentValue = null;
             initialized = false;
@@ -127,7 +130,7 @@ namespace Vostok.Configuration.Sources.Watchers
             else if (fileExists)
             {
                 using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
-                using (var reader = new StreamReader(fileStream, Encoding.UTF8)) // CR(krait): Why only UTF8?
+                using (var reader = new StreamReader(fileStream, encoding))
                     changes = reader.ReadToEnd();
 
                 if (currentValue != changes)

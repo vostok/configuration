@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions.SettingsTree;
 
@@ -15,13 +16,14 @@ namespace Vostok.Configuration.Sources
         /// Creates a <see cref="JsonFileSource"/> instance using given parameter <paramref name="filePath"/>
         /// </summary>
         /// <param name="filePath">File name with settings</param>
-        public JsonFileSource([NotNull] string filePath)
-            : base(filePath, ParseSettings)
+        /// <param name="settings">File parsing settings</param>
+        public JsonFileSource([NotNull] string filePath, FileSourceSettings settings = null)
+            : base(filePath, settings, ParseSettings)
         {
         }
 
-        internal JsonFileSource([NotNull] string filePath, Func<string, IObservable<string>> fileWatcherCreator)
-            : base(filePath, ParseSettings, fileWatcherCreator)
+        internal JsonFileSource([NotNull] string filePath, Func<string, Encoding, IObservable<string>> fileWatcherCreator, FileSourceSettings settings = null)
+            : base(filePath, settings, ParseSettings, fileWatcherCreator)
         {
         }
 

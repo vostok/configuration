@@ -23,9 +23,9 @@ namespace Vostok.Configuration.Tests.Sources
             const string fileName = "test.json";
             const string content = "{ 'value': 1 }";
 
-            var jfs = new JsonFileSource(fileName, f =>
+            var jfs = new JsonFileSource(fileName, (f, e) =>
             {
-                var watcher = new SingleFileWatcherSubstitute(f);
+                var watcher = new SingleFileWatcherSubstitute(f, e);
                 watcher.GetUpdate(content); //create file
                 return watcher;
             });
@@ -57,9 +57,9 @@ namespace Vostok.Configuration.Tests.Sources
             const string fileName = "test.json";
             const string content = "{ 'value 1': { 'value 2': { 'value 3': 1 } } }";
 
-            var jfs = new JsonFileSource(fileName, f =>
+            var jfs = new JsonFileSource(fileName, (f, e) =>
             {
-                var watcher = new SingleFileWatcherSubstitute(f);
+                var watcher = new SingleFileWatcherSubstitute(f, e);
                 watcher.GetUpdate(content); //create file
                 return watcher;
             });
@@ -84,9 +84,9 @@ namespace Vostok.Configuration.Tests.Sources
             const string fileName = "test.json";
             const string content = "{ 'value': [[1,2], [3,4,5]] }";
 
-            var jfs = new JsonFileSource(fileName, f =>
+            var jfs = new JsonFileSource(fileName, (f, e) =>
             {
-                var watcher = new SingleFileWatcherSubstitute(f);
+                var watcher = new SingleFileWatcherSubstitute(f, e);
                 watcher.GetUpdate(content); //create file
                 return watcher;
             });
@@ -112,9 +112,9 @@ namespace Vostok.Configuration.Tests.Sources
             const string fileName = "test.json";
             const string content = "{ 'value': { 'list': [1,2] } }";
 
-            var jfs = new JsonFileSource(fileName, f =>
+            var jfs = new JsonFileSource(fileName, (f, e) =>
             {
-                var watcher = new SingleFileWatcherSubstitute(f);
+                var watcher = new SingleFileWatcherSubstitute(f, e);
                 watcher.GetUpdate(content); //create file
                 return watcher;
             });
@@ -146,9 +146,9 @@ namespace Vostok.Configuration.Tests.Sources
             var content = "{ 'value': { 'list': [1,2] } }";
             SingleFileWatcherSubstitute watcher = null;
 
-            var jfs = new JsonFileSource(fileName, f =>
+            var jfs = new JsonFileSource(fileName, (f, e) =>
             {
-                watcher = new SingleFileWatcherSubstitute(f);
+                watcher = new SingleFileWatcherSubstitute(f, e);
                 watcher.GetUpdate(content); //create file
                 return watcher;
             });

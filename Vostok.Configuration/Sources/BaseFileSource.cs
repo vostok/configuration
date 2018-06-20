@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reactive.Linq;
+using System.Text;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Sources.Watchers;
@@ -13,8 +14,9 @@ namespace Vostok.Configuration.Sources
     public class BaseFileSource : IConfigurationSource
     {
         private readonly string filePath;
+        private readonly FileSourceSettings settings;
         private readonly Func<string, ISettingsNode> parseSettings;
-        private readonly Func<string, IObservable<string>> fileWatcherCreator;
+        private readonly Func<string, Encoding, IObservable<string>> fileWatcherCreator;
         private readonly TaskSource taskSource;
         private IObservable<ISettingsNode> fileObserver;
         private ISettingsNode currentValue;
@@ -24,15 +26,17 @@ namespace Vostok.Configuration.Sources
         /// <para>Wayits for file to be parsed.</para>
         /// </summary>
         /// <param name="filePath">File name with settings</param>
+        /// <param name="settings">File parsing settings</param>
         /// <param name="parseSettings">"Get" method invocation for string source</param>
-        protected BaseFileSource(string filePath, Func<string, ISettingsNode> parseSettings)
-            : this(filePath, parseSettings, SettingsFileWatcher.WatchFile)
+        protected BaseFileSource(string filePath, FileSourceSettings settings, Func<string, ISettingsNode> parseSettings)
+            : this(filePath, settings, parseSettings, SettingsFileWatcher.WatchFile)
         {
         }
 
-        internal BaseFileSource(string filePath, Func<string, ISettingsNode> parseSettings, Func<string, IObservable<string>> fileWatcherCreator)
+        internal BaseFileSource(string filePath, FileSourceSettings settings, Func<string, ISettingsNode> parseSettings, Func<string, Encoding, IObservable<string>> fileWatcherCreator)
         {
             this.filePath = filePath;
+            this.settings = settings ?? new FileSourceSettings();
             this.parseSettings = parseSettings;
             this.fileWatcherCreator = fileWatcherCreator;
             taskSource = new TaskSource();
@@ -55,7 +59,7 @@ namespace Vostok.Configuration.Sources
         {
             if (fileObserver != null) return fileObserver;
 
-            var fileWatcher = SettingsFileWatcher.WatchFile(filePath, fileWatcherCreator);
+            var fileWatcher = SettingsFileWatcher.WatchFile(filePath, settings.Encoding, fileWatcherCreator);
             fileObserver = fileWatcher.Select(
                 str =>
                 {

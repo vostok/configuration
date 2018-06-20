@@ -32,12 +32,7 @@ namespace Vostok.Configuration
         /// <param name="configurationProviderSettings">Provider settings. Uses <see cref="DefaultSettingsBinder"/> if <see cref="ConfigurationProviderSettings.Binder"/> is null.</param>
         public ConfigurationProvider(ConfigurationProviderSettings configurationProviderSettings = null)
         {
-            settings = configurationProviderSettings
-                       ?? new ConfigurationProviderSettings
-                       {
-                           Binder = new DefaultSettingsBinder().WithDefaultParsers(),
-                           ThrowExceptions = true
-                       };
+            settings = configurationProviderSettings ?? new ConfigurationProviderSettings { Binder = new DefaultSettingsBinder().WithDefaultParsers() };
             if (settings.Binder == null)
                 settings.Binder = new DefaultSettingsBinder().WithDefaultParsers();
 
@@ -109,8 +104,8 @@ namespace Vostok.Configuration
                 .Select(
                     s =>
                     {
-                        try
-                        {
+                        // try
+                        // {
                             var value = settings.Binder.Bind<TSettings>(s);
                             if (!sourceCache.ContainsKey(source))
                                 sourceCacheQueue.Enqueue(source);
@@ -118,16 +113,16 @@ namespace Vostok.Configuration
                             if (sourceCache.Count > MaxSourceCacheSize && sourceCacheQueue.TryDequeue(out var src))
                                 sourceCache.TryRemove(src, out _);
                             return value;
-                        }
-                        catch (Exception e)
-                        {
-                            if (settings.ThrowExceptions)
-                                throw;
-                            settings.OnError?.Invoke(e);
-                            return sourceCache.TryGetValue(source, out var value)
-                                ? (TSettings)value
-                                : default;
-                        }
+                        // }
+                        // catch (Exception e)
+                        // {
+                            // if (settings.ThrowExceptions)
+                                // throw;
+                            // settings.OnError?.Invoke(e);
+                            // return sourceCache.TryGetValue(source, out var value)
+                                // ? (TSettings)value
+                                // : default;
+                        // }
                     });
 
         /// <summary>
@@ -161,17 +156,17 @@ namespace Vostok.Configuration
 
         private TSettings PrepareWatcherValue<TSettings>(object value)
         {
-            try
-            {
+            // try
+            // {
                 return (TSettings)value;
-            }
-            catch (Exception e)
-            {
-                if (settings.ThrowExceptions)
-                    throw;
-                settings.OnError?.Invoke(e);
-                return typeCache.TryGetValue(typeof(TSettings), out var val) ? (TSettings)val : default;
-            }
+            // }
+            // catch (Exception e)
+            // {
+                // if (settings.ThrowExceptions)
+                    // throw;
+                // settings.OnError?.Invoke(e);
+                // return typeCache.TryGetValue(typeof(TSettings), out var val) ? (TSettings)val : default;
+            // }
         }
 
         private object SubscribeWatcher<TSettings>(ISettingsNode rs)
@@ -179,17 +174,18 @@ namespace Vostok.Configuration
             var type = typeof(TSettings);
             if (!typeSources.TryGetValue(type, out _))
                 throw new ArgumentException($"{UnknownTypeExceptionMsg.Replace("typeName", type.Name)}");
-            try
-            {
+            if (rs == null) return type.Default();
+            // try
+            // {
                 return settings.Binder.Bind<TSettings>(rs);
-            }
-            catch (Exception e)
-            {
-                if (settings.ThrowExceptions)
-                    throw;
-                settings.OnError?.Invoke(e);
-                return typeCache.TryGetValue(type, out var value) ? value : default;
-            }
+            // }
+            // catch (Exception e)
+            // {
+            //     if (settings.ThrowExceptions)
+            //         throw;
+            //     settings.OnError?.Invoke(e);
+            //     return typeCache.TryGetValue(type, out var value) ? value : default;
+            // }
         }
     }
 }

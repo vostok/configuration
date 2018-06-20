@@ -23,9 +23,9 @@ namespace Vostok.Configuration.Tests.Sources
                 return new CombinedSource();
 
             watchers = new SingleFileWatcherSubstitute[filesContent.Length];
-            var list = filesContent.Select((n, i) => new JsonFileSource($"{i}.json", f =>
+            var list = filesContent.Select((n, i) => new JsonFileSource($"{i}.json", (f, e) =>
                 {
-                    watchers[i] = new SingleFileWatcherSubstitute(f);
+                    watchers[i] = new SingleFileWatcherSubstitute(f, e);
                     watchers[i].GetUpdate(n);
                     return watchers[i];
                 })).ToList();
