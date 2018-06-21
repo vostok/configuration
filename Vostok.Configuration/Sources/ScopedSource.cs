@@ -73,27 +73,29 @@ namespace Vostok.Configuration.Sources
             Observable.Create<ISettingsNode>(
                 observer =>
                 {
-                    if (watcher == null && source != null)
-                    {
-                        watcher = source.Observe()
-                            .Subscribe(
-                                settings =>
-                                {
-                                    lock (locker)
+                    lock (locker)
+                        if (watcher == null && source != null)
+                        {
+                            watcher = source.Observe()
+                                .Subscribe(
+                                    settings =>
                                     {
-                                        var newSettings = InnerScope(settings, scope);
-                                        if (!Equals(newSettings, currentValue) || firstRequest)
+                                        lock (locker)
                                         {
-                                            firstRequest = false;
-                                            currentValue = newSettings;
-                                            observer.OnNext(currentValue);
+                                            var newSettings = InnerScope(settings, scope);
+                                            if (!Equals(newSettings, currentValue) || firstRequest)
+                                            {
+                                                firstRequest = false;
+                                                currentValue = newSettings;
+                                                observer.OnNext(currentValue);
+                                            }
                                         }
-                                    }
-                                });
-                    }
+                                    });
+                        }
 
                     if (watcher != null) return watcher;
 
+                    //if (source == null)
                     lock (locker)
                     {
                         if (firstRequest)

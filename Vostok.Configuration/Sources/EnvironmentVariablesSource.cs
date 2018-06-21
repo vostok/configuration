@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Reactive.Linq;
 using System.Text;
-using Kontur.Synchronization;
+using Vostok.Commons.Synchronization;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 
@@ -50,8 +50,6 @@ namespace Vostok.Configuration.Sources
             return Observable.Return(currentValue);
         }
 
-        // CR(krait): Why don't you allow multiple level values here? It should be possible to fill complex types using environment variables with dots in names.
-        // answer: variables can be located in wrong order which can cause an exception or they can have values on every level: a, a.b, a.b.c which is not allowed.
         private static ISettingsNode GetSettings(string vars) => new IniStringSource(vars, false).Get();
 
         private static string GetVariables()

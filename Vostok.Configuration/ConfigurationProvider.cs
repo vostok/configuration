@@ -104,8 +104,8 @@ namespace Vostok.Configuration
                 .Select(
                     s =>
                     {
-                        // try
-                        // {
+                        try
+                        {
                             var value = settings.Binder.Bind<TSettings>(s);
                             if (!sourceCache.ContainsKey(source))
                                 sourceCacheQueue.Enqueue(source);
@@ -113,16 +113,16 @@ namespace Vostok.Configuration
                             if (sourceCache.Count > MaxSourceCacheSize && sourceCacheQueue.TryDequeue(out var src))
                                 sourceCache.TryRemove(src, out _);
                             return value;
-                        // }
-                        // catch (Exception e)
-                        // {
-                            // if (settings.ThrowExceptions)
-                                // throw;
-                            // settings.OnError?.Invoke(e);
-                            // return sourceCache.TryGetValue(source, out var value)
-                                // ? (TSettings)value
-                                // : default;
-                        // }
+                        }
+                        catch (Exception e)
+                        {
+                            if (settings.ThrowExceptions)
+                                throw;
+                            settings.OnError?.Invoke(e);
+                            return sourceCache.TryGetValue(source, out var value)
+                                ? (TSettings)value
+                                : default;
+                        }
                     });
 
         /// <summary>
@@ -156,17 +156,17 @@ namespace Vostok.Configuration
 
         private TSettings PrepareWatcherValue<TSettings>(object value)
         {
-            // try
-            // {
+            try
+            {
                 return (TSettings)value;
-            // }
-            // catch (Exception e)
-            // {
-                // if (settings.ThrowExceptions)
-                    // throw;
-                // settings.OnError?.Invoke(e);
-                // return typeCache.TryGetValue(typeof(TSettings), out var val) ? (TSettings)val : default;
-            // }
+            }
+            catch (Exception e)
+            {
+                if (settings.ThrowExceptions)
+                    throw;
+                settings.OnError?.Invoke(e);
+                return typeCache.TryGetValue(typeof(TSettings), out var val) ? (TSettings)val : default;
+            }
         }
 
         private object SubscribeWatcher<TSettings>(ISettingsNode rs)
@@ -175,17 +175,17 @@ namespace Vostok.Configuration
             if (!typeSources.TryGetValue(type, out _))
                 throw new ArgumentException($"{UnknownTypeExceptionMsg.Replace("typeName", type.Name)}");
             if (rs == null) return type.Default();
-            // try
-            // {
+            try
+            {
                 return settings.Binder.Bind<TSettings>(rs);
-            // }
-            // catch (Exception e)
-            // {
-            //     if (settings.ThrowExceptions)
-            //         throw;
-            //     settings.OnError?.Invoke(e);
-            //     return typeCache.TryGetValue(type, out var value) ? value : default;
-            // }
+            }
+            catch (Exception e)
+            {
+                if (settings.ThrowExceptions)
+                    throw;
+                settings.OnError?.Invoke(e);
+                return typeCache.TryGetValue(type, out var value) ? value : default;
+            }
         }
     }
 }

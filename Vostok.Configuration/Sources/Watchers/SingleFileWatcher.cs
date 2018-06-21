@@ -1,13 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Reactive.Disposables;
+using System.Reactive.Subjects;
 using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Vostok.Commons.Conversions;
+using Vostok.Commons.Synchronization;
 
 namespace Vostok.Configuration.Sources.Watchers
 {
@@ -23,15 +23,13 @@ namespace Vostok.Configuration.Sources.Watchers
         private readonly string filePath;
         private readonly Encoding encoding;
 
-        // CR(krait): Why couldn't you just use a Subject<string> and avoid locks and half the code? Btw, if you peek inside Subject<T>, you'll see a correct way to keep a list of subscribers without locks.
-        // CR(krait): When switching to Subject<T>, please keep in mind to correctly push the current value to new subscribers.
-        private readonly List<IObserver<string>> observers;
+        private readonly Subject<string> observers;
         private readonly FileSystemWatcher fileWatcher;
         private readonly object locker;
         private Task task;
         private CancellationTokenSource tokenSource;
         private string currentValue;
-        private bool initialized;
+        private readonly AtomicBoolean initialized;
         private CancellationToken token;
 
         /// <summary>
@@ -43,9 +41,9 @@ namespace Vostok.Configuration.Sources.Watchers
         {
             this.filePath = filePath;
             this.encoding = encoding;
-            observers = new List<IObserver<string>>();
+            observers = new Subject<string>();
             currentValue = null;
-            initialized = false;
+            initialized = new AtomicBoolean(false);
 
             var path = Path.GetDirectoryName(filePath);
             if (string.IsNullOrEmpty(path))
@@ -56,8 +54,10 @@ namespace Vostok.Configuration.Sources.Watchers
 
         public IDisposable Subscribe(IObserver<string> observer)
         {
-            if (!observers.Contains(observer))
-                observers.Add(observer);
+            observers.Subscribe(observer);
+            if (initialized)
+                observer.OnNext(currentValue);
+
             lock (locker)
                 if (tokenSource == null)
                 {
@@ -66,20 +66,8 @@ namespace Vostok.Configuration.Sources.Watchers
                     task = new Task(WatchFile, token);
                     task.Start();
                 }
-                else if (initialized)
-                    observer.OnNext(currentValue);
 
-            return Disposable.Create(
-                () =>
-                {
-                    lock (locker)
-                    {
-                        if (observers.Contains(observer))
-                            observers.Remove(observer);
-                        if (observers.Count == 0)
-                            StopTask();
-                    }
-                });
+            return observers;
         }
 
         private void StopTask()
@@ -92,6 +80,7 @@ namespace Vostok.Configuration.Sources.Watchers
         {
             while (true)
             {
+                if (!observers.HasObservers) StopTask();
                 if (token.IsCancellationRequested) break;
 
                 try
@@ -99,10 +88,9 @@ namespace Vostok.Configuration.Sources.Watchers
                     lock (locker)
                         if (CheckFile(out var changes))
                         {
-                            initialized = true;
+                            initialized.TrySetTrue();
                             currentValue = changes;
-                            foreach (var observer in observers)
-                                observer.OnNext(currentValue);
+                            observers.OnNext(currentValue);
                         }
                 }
                 catch (IOException)
@@ -110,9 +98,7 @@ namespace Vostok.Configuration.Sources.Watchers
                 }
                 catch (Exception e)
                 {
-                    lock (locker)
-                        foreach (var observer in observers)
-                            observer.OnError(e);
+                    observers.OnError(e);
                 }
 
                 if (token.IsCancellationRequested) break;
