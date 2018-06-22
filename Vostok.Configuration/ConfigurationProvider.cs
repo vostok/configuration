@@ -32,7 +32,7 @@ namespace Vostok.Configuration
         /// <param name="configurationProviderSettings">Provider settings. Uses <see cref="DefaultSettingsBinder"/> if <see cref="ConfigurationProviderSettings.Binder"/> is null.</param>
         public ConfigurationProvider(ConfigurationProviderSettings configurationProviderSettings = null)
         {
-            settings = configurationProviderSettings ?? new ConfigurationProviderSettings { Binder = new DefaultSettingsBinder().WithDefaultParsers() };
+            settings = configurationProviderSettings ?? new ConfigurationProviderSettings {Binder = new DefaultSettingsBinder().WithDefaultParsers()};
             if (settings.Binder == null)
                 settings.Binder = new DefaultSettingsBinder().WithDefaultParsers();
 
@@ -116,12 +116,13 @@ namespace Vostok.Configuration
                         }
                         catch (Exception e)
                         {
-                            if (settings.ThrowExceptions)
-                                throw;
-                            settings.OnError?.Invoke(e);
-                            return sourceCache.TryGetValue(source, out var value)
-                                ? (TSettings)value
-                                : default;
+                            if (sourceCache.TryGetValue(source, out var val) && val != null)
+                            {
+                                settings.OnError?.Invoke(e);
+                                return (TSettings)val;
+                            }
+
+                            throw;
                         }
                     });
 
@@ -162,10 +163,13 @@ namespace Vostok.Configuration
             }
             catch (Exception e)
             {
-                if (settings.ThrowExceptions)
-                    throw;
-                settings.OnError?.Invoke(e);
-                return typeCache.TryGetValue(typeof(TSettings), out var val) ? (TSettings)val : default;
+                if (typeCache.TryGetValue(typeof(TSettings), out var val) && val != null)
+                {
+                    settings.OnError?.Invoke(e);
+                    return (TSettings)val;
+                }
+
+                throw;
             }
         }
 
@@ -174,17 +178,20 @@ namespace Vostok.Configuration
             var type = typeof(TSettings);
             if (!typeSources.TryGetValue(type, out _))
                 throw new ArgumentException($"{UnknownTypeExceptionMsg.Replace("typeName", type.Name)}");
-            if (rs == null) return type.Default();
+
             try
             {
                 return settings.Binder.Bind<TSettings>(rs);
             }
             catch (Exception e)
             {
-                if (settings.ThrowExceptions)
-                    throw;
-                settings.OnError?.Invoke(e);
-                return typeCache.TryGetValue(type, out var value) ? value : default;
+                if (typeCache.TryGetValue(typeof(TSettings), out var val) && val != null)
+                {
+                    settings.OnError?.Invoke(e);
+                    return (TSettings)val;
+                }
+
+                throw;
             }
         }
     }

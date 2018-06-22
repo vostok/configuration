@@ -250,7 +250,7 @@ namespace Vostok.Configuration.Tests
             }
 
             [Test]
-            public void DoSomething_WhenSomething()
+            public void Should_throw_exception_then_resubsribe_and_return_value()
             {
                 const string fileName = "test.json";
                 const string content = "{ 'Value': 123 }";
@@ -259,61 +259,28 @@ namespace Vostok.Configuration.Tests
                 var source = new JsonFileSource(fileName, (f, e) =>
                 {
                     watcher = new SingleFileWatcherSubstitute(f, e);
-                    watcher.GetUpdate(content); //create file
+                    watcher.GetUpdate("wrong format"); //create file
                     return watcher;
                 });
                 var cp = new ConfigurationProvider().SetupSourceFor<int>(source);
-                cp.Get<int>().Should().Be(123);
 
-                watcher.GetUpdate(null);
-                cp.Get<int>();
+                new Action(() => cp.Get<int>()).Should().Throw<Exception>();
+                //update file
+                Task.Run(() =>
+                {
+                    Thread.Sleep(20);
+                    watcher.GetUpdate(content);
+                });
+                Thread.Sleep(50.Milliseconds());
+
+                cp.Get<int>().Should().Be(123);
             }
 
-            /*[Test]
-            public void Should_return_default_value_if_disabled_throwing_exceptions()
+            [Test]
+            public void Should_return_cached_value_and_invoke_OnError_by_settings()
             {
                 const string fileName = "test.json";
-                const string content = "{ 'Value': 'str' }";
-
-                var source = new JsonFileSource(fileName, (f, e) =>
-                {
-                    var watcher = new SingleFileWatcherSubstitute(f, e);
-                    watcher.GetUpdate(content); //create file
-                    return watcher;
-                });
-                var cp = new ConfigurationProvider(new ConfigurationProviderSettings{ ThrowExceptions = false })
-                    .SetupSourceFor<int>(source);
-                cp.Get<int>().Should().Be(default);
-            }*/
-
-            /*[Test]
-            public void Should_return_default_value_and_invoke_OnError_by_settings()
-            {
-                const string fileName = "test.json";
-                const string content = "{ 'Value': 'str' }";
-
-                var source = new JsonFileSource(fileName, (f, e) =>
-                {
-                    var watcher = new SingleFileWatcherSubstitute(f, e);
-                    watcher.GetUpdate(content); //create file
-                    return watcher;
-                });
-                var msg = string.Empty;
-                var cp = new ConfigurationProvider(new ConfigurationProviderSettings
-                    {
-                        ThrowExceptions = false,
-                        OnError = e => msg = e.Message,
-                    })
-                    .SetupSourceFor<int>(source);
-                cp.Get<int>().Should().Be(default);
-                msg.Should().NotBeNullOrWhiteSpace();
-            }*/
-
-            /*[Test]
-            public void Should_read_from_cache_in_case_of_exception_if_disabled_throwing_exceptions()
-            {
-                const string fileName = "test.json";
-                var content = "{ 'Value': 123 }";
+                const string content = "{ 'Value': '123' }";
                 SingleFileWatcherSubstitute watcher = null;
 
                 var source = new JsonFileSource(fileName, (f, e) =>
@@ -323,26 +290,15 @@ namespace Vostok.Configuration.Tests
                     return watcher;
                 });
                 var msg = string.Empty;
-                var cp = new ConfigurationProvider(new ConfigurationProviderSettings
-                    {
-                        ThrowExceptions = false,
-                        OnError = e => msg = e.Message,
-                    })
+                var cp = new ConfigurationProvider(new ConfigurationProviderSettings { OnError = e => msg = e.Message })
                     .SetupSourceFor<int>(source);
-                cp.Get<int>().Should().Be(123);
-
-                content = "{ 'Value': 'str' }";
-                //update file
-                Task.Run(() =>
-                {
-                    Thread.Sleep(50);
-                    watcher.GetUpdate(content);
-                });
-                Thread.Sleep(100.Milliseconds());
 
                 cp.Get<int>().Should().Be(123);
+                watcher.GetUpdate(null);
+                cp.Get<int>().Should().Be(123, "cached value");
+
                 msg.Should().NotBeNullOrWhiteSpace();
-            }*/
+            }
         }
 
         public class BySource
@@ -528,79 +484,56 @@ namespace Vostok.Configuration.Tests
                 new Action(() => cp.Get<int>(source)).Should().Throw<Exception>();
             }
 
-            /*[Test]
-            public void Should_return_default_value_if_disabled_throwing_exceptions()
+            [Test]
+            public void Should_return_cached_value_and_invoke_OnError_by_settings()
             {
                 const string fileName = "test.json";
-                const string content = "{ 'Value': 'str' }";
-
-                var source = new JsonFileSource(fileName, f =>
-                {
-                    var watcher = new SingleFileWatcherSubstitute(f);
-                    watcher.GetUpdate(content); //create file
-                    return watcher;
-                });
-                var cp = new ConfigurationProvider(new ConfigurationProviderSettings { ThrowExceptions = false });
-                cp.Get<int>(source).Should().Be(default);
-            }*/
-
-            /*[Test]
-            public void Should_return_default_value_and_invoke_OnError_by_settings()
-            {
-                const string fileName = "test.json";
-                const string content = "{ 'Value': 'str' }";
-
-                var source = new JsonFileSource(fileName, f =>
-                {
-                    var watcher = new SingleFileWatcherSubstitute(f);
-                    watcher.GetUpdate(content); //create file
-                    return watcher;
-                });
-                var msg = string.Empty;
-                var cp = new ConfigurationProvider(
-                    new ConfigurationProviderSettings
-                    {
-                        ThrowExceptions = false,
-                        OnError = e => msg = e.Message,
-                    });
-                cp.Get<int>(source).Should().Be(default);
-                msg.Should().NotBeNullOrWhiteSpace();
-            }*/
-
-            /*[Test]
-            public void Should_read_from_cache_in_case_of_exception_if_disabled_throwing_exceptions()
-            {
-                const string fileName = "test.json";
-                var content = "{ 'Value': 123 }";
+                const string content = "{ 'Value': 123 }";
                 SingleFileWatcherSubstitute watcher = null;
 
-                var source = new JsonFileSource(fileName, f =>
+                var source = new JsonFileSource(fileName, (f, e) =>
                 {
-                    watcher = new SingleFileWatcherSubstitute(f);
+                    watcher = new SingleFileWatcherSubstitute(f, e);
                     watcher.GetUpdate(content); //create file
                     return watcher;
                 });
                 var msg = string.Empty;
                 var cp = new ConfigurationProvider(
-                    new ConfigurationProviderSettings
-                    {
-                        ThrowExceptions = false,
-                        OnError = e => msg = e.Message,
-                    });
-                cp.Get<int>(source).Should().Be(123);
+                    new ConfigurationProviderSettings { OnError = e => msg = e.Message });
 
-                content = "{ 'Value': 'str' }";
+                cp.Get<int>(source).Should().Be(123);
+                watcher.GetUpdate(null);
+                cp.Get<int>(source).Should().Be(123, "cached value");
+
+                msg.Should().NotBeNullOrWhiteSpace();
+            }
+
+            [Test(Description = "also tests TaskSource.Get<T>()")]
+            public void Should_throw_exception_then_resubsribe_and_return_value()
+            {
+                const string fileName = "test.json";
+                const string content = "{ 'Value': 123 }";
+                var watcher = new SingleFileWatcherSubstitute(fileName, Encoding.UTF8);
+
+                var source = new JsonFileSource(fileName, (f, e) =>
+                {
+                    watcher = new SingleFileWatcherSubstitute(f, e);
+                    watcher.GetUpdate("wrong format"); //create file
+                    return watcher;
+                });
+                var cp = new ConfigurationProvider();
+
+                new Action(() => cp.Get<int>(source)).Should().Throw<Exception>();
                 //update file
                 Task.Run(() =>
                 {
-                    Thread.Sleep(50);
+                    Thread.Sleep(20);
                     watcher.GetUpdate(content);
                 });
-                Thread.Sleep(100.Milliseconds());
+                Thread.Sleep(50.Milliseconds());
 
                 cp.Get<int>(source).Should().Be(123);
-                msg.Should().NotBeNullOrWhiteSpace();
-            }*/
+            }
         }
 
         private class MyClass

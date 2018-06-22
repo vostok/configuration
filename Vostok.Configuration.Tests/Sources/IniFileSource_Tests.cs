@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Sources;
@@ -49,6 +51,35 @@ namespace Vostok.Configuration.Tests.Sources
                 });
                 ifs.Get();
             }).Should().Throw<Exception>();
+        }
+
+        [Test(Description = "also tests TaskSource.Get()")]
+        public void Should_throw_exception_then_return_value_after_file_update()
+        {
+            const string fileName = "test.ini";
+            var content = "wrong file format";
+            SingleFileWatcherSubstitute watcher = null;
+
+            var ifs = new IniFileSource(fileName, (f, e) =>
+            {
+                watcher = new SingleFileWatcherSubstitute(f, e);
+                watcher.GetUpdate(content); //create file
+                return watcher;
+            });
+
+            new Action(() => ifs.Get()).Should().Throw<Exception>();
+
+            content = "Value = 123";
+            //update file
+            Task.Run(() =>
+            {
+                Thread.Sleep(20);
+                watcher.GetUpdate(content);
+            });
+            Thread.Sleep(50);
+
+            var result = ifs.Get();
+            result["value"].Value.Should().Be("123");
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Configurations>Debug;Release</Configurations>
@@ -16,6 +15,7 @@
 	  <NuspecFile>Vostok.Configuration.nuspec</NuspecFile>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="ILRepack" Version="2.0.15" />
     <PackageReference Include="ILRepack.MSBuild.Task" Version="1.0.9" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="SimpleInjector" Version="4.3.0" />
@@ -32,19 +32,15 @@
   <ItemGroup>
     <ProjectReference Include="..\Vostok.Configuration.Abstractions\Vostok.Configuration.Abstractions.csproj" />
   </ItemGroup>
-  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
-  <Target Name="AfterBuild" Condition="'$(Configuration)' == 'Release'">
+  <Target Name="RepackAssemblies" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
     <ItemGroup>
-      <InputAssemblies Include="$(OutputPath)\Vostok.Configuration.dll" />
-      <InputAssemblies Include="$(USERPROFILE)\.nuget\packages\newtonsoft.json\11.0.2\lib\netstandard2.0\Newtonsoft.Json.dll" />
-      <InputAssemblies Include="$(USERPROFILE)\.nuget\packages\simpleinjector\4.3.0\lib\netstandard1.3\SimpleInjector.dll" />
-      <InputAssemblies Include="$(USERPROFILE)\.nuget\packages\system.reactive\4.0.0\lib\netstandard2.0\System.Reactive.dll" />
-      <InputAssemblies Include="$(USERPROFILE)\.nuget\packages\system.reactive.core\4.0.0\lib\netstandard2.0\System.Reactive.Core.dll" />
-      <InputAssemblies Include="$(USERPROFILE)\.nuget\packages\system.reactive.linq\4.0.0\lib\netstandard2.0\System.Reactive.Linq.dll" />
+      <MergeAssemblies Include="$(AssemblyName).dll" />
+      <MergeAssemblies Include="$(USERPROFILE)\.nuget\packages\newtonsoft.json\11.0.2\lib\netstandard2.0\Newtonsoft.Json.dll" />
+      <MergeAssemblies Include="$(USERPROFILE)\.nuget\packages\simpleinjector\4.3.0\lib\netstandard1.3\SimpleInjector.dll" />
+      <MergeAssemblies Include="$(USERPROFILE)\.nuget\packages\system.reactive\4.0.0\lib\netstandard2.0\System.Reactive.dll" />
+      <MergeAssemblies Include="$(USERPROFILE)\.nuget\packages\system.reactive.core\4.0.0\lib\netstandard2.0\System.Reactive.Core.dll" />
+      <MergeAssemblies Include="$(USERPROFILE)\.nuget\packages\system.reactive.linq\4.0.0\lib\netstandard2.0\System.Reactive.Linq.dll" />
     </ItemGroup>
-    <ItemGroup>
-      <DoNotInternalizeAssemblies Include="Vostok.Configuration" />
-    </ItemGroup>
-    <ILRepack Parallel="true" Internalize="true" InternalizeExclude="@(DoNotInternalizeAssemblies)" InputAssemblies="@(InputAssemblies)" TargetKind="Dll" OutputFile="$(OutputPath)\Merged\$(AssemblyName).dll" />
+     <Exec WorkingDirectory="$(ProjectDir)$(OutputPath)" Command="$(ILRepack) /internalize /log:ilrepack.log /out:Merged\$(AssemblyName).dll @(MergeAssemblies, ' ')" /> 
   </Target>
 </Project>

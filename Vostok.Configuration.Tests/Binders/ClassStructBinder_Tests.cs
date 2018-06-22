@@ -5,6 +5,10 @@ using NUnit.Framework;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.SettingsTree;
+// ReSharper disable ClassNeverInstantiated.Local
+#pragma warning disable 414
+#pragma warning disable 649
+#pragma warning disable 169
 
 namespace Vostok.Configuration.Tests.Binders
 {

@@ -9,6 +9,11 @@ using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.SettingsTree;
+// ReSharper disable UnusedMember.Local
+// ReSharper disable UnassignedGetOnlyAutoProperty
+#pragma warning disable 414
+#pragma warning disable 169
+#pragma warning disable 649
 
 namespace Vostok.Configuration.Tests
 {
@@ -300,9 +305,7 @@ namespace Vostok.Configuration.Tests
 
         private class MyClass
         {
-#pragma warning disable 169
             private int privateIntField;
-#pragma warning restore 169
             private string PrivateStrGetProp { get; }
             public double PublicDoubleSetProp { get; set; }
             public readonly int PublicIntReadonlyField;
@@ -336,9 +339,7 @@ namespace Vostok.Configuration.Tests
         }
         private class MyClass3
         {
-#pragma warning disable 169
             public int PublicIntField;
-#pragma warning restore 169
         }
 
         [Test]

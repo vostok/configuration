@@ -77,7 +77,9 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_observe_file()
         {
-            new Action(() => ShouldObserveFileTest_ReturnsCountOfReceives().Should().Be(2)).ShouldPassIn(1.Seconds());
+            var res = 0;
+            new Action(() => res = ShouldObserveFileTest_ReturnsCountOfReceives()).ShouldPassIn(1.Seconds());
+            res.Should().Be(2);
         }
 
         private int ShouldObserveFileTest_ReturnsCountOfReceives()
