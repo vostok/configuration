@@ -73,6 +73,7 @@ namespace Vostok.Configuration.Sources
             Observable.Create<ISettingsNode>(
                 observer =>
                 {
+                    // CR(krait): Looks suspicious. Likely this can be written much simpler and without locks.
                     lock (locker)
                         if (watcher == null && source != null)
                         {

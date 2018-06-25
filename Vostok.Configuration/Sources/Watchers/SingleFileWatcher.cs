@@ -18,6 +18,7 @@ namespace Vostok.Configuration.Sources.Watchers
     /// </summary>
     internal class SingleFileWatcher : IObservable<string>
     {
+        // CR(krait): Use TimeSpan.
         private readonly int watcherPeriod = (int)5.Seconds().TotalMilliseconds; // todo(Mansiper): choose value
 
         private readonly string filePath;
@@ -25,6 +26,7 @@ namespace Vostok.Configuration.Sources.Watchers
 
         private readonly Subject<string> observers;
         private readonly object locker;
+        // CR(krait): Who cancels tokenTaskSource?
         private CancellationTokenSource tokenTaskSource, tokenDelaySource;
         private string currentValue;
         private readonly AtomicBoolean initialized;
@@ -45,9 +47,10 @@ namespace Vostok.Configuration.Sources.Watchers
 
             var path = Path.GetDirectoryName(filePath);
             if (string.IsNullOrEmpty(path))
-                path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location); // CR(krait): Seems like path can still be null.
             var fileWatcher = new FileSystemWatcher(path, Path.GetFileName(filePath));
             fileWatcher.Changed += OnFileWatcherEvent;
+            // CR(krait): Doesn't 'Changed' cover all other events?
             fileWatcher.Created += OnFileWatcherEvent;
             fileWatcher.Deleted += OnFileWatcherEvent;
             fileWatcher.Renamed += OnFileWatcherEvent;
@@ -67,6 +70,7 @@ namespace Vostok.Configuration.Sources.Watchers
             if (initialized)
                 observer.OnNext(currentValue);
 
+            // CR(krait): Please get rid of locks in this class, they have no just reason to exist. For example, you could try to wrap all state in one object and atomically substitute it via Interlocked.
             lock (locker)
                 if (tokenTaskSource == null)
                 {
@@ -80,6 +84,7 @@ namespace Vostok.Configuration.Sources.Watchers
             return observers;
         }
 
+        // CR(krait): What's this?
         /*private void StopTask()
         {
             if (tokenTaskSource != null && !tokenTaskSource.IsCancellationRequested)
@@ -118,6 +123,8 @@ namespace Vostok.Configuration.Sources.Watchers
                     tokenDelay = tokenDelaySource.Token;
                 }
 
+                // CR(krait): There is a more elegant way to achieve this. Instead of try-catch, just add an empty continuation: .ContinueWith(_ => { });
+                // CR(krait): Btw, it's a useful pattern worth moving into vostok.commons. See https://github.com/vostok/airlock.client/blob/temp/Vostok.Airlock.Client/TaskExtensions.cs
                 try
                 {
                     await Task.Delay(watcherPeriod, tokenDelay);

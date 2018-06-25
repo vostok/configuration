@@ -16,6 +16,7 @@ namespace Vostok.Configuration.Sources
     /// </summary>
     public class CombinedSource : IConfigurationSource, IDisposable // CR(krait): Are you sure this cannot be done a lot easier using Subject<T>?
     {
+        // CR(krait): What's the point of annotating private fields?
         [NotNull]
         private readonly IReadOnlyCollection<IConfigurationSource> sources;
         private readonly SettingsMergeOptions options;

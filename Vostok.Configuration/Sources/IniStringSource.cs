@@ -49,7 +49,7 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         public IObservable<ISettingsNode> Observe()
         {
-            if (neverParsed)
+            if (neverParsed) // CR(krait): Should be atomic boolean.
             {
                 neverParsed = false;
                 currentSettings = string.IsNullOrWhiteSpace(ini) ? null : ParseIni(ini, "root");
