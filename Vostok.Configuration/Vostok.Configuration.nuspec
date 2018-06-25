@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>Vostok.Configuration</id>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
     <authors>Vostok team</authors>
     <owners>Vostok team</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -12,8 +12,8 @@
     <copyright>Copyright (c) 2017-2018 SKB Kontur</copyright>
     <dependencies>
       <group targetFramework=".NETStandard2.0">
-        <dependency id="Vostok.Configuration.Abstractions" version="0.0.1" exclude="Build,Analyzers" />
-		    <dependency id="Vostok.Commons" version="0.0.1" exclude="Build,Analyzers" />
+        <dependency id="Vostok.Configuration.Abstractions" version="0.0.2" exclude="Build,Analyzers" />
+		    <dependency id="Vostok.Commons" version="0.0.3" exclude="Build,Analyzers" />
       </group>
     </dependencies>
   </metadata>

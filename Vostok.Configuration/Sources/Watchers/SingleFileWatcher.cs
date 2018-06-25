@@ -24,13 +24,11 @@ namespace Vostok.Configuration.Sources.Watchers
         private readonly Encoding encoding;
 
         private readonly Subject<string> observers;
-        private readonly FileSystemWatcher fileWatcher;
         private readonly object locker;
-        private Task task;
-        private CancellationTokenSource tokenSource;
+        private CancellationTokenSource tokenTaskSource, tokenDelaySource;
         private string currentValue;
         private readonly AtomicBoolean initialized;
-        private CancellationToken token;
+        private CancellationToken tokenTask, tokenDelay;
 
         /// <summary>
         /// Creates a <see cref="SingleFileWatcher"/> instance with given parameter <paramref name="filePath"/>
@@ -48,8 +46,19 @@ namespace Vostok.Configuration.Sources.Watchers
             var path = Path.GetDirectoryName(filePath);
             if (string.IsNullOrEmpty(path))
                 path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            fileWatcher = new FileSystemWatcher(path, Path.GetFileName(filePath));
+            var fileWatcher = new FileSystemWatcher(path, Path.GetFileName(filePath));
+            fileWatcher.Changed += OnFileWatcherEvent;
+            fileWatcher.Created += OnFileWatcherEvent;
+            fileWatcher.Deleted += OnFileWatcherEvent;
+            fileWatcher.Renamed += OnFileWatcherEvent;
+            fileWatcher.EnableRaisingEvents = true;
             locker = new object();
+        }
+
+        private void OnFileWatcherEvent(object sender, FileSystemEventArgs args)
+        {
+            if (tokenDelaySource != null && !tokenDelaySource.IsCancellationRequested)
+                tokenDelaySource.Cancel();
         }
 
         public IDisposable Subscribe(IObserver<string> observer)
@@ -59,30 +68,30 @@ namespace Vostok.Configuration.Sources.Watchers
                 observer.OnNext(currentValue);
 
             lock (locker)
-                if (tokenSource == null)
+                if (tokenTaskSource == null)
                 {
-                    tokenSource = new CancellationTokenSource();
-                    token = tokenSource.Token;
-                    task = new Task(WatchFile, token);
-                    task.Start();
+                    tokenTaskSource = new CancellationTokenSource();
+                    tokenDelaySource = new CancellationTokenSource();
+                    tokenTask = tokenTaskSource.Token;
+                    tokenDelay = tokenDelaySource.Token;
+                    Task.Run(WatchFile, tokenTask);
                 }
 
             return observers;
         }
 
-        private void StopTask()
+        /*private void StopTask()
         {
-            if (tokenSource != null && !tokenSource.IsCancellationRequested)
-                tokenSource.Cancel();
-        }
+            if (tokenTaskSource != null && !tokenTaskSource.IsCancellationRequested)
+                tokenTaskSource.Cancel();
+        }*/
 
-        private void WatchFile()
+        private async Task WatchFile()
         {
             while (true)
             {
-                if (!observers.HasObservers) StopTask();
-                if (token.IsCancellationRequested) break;
-
+                if (tokenTask.IsCancellationRequested) break;
+                
                 try
                 {
                     lock (locker)
@@ -101,8 +110,19 @@ namespace Vostok.Configuration.Sources.Watchers
                     observers.OnError(e);
                 }
 
-                if (token.IsCancellationRequested) break;
-                fileWatcher.WaitForChanged(WatcherChangeTypes.All, watcherPeriod); // CR(krait): Now you just spend a thread pool thread instead of you own. The idea was to sleep without consuming a thread.
+                if (tokenTask.IsCancellationRequested) break;
+
+                if (tokenDelay.IsCancellationRequested)
+                {
+                    tokenDelaySource = new CancellationTokenSource();
+                    tokenDelay = tokenDelaySource.Token;
+                }
+
+                try
+                {
+                    await Task.Delay(watcherPeriod, tokenDelay);
+                }
+                catch (TaskCanceledException) { }
             }
         }
 

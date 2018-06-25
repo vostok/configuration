@@ -16,10 +16,7 @@ namespace Vostok.Configuration.Tests.Sources
         private const string TestName = nameof(SettingsFileWatcher);
         
         [TearDown]
-        public void Cleanup()
-        {
-            TestHelper.DeleteAllFiles(TestName);
-        }
+        public void Cleanup() => TestHelper.DeleteAllFiles(TestName);
 
         [Test]
         public void Should_return_null_if_file_not_exists()
@@ -90,7 +87,6 @@ namespace Vostok.Configuration.Tests.Sources
                 {
                     s = s?.Trim();
                     val1++;
-                    Console.WriteLine($"{val1}: {s ?? "null"}");
                     if (val1 == 1)
                         s.Should().BeNull();
                     else
@@ -110,7 +106,6 @@ namespace Vostok.Configuration.Tests.Sources
                     else
                         s.Should().Be(content);
                 });
-
             Thread.Sleep(200.Milliseconds());
 
             sub1.Dispose();
