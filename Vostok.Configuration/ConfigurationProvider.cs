@@ -21,7 +21,7 @@ namespace Vostok.Configuration
         private readonly ConcurrentQueue<Type> typeCacheQueue;
         private readonly ConcurrentDictionary<Type, IConfigurationSource> typeSources;
         private readonly ConcurrentDictionary<Type, IObservable<object>> typeWatchers;
-        private readonly TaskSource taskSource;
+        private readonly TypedTaskSource taskSource;
 
         private readonly ConcurrentDictionary<IConfigurationSource, object> sourceCache;
         private readonly ConcurrentQueue<IConfigurationSource> sourceCacheQueue;
@@ -42,7 +42,7 @@ namespace Vostok.Configuration
             typeCacheQueue = new ConcurrentQueue<Type>();
             sourceCache = new ConcurrentDictionary<IConfigurationSource, object>();
             sourceCacheQueue = new ConcurrentQueue<IConfigurationSource>();
-            taskSource = new TaskSource();
+            taskSource = new TypedTaskSource();
         }
 
         /// <inheritdoc />
