@@ -37,6 +37,6 @@ namespace Vostok.Configuration.Abstractions
         public ValidateByAttribute(Type validatorType) => this.validatorType = validatorType;
 
         [NotNull]
-        public ISettingsValidator Validator => (ISettingsValidator)Activator.CreateInstance(validatorType);
+        public object Validator => Activator.CreateInstance(validatorType);
     }
 }

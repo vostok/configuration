@@ -6,6 +6,7 @@ using NUnit.Framework;
 using Vostok.Commons.Conversions;
 using Vostok.Commons.Testing;
 using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Abstractions.Validation;
 using Vostok.Configuration.Sources;
 using Vostok.Configuration.Tests.Helper;
 
@@ -668,19 +669,16 @@ namespace Vostok.Configuration.Tests
             public override string ToString() => Value.ToString();
         }
 
-        private class MyValidator : ISettingsValidator
+        private class MyValidator : ISettingsValidator<ValidatedClass>
         {
-            public SettingsValidationErrors Validate(object value, string prefix = "")
+            public ISettingsValidationErrors Validate(ValidatedClass value)
             {
                 var errors = new SettingsValidationErrors();
 
-                if (!(value is ValidatedClass val))
-                    return errors;
-
-                if (string.IsNullOrEmpty(val.Str))
-                    errors.ReportError($"'{nameof(val.Str)}' must be non-empty.", prefix);
-                if (val.Int < 0)
-                    errors.ReportError($"'{nameof(val.Int)}' must be non-negative.", prefix);
+                if (string.IsNullOrEmpty(value.Str))
+                    errors.ReportError($"'{nameof(value.Str)}' must be non-empty.");
+                if (value.Int < 0)
+                    errors.ReportError($"'{nameof(value.Int)}' must be non-negative.");
 
                 return errors;
             }

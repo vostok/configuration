@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Reflection;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Abstractions.Validation;
@@ -218,20 +219,26 @@ namespace Vostok.Configuration
 
         private static void Validate(Type type, object value, ICollection<SettingsValidationErrors> errors, string prefix)
         {
+            if (value == null) return;
             var validAttribute = type.GetCustomAttributes(typeof(ValidateByAttribute), false).FirstOrDefault() as ValidateByAttribute;
             if (validAttribute == null) return;
 
-            var validationResult = validAttribute.Validator.Validate(value, prefix);
-            errors.Add(validationResult);
-            if (value == null) return;
+            var validator = validAttribute.Validator;
+            var validateMethod = validator.GetType().GetMethod(nameof(ISettingsValidator<string>.Validate));
+            var validationResult = validateMethod?.Invoke(validator, new[] {value}) as SettingsValidationErrors;
+            if (validationResult != null)
+            {
+                validationResult.Prefix = prefix;
+                errors.Add(validationResult);
+            }
 
-            bool CheckType(Type f) => !f.IsValueType && !f.IsArray && f.IsClass && f != typeof(string);
             string SetPrefix(string name) => prefix.Replace(": ", ".") + name + ": ";
+            bool IsAllowedType(Type f) => !f.IsValueType && !f.IsArray && f.IsClass && f != typeof(string);
 
-            foreach (var field in type.GetFields().Where(f => CheckType(f.FieldType)))
+            foreach (var field in type.GetFields().Where(f => IsAllowedType(f.FieldType)))
                 Validate(field.FieldType, field.GetValue(value), errors, SetPrefix(field.Name));
 
-            foreach (var prop in type.GetProperties().Where(p => CheckType(p.PropertyType)))
+            foreach (var prop in type.GetProperties().Where(p => IsAllowedType(p.PropertyType)))
                 Validate(prop.PropertyType, prop.GetValue(value), errors, SetPrefix(prop.Name));
         }
     }

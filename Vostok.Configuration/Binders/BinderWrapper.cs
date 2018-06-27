@@ -13,7 +13,7 @@ namespace Vostok.Configuration.Binders
             this.binder = binder;
 
         private MethodInfo BinderBindMethod =>
-            binder.GetType().GetMethods().First(m => m.Name == nameof(Bind));
+            binder.GetType().GetMethod(nameof(Bind));
 
         public object Bind(ISettingsNode rawSettings) =>
             BinderBindMethod.Invoke(binder, new object[] {rawSettings});
