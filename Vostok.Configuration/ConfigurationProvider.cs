@@ -96,7 +96,6 @@ namespace Vostok.Configuration
         /// <returns>Event with new value</returns>
         public IObservable<TSettings> Observe<TSettings>(IConfigurationSource source) =>
             source.Observe().Select(s => SourcedSubscriptionPrepare<TSettings>(source, s));
-                            var value = ValidatedBind<TSettings>(s);
 
         /// <summary>
         /// Changes source to combination of source for given type <typeparamref name="TSettings"/> and <paramref name="source"/>
@@ -145,7 +144,7 @@ namespace Vostok.Configuration
         {
             try
             {
-                var value = settings.Binder.Bind<TSettings>(node);
+                var value = ValidatedBind<TSettings>(node);
                 if (!sourceCache.ContainsKey(source))
                     sourceCacheQueue.Enqueue(source);
                 sourceCache.AddOrUpdate(source, value, (t, o) => value);
