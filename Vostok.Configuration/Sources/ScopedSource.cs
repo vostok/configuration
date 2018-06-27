@@ -87,12 +87,11 @@ namespace Vostok.Configuration.Sources
                             }
                         });
 
-            lock (locker)
-                if (firstRequest)
-                {
-                    firstRequest = false;
-                    currentValue = InnerScope(incomeSettings, scope);
-                }
+            if (firstRequest)
+            {
+                currentValue = InnerScope(incomeSettings, scope);
+                firstRequest = false;
+            }
 
             return Observable.Return(currentValue);
         }

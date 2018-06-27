@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Reactive.Linq;
 using Newtonsoft.Json.Linq;
-using Vostok.Commons.Synchronization;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.SettingsTree;
@@ -19,7 +18,7 @@ namespace Vostok.Configuration.Sources
         private readonly TaskSource taskSource;
         private ISettingsNode currentSettings;
 
-        private readonly AtomicBoolean neverParsed;
+        private volatile bool neverParsed;
 
         /// <summary>
         /// <para>Creates a <see cref="JsonStringSource"/> instance using given string in <paramref name="json"/> parameter</para>
@@ -30,7 +29,7 @@ namespace Vostok.Configuration.Sources
         public JsonStringSource(string json)
         {
             this.json = json;
-            neverParsed = new AtomicBoolean(true);
+            neverParsed = true;
             taskSource = new TaskSource();
         }
 
@@ -47,8 +46,12 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         public IObservable<ISettingsNode> Observe()
         {
-            if (neverParsed.TrySetFalse())
+            if (neverParsed)
+            {
                 currentSettings = string.IsNullOrWhiteSpace(json) ? null : ParseJson(JObject.Parse(json), "root");
+                neverParsed = false;
+            }
+
             return Observable.Return(currentSettings);
         }
 

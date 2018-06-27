@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Reactive.Linq;
-using Vostok.Commons.Synchronization;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.SettingsTree;
@@ -18,7 +17,7 @@ namespace Vostok.Configuration.Sources
         private readonly string ini;
         private readonly bool allowMultiLevelValues;
         private readonly TaskSource taskSource;
-        private readonly AtomicBoolean neverParsed;
+        private volatile bool neverParsed;
         private ISettingsNode currentSettings;
 
         /// <summary>
@@ -33,7 +32,7 @@ namespace Vostok.Configuration.Sources
             this.ini = ini;
             this.allowMultiLevelValues = allowMultiLevelValues;
             taskSource = new TaskSource();
-            neverParsed = new AtomicBoolean(true);
+            neverParsed = true;
         }
 
         /// <inheritdoc />
@@ -49,8 +48,12 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         public IObservable<ISettingsNode> Observe()
         {
-            if (neverParsed.TrySetFalse())
+            if (neverParsed)
+            {
                 currentSettings = string.IsNullOrWhiteSpace(ini) ? null : ParseIni(ini, "root");
+                neverParsed = false;
+            }
+
             return Observable.Return(currentSettings);
         }
 

@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Reactive.Linq;
 using System.Text;
-using Vostok.Commons.Synchronization;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 
@@ -15,7 +14,7 @@ namespace Vostok.Configuration.Sources
     public class EnvironmentVariablesSource : IConfigurationSource
     {
         private readonly TaskSource taskSource;
-        private readonly AtomicBoolean neverParsed;
+        private volatile bool neverParsed;
         private ISettingsNode currentValue;
 
         /// <inheritdoc />
@@ -25,7 +24,7 @@ namespace Vostok.Configuration.Sources
         public EnvironmentVariablesSource()
         {
             taskSource = new TaskSource();
-            neverParsed = new AtomicBoolean(true);
+            neverParsed = true;
         }
 
         /// <inheritdoc />
@@ -41,8 +40,12 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         public IObservable<ISettingsNode> Observe()
         {
-            if (neverParsed.TrySetFalse())
+            if (neverParsed)
+            {
                 currentValue = GetSettings(GetVariables());
+                neverParsed = false;
+            }
+
             return Observable.Return(currentValue);
         }
 

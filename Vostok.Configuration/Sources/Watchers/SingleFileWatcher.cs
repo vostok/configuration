@@ -16,9 +16,7 @@ namespace Vostok.Configuration.Sources.Watchers
     /// </summary>
     internal class SingleFileWatcher : IObservable<string>
     {
-        private const int True = 1;
-        private const int False = 0;
-        private readonly TimeSpan watcherPeriod = 5.Seconds(); // todo(Mansiper): choose value
+        private readonly TimeSpan watcherPeriod = 5.Seconds();
 
         private readonly string filePath;
         private readonly Encoding encoding;
@@ -26,9 +24,9 @@ namespace Vostok.Configuration.Sources.Watchers
         private readonly Subject<string> observers;
         private readonly object locker;
         private readonly AtomicBoolean initialized;
+        private readonly AtomicBoolean taskIsRun;
         private CancellationTokenSource tokenDelaySource;
         private string currentValue;
-        private int taskIsRun;
         private CancellationToken tokenDelay;
 
         /// <summary>
@@ -43,7 +41,7 @@ namespace Vostok.Configuration.Sources.Watchers
             observers = new Subject<string>();
             currentValue = null;
             initialized = new AtomicBoolean(false);
-            taskIsRun = False;
+            taskIsRun = new AtomicBoolean(false);
 
             var path = Path.GetDirectoryName(filePath);
             if (string.IsNullOrEmpty(path))
@@ -60,7 +58,7 @@ namespace Vostok.Configuration.Sources.Watchers
             if (initialized)
                 observer.OnNext(currentValue);
 
-            if (Interlocked.Exchange(ref taskIsRun, True) == False)
+            if (taskIsRun.TrySetTrue())
                 Task.Run(WatchFile);
 
             return observers;

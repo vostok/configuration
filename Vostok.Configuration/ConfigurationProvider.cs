@@ -11,8 +11,6 @@ namespace Vostok.Configuration
 {
     public class ConfigurationProvider : IConfigurationProvider
     {
-        private const int MaxTypeCacheSize = 10; // todo(Mansiper): choose values
-        private const int MaxSourceCacheSize = 10;
         private static readonly string UnknownTypeExceptionMsg = $"{nameof(IConfigurationSource)} for specified type \"typeName\" is absent. User {nameof(SetupSourceFor)} to add source.";
         private readonly ConfigurationProviderSettings settings;
 
@@ -83,7 +81,7 @@ namespace Vostok.Configuration
             if (typeWatchers.TryGetValue(type, out var watcher))
                 return watcher.Select(TypedSubscriptionPrepare<TSettings>);
 
-            return Observable.Empty((TSettings)type.Default());
+            throw new NullReferenceException($"{nameof(ConfigurationProvider)}: watcher for type \"{type.Name}\" not found.");
         }
 
         /// <inheritdoc />
@@ -122,7 +120,7 @@ namespace Vostok.Configuration
                 if (!typeCache.ContainsKey(type))
                     typeCacheQueue.Enqueue(type);
                 typeCache.AddOrUpdate(type, value, (t, o) => value);
-                if (typeCache.Count > MaxTypeCacheSize && typeCacheQueue.TryDequeue(out var tp))
+                if (typeCache.Count > settings.MaxTypeCacheSize && typeCacheQueue.TryDequeue(out var tp))
                     typeCache.TryRemove(tp, out _);
                 return value;
             }
@@ -146,7 +144,7 @@ namespace Vostok.Configuration
                 if (!sourceCache.ContainsKey(source))
                     sourceCacheQueue.Enqueue(source);
                 sourceCache.AddOrUpdate(source, value, (t, o) => value);
-                if (sourceCache.Count > MaxSourceCacheSize && sourceCacheQueue.TryDequeue(out var src))
+                if (sourceCache.Count > settings.MaxSourceCacheSize && sourceCacheQueue.TryDequeue(out var src))
                     sourceCache.TryRemove(src, out _);
                 return value;
             }
