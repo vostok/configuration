@@ -29,11 +29,9 @@ namespace Vostok.Configuration.Tests.Sources
                 watcher.GetUpdate(content); //create file
                 return watcher;
             });
-            using (var ss = new ScopedSource(jfs))
-            {
-                var result = ss.Get();
-                result["value"].Value.Should().Be("1");
-            }
+            var ss = new ScopedSource(jfs);
+            var result = ss.Get();
+            result["value"].Value.Should().Be("1");
         }
 
         [Test]
@@ -44,11 +42,9 @@ namespace Vostok.Configuration.Tests.Sources
                 ["value"] = new ValueNode("1"),
             });
 
-            using (var ss = new ScopedSource(tree))
-            {
-                var result = ss.Get();
-                result["value"].Value.Should().Be("1");
-            }
+            var ss = new ScopedSource(tree);
+            var result = ss.Get();
+            result["value"].Value.Should().Be("1");
         }
 
         [Test]
@@ -64,17 +60,13 @@ namespace Vostok.Configuration.Tests.Sources
                 return watcher;
             });
             {
-                using (var ss = new ScopedSource(jfs, "value 1", "value 2"))
-                {
-                    var result = ss.Get();
-                    result["value 3"].Value.Should().Be("1");
-                }
+                var ss = new ScopedSource(jfs, "value 1", "value 2");
+                var result = ss.Get();
+                result["value 3"].Value.Should().Be("1");
 
-                using (var ss = new ScopedSource(jfs, "value 1", "value 2", "value 3"))
-                {
-                    var result = ss.Get();
-                    result.Value.Should().Be("1");
-                }
+                ss = new ScopedSource(jfs, "value 1", "value 2", "value 3");
+                result = ss.Get();
+                result.Value.Should().Be("1");
             }
         }
 
@@ -91,18 +83,14 @@ namespace Vostok.Configuration.Tests.Sources
                 return watcher;
             });
             {
-                using (var ss = new ScopedSource(jfs, "value", "[0]"))
-                {
-                    var result = ss.Get();
-                    result.Children.First().Value.Should().Be("1");
-                    result.Children.Last().Value.Should().Be("2");
-                }
+                var ss = new ScopedSource(jfs, "value", "[0]");
+                var result = ss.Get();
+                result.Children.First().Value.Should().Be("1");
+                result.Children.Last().Value.Should().Be("2");
 
-                using (var ss = new ScopedSource(jfs, "value", "[1]", "[2]"))
-                {
-                    var result = ss.Get();
-                    result.Value.Should().Be("5");
-                }
+                ss = new ScopedSource(jfs, "value", "[1]", "[2]");
+                result = ss.Get();
+                result.Value.Should().Be("5");
             }
         }
 
@@ -119,16 +107,16 @@ namespace Vostok.Configuration.Tests.Sources
                 return watcher;
             });
             {
-                using (var ss = new ScopedSource(jfs, "unknown value"))
-                    ss.Get().Should().BeNull();
-                using (var ss = new ScopedSource(jfs, "value", "[0]"))
-                    ss.Get().Should().BeNull();
-                using (var ss = new ScopedSource(jfs, "value", "list", "[]"))
-                    ss.Get().Should().BeNull();
-                using (var ss = new ScopedSource(jfs, "value", "list", "[not_a_number]"))
-                    ss.Get().Should().BeNull();
-                using (var ss = new ScopedSource(jfs, "value", "list", "[100]"))
-                    ss.Get().Should().BeNull();
+                var ss = new ScopedSource(jfs, "unknown value");
+                ss.Get().Should().BeNull();
+                ss = new ScopedSource(jfs, "value", "[0]");
+                ss.Get().Should().BeNull();
+                ss = new ScopedSource(jfs, "value", "list", "[]");
+                ss.Get().Should().BeNull();
+                ss = new ScopedSource(jfs, "value", "list", "[not_a_number]");
+                ss.Get().Should().BeNull();
+                ss = new ScopedSource(jfs, "value", "list", "[100]");
+                ss.Get().Should().BeNull();
             }
         }
 
@@ -155,21 +143,19 @@ namespace Vostok.Configuration.Tests.Sources
             {
                 var rsList = new List<ISettingsNode>();
 
-                using (var ss = new ScopedSource(jfs, "value", "list", "[1]"))
+                var ss = new ScopedSource(jfs, "value", "list", "[1]");
+                var sub = ss.Observe().Subscribe(settings => rsList.Add(settings));
+
+                content = "{ 'value': { 'list': [3,4,5] } }";
+                //update file
+                Task.Run(() =>
                 {
-                    var sub = ss.Observe().Subscribe(settings => rsList.Add(settings));
+                    Thread.Sleep(50);
+                    watcher.GetUpdate(content);
+                });
+                Thread.Sleep(150.Milliseconds());
 
-                    content = "{ 'value': { 'list': [3,4,5] } }";
-                    //update file
-                    Task.Run(() =>
-                    {
-                        Thread.Sleep(50);
-                        watcher.GetUpdate(content);
-                    });
-                    Thread.Sleep(150.Milliseconds());
-
-                    sub.Dispose();
-                }
+                sub.Dispose();
 
                return rsList;
             }

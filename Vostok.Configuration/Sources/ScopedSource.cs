@@ -2,8 +2,8 @@ using System;
 using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Threading;
 using JetBrains.Annotations;
+using Vostok.Commons.Synchronization;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.SettingsTree;
@@ -13,20 +13,15 @@ namespace Vostok.Configuration.Sources
     /// <summary>
     /// Searches subtree in <see cref="ISettingsNode"/> tree.
     /// </summary>
-    public class ScopedSource : IConfigurationSource, IDisposable
+    public class ScopedSource : IConfigurationSource
     {
-        private const int True = 1;
-        private const int False = 0;
-
         private readonly ISettingsNode incomeSettings;
         private readonly IConfigurationSource source;
         private readonly string[] scope;
         private readonly TaskSource taskSource;
         private readonly object locker;
-        private IDisposable watcher;
         private ISettingsNode currentValue;
         private bool firstRequest = true;
-        private int needCreateWatcher;
 
         /// <summary>
         /// Creates a <see cref="ScopedSource"/> instance for <see cref="source"/> to search in by <see cref="scope"/>
@@ -42,7 +37,6 @@ namespace Vostok.Configuration.Sources
             this.scope = scope;
             locker = new object();
             taskSource = new TaskSource();
-            needCreateWatcher = True;
         }
 
         /// <summary>
@@ -59,7 +53,6 @@ namespace Vostok.Configuration.Sources
             this.scope = scope;
             locker = new object();
             taskSource = new TaskSource();
-            needCreateWatcher = False;
         }
 
         /// <inheritdoc />
@@ -76,48 +69,34 @@ namespace Vostok.Configuration.Sources
         /// <para>You can get update only if you used scope by source.</para>
         /// </summary>
         /// <returns>Event with new RawSettings tree</returns>
-        public IObservable<ISettingsNode> Observe() =>
-            Observable.Create<ISettingsNode>(
-                observer =>
-                {
-                    //if (by source)
-                    if (Interlocked.Exchange(ref needCreateWatcher, False) == True)
-                        watcher = source.Observe()
-                            .Subscribe(
-                                settings =>
-                                {
-                                    lock (locker)
-                                    {
-                                        var newSettings = InnerScope(settings, scope);
-                                        if (!Equals(newSettings, currentValue) || firstRequest)
-                                        {
-                                            firstRequest = false;
-                                            currentValue = newSettings;
-                                            observer.OnNext(currentValue);
-                                        }
-                                    }
-                                });
-
-                    if (watcher != null) return watcher;
-
-                    //if (by settings tree)
-                    lock (locker)
-                    {
-                        if (firstRequest)
-                        {
-                            firstRequest = false;
-                            currentValue = source != null ? InnerScope(source.Get(), scope) : InnerScope(incomeSettings, scope);
-                        }
-
-                        observer.OnNext(currentValue);
-                    }
-
-                    return Disposable.Empty;
-                });
-
-        public void Dispose()
+        public IObservable<ISettingsNode> Observe()
         {
-            watcher?.Dispose();
+            if (source != null)
+                return source.Observe()
+                    .Select(
+                        settings =>
+                        {
+                            lock (locker)
+                            {
+                                var newSettings = InnerScope(settings, scope);
+                                if (!Equals(newSettings, currentValue) || firstRequest)
+                                {
+                                    firstRequest = false;
+                                    currentValue = newSettings;
+                                }
+
+                                return currentValue;
+                            }
+                        });
+
+            lock (locker)
+                if (firstRequest)
+                {
+                    firstRequest = false;
+                    currentValue = source != null ? InnerScope(source.Get(), scope) : InnerScope(incomeSettings, scope);
+                }
+
+            return Observable.Return(currentValue);
         }
 
         private static ISettingsNode InnerScope(ISettingsNode settings, params string[] scope)

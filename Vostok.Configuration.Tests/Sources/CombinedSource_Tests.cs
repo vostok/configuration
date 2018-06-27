@@ -35,8 +35,8 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_return_null_if_no_sources()
         {
-            using (var cs = CreateCombinedSource(null))
-                cs.Get().Should().BeNull();
+            var cs = CreateCombinedSource(null);
+            cs.Get().Should().BeNull();
         }
 
         [Test]
@@ -44,11 +44,9 @@ namespace Vostok.Configuration.Tests.Sources
         {
             var filesContent = new[] { "{ 'value 1': 'string 1' }" };
 
-            using (var cs = CreateCombinedSource(filesContent))
-            {
-                var result = cs.Get();
-                result["value 1"].Value.Should().Be("string 1");
-            }
+            var cs = CreateCombinedSource(filesContent);
+            var result = cs.Get();
+            result["value 1"].Value.Should().Be("string 1");
         }
 
         [Test]
@@ -61,17 +59,14 @@ namespace Vostok.Configuration.Tests.Sources
                 "{ 'value 2': 'string 22' }",
             };
 
-            using (var cs = CreateCombinedSource(filesContent, new SettingsMergeOptions { ObjectMergeStyle = ObjectMergeStyle.Shallow }))
-            {
-                var result = cs.Get();
-                result["value 2"].Value.Should().Be("string 22");
-            }
-            using (var cs = CreateCombinedSource(filesContent, new SettingsMergeOptions { ObjectMergeStyle = ObjectMergeStyle.Deep }))
-            {
-                var result = cs.Get();
-                result["value 1"].Value.Should().Be("string 1");
-                result["value 2"].Value.Should().Be("string 22");
-            }
+            var cs = CreateCombinedSource(filesContent, new SettingsMergeOptions {ObjectMergeStyle = ObjectMergeStyle.Shallow});
+            var result = cs.Get();
+            result["value 2"].Value.Should().Be("string 22");
+
+            cs = CreateCombinedSource(filesContent, new SettingsMergeOptions {ObjectMergeStyle = ObjectMergeStyle.Deep});
+            result = cs.Get();
+            result["value 1"].Value.Should().Be("string 1");
+            result["value 2"].Value.Should().Be("string 22");
         }
 
         [Test]
@@ -91,26 +86,24 @@ namespace Vostok.Configuration.Tests.Sources
             };
             var val = 0;
 
-            using (var ccs = CreateCombinedSource(filesContent, new SettingsMergeOptions { ObjectMergeStyle = ObjectMergeStyle.Deep }))
+            var ccs = CreateCombinedSource(filesContent, new SettingsMergeOptions {ObjectMergeStyle = ObjectMergeStyle.Deep});
+            var sub = ccs.Observe().Subscribe(settings =>
             {
-                var sub = ccs.Observe().Subscribe(settings =>
-                {
-                    val++;
-                    settings["value 1"].Value.Should().Be("1");
-                    settings["value 2"].Value.Should().Be("2");
-                    settings["list"].Children.Select(c => c.Value).Should().ContainInOrder("1", "2");
-                });
+                val++;
+                settings["value 1"].Value.Should().Be("1");
+                settings["value 2"].Value.Should().Be("2");
+                settings["list"].Children.Select(c => c.Value).Should().ContainInOrder("1", "2");
+            });
 
-                //update file
-                Task.Run(() =>
-                {
-                    Thread.Sleep(20);
-                    watchers[1].GetUpdate("{ 'value 2': 2, 'list': [3,4] }");
-                });
-                Thread.Sleep(50.Milliseconds());
+            //update file
+            Task.Run(() =>
+            {
+                Thread.Sleep(20);
+                watchers[1].GetUpdate("{ 'value 2': 2, 'list': [3,4] }");
+            });
+            Thread.Sleep(50.Milliseconds());
 
-                sub.Dispose();
-            }
+            sub.Dispose();
             return val;
         }
     }
