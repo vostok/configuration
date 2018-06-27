@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Vostok.Commons.Synchronization;
 using Vostok.Configuration.Abstractions;
@@ -19,8 +18,8 @@ namespace Vostok.Configuration.Sources
         private readonly string ini;
         private readonly bool allowMultiLevelValues;
         private readonly TaskSource taskSource;
-        private ISettingsNode currentSettings;
         private readonly AtomicBoolean neverParsed;
+        private ISettingsNode currentSettings;
 
         /// <summary>
         /// <para>Creates a <see cref="IniStringSource"/> instance using given string in <paramref name="ini"/> parameter</para>
@@ -50,18 +49,9 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         public IObservable<ISettingsNode> Observe()
         {
-            if (neverParsed)
-            {
-                neverParsed.TrySetFalse();
+            if (neverParsed.TrySetFalse())
                 currentSettings = string.IsNullOrWhiteSpace(ini) ? null : ParseIni(ini, "root");
-            }
-
-            return Observable.Create<ISettingsNode>(
-                observer =>
-                {
-                    observer.OnNext(currentSettings);
-                    return Disposable.Empty;
-                });
+            return Observable.Return(currentSettings);
         }
 
         private ISettingsNode ParseIni(string text, string name)
@@ -119,8 +109,7 @@ namespace Vostok.Configuration.Sources
                         var child = (UniversalNode)obj[keys[i]];
                         if (child.Value != null)
                             throw new FormatException($"{nameof(IniStringSource)}: wrong ini file ({currentLine}): key \"{keys[i]}\" with value \"{child.Value}\" already exists");
-                        else
-                            child.Value = value;
+                        child.Value = value;
                     }
                     else
                         obj.Add(keys[i], new UniversalNode(value, keys[i]));

@@ -15,8 +15,8 @@ namespace Vostok.Configuration.Sources
     public class EnvironmentVariablesSource : IConfigurationSource
     {
         private readonly TaskSource taskSource;
-        private ISettingsNode currentValue;
         private readonly AtomicBoolean neverParsed;
+        private ISettingsNode currentValue;
 
         /// <inheritdoc />
         /// <summary>
@@ -41,12 +41,8 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         public IObservable<ISettingsNode> Observe()
         {
-            if (neverParsed)
-            {
-                neverParsed.TrySetFalse();
+            if (neverParsed.TrySetFalse())
                 currentValue = GetSettings(GetVariables());
-            }
-
             return Observable.Return(currentValue);
         }
 

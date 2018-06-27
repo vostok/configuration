@@ -1,9 +1,7 @@
 using System;
 using System.Linq;
-using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using JetBrains.Annotations;
-using Vostok.Commons.Synchronization;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.SettingsTree;
@@ -93,7 +91,7 @@ namespace Vostok.Configuration.Sources
                 if (firstRequest)
                 {
                     firstRequest = false;
-                    currentValue = source != null ? InnerScope(source.Get(), scope) : InnerScope(incomeSettings, scope);
+                    currentValue = InnerScope(incomeSettings, scope);
                 }
 
             return Observable.Return(currentValue);

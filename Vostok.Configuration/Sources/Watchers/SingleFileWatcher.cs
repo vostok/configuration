@@ -28,7 +28,7 @@ namespace Vostok.Configuration.Sources.Watchers
         private readonly AtomicBoolean initialized;
         private CancellationTokenSource tokenDelaySource;
         private string currentValue;
-        private int firstSubscription;
+        private int taskIsRun;
         private CancellationToken tokenDelay;
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace Vostok.Configuration.Sources.Watchers
             observers = new Subject<string>();
             currentValue = null;
             initialized = new AtomicBoolean(false);
-            firstSubscription = True;
+            taskIsRun = False;
 
             var path = Path.GetDirectoryName(filePath);
             if (string.IsNullOrEmpty(path))
@@ -60,12 +60,8 @@ namespace Vostok.Configuration.Sources.Watchers
             if (initialized)
                 observer.OnNext(currentValue);
 
-            if (Interlocked.Exchange(ref firstSubscription, False) == True)
-            {
-                tokenDelaySource = new CancellationTokenSource();
-                tokenDelay = tokenDelaySource.Token;
+            if (Interlocked.Exchange(ref taskIsRun, True) == False)
                 Task.Run(WatchFile);
-            }
 
             return observers;
         }
@@ -98,7 +94,7 @@ namespace Vostok.Configuration.Sources.Watchers
                     observers.OnError(e);
                 }
 
-                if (tokenDelay.IsCancellationRequested)
+                if (tokenDelaySource == null || tokenDelay.IsCancellationRequested)
                 {
                     tokenDelaySource = new CancellationTokenSource();
                     tokenDelay = tokenDelaySource.Token;

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Newtonsoft.Json.Linq;
 using Vostok.Commons.Synchronization;
@@ -48,18 +47,9 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         public IObservable<ISettingsNode> Observe()
         {
-            if (neverParsed)
-            {
-                neverParsed.TrySetFalse();
+            if (neverParsed.TrySetFalse())
                 currentSettings = string.IsNullOrWhiteSpace(json) ? null : ParseJson(JObject.Parse(json), "root");
-            }
-
-            return Observable.Create<ISettingsNode>(
-                observer =>
-                {
-                    observer.OnNext(currentSettings);
-                    return Disposable.Empty;
-                });
+            return Observable.Return(currentSettings);
         }
 
         private ISettingsNode ParseJson(JObject jObject, string tokenKey)
@@ -114,6 +104,7 @@ namespace Vostok.Configuration.Sources
                         break;
                 }
 
+                i++;
                 list.Add(obj);
             }
 
