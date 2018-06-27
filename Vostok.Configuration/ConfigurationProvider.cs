@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
@@ -75,23 +74,17 @@ namespace Vostok.Configuration
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
         /// <returns>Event with new value</returns>
-        public IObservable<TSettings> Observe<TSettings>() =>
-            Observable.Create<TSettings>(
-                observer =>
-                {
-                    var type = typeof(TSettings);
-                    if (!typeWatchers.ContainsKey(type) && typeSources.ContainsKey(type))
-                        typeWatchers[type] = typeSources[type].Observe().Select(SubscribeWatcher<TSettings>);
+        public IObservable<TSettings> Observe<TSettings>()
+        {
+            var type = typeof(TSettings);
+            if (!typeWatchers.ContainsKey(type) && typeSources.ContainsKey(type))
+                typeWatchers[type] = typeSources[type].Observe().Select(SubscribeWatcher<TSettings>);
 
-                    if (typeWatchers.TryGetValue(type, out var watcher))
-                        return watcher
-                            .Select(PrepareWatcherValue<TSettings>)
-                            .Subscribe(
-                                value => WatcherOnNext(observer, value),
-                                observer.OnError);
+            if (typeWatchers.TryGetValue(type, out var watcher))
+                return watcher.Select(TypedSubscriptionPrepare<TSettings>);
 
-                    return Disposable.Empty;
-                });
+            return Observable.Empty((TSettings)type.Default());
+        }
 
         /// <inheritdoc />
         /// <summary>
@@ -100,31 +93,7 @@ namespace Vostok.Configuration
         /// </summary>
         /// <returns>Event with new value</returns>
         public IObservable<TSettings> Observe<TSettings>(IConfigurationSource source) =>
-            source.Observe()
-                .Select(
-                    s =>
-                    {
-                        try
-                        {
-                            var value = settings.Binder.Bind<TSettings>(s);
-                            if (!sourceCache.ContainsKey(source))
-                                sourceCacheQueue.Enqueue(source);
-                            sourceCache.AddOrUpdate(source, value, (t, o) => value);
-                            if (sourceCache.Count > MaxSourceCacheSize && sourceCacheQueue.TryDequeue(out var src))
-                                sourceCache.TryRemove(src, out _);
-                            return value;
-                        }
-                        catch (Exception e)
-                        {
-                            if (sourceCache.TryGetValue(source, out var val) && val != null)
-                            {
-                                settings.OnError?.Invoke(e);
-                                return (TSettings)val;
-                            }
-
-                            throw;
-                        }
-                    });
+            source.Observe().Select(s => SourcedSubscriptionPrepare<TSettings>(source, s));
 
         /// <summary>
         /// Changes source to combination of source for given type <typeparamref name="TSettings"/> and <paramref name="source"/>
@@ -144,26 +113,46 @@ namespace Vostok.Configuration
             return this;
         }
 
-        private void WatcherOnNext<TSettings>(IObserver<TSettings> observer, TSettings value)
+        private TSettings TypedSubscriptionPrepare<TSettings>(object node)
         {
             var type = typeof(TSettings);
-            if (!typeCache.ContainsKey(type))
-                typeCacheQueue.Enqueue(type);
-            typeCache.AddOrUpdate(type, value, (t, o) => value);
-            if (typeCache.Count > MaxTypeCacheSize && typeCacheQueue.TryDequeue(out var tp))
-                typeCache.TryRemove(tp, out _);
-            observer.OnNext(value);
-        }
-
-        private TSettings PrepareWatcherValue<TSettings>(object value)
-        {
             try
             {
-                return (TSettings)value;
+                var value = (TSettings)node;
+                if (!typeCache.ContainsKey(type))
+                    typeCacheQueue.Enqueue(type);
+                typeCache.AddOrUpdate(type, value, (t, o) => value);
+                if (typeCache.Count > MaxTypeCacheSize && typeCacheQueue.TryDequeue(out var tp))
+                    typeCache.TryRemove(tp, out _);
+                return value;
             }
             catch (Exception e)
             {
                 if (typeCache.TryGetValue(typeof(TSettings), out var val) && val != null)
+                {
+                    settings.OnError?.Invoke(e);
+                    return (TSettings)val;
+                }
+
+                throw;
+            }
+        }
+
+        private TSettings SourcedSubscriptionPrepare<TSettings>(IConfigurationSource source, ISettingsNode node)
+        {
+            try
+            {
+                var value = settings.Binder.Bind<TSettings>(node);
+                if (!sourceCache.ContainsKey(source))
+                    sourceCacheQueue.Enqueue(source);
+                sourceCache.AddOrUpdate(source, value, (t, o) => value);
+                if (sourceCache.Count > MaxSourceCacheSize && sourceCacheQueue.TryDequeue(out var src))
+                    sourceCache.TryRemove(src, out _);
+                return value;
+            }
+            catch (Exception e)
+            {
+                if (sourceCache.TryGetValue(source, out var val) && val != null)
                 {
                     settings.OnError?.Invoke(e);
                     return (TSettings)val;
