@@ -1,11 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Reactive.Subjects;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
-using Vostok.Commons.Conversions;
 using Vostok.Commons.Synchronization;
 
 namespace Vostok.Configuration.Sources.Watchers
@@ -16,10 +14,8 @@ namespace Vostok.Configuration.Sources.Watchers
     /// </summary>
     internal class SingleFileWatcher : IObservable<string>
     {
-        private readonly TimeSpan watcherPeriod = 5.Seconds();
-
         private readonly string filePath;
-        private readonly Encoding encoding;
+        private readonly FileSourceSettings settings;
 
         private readonly Subject<string> observers;
         private readonly object locker;
@@ -33,11 +29,11 @@ namespace Vostok.Configuration.Sources.Watchers
         /// Creates a <see cref="SingleFileWatcher"/> instance with given parameter <paramref name="filePath"/>
         /// </summary>
         /// <param name="filePath">Full file path</param>
-        /// <param name="encoding">File encoding</param>
-        public SingleFileWatcher([NotNull] string filePath, Encoding encoding)
+        /// <param name="fileSourceSettings"></param>
+        public SingleFileWatcher([NotNull] string filePath, FileSourceSettings fileSourceSettings)
         {
             this.filePath = filePath;
-            this.encoding = encoding;
+            settings = fileSourceSettings ?? new FileSourceSettings();
             observers = new Subject<string>();
             currentValue = null;
             initialized = new AtomicBoolean(false);
@@ -98,7 +94,7 @@ namespace Vostok.Configuration.Sources.Watchers
                     tokenDelay = tokenDelaySource.Token;
                 }
 
-                await Task.Delay(watcherPeriod, tokenDelay).ContinueWith(_ => {});
+                await Task.Delay(settings.FileWatcherPeriod, tokenDelay).ContinueWith(_ => {});
             }
         }
 
@@ -112,7 +108,7 @@ namespace Vostok.Configuration.Sources.Watchers
             else if (fileExists)
             {
                 using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
-                using (var reader = new StreamReader(fileStream, encoding))
+                using (var reader = new StreamReader(fileStream, settings.Encoding))
                     changes = reader.ReadToEnd();
 
                 if (currentValue != changes)

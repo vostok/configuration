@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reactive.Disposables;
-using System.Text;
 using JetBrains.Annotations;
+using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests.Helper
 {
@@ -13,7 +13,7 @@ namespace Vostok.Configuration.Tests.Helper
         private readonly object locker;
         private bool initialized;
 
-        public SingleFileWatcherSubstitute([NotNull] string filePath, Encoding encoding)
+        public SingleFileWatcherSubstitute([NotNull] string filePath, FileSourceSettings encoding)
         {
             observers = new List<IObserver<string>>();
             currentValue = null;

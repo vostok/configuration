@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions.SettingsTree;
 
@@ -22,7 +21,7 @@ namespace Vostok.Configuration.Sources
         {
         }
 
-        internal JsonFileSource([NotNull] string filePath, Func<string, Encoding, IObservable<string>> fileWatcherCreator, FileSourceSettings settings = null)
+        internal JsonFileSource([NotNull] string filePath, Func<string, FileSourceSettings, IObservable<string>> fileWatcherCreator, FileSourceSettings settings = null)
             : base(filePath, settings, ParseSettings, fileWatcherCreator)
         {
         }

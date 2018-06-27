@@ -1,6 +1,5 @@
 ﻿using System;
 using JetBrains.Annotations;
-using Vostok.Configuration.Abstractions.Validation;
 
 namespace Vostok.Configuration.Abstractions
 {

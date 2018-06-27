@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -11,6 +10,7 @@ using Vostok.Configuration.Abstractions.Validation;
 using Vostok.Configuration.Sources;
 using Vostok.Configuration.Tests.Helper;
 #pragma warning disable 169
+#pragma warning disable 649
 
 namespace Vostok.Configuration.Tests
 {
@@ -127,7 +127,7 @@ namespace Vostok.Configuration.Tests
             {
                 const string fileName = "test.json";
                 const string content = "{ 'Value': 123 }";
-                var watcher = new SingleFileWatcherSubstitute(fileName, Encoding.UTF8);
+                var watcher = new SingleFileWatcherSubstitute(fileName, null);
                 watcher.GetUpdate(content); //create file
 
                 new Action(() => new ConfigurationProvider()
@@ -257,7 +257,7 @@ namespace Vostok.Configuration.Tests
             {
                 const string fileName = "test.json";
                 const string content = "{ 'Value': 123 }";
-                var watcher = new SingleFileWatcherSubstitute(fileName, Encoding.UTF8);
+                var watcher = new SingleFileWatcherSubstitute(fileName, null);
 
                 var source = new JsonFileSource(fileName, (f, e) =>
                 {
@@ -552,7 +552,7 @@ namespace Vostok.Configuration.Tests
             {
                 const string fileName = "test.json";
                 const string content = "{ 'Value': 123 }";
-                var watcher = new SingleFileWatcherSubstitute(fileName, Encoding.UTF8);
+                var watcher = new SingleFileWatcherSubstitute(fileName, null);
 
                 var source = new JsonFileSource(fileName, (f, e) =>
                 {

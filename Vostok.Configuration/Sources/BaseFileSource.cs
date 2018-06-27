@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Reactive.Linq;
-using System.Text;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Sources.Watchers;
@@ -16,7 +15,7 @@ namespace Vostok.Configuration.Sources
         private readonly string filePath;
         private readonly FileSourceSettings settings;
         private readonly Func<string, ISettingsNode> parseSettings;
-        private readonly Func<string, Encoding, IObservable<string>> fileWatcherCreator;
+        private readonly Func<string, FileSourceSettings, IObservable<string>> fileWatcherCreator;
         private readonly TaskSource taskSource;
         private IObservable<ISettingsNode> fileObserver;
         private ISettingsNode currentValue;
@@ -33,7 +32,7 @@ namespace Vostok.Configuration.Sources
         {
         }
 
-        internal BaseFileSource(string filePath, FileSourceSettings settings, Func<string, ISettingsNode> parseSettings, Func<string, Encoding, IObservable<string>> fileWatcherCreator)
+        internal BaseFileSource(string filePath, FileSourceSettings settings, Func<string, ISettingsNode> parseSettings, Func<string, FileSourceSettings, IObservable<string>> fileWatcherCreator)
         {
             this.filePath = filePath;
             this.settings = settings ?? new FileSourceSettings();
@@ -59,7 +58,7 @@ namespace Vostok.Configuration.Sources
         {
             if (fileObserver != null) return fileObserver;
 
-            var fileWatcher = SettingsFileWatcher.WatchFile(filePath, settings.Encoding, fileWatcherCreator);
+            var fileWatcher = SettingsFileWatcher.WatchFile(filePath, settings, fileWatcherCreator);
             fileObserver = fileWatcher.Select(
                 str =>
                 {
