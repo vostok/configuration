@@ -33,14 +33,7 @@ namespace Vostok.Configuration.Binders
                     instance,
                     GetValue(prop.PropertyType, prop.Name, prop.GetCustomAttributes().GetBinderAttribute(defaultAttrOption), settings, prop.GetValue(instance)));
 
-            var result = (T)instance;
-
-            var validAttribute = type.GetCustomAttributes(typeof(ValidateByAttribute), false).FirstOrDefault() as ValidateByAttribute;
-            var validationResult = validAttribute?.CastValidator<T>().Validate(result);
-            if (validationResult?.HasErrors == true)
-                throw validationResult.ToException(); // TODO(krait): Merge errors through the entire tree.
-
-            return result;
+            return (T)instance;
         }
 
         private object GetValue(Type type, string name, BinderAttribute binderAttribute, ISettingsNode settings, object defaultValue)

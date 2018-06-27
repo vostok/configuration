@@ -258,31 +258,6 @@ namespace Vostok.Configuration.Tests.Binders
             new Action(() => binder.Bind(settings)).Should().Throw<Exception>();
         }
 
-        [Test]
-        public void Should_validate_with_ValidateBy_attribute()
-        {
-            var settings = new ObjectNode(
-                new SortedDictionary<string, ISettingsNode>
-                {
-                    {"Str", new ValueNode("")},
-                    {"Int", new ValueNode("-1")},
-                });
-            var binder = Container.GetInstance<ISettingsBinder<ValidatedClass>>();
-            new Action(() => binder.Bind(settings)).Should().Throw<SettingsValidationException>();
-
-            settings = new ObjectNode(
-                new SortedDictionary<string, ISettingsNode>
-                {
-                    {"Str", new ValueNode("qwe")},
-                    {"Int", new ValueNode("1")},
-                });
-            binder = Container.GetInstance<ISettingsBinder<ValidatedClass>>();
-            binder.Bind(settings).Should().BeEquivalentTo(new ValidatedClass {Str = "qwe", Int = 1});
-
-            var wrongBinder = Container.GetInstance<ISettingsBinder<WrongValidatedClass>>();
-            new Action(() => wrongBinder.Bind(settings)).Should().Throw<SettingsValidationException>();
-        }
-
         private class SimpleClass
         {
             public int Int { get; set; }
@@ -322,41 +297,6 @@ namespace Vostok.Configuration.Tests.Binders
             public int Int { get; set; } = 123;
             public long? Long = 321;
             public List<bool> Bools { get; set; } = new List<bool> { true };
-        }
-
-        private class MyValidator : ISettingsValidator<ValidatedClass>
-        {
-            public SettingsValidationErrors Validate(ValidatedClass value)
-            {
-                var errors = new SettingsValidationErrors();
-
-                if (value == null)
-                {
-                    errors.ReportError("Instance must not be null.");
-                    return errors;
-                }
-
-                if (string.IsNullOrEmpty(value.Str))
-                    errors.ReportError($"'{nameof(value.Str)}' must be non-empty.");
-                if (value.Int < 0)
-                    errors.ReportError($"'{nameof(value.Int)}' must be non-negative.");
-
-                return errors;
-            }
-        }
-
-        [ValidateBy(typeof(MyValidator))]
-        private class ValidatedClass
-        {
-            public string Str { get; set; }
-            public int Int;
-        }
-
-        [ValidateBy(typeof(MyValidator))]
-        private class WrongValidatedClass
-        {
-            public string Str { get; set; }
-            public int Int;
         }
     }
 }

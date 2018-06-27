@@ -5,6 +5,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons.Conversions;
 using Vostok.Commons.Testing;
+using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Sources;
 using Vostok.Configuration.Tests.Helper;
 
@@ -325,6 +326,42 @@ namespace Vostok.Configuration.Tests
                 cp.Get<int>().Should().Be(123);
                 msg.Should().NotBeNullOrWhiteSpace();
             }
+
+            [Test]
+            public void Should_validate_with_ValidateBy_attribute_exception()
+            {
+                const string fileName = "test.json";
+                const string content = "{ 'Str': null, 'Int': -100, 'Class': { 'Str': '', 'Int': -1, 'Class': { 'Str': '', 'Int': -1 } } }";
+
+                var source = new JsonFileSource(fileName, f =>
+                {
+                    var watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                });
+                var cp = new ConfigurationProvider()
+                    .SetupSourceFor<ValidatedClass>(source);
+                var ex = new Action(() => cp.Get<ValidatedClass>()).Should().Throw<SettingsValidationException>();
+                ex.Where(exception => exception.Message.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length == 6);
+            }
+
+            [Test]
+            public void Should_validate_with_ValidateBy_attribute_ok()
+            {
+                const string fileName = "test.json";
+                const string content = "{ 'Str': 'qwe', 'Int': 1 }";
+
+                var source = new JsonFileSource(fileName, f =>
+                {
+                    var watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                });
+                var cp = new ConfigurationProvider()
+                    .SetupSourceFor<ValidatedClass>(source);
+                var result = cp.Get<ValidatedClass>();
+                result.Should().BeEquivalentTo(new ValidatedClass { Str = "qwe", Int = 1 });
+            }
         }
 
         public class BySource
@@ -583,6 +620,40 @@ namespace Vostok.Configuration.Tests
                 cp.Get<int>(source).Should().Be(123);
                 msg.Should().NotBeNullOrWhiteSpace();
             }
+
+            [Test]
+            public void Should_validate_with_ValidateBy_attribute_exception()
+            {
+                const string fileName = "test.json";
+                const string content = "{ 'Str': null, 'Int': -100, 'Class': { 'Str': '', 'Int': -1, 'Class': { 'Str': '', 'Int': -1 } } }";
+
+                var source = new JsonFileSource(fileName, f =>
+                {
+                    var watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                });
+                var cp = new ConfigurationProvider();
+                var ex = new Action(() => cp.Get<ValidatedClass>(source)).Should().Throw<SettingsValidationException>();
+                ex.Where(exception => exception.Message.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length == 6);
+            }
+
+            [Test]
+            public void Should_validate_with_ValidateBy_attribute_ok()
+            {
+                const string fileName = "test.json";
+                const string content = "{ 'Str': 'qwe', 'Int': 1 }";
+
+                var source = new JsonFileSource(fileName, f =>
+                {
+                    var watcher = new SingleFileWatcherSubstitute(f);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                });
+                var cp = new ConfigurationProvider();
+                var result = cp.Get<ValidatedClass>(source);
+                result.Should().BeEquivalentTo(new ValidatedClass { Str = "qwe", Int = 1 });
+            }
         }
 
         private class MyClass
@@ -595,6 +666,40 @@ namespace Vostok.Configuration.Tests
         {
             public int Value { get; set; }
             public override string ToString() => Value.ToString();
+        }
+
+        private class MyValidator : ISettingsValidator
+        {
+            public SettingsValidationErrors Validate(object value, string prefix = "")
+            {
+                var errors = new SettingsValidationErrors();
+
+                if (!(value is ValidatedClass val))
+                    return errors;
+
+                if (string.IsNullOrEmpty(val.Str))
+                    errors.ReportError($"'{nameof(val.Str)}' must be non-empty.", prefix);
+                if (val.Int < 0)
+                    errors.ReportError($"'{nameof(val.Int)}' must be non-negative.", prefix);
+
+                return errors;
+            }
+        }
+
+        [ValidateBy(typeof(MyValidator))]
+        private class ValidatedClass
+        {
+            public string Str { get; set; }
+            public int Int;
+            [Optional]
+            public ValidatedClass Class { get; set; }
+        }
+
+        [ValidateBy(typeof(MyValidator))]
+        private class WrongValidatedClass
+        {
+            public string Str { get; set; }
+            public int Int;
         }
     }
 }

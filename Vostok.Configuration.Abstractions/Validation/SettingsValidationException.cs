@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Vostok.Configuration.Abstractions
+namespace Vostok.Configuration.Abstractions.Validation
 {
     public class SettingsValidationException : Exception
     {

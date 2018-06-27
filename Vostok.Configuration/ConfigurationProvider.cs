@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Abstractions.Validation;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Sources;
@@ -111,7 +114,7 @@ namespace Vostok.Configuration
                     {
                         try
                         {
-                            var value = settings.Binder.Bind<TSettings>(s);
+                            var value = ValidatedBind<TSettings>(s);
                             if (!sourceCache.ContainsKey(source))
                                 sourceCacheQueue.Enqueue(source);
                             sourceCache.AddOrUpdate(source, value, (t, o) => value);
@@ -181,7 +184,7 @@ namespace Vostok.Configuration
                 throw new ArgumentException($"{UnknownTypeExceptionMsg.Replace("typeName", type.Name)}");
             try
             {
-                return settings.Binder.Bind<TSettings>(rs);
+                return ValidatedBind<TSettings>(rs);
             }
             catch (Exception e)
             {
@@ -190,6 +193,46 @@ namespace Vostok.Configuration
                 settings.OnError?.Invoke(e);
                 return typeCache.TryGetValue(type, out var value) ? value : default;
             }
+        }
+
+        private TSettings ValidatedBind<TSettings>(ISettingsNode rs)
+        {
+            var type = typeof(TSettings);
+            var value = settings.Binder.Bind<TSettings>(rs);
+            var errors = new List<SettingsValidationErrors>();
+
+            Validate(type, value, errors, "");
+            if (errors.Any(e => e.HasErrors))
+            {
+                errors = errors.Where(e => e.HasErrors).ToList();
+                var validationResult = new SettingsValidationErrors();
+
+                foreach (var er in errors)
+                    validationResult.MergeWith(er);
+
+                throw validationResult.ToException();
+            }
+
+            return value;
+        }
+
+        private static void Validate(Type type, object value, ICollection<SettingsValidationErrors> errors, string prefix)
+        {
+            var validAttribute = type.GetCustomAttributes(typeof(ValidateByAttribute), false).FirstOrDefault() as ValidateByAttribute;
+            if (validAttribute == null) return;
+
+            var validationResult = validAttribute.Validator.Validate(value, prefix);
+            errors.Add(validationResult);
+            if (value == null) return;
+
+            bool CheckType(Type f) => !f.IsValueType && !f.IsArray && f.IsClass && f != typeof(string);
+            string SetPrefix(string name) => prefix.Replace(": ", ".") + name + ": ";
+
+            foreach (var field in type.GetFields().Where(f => CheckType(f.FieldType)))
+                Validate(field.FieldType, field.GetValue(value), errors, SetPrefix(field.Name));
+
+            foreach (var prop in type.GetProperties().Where(p => CheckType(p.PropertyType)))
+                Validate(prop.PropertyType, prop.GetValue(value), errors, SetPrefix(prop.Name));
         }
     }
 }

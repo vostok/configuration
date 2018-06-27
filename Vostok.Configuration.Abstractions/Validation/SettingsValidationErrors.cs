@@ -3,19 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Vostok.Configuration.Abstractions
+namespace Vostok.Configuration.Abstractions.Validation
 {
     public class SettingsValidationErrors
     {
         private readonly List<string> errors = new List<string>();
 
-        public void ReportError(string error)
-        {
-            errors.Add(error);
-        }
+        public bool HasErrors => errors.Any();
+
+        public void ReportError(string error, string prefix = "") => errors.Add(prefix + error);
 
         public void MergeWith(SettingsValidationErrors other)
         {
+            if (other == null) return;
             errors.AddRange(other.errors);
         }
 
@@ -29,11 +29,6 @@ namespace Vostok.Configuration.Abstractions
             return builder.ToString();
         }
 
-        public Exception ToException()
-        {
-            return new SettingsValidationException(ToString());
-        }
-
-        public bool HasErrors => errors.Any();
+        public Exception ToException() => new SettingsValidationException(ToString());
     }
 }

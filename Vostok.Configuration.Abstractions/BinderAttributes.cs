@@ -1,5 +1,6 @@
 ﻿using System;
 using JetBrains.Annotations;
+using Vostok.Configuration.Abstractions.Validation;
 
 namespace Vostok.Configuration.Abstractions
 {
@@ -24,21 +25,18 @@ namespace Vostok.Configuration.Abstractions
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class OptionalAttribute : Attribute { }
 
+    /// <inheritdoc />
+    /// <summary>
+    /// Allows validate classes and structs with specified validator
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
     public class ValidateByAttribute : Attribute
     {
         private readonly Type validatorType;
 
-        public ValidateByAttribute(Type validatorType) =>
-            this.validatorType = validatorType;
+        public ValidateByAttribute(Type validatorType) => this.validatorType = validatorType;
 
         [NotNull]
-        public ISettingsValidator<T> CastValidator<T>()
-        {
-            if (!(Activator.CreateInstance(validatorType) is ISettingsValidator<T> validator))
-                throw new SettingsValidationException($"A validator of type '{validatorType}' cannot be used to validate an instance of type '{typeof(T)}'.");
-
-            return validator;
-        }
+        public ISettingsValidator Validator => (ISettingsValidator)Activator.CreateInstance(validatorType);
     }
 }
