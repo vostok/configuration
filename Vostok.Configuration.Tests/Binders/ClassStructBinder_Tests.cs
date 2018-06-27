@@ -227,7 +227,7 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_throw_exception_if_requred_value_has_wrong_value()
+        public void Should_throw_exception_if_required_value_has_wrong_value()
         {
             var settings = new ObjectNode(
                 new SortedDictionary<string, ISettingsNode>
@@ -239,7 +239,7 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_throw_exception_if_requred_value_has_no_value_in_settings()
+        public void Should_throw_exception_if_required_value_has_no_value_in_settings()
         {
             var settings = new ObjectNode(
                 new SortedDictionary<string, ISettingsNode>
@@ -251,7 +251,7 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_throw_exception_if_requred_value_has_null_value()
+        public void Should_throw_exception_if_required_value_has_null_value()
         {
             var settings = new ObjectNode(
                 new SortedDictionary<string, ISettingsNode>
@@ -260,31 +260,6 @@ namespace Vostok.Configuration.Tests.Binders
                 });
             var binder = Container.GetInstance<ISettingsBinder<AttributedClassByProps>>();
             new Action(() => binder.Bind(settings)).Should().Throw<Exception>();
-        }
-
-        [Test]
-        public void Should_validate_with_ValidateBy_attribute()
-        {
-            var settings = new ObjectNode(
-                new SortedDictionary<string, ISettingsNode>
-                {
-                    {"Str", new ValueNode("")},
-                    {"Int", new ValueNode("-1")},
-                });
-            var binder = Container.GetInstance<ISettingsBinder<ValidatedClass>>();
-            new Action(() => binder.Bind(settings)).Should().Throw<FormatException>();
-
-            settings = new ObjectNode(
-                new SortedDictionary<string, ISettingsNode>
-                {
-                    {"Str", new ValueNode("qwe")},
-                    {"Int", new ValueNode("1")},
-                });
-            binder = Container.GetInstance<ISettingsBinder<ValidatedClass>>();
-            binder.Bind(settings).Should().BeEquivalentTo(new ValidatedClass {Str = "qwe", Int = 1});
-
-            var wrongBinder = Container.GetInstance<ISettingsBinder<WrongValidatedClass>>();
-            new Action(() => wrongBinder.Bind(settings)).Should().Throw<FormatException>();
         }
 
         private class SimpleClass
@@ -326,37 +301,6 @@ namespace Vostok.Configuration.Tests.Binders
             public int Int { get; set; } = 123;
             public long? Long = 321;
             public List<bool> Bools { get; set; } = new List<bool> { true };
-        }
-
-        private class MyValidator : BaseValidator
-        {
-            public override bool IsValid<T>(T obj)
-            {
-                if (!CheckNull(obj) ||
-                    !CheckType<ValidatedClass>(obj, out var objct))
-                    return false;
-
-                if (string.IsNullOrEmpty(objct.Str))
-                    Errors[nameof(objct.Str)] = "empty or null";
-                if (objct.Int < 0)
-                    Errors[nameof(objct.Int)] = "negative";
-
-                return Errors.Count == 0;
-            }
-        }
-
-        [ValidateBy(typeof(MyValidator))]
-        private class ValidatedClass
-        {
-            public string Str { get; set; }
-            public int Int;
-        }
-
-        [ValidateBy(typeof(MyValidator))]
-        private class WrongValidatedClass
-        {
-            public string Str { get; set; }
-            public int Int;
         }
     }
 }

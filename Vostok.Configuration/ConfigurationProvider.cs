@@ -1,8 +1,12 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reactive.Linq;
+using System.Reflection;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Abstractions.Validation;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Sources;
@@ -92,6 +96,7 @@ namespace Vostok.Configuration
         /// <returns>Event with new value</returns>
         public IObservable<TSettings> Observe<TSettings>(IConfigurationSource source) =>
             source.Observe().Select(s => SourcedSubscriptionPrepare<TSettings>(source, s));
+                            var value = ValidatedBind<TSettings>(s);
 
         /// <summary>
         /// Changes source to combination of source for given type <typeparamref name="TSettings"/> and <paramref name="source"/>
@@ -168,7 +173,7 @@ namespace Vostok.Configuration
 
             try
             {
-                return settings.Binder.Bind<TSettings>(rs);
+                return ValidatedBind<TSettings>(rs);
             }
             catch (Exception e)
             {
@@ -180,6 +185,52 @@ namespace Vostok.Configuration
 
                 throw;
             }
+        }
+
+        private TSettings ValidatedBind<TSettings>(ISettingsNode rs)
+        {
+            var type = typeof(TSettings);
+            var value = settings.Binder.Bind<TSettings>(rs);
+            var errors = new List<SettingsValidationErrors>();
+
+            Validate(type, value, errors, "");
+            if (errors.Any(e => e.HasErrors))
+            {
+                errors = errors.Where(e => e.HasErrors).ToList();
+                var validationResult = new SettingsValidationErrors();
+
+                foreach (var er in errors)
+                    validationResult.MergeWith(er);
+
+                throw validationResult.ToException();
+            }
+
+            return value;
+        }
+
+        private static void Validate(Type type, object value, ICollection<SettingsValidationErrors> errors, string prefix)
+        {
+            if (value == null) return;
+            var validAttribute = type.GetCustomAttributes(typeof(ValidateByAttribute), false).FirstOrDefault() as ValidateByAttribute;
+            if (validAttribute == null) return;
+
+            var validator = validAttribute.Validator;
+            var validateMethod = validator.GetType().GetMethod(nameof(ISettingsValidator<string>.Validate));
+            var validationResult = validateMethod?.Invoke(validator, new[] {value}) as SettingsValidationErrors;
+            if (validationResult != null)
+            {
+                validationResult.Prefix = prefix;
+                errors.Add(validationResult);
+            }
+
+            string SetPrefix(string name) => prefix.Replace(": ", ".") + name + ": ";
+            bool IsAllowedType(Type f) => !f.IsValueType && !f.IsArray && f.IsClass && f != typeof(string);
+
+            foreach (var field in type.GetFields().Where(f => IsAllowedType(f.FieldType)))
+                Validate(field.FieldType, field.GetValue(value), errors, SetPrefix(field.Name));
+
+            foreach (var prop in type.GetProperties().Where(p => IsAllowedType(p.PropertyType)))
+                Validate(prop.PropertyType, prop.GetValue(value), errors, SetPrefix(prop.Name));
         }
     }
 }

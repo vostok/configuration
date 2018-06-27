@@ -118,12 +118,14 @@ namespace Vostok.Configuration.Tests.Binders
             binder.Bind(settings).Should().Be(new Uri("http://example.com", UriKind.Absolute));
         }
 
-        [Test]
-        public void Should_bind_to_String()
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("somestring")]
+        public void Should_bind_to_String(string str)
         {
-            var settings = new ValueNode("somestring");
+            var settings = new ValueNode(str);
             var binder = Container.GetInstance<ISettingsBinder<string>>();
-            binder.Bind(settings).Should().Be("somestring");
+            binder.Bind(settings).Should().Be(str);
         }
     }
 }

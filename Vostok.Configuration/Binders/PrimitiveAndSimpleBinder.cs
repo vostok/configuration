@@ -18,20 +18,24 @@ namespace Vostok.Configuration.Binders
         public T Bind(ISettingsNode settings)
         {
             var type = typeof(T);
-            if (!parsers.ContainsKey(type) && type != typeof(string))
+            var typeIsString = type == typeof(string);
+            if (!parsers.ContainsKey(type) && !typeIsString)
                 throw new ArgumentException($"{nameof(PrimitiveAndSimpleBinder<T>)}: have no parser for the type \"{type.Name}\"");
-            SettingsNode.CheckSettings(settings);
-
+            
             string value;
-            if (!string.IsNullOrWhiteSpace(settings.Value))
-                value = settings.Value;
-            else if (settings.Value == null && settings.Children.Count() == 1 && settings.Children.First() is ValueNode valueNode)
-                value = valueNode.Value;
+            if (!typeIsString)
+            {
+                SettingsNode.CheckSettings(settings);
+                if (!string.IsNullOrWhiteSpace(settings.Value))
+                    value = settings.Value;
+                else if (settings.Value == null && settings.Children.Count() == 1 && settings.Children.First() is ValueNode valueNode)
+                    value = valueNode.Value;
+                else
+                    throw new ArgumentNullException($"{nameof(PrimitiveAndSimpleBinder<T>)}: settings value is null. Can't parse.");
+            }
             else
-                throw new ArgumentNullException($"{nameof(PrimitiveAndSimpleBinder<T>)}: settings value is null. Can't parse.");
+                return (T)(object)settings.Value;
 
-            if (type == typeof(string))
-                return (T)(object)value;
             if (parsers[type].TryParse(value, out var res))
                 return (T)res;
 
