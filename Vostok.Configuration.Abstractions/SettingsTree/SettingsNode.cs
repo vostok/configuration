@@ -3,6 +3,7 @@ using System.Linq;
 
 namespace Vostok.Configuration.Abstractions.SettingsTree
 {
+    // CR(krait): Should this really be public? And if it should, should it be located in Abstractions?
     public static class SettingsNode
     {
         /// <summary>

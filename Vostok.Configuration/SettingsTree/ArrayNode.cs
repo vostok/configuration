@@ -23,6 +23,7 @@ namespace Vostok.Configuration.SettingsTree
 
         public string Name { get; }
         public IEnumerable<ISettingsNode> Children => children.AsEnumerable() ?? Enumerable.Empty<ArrayNode>();
+        // CR(krait): Array elements should not be accessible by index. See xml doc for ISettingsNode. Is it used somewhere?
         public ISettingsNode this[string name] => int.TryParse(name, out var index) && index >= 0 && index < children.Count ? children[index] : null;
         string ISettingsNode.Value { get; } = null;
 
@@ -41,7 +42,7 @@ namespace Vostok.Configuration.SettingsTree
                 case ArrayMergeStyle.Concat:
                     return new ArrayNode(children.Concat(other.Children).ToList(), Name);
                 case ArrayMergeStyle.Union:
-                    return new ArrayNode(children.Union(other.Children).ToList(), Name);
+                    return new ArrayNode(children.Union(other.Children).ToList(), Name); // CR(krait): There should be a test checking which one of duplicate elements is kept (it should be always the first one in list order).
                 default:
                     return null;
             }

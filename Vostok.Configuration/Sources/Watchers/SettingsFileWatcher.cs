@@ -21,6 +21,7 @@ namespace Vostok.Configuration.Sources.Watchers
         public static IObservable<string> WatchFile([NotNull] string file, FileSourceSettings settings = null) =>
             WatchFile(file, settings, (f, s) => new SingleFileWatcher(f, s), true);
 
+        // CR(krait): What's the point of 'useCache' argument? Couldn't we always use cache?
         internal static IObservable<string> WatchFile([NotNull] string file, FileSourceSettings settings, Func<string, FileSourceSettings, IObservable<string>> watcherCreator, bool useCache = false)
         {
             if (useCache && Watchers.TryGetValue(file, out var watcher))

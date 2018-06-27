@@ -58,8 +58,8 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         /// <returns>Event with new RawSettings tree</returns>
         public IObservable<ISettingsNode> Observe() =>
-            sources.Any()
-                ? sources.Select(s => s.Observe()).CombineLatest().Select(l => l.Aggregate((a, b) => a.Merge(b, options)))
+            sources.Any() // CR(krait): Let's remove this check and just throw an exception in constructor when someone creates a CombinedSource without any sources.
+                ? sources.Select(s => s.Observe()).CombineLatest().Select(l => l.Aggregate((a, b) => a.Merge(b, options))) // CR(krait): Maybe we should cache this expression.
                 : Observable.Return<ISettingsNode>(null);
     }
 }

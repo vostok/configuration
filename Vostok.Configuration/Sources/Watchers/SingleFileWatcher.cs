@@ -18,11 +18,10 @@ namespace Vostok.Configuration.Sources.Watchers
         private readonly FileSourceSettings settings;
 
         private readonly Subject<string> observers;
-        private readonly object locker;
-        private readonly AtomicBoolean initialized;
         private readonly AtomicBoolean taskIsRun;
+
+        private volatile ValueWrapper currentValueWrapper;
         private CancellationTokenSource tokenDelaySource;
-        private string currentValue;
         private CancellationToken tokenDelay;
 
         /// <summary>
@@ -35,8 +34,6 @@ namespace Vostok.Configuration.Sources.Watchers
             this.filePath = filePath;
             settings = fileSourceSettings ?? new FileSourceSettings();
             observers = new Subject<string>();
-            currentValue = null;
-            initialized = new AtomicBoolean(false);
             taskIsRun = new AtomicBoolean(false);
 
             var path = Path.GetDirectoryName(filePath);
@@ -45,14 +42,13 @@ namespace Vostok.Configuration.Sources.Watchers
             var fileWatcher = new FileSystemWatcher(path, Path.GetFileName(filePath));
             fileWatcher.Changed += OnFileWatcherEvent;
             fileWatcher.EnableRaisingEvents = true;
-            locker = new object();
         }
 
         public IDisposable Subscribe(IObserver<string> observer)
         {
             observers.Subscribe(observer);
-            if (initialized)
-                observer.OnNext(currentValue);
+            if (currentValueWrapper != null)
+                observer.OnNext(currentValueWrapper.Value);
 
             if (taskIsRun.TrySetTrue())
                 Task.Run(WatchFile);
@@ -72,15 +68,13 @@ namespace Vostok.Configuration.Sources.Watchers
             {
                 try
                 {
-                    lock (locker)
-                        if (CheckFile(out var changes))
-                        {
-                            initialized.TrySetTrue();
-                            currentValue = changes;
-                            observers.OnNext(currentValue);
-                        }
+                    if (CheckFile(out var changes))
+                    {
+                        currentValueWrapper = new ValueWrapper(changes);
+                        observers.OnNext(changes);
+                    }
                 }
-                catch (IOException)
+                catch (IOException) // CR(krait): In the new exception model, I don't think we should ignore IOExceptions.
                 {
                 }
                 catch (Exception e)
@@ -94,28 +88,33 @@ namespace Vostok.Configuration.Sources.Watchers
                     tokenDelay = tokenDelaySource.Token;
                 }
 
+                // CR(krait): Please move .ContinueWith(_ => {}) into an extension method in vostok.commons.
                 await Task.Delay(settings.FileWatcherPeriod, tokenDelay).ContinueWith(_ => {});
             }
         }
 
         private bool CheckFile(out string changes)
         {
-            var fileExists = File.Exists(filePath);
             changes = null;
 
-            if (!fileExists && (currentValue != null || !initialized))
-                return true;
-            else if (fileExists)
+            if (File.Exists(filePath))
             {
                 using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
                 using (var reader = new StreamReader(fileStream, settings.Encoding))
                     changes = reader.ReadToEnd();
-
-                if (currentValue != changes)
-                    return true;
             }
 
-            return false;
+            return currentValueWrapper == null ||  currentValueWrapper.Value != changes;
+        }
+
+        private class ValueWrapper
+        {
+            public ValueWrapper(string value)
+            {
+                Value = value;
+            }
+
+            public string Value { get; }
         }
     }
 }

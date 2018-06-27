@@ -17,6 +17,7 @@ namespace Vostok.Configuration.Abstractions.Validation
         public void MergeWith(SettingsValidationErrors other)
         {
             if (other == null) return;
+            // CR(krait): What's the problem with this Select?
             errors.AddRange(other.errors.Select(e => other.Prefix + e)); // todo(Mansiper): possible wrong value in select
         }
 

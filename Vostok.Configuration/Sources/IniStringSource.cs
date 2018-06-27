@@ -4,7 +4,7 @@ using System.Reactive.Linq;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.SettingsTree;
-using Vostok.Configuration.SettingsTree.Changable;
+using Vostok.Configuration.SettingsTree.Mutable;
 
 namespace Vostok.Configuration.Sources
 {

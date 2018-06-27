@@ -5,7 +5,7 @@ using Vostok.Configuration.Abstractions.MergeOptions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Extensions;
 
-namespace Vostok.Configuration.SettingsTree.Changable
+namespace Vostok.Configuration.SettingsTree.Mutable
 {
     internal sealed class UniversalNode : ISettingsNode
     {

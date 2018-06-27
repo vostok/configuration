@@ -32,7 +32,7 @@ namespace Vostok.Configuration
         /// <param name="configurationProviderSettings">Provider settings. Uses <see cref="DefaultSettingsBinder"/> if <see cref="ConfigurationProviderSettings.Binder"/> is null.</param>
         public ConfigurationProvider(ConfigurationProviderSettings configurationProviderSettings = null)
         {
-            settings = configurationProviderSettings ?? new ConfigurationProviderSettings {Binder = new DefaultSettingsBinder().WithDefaultParsers()};
+            settings = configurationProviderSettings ?? new ConfigurationProviderSettings();
             if (settings.Binder == null)
                 settings.Binder = new DefaultSettingsBinder().WithDefaultParsers();
 
