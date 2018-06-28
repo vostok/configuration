@@ -14,6 +14,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	  <NuspecFile>Vostok.Configuration.nuspec</NuspecFile>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="ILRepack" Version="2.0.15" />
     <PackageReference Include="ILRepack.MSBuild.Task" Version="1.0.9" />
@@ -23,6 +24,7 @@
     <PackageReference Include="System.Reactive.Core" Version="4.0.0" />
     <PackageReference Include="System.Reactive.Linq" Version="4.0.0" />
   </ItemGroup>
+  
   <ItemGroup>
     <Reference Include="Vostok.Commons">
       <SpecificVersion>False</SpecificVersion>
@@ -32,6 +34,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Vostok.Configuration.Abstractions\Vostok.Configuration.Abstractions.csproj" />
   </ItemGroup>
+  
   <Target Name="RepackAssemblies" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
     <ItemGroup>
       <MergeAssemblies Include="$(AssemblyName).dll" />
