@@ -4,6 +4,7 @@ using System.Reflection;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Extensions;
+using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Binders
 {
@@ -42,8 +43,6 @@ namespace Vostok.Configuration.Binders
 
             object GetDefaultIfOptionalOrThrow(BinderAttribute attr, Type t, string msg) =>
                 attr == BinderAttribute.IsOptional ? t.Default() : throw new InvalidCastException(msg);
-
-            SettingsNode.CheckSettings(settings, false);
 
             var rs = settings[name];
             if (rs == null)

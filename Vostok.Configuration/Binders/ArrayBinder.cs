@@ -2,6 +2,7 @@
 using System.Linq;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Binders
 {
@@ -14,9 +15,10 @@ namespace Vostok.Configuration.Binders
 
         public T Bind(ISettingsNode settings)
         {
+            SettingsNode.CheckSettings(settings);
+
             var subType = typeof(T).GetElementType();
             var binder = binderFactory.CreateFor(subType);
-            SettingsNode.CheckSettings(settings);
 
             var i = 0;
             var instance = Array.CreateInstance(subType, settings.Children.Count());

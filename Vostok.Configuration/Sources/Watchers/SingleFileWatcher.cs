@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Vostok.Commons.Synchronization;
+using Vostok.Commons.Extensions;
 
 namespace Vostok.Configuration.Sources.Watchers
 {
@@ -74,9 +75,6 @@ namespace Vostok.Configuration.Sources.Watchers
                         observers.OnNext(changes);
                     }
                 }
-                catch (IOException) // CR(krait): In the new exception model, I don't think we should ignore IOExceptions.
-                {
-                }
                 catch (Exception e)
                 {
                     observers.OnError(e);
@@ -88,8 +86,7 @@ namespace Vostok.Configuration.Sources.Watchers
                     tokenDelay = tokenDelaySource.Token;
                 }
 
-                // CR(krait): Please move .ContinueWith(_ => {}) into an extension method in vostok.commons.
-                await Task.Delay(settings.FileWatcherPeriod, tokenDelay).ContinueWith(_ => {});
+                await Task.Delay(settings.FileWatcherPeriod, tokenDelay).SilentlyContinue();
             }
         }
 

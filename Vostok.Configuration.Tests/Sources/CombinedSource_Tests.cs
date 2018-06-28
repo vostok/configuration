@@ -33,10 +33,13 @@ namespace Vostok.Configuration.Tests.Sources
         }
 
         [Test]
-        public void Should_return_null_if_no_sources()
+        public void Should_throw_exception_if_no_sources()
         {
-            var cs = CreateCombinedSource(null);
-            cs.Get().Should().BeNull();
+            new Action(() => new CombinedSource(null))
+                .Should().Throw<ArgumentException>();
+
+            new Action(() => new CombinedSource(new JsonFileSource[0]))
+                .Should().Throw<ArgumentException>();
         }
 
         [Test]
@@ -105,6 +108,45 @@ namespace Vostok.Configuration.Tests.Sources
 
             sub.Dispose();
             return val;
+        }
+
+        [Test]
+        public void Should_return_OnError_to_subscriber_in_case_of_exception_and_continue_work_after_resubscription()
+        {
+            var filesContent = new[]
+            {
+                "wrong file format",
+            };
+
+            var cs = CreateCombinedSource(filesContent);
+            var onNext = 0;
+            var onError = 0;
+
+            cs.Observe().Subscribe(node => onNext++, e => onError++);
+            Thread.Sleep(50);
+
+            onNext.Should().Be(0);
+            onError.Should().Be(1);
+
+
+
+            //update file
+            Task.Run(() =>
+            {
+                Thread.Sleep(20);
+                watchers[0].GetUpdate("{ 'value': 123 }");
+            });
+            Thread.Sleep(50);
+
+            onNext.Should().Be(0, "need resubscription for changes");
+
+
+
+            cs.Observe().Subscribe(node => onNext++, e => onError++);
+            Thread.Sleep(50);
+
+            onNext.Should().Be(1);
+            onError.Should().Be(1);
         }
     }
 }

@@ -36,36 +36,31 @@ namespace Vostok.Configuration.Tests.Sources
             var value = "???";
             new Action(() =>
             {
-                var iss = new IniStringSource(value);
-                iss.Get();
+                new IniStringSource(value).Get();
             }).Should().Throw<FormatException>();
 
             value = "[]";
             new Action(() =>
             {
-                var iss = new IniStringSource(value);
-                iss.Get();
+                new IniStringSource(value).Get();
             }).Should().Throw<FormatException>();
 
             value = " = 123";
             new Action(() =>
             {
-                var iss = new IniStringSource(value);
-                iss.Get();
+                new IniStringSource(value).Get();
             }).Should().Throw<FormatException>();
 
             value = "A.B = 123 \r A.B = 321";
             new Action(() =>
             {
-                var iss = new IniStringSource(value);
-                iss.Get();
+                new IniStringSource(value).Get();
             }).Should().Throw<FormatException>();
 
             value = "a=0 \r a.b=1 \r a.b.c=2 \r a.b=11";
             new Action(() =>
             {
-                var iss = new IniStringSource(value);
-                iss.Get();
+                new IniStringSource(value).Get();
             }).Should().Throw<FormatException>();
         }
         
@@ -111,8 +106,7 @@ namespace Vostok.Configuration.Tests.Sources
         public void Should_throw_if_key_already_exists_while_deep_parsing()
         {
             new Action(() => {
-                var iss = new IniStringSource("a=0 \r a.b.c=2 \r a.b=1");
-                iss.Get();
+                new IniStringSource("a=0 \r a.b.c=2 \r a.b=1").Get();
             }).Should().Throw<FormatException>();
         }
 

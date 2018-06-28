@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Abstractions.MergeOptions;
@@ -45,7 +46,7 @@ namespace Vostok.Configuration.Tests.SettingsTree
         }
 
         [Test]
-        public void Should_return_other_on_another_node_type()
+        public void Should_return_other_on_merging_with_another_node_type()
         {
             var sets1 = new ArrayNode(new List<ISettingsNode> { new ValueNode("x1") });
             var sets2 = new ValueNode("x2");
@@ -54,7 +55,7 @@ namespace Vostok.Configuration.Tests.SettingsTree
             merge.Value.Should().Be("x2");
 
             merge = sets2.Merge(sets1, null);
-            merge["0"].Value.Should().Be("x1");
+            merge.Children.First().Value.Should().Be("x1");
         }
 
         [TestCase(ArrayMergeStyle.Replace, TestName = "Replace option")]
@@ -121,6 +122,7 @@ namespace Vostok.Configuration.Tests.SettingsTree
 
             var merge = sets1.Merge(sets2, new SettingsMergeOptions { ObjectMergeStyle = ObjectMergeStyle.Shallow, ArrayMergeStyle = ArrayMergeStyle.Union });
             var children = merge.Children.ToArray();
+            children.Length.Should().Be(5);
             children[0].Value.Should().Be("x1");
             children[1]["value"].Value.Should().Be("x11");
             children[2]["value"].Value.Should().Be("x12");

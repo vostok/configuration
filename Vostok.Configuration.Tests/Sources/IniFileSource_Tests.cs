@@ -81,5 +81,49 @@ namespace Vostok.Configuration.Tests.Sources
             var result = ifs.Get();
             result["value"].Value.Should().Be("123");
         }
+
+        [Test]
+        public void Should_return_OnError_to_subscriber_in_case_of_exception_and_continue_work_after_resubscription()
+        {
+            const string fileName = "test.ini";
+            var content = "wrong file format";
+            SingleFileWatcherSubstitute watcher = null;
+
+            var ifs = new IniFileSource(fileName, (f, e) =>
+            {
+                watcher = new SingleFileWatcherSubstitute(f, e);
+                watcher.GetUpdate(content); //create file
+                return watcher;
+            });
+            var onNext = 0;
+            var onError = 0;
+
+            ifs.Observe().Subscribe(node => onNext++, e => onError++);
+            Thread.Sleep(50);
+
+            onNext.Should().Be(0);
+            onError.Should().Be(1);
+
+
+
+            content = "Value = 123";
+            //update file
+            Task.Run(() =>
+            {
+                Thread.Sleep(20);
+                watcher.GetUpdate(content);
+            });
+            Thread.Sleep(50);
+
+            onNext.Should().Be(0, "need resubscription for changes");
+
+
+
+            ifs.Observe().Subscribe(node => onNext++, e => onError++);
+            Thread.Sleep(50);
+
+            onNext.Should().Be(1);
+            onError.Should().Be(1);
+        }
     }
 }

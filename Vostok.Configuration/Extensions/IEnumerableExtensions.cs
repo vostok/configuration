@@ -4,8 +4,7 @@ using System.Linq;
 
 namespace Vostok.Configuration.Extensions
 {
-    // CR(krait): Should this be public?
-    public static class IEnumerableExtensions
+    internal static class IEnumerableExtensions
     {
         public static SortedDictionary<TKey, TElement> ToSortedDictionary<TSource, TKey, TElement>(
             this IEnumerable<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> elementSelector, IComparer<TKey> comparer = null) =>

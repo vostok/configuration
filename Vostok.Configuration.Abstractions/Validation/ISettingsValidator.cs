@@ -1,7 +1,7 @@
 ﻿namespace Vostok.Configuration.Abstractions.Validation
 {
-    public interface ISettingsValidator<in T> where T : class
+    public interface ISettingsValidator<in T>
     {
-        ISettingsValidationErrors Validate(T value);
+        void Validate(T value, ISettingsValidationErrors errors);
     }
 }

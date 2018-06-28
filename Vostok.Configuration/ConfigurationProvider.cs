@@ -104,8 +104,11 @@ namespace Vostok.Configuration
         public ConfigurationProvider SetupSourceFor<TSettings>(IConfigurationSource source)
         {
             var type = typeof(TSettings);
-            if (typeWatchers.ContainsKey(type))
+            var hasWatcher = typeWatchers.ContainsKey(type);
+            if (hasWatcher)
                 throw new InvalidOperationException($"{nameof(ConfigurationProvider)}: it is not allowed to add sources for \"{type.Name}\" to a {nameof(ConfigurationProvider)} after {nameof(Get)}() or {nameof(Observe)}() was called for this type.");
+            if (!hasWatcher && typeCache.ContainsKey(type))
+                throw new InvalidOperationException($"{nameof(ConfigurationProvider)}: it is not allowed to add sources for \"{type.Name}\" to a {nameof(ConfigurationProvider)} after {nameof(SetManually)}() was called for this type.");
 
             if (typeSources.TryGetValue(type, out var existingSource))
                 source = existingSource.Combine(source);
@@ -114,17 +117,18 @@ namespace Vostok.Configuration
             return this;
         }
 
+        public ConfigurationProvider SetManually<TSettings>(TSettings value)
+        {
+            AddInCache(value);
+            return this;
+        }
+
         private TSettings TypedSubscriptionPrepare<TSettings>(object node)
         {
-            var type = typeof(TSettings);
             try
             {
                 var value = (TSettings)node;
-                if (!typeCache.ContainsKey(type))
-                    typeCacheQueue.Enqueue(type);
-                typeCache.AddOrUpdate(type, value, (t, o) => value);
-                if (typeCache.Count > settings.MaxTypeCacheSize && typeCacheQueue.TryDequeue(out var tp))
-                    typeCache.TryRemove(tp, out _);
+                AddInCache(value);
                 return value;
             }
             catch (Exception e)
@@ -137,6 +141,16 @@ namespace Vostok.Configuration
 
                 throw;
             }
+        }
+
+        private void AddInCache<TSettings>(TSettings value)
+        {
+            var type = typeof(TSettings);
+            if (!typeCache.ContainsKey(type))
+                typeCacheQueue.Enqueue(type);
+            typeCache.AddOrUpdate(type, value, (t, o) => value);
+            if (typeCache.Count > settings.MaxTypeCacheSize && typeCacheQueue.TryDequeue(out var tp))
+                typeCache.TryRemove(tp, out _);
         }
 
         private TSettings SourcedSubscriptionPrepare<TSettings>(IConfigurationSource source, ISettingsNode node)
@@ -214,12 +228,10 @@ namespace Vostok.Configuration
 
             var validator = validAttribute.Validator;
             var validateMethod = validator.GetType().GetMethod(nameof(ISettingsValidator<string>.Validate));
-            var validationResult = validateMethod?.Invoke(validator, new[] {value}) as SettingsValidationErrors;
-            if (validationResult != null)
-            {
-                validationResult.Prefix = prefix;
-                errors.Add(validationResult);
-            }
+            var validationResult = new SettingsValidationErrors();
+            validateMethod?.Invoke(validator, new[] {value, validationResult});
+            validationResult.Prefix = prefix;
+            errors.Add(validationResult);
 
             string SetPrefix(string name) => prefix.Replace(": ", ".") + name + ": ";
             bool IsAllowedType(Type f) => !f.IsValueType && !f.IsArray && f.IsClass && f != typeof(string);

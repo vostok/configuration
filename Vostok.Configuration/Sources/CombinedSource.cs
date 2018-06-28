@@ -17,6 +17,7 @@ namespace Vostok.Configuration.Sources
         private readonly IReadOnlyCollection<IConfigurationSource> sources;
         private readonly SettingsMergeOptions options;
         private readonly TypedTaskSource taskSource;
+        private IObservable<ISettingsNode> observer;
 
         /// <summary>
         /// <para>Creates a <see cref="CombinedSource"/> instance new source using combining options.</para>
@@ -28,6 +29,9 @@ namespace Vostok.Configuration.Sources
             [NotNull] IReadOnlyCollection<IConfigurationSource> sources,
             SettingsMergeOptions options)
         {
+            if (sources == null || sources.Count == 0)
+                throw new ArgumentException($"{nameof(CombinedSource)}: {nameof(sources)} collection should not be empty");
+
             this.sources = sources;
             this.options = options;
             taskSource = new TypedTaskSource();
@@ -58,8 +62,6 @@ namespace Vostok.Configuration.Sources
         /// </summary>
         /// <returns>Event with new RawSettings tree</returns>
         public IObservable<ISettingsNode> Observe() =>
-            sources.Any() // CR(krait): Let's remove this check and just throw an exception in constructor when someone creates a CombinedSource without any sources.
-                ? sources.Select(s => s.Observe()).CombineLatest().Select(l => l.Aggregate((a, b) => a.Merge(b, options))) // CR(krait): Maybe we should cache this expression.
-                : Observable.Return<ISettingsNode>(null);
+            observer ?? (observer = sources.Select(s => s.Observe()).CombineLatest().Select(l => l.Aggregate((a, b) => a.Merge(b, options))));
     }
 }

@@ -47,13 +47,19 @@ namespace Vostok.Configuration.Tests
         }
 
         [Test]
-        public void Should_bind_to_Primitive_from_single_dictionary_value()
+        public void Should_bind_to_Primitive_from_single_children_value()
         {
-            var settings = new ObjectNode(new SortedDictionary<string, ISettingsNode>
+            var sets1 = new ObjectNode(new SortedDictionary<string, ISettingsNode>
             {
                 { "key", new ValueNode("123") }
             });
-            binder.Bind<int>(settings).Should().Be(123);
+            binder.Bind<int>(sets1).Should().Be(123);
+
+            var sets2 = new ArrayNode(new List<ISettingsNode>
+            {
+                new ValueNode("321"),
+            });
+            binder.Bind<int>(sets2).Should().Be(321);
         }
 
         [Test]
@@ -128,7 +134,7 @@ namespace Vostok.Configuration.Tests
         }
 
         [Test]
-        public void Should_bind_with_custom_CSTParser_over_ITypeParser()
+        public void Should_bind_with_custom_parser_over_ITypeParser()
         {
             var settings = new ValueNode("some,string");
             var result = binder.WithCustomParser<CST>(new CommaSeparatedTextParser())
@@ -138,7 +144,7 @@ namespace Vostok.Configuration.Tests
         }
 
         [Test]
-        public void Should_bind_with_custom_SSTParser_over_delegate()
+        public void Should_bind_with_custom_parser_over_delegate()
         {
             var settings = new ValueNode("some;string");
             var result = binder.WithCustomParser<SST>(TryParseSemicolonSeparatedText)

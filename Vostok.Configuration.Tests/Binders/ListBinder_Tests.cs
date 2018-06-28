@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Abstractions;
@@ -104,6 +105,20 @@ namespace Vostok.Configuration.Tests.Binders
             var binder = Container.GetInstance<ISettingsBinder<List<List<int>>>>();
             var result = binder.Bind(settings);
             result.Should().BeEquivalentTo(new List<List<int>> { new List<int> {10}, new List<int> {12} });
+        }
+
+        [Test]
+        public void Should_throw_exception_if_tree_is_null()
+        {
+            var binder = Container.GetInstance<ISettingsBinder<List<int>>>();
+            new Action(() => binder.Bind(null)).Should().Throw<ArgumentNullException>();
+        }
+
+        [Test]
+        public void Should_throw_exception_if_tree_is_empty()
+        {
+            var binder = Container.GetInstance<ISettingsBinder<List<int>>>();
+            new Action(() => binder.Bind(new ArrayNode(name:null))).Should().Throw<ArgumentNullException>();
         }
     }
 }

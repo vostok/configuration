@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Linq;
+using Vostok.Configuration.Abstractions.SettingsTree;
 
-namespace Vostok.Configuration.Abstractions.SettingsTree
+namespace Vostok.Configuration.SettingsTree
 {
-    // CR(krait): Should this really be public? And if it should, should it be located in Abstractions?
-    public static class SettingsNode
+    internal static class SettingsNode
     {
         /// <summary>
         /// Checks <see cref="settings"/>. Throws exeption if something is wrong.

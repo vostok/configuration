@@ -17,7 +17,7 @@ namespace Vostok.Configuration.Tests
     [TestFixture]
     public class ConfigurationProvider_Tests
     {
-        public class ByType
+        public class ConfigurationProvider_Tests_ByType
         {
             [Test]
             public void Get_WithSourceFor_should_work_correctly()
@@ -304,6 +304,26 @@ namespace Vostok.Configuration.Tests
             }
 
             [Test]
+            public void Should_return_cached_value_if_it_was_set_manually_and_not_allow_add_source_for_same_type()
+            {
+                const string fileName = "test.json";
+                const string content = "{ 'Value': '123' }";
+
+                var source = new JsonFileSource(fileName, (f, e) =>
+                {
+                    var watcher = new SingleFileWatcherSubstitute(f, e);
+                    watcher.GetUpdate(content); //create file
+                    return watcher;
+                });
+                var cp = new ConfigurationProvider()
+                    .SetManually(123);
+
+                cp.Get<int>().Should().Be(123);
+
+                new Action(() => cp.SetupSourceFor<int>(source)).Should().Throw<InvalidOperationException>();
+            }
+
+            [Test]
             public void Should_validate_with_ValidateBy_attribute_exception()
             {
                 const string fileName = "test.json";
@@ -340,7 +360,7 @@ namespace Vostok.Configuration.Tests
             }
         }
 
-        public class BySource
+        public class ConfigurationProvider_Tests_BySource
         {
             [Test]
             public void Get_from_source_should_work_correctly()
@@ -623,16 +643,12 @@ namespace Vostok.Configuration.Tests
 
         private class MyValidator : ISettingsValidator<ValidatedClass>
         {
-            public ISettingsValidationErrors Validate(ValidatedClass value)
+            public void Validate(ValidatedClass value, ISettingsValidationErrors errors)
             {
-                var errors = new SettingsValidationErrors();
-
                 if (string.IsNullOrEmpty(value.Str))
                     errors.ReportError($"'{nameof(value.Str)}' must be non-empty.");
                 if (value.Int < 0)
                     errors.ReportError($"'{nameof(value.Int)}' must be non-negative.");
-
-                return errors;
             }
         }
 

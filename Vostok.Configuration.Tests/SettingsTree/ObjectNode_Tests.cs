@@ -111,6 +111,7 @@ namespace Vostok.Configuration.Tests.SettingsTree
             });
 
             var merge = sets1.Merge(sets2, new SettingsMergeOptions {ObjectMergeStyle = ObjectMergeStyle.Shallow});
+            merge.Children.Count().Should().Be(2);
             merge["value2"].Value.Should().Be("x2");
             merge["value2"].Name.Should().Be("value2");
             merge["value1"].Name.Should().Be("VALUE1");
@@ -156,6 +157,7 @@ namespace Vostok.Configuration.Tests.SettingsTree
             });
 
             var merge = sets1.Merge(sets2, new SettingsMergeOptions { ObjectMergeStyle = ObjectMergeStyle.Deep });
+            merge.Children.Count().Should().Be(3);
             merge["value1"]["sv1"].Value.Should().Be("sx1");
             merge["value1"]["sv2"].Value.Should().Be("sx2");
             merge["value1"]["sv3"].Value.Should().Be("sx2");

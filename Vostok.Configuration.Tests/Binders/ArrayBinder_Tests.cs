@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Abstractions;
@@ -45,6 +46,20 @@ namespace Vostok.Configuration.Tests.Binders
                 new SimpleStruct{ Int = 1, String = "str1" },
                 new SimpleStruct{ Int = 2, String = "str2" },
             });
+        }
+
+        [Test]
+        public void Should_throw_exception_if_tree_is_null()
+        {
+            var binder = Container.GetInstance<ISettingsBinder<SimpleStruct[]>>();
+            new Action(() => binder.Bind(null)).Should().Throw<ArgumentNullException>();
+        }
+
+        [Test]
+        public void Should_throw_exception_if_tree_is_empty()
+        {
+            var binder = Container.GetInstance<ISettingsBinder<SimpleStruct[]>>();
+            new Action(() => binder.Bind(new ArrayNode(name:null))).Should().Throw<ArgumentNullException>();
         }
 
         private struct SimpleStruct

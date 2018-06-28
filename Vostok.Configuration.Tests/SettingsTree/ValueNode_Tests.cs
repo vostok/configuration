@@ -50,7 +50,6 @@ namespace Vostok.Configuration.Tests.SettingsTree
             sets1 = new ValueNode("x1", "name");
             sets2 = new ValueNode("x2", "name");
             merge = sets1.Merge(sets2, null);
-
             merge.Value.Should().Be("x2");
             merge.Name.Should().Be("name");
         }

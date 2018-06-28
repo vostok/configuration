@@ -127,5 +127,19 @@ namespace Vostok.Configuration.Tests.Binders
             var binder = Container.GetInstance<ISettingsBinder<string>>();
             binder.Bind(settings).Should().Be(str);
         }
+
+        [Test]
+        public void Should_throw_exception_if_tree_is_null_not_for_string()
+        {
+            var binder = Container.GetInstance<ISettingsBinder<int>>();
+            new Action(() => binder.Bind(null)).Should().Throw<ArgumentNullException>();
+        }
+
+        [Test]
+        public void Should_throw_exception_if_tree_is_empty_not_for_string()
+        {
+            var binder = Container.GetInstance<ISettingsBinder<int>>();
+            new Action(() => binder.Bind(new ValueNode(null))).Should().Throw<ArgumentNullException>();
+        }
     }
 }

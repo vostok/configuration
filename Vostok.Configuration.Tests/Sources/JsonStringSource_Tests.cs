@@ -17,6 +17,7 @@ namespace Vostok.Configuration.Tests.Sources
         {
             var jss = new JsonStringSource(null);
             jss.Get().Should().BeNull();
+
             jss = new JsonStringSource(" ");
             jss.Get().Should().BeNull();
         }
@@ -121,8 +122,8 @@ namespace Vostok.Configuration.Tests.Sources
 
             var jss = new JsonStringSource(value);
             var result = jss.Get();
-            result["Array"]["0"].Children.Select(c => c.Value).Should().Equal("s", "t");
-            result["Array"]["1"].Children.Select(c => c.Value).Should().Equal("r");
+            result["Array"].Children.First().Children.Select(c => c.Value).Should().Equal("s", "t");
+            result["Array"].Children.Last().Children.Select(c => c.Value).Should().Equal("r");
         }
 
         [Test]
