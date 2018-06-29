@@ -9,7 +9,7 @@ using Vostok.Configuration.Tests.Helper;
 namespace Vostok.Configuration.Tests.Sources
 {
     [TestFixture]
-    public class IniFileSource_Tests
+    public class IniFileSource_Tests : Sources_Test
     {
         [Test]
         public void Should_return_null_if_file_not_exists()

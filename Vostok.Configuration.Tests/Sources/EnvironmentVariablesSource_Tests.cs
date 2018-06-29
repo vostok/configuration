@@ -9,7 +9,7 @@ using Vostok.Configuration.Sources;
 namespace Vostok.Configuration.Tests.Sources
 {
     [TestFixture]
-    public class EnvironmentVariablesSource_Tests
+    public class EnvironmentVariablesSource_Tests : Sources_Test
     {
         [Test]
         public void Should_return_correct_values()

@@ -19,19 +19,18 @@ namespace Vostok.Configuration.Sources.Watchers
         /// <param name="settings"></param>
         /// <returns>Subscriber receiving file text. Receive null if file not exists.</returns>
         public static IObservable<string> WatchFile([NotNull] string file, FileSourceSettings settings = null) =>
-            WatchFile(file, settings, (f, s) => new SingleFileWatcher(f, s), true);
+            WatchFile(file, settings, (f, s) => new SingleFileWatcher(f, s));
 
-        // CR(krait): What's the point of 'useCache' argument? Couldn't we always use cache?
-        // Answer: i cannot use cache in tests. Everything breaks.
-        internal static IObservable<string> WatchFile([NotNull] string file, FileSourceSettings settings, Func<string, FileSourceSettings, IObservable<string>> watcherCreator, bool useCache = false)
+        internal static IObservable<string> WatchFile([NotNull] string file, FileSourceSettings settings, Func<string, FileSourceSettings, IObservable<string>> watcherCreator)
         {
-            if (useCache && Watchers.TryGetValue(file, out var watcher))
+            if (Watchers.TryGetValue(file, out var watcher))
                 return watcher;
 
             watcher = watcherCreator?.Invoke(file, settings) ?? new SingleFileWatcher(file, settings);
-            if (useCache)
-                Watchers.TryAdd(file, watcher);
+            Watchers.TryAdd(file, watcher);
             return watcher;
         }
+
+        internal static void ClreatCache() => Watchers.Clear();
     }
 }

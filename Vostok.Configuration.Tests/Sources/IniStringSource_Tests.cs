@@ -9,7 +9,7 @@ using Vostok.Configuration.Sources;
 namespace Vostok.Configuration.Tests.Sources
 {
     [TestFixture]
-    public class IniStringSource_Tests
+    public class IniStringSource_Tests : Sources_Test
     {
         [Test]
         public void Should_return_null_if_null_or_whitespace_string()

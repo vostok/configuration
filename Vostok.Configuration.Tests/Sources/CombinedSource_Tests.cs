@@ -13,7 +13,7 @@ using Vostok.Configuration.Tests.Helper;
 namespace Vostok.Configuration.Tests.Sources
 {
     [TestFixture]
-    public class CombinedSource_Tests
+    public class CombinedSource_Tests: Sources_Test
     {
         private SingleFileWatcherSubstitute[] watchers;
 

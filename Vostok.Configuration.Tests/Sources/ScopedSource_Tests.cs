@@ -15,7 +15,7 @@ using Vostok.Configuration.Tests.Helper;
 namespace Vostok.Configuration.Tests.Sources
 {
     [TestFixture]
-    public class ScopedSource_Tests
+    public class ScopedSource_Tests : Sources_Test
     {
         [Test]
         public void Should_return_full_tree_by_source()

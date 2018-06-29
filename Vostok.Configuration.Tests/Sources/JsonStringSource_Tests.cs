@@ -10,7 +10,7 @@ using Vostok.Configuration.Sources;
 namespace Vostok.Configuration.Tests.Sources
 {
     [TestFixture]
-    public class JsonStringSource_Tests
+    public class JsonStringSource_Tests : Sources_Test
     {
         [Test]
         public void Should_return_null_if_null_or_whitespace_string()

@@ -9,6 +9,7 @@ using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Validation;
 using Vostok.Configuration.Sources;
 using Vostok.Configuration.Tests.Helper;
+using Vostok.Configuration.Tests.Sources;
 #pragma warning disable 169
 #pragma warning disable 649
 
@@ -17,7 +18,7 @@ namespace Vostok.Configuration.Tests
     [TestFixture]
     public class ConfigurationProvider_Tests
     {
-        public class ConfigurationProvider_Tests_ByType
+        public class ConfigurationProvider_Tests_ByType : Sources_Test
         {
             [Test]
             public void Get_WithSourceFor_should_work_correctly()
@@ -360,7 +361,9 @@ namespace Vostok.Configuration.Tests
             }
         }
 
-        public class ConfigurationProvider_Tests_BySource
+        //=======================================================================================
+
+        public class ConfigurationProvider_Tests_BySource : Sources_Test
         {
             [Test]
             public void Get_from_source_should_work_correctly()

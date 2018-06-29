@@ -11,7 +11,7 @@ using Vostok.Configuration.Tests.Helper;
 namespace Vostok.Configuration.Tests.Sources
 {
     [TestFixture]
-    public class JsonFileSource_Tests
+    public class JsonFileSource_Tests : Sources_Test
     {
         /*private const string TestName = nameof(JsonFileSource);
 
