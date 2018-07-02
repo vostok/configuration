@@ -117,8 +117,10 @@ namespace Vostok.Configuration
             return this;
         }
 
-        public ConfigurationProvider SetManually<TSettings>(TSettings value)
+        public ConfigurationProvider SetManually<TSettings>(TSettings value, bool validate = false)
         {
+            if (validate)
+                Validate(value);
             AddInCache(value);
             return this;
         }
@@ -201,11 +203,16 @@ namespace Vostok.Configuration
 
         private TSettings ValidatedBind<TSettings>(ISettingsNode rs)
         {
-            var type = typeof(TSettings);
             var value = settings.Binder.Bind<TSettings>(rs);
+            Validate(value);
+            return value;
+        }
+
+        private static void Validate<TSettings>(TSettings value)
+        {
             var errors = new List<SettingsValidationErrors>();
 
-            Validate(type, value, errors, "");
+            Validate(typeof(TSettings), value, errors, "");
             if (errors.Any(e => e.HasErrors))
             {
                 errors = errors.Where(e => e.HasErrors).ToList();
@@ -216,8 +223,6 @@ namespace Vostok.Configuration
 
                 throw validationResult.ToException();
             }
-
-            return value;
         }
 
         private static void Validate(Type type, object value, ICollection<SettingsValidationErrors> errors, string prefix)

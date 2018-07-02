@@ -12,6 +12,10 @@ namespace Vostok.Configuration.SettingsTree.Mutable
         private readonly IList<ISettingsNode> childrenList = new List<ISettingsNode>();
         private readonly IDictionary<string, ISettingsNode> childrenDict = new SortedDictionary<string, ISettingsNode>(StringComparer.InvariantCultureIgnoreCase);
 
+        public UniversalNode()
+        {
+        }
+
         public UniversalNode(string value, string name = null)
         {
             Value = value;

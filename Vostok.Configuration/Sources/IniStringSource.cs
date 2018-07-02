@@ -84,7 +84,7 @@ namespace Vostok.Configuration.Sources
                 }
             }
 
-            return !res.ChildrenDict.Any() ? null : (ObjectNode)res;
+            return res.ChildrenDict.Any() ? (ObjectNode)res : null;
         }
 
         private UniversalNode ParseSection(string section, UniversalNode settings, int currentLine)

@@ -54,6 +54,18 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
+        public void Should_bind_to_Primitive_from_single_list_value()
+        {
+            var settings = new ArrayNode(new List<ISettingsNode>
+            {
+                new ValueNode("123")
+            });
+            var binder = Container.GetInstance<ISettingsBinder<int>>();
+            var result = binder.Bind(settings);
+            result.Should().Be(123);
+        }
+
+        [Test]
         public void Should_bind_to_TimeSpan()
         {
             var settings = new ValueNode("1 second");
@@ -136,10 +148,17 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_throw_exception_if_tree_is_empty_not_for_string()
+        public void Should_throw_exception_if_tree_is_empty_for_value_types()
         {
             var binder = Container.GetInstance<ISettingsBinder<int>>();
             new Action(() => binder.Bind(new ValueNode(null))).Should().Throw<ArgumentNullException>();
+        }
+
+        [Test]
+        public void Should_return_default_if_tree_is_null_for_nullable_types()
+        {
+            var binder = Container.GetInstance<ISettingsBinder<IPAddress>>();
+            binder.Bind(new ValueNode(null)).Should().BeNull();
         }
     }
 }

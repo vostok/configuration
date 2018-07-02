@@ -4,6 +4,7 @@ using System.Linq;
 using Vostok.Commons.Parsers;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Extensions;
 using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Binders
@@ -23,15 +24,25 @@ namespace Vostok.Configuration.Binders
                 throw new ArgumentException($"{nameof(PrimitiveAndSimpleBinder<T>)}: have no parser for the type \"{type.Name}\"");
             
             string value;
-            if (!typeIsString)
+            if (type.IsValueType)
             {
                 SettingsNode.CheckSettings(settings);
                 if (!string.IsNullOrWhiteSpace(settings.Value))
                     value = settings.Value;
-                else if (settings.Value == null && settings.Children.Count() == 1 && settings.Children.First() is ValueNode valueNode)
+                else if (settings.Children.Count() == 1 && settings.Children.First() is ValueNode valueNode && !string.IsNullOrWhiteSpace(valueNode.Value))
                     value = valueNode.Value;
                 else
                     throw new ArgumentNullException($"{nameof(PrimitiveAndSimpleBinder<T>)}: settings value is null. Can't parse.");
+            }
+            else if (!type.IsValueType && !typeIsString)
+            {
+                SettingsNode.CheckSettings(settings, false);
+                if (settings.Value != null)
+                    value = settings.Value;
+                else if (settings.Children.Count() == 1 && settings.Children.First() is ValueNode valueNode && valueNode.Value != null)
+                    value = valueNode.Value;
+                else
+                    return (T)type.Default();
             }
             else
                 return (T)(object)settings.Value;
