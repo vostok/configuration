@@ -49,10 +49,15 @@ namespace Vostok.Configuration.Sources
         public IObservable<ISettingsNode> Observe()
         {
             if (neverParsed)
-            {
-                currentSettings = string.IsNullOrWhiteSpace(ini) ? null : ParseIni(ini, "root");
-                neverParsed = false;
-            }
+                try
+                {
+                    currentSettings = string.IsNullOrWhiteSpace(ini) ? null : ParseIni(ini, "root");
+                    neverParsed = false;
+                }
+                catch (Exception e)
+                {
+                    return Observable.Throw<ISettingsNode>(e);
+                }
 
             return Observable.Return(currentSettings);
         }

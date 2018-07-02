@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Linq;
+using System.Xml;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
+using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests.Sources
@@ -158,6 +160,28 @@ namespace Vostok.Configuration.Tests.Sources
             sub.Dispose();
 
             return val;
+        }
+
+        [Test]
+        public void Should_throw_FormatException_on_wrong_xml_format()
+        {
+            const string value = "wrong file format";
+            new Action(() =>
+            {
+                new XmlStringSource(value).Get();
+            }).Should().Throw<XmlException>();
+        }
+
+        [Test]
+        public void Should_invoke_OnError_for_observer_on_wrong_xml_format()
+        {
+            const string value = "wrong file format";
+            var next = 0;
+            var error = 0;
+            new JsonStringSource(value).Observe().SubscribeTo(node => next++, e => error++);
+
+            next.Should().Be(0);
+            error.Should().Be(1);
         }
     }
 }

@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Threading;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
+using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Sources;
 // ReSharper disable AccessToModifiedClosure
 
@@ -31,7 +33,7 @@ namespace Vostok.Configuration.Tests.Sources
         }
         
         [Test]
-        public void Should_throw_FormatException()
+        public void Should_throw_FormatException_on_wrong_ini_format()
         {
             var value = "???";
             new Action(() =>
@@ -62,6 +64,18 @@ namespace Vostok.Configuration.Tests.Sources
             {
                 new IniStringSource(value).Get();
             }).Should().Throw<FormatException>();
+        }
+
+        [Test]
+        public void Should_invoke_OnError_for_observer_on_wrong_ini_format()
+        {
+            const string value = "???";
+            var next = 0;
+            var error = 0;
+            new IniStringSource(value).Observe().SubscribeTo(node => next++, e => error++);
+
+            next.Should().Be(0);
+            error.Should().Be(1);
         }
         
         [Test]

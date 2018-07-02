@@ -5,6 +5,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons.Conversions;
 using Vostok.Commons.Testing;
+using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Sources;
 using Vostok.Configuration.Tests.Helper;
 
@@ -193,6 +194,18 @@ namespace Vostok.Configuration.Tests.Sources
                 });
                 jfs.Get();
             }).Should().Throw<Exception>();
+        }
+
+        [Test]
+        public void Should_invoke_OnError_for_observer_on_wrong_json_format()
+        {
+            const string value = "wrong file format";
+            var next = 0;
+            var error = 0;
+            new JsonStringSource(value).Observe().SubscribeTo(node => next++, e => error++);
+
+            next.Should().Be(0);
+            error.Should().Be(1);
         }
 
         [Test]

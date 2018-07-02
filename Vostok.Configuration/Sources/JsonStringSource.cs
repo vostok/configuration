@@ -47,10 +47,15 @@ namespace Vostok.Configuration.Sources
         public IObservable<ISettingsNode> Observe()
         {
             if (neverParsed)
-            {
-                currentSettings = string.IsNullOrWhiteSpace(json) ? null : ParseJson(JObject.Parse(json), "root");
-                neverParsed = false;
-            }
+                try
+                {
+                    currentSettings = string.IsNullOrWhiteSpace(json) ? null : ParseJson(JObject.Parse(json), "root");
+                    neverParsed = false;
+                }
+                catch (Exception e)
+                {
+                    return Observable.Throw<ISettingsNode>(e);
+                }
 
             return Observable.Return(currentSettings);
         }

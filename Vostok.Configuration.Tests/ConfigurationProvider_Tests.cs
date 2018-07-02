@@ -7,6 +7,7 @@ using Vostok.Commons.Conversions;
 using Vostok.Commons.Testing;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Validation;
+using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Sources;
 using Vostok.Configuration.Tests.Helper;
 using Vostok.Configuration.Tests.Sources;
@@ -254,7 +255,7 @@ namespace Vostok.Configuration.Tests
             }
 
             [Test]
-            public void Should_throw_exception_then_resubsribe_and_return_value()
+            public void Should_throw_exception_then_resubsribe_and_return_value_by_Get()
             {
                 const string fileName = "test.json";
                 const string content = "{ 'Value': 123 }";
@@ -278,6 +279,40 @@ namespace Vostok.Configuration.Tests
                 Thread.Sleep(50.Milliseconds());
 
                 cp.Get<int>().Should().Be(123);
+            }
+
+            [Test]
+            public void Should_throw_exception_then_resubsribe_and_return_value_by_Observe()
+            {
+                const string fileName = "test.json";
+                const string content = "{ 'Value': 123 }";
+                var watcher = new SingleFileWatcherSubstitute(fileName, null);
+
+                var source = new JsonFileSource(fileName, (f, e) =>
+                {
+                    watcher = new SingleFileWatcherSubstitute(f, e);
+                    watcher.GetUpdate("wrong format"); //create file
+                    return watcher;
+                });
+                var cp = new ConfigurationProvider().SetupSourceFor<int>(source);
+
+                var next = 0;
+                var error = 0;
+                cp.Observe<int>().SubscribeTo(n => next++, e => error++);
+                next.Should().Be(0);
+                error.Should().Be(1);
+
+                //update file
+                Task.Run(() =>
+                {
+                    Thread.Sleep(20);
+                    watcher.GetUpdate(content);
+                });
+                Thread.Sleep(50.Milliseconds());
+
+                cp.Observe<int>().SubscribeTo(n => next += 10, e => error += 10);
+                next.Should().Be(10);
+                error.Should().Be(1);
             }
 
             [Test]
@@ -571,7 +606,7 @@ namespace Vostok.Configuration.Tests
             }
 
             [Test(Description = "also tests TaskSource.Get<T>()")]
-            public void Should_throw_exception_then_resubsribe_and_return_value()
+            public void Should_throw_exception_then_resubsribe_and_return_value_by_Get()
             {
                 const string fileName = "test.json";
                 const string content = "{ 'Value': 123 }";
@@ -595,6 +630,40 @@ namespace Vostok.Configuration.Tests
                 Thread.Sleep(50.Milliseconds());
 
                 cp.Get<int>(source).Should().Be(123);
+            }
+
+            [Test]
+            public void Should_throw_exception_then_resubsribe_and_return_value_by_Observe()
+            {
+                const string fileName = "test.json";
+                const string content = "{ 'Value': 123 }";
+                var watcher = new SingleFileWatcherSubstitute(fileName, null);
+
+                var source = new JsonFileSource(fileName, (f, e) =>
+                {
+                    watcher = new SingleFileWatcherSubstitute(f, e);
+                    watcher.GetUpdate("wrong format"); //create file
+                    return watcher;
+                });
+                var cp = new ConfigurationProvider();
+
+                var next = 0;
+                var error = 0;
+                cp.Observe<int>(source).SubscribeTo(n => next++, e => error++);
+                next.Should().Be(0);
+                error.Should().Be(1);
+
+                //update file
+                Task.Run(() =>
+                {
+                    Thread.Sleep(20);
+                    watcher.GetUpdate(content);
+                });
+                Thread.Sleep(50.Milliseconds());
+
+                cp.Observe<int>(source).SubscribeTo(n => next += 10, e => error += 10);
+                next.Should().Be(10);
+                error.Should().Be(1);
             }
 
             [Test]
