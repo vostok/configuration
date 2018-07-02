@@ -18,7 +18,7 @@ namespace Vostok.Configuration.Sources.Watchers
         private readonly string filePath;
         private readonly FileSourceSettings settings;
 
-        private readonly Subject<string> observers;
+        private Subject<string> observers;
         private readonly AtomicBoolean taskIsRun;
 
         private volatile ValueWrapper currentValueWrapper;
@@ -47,6 +47,8 @@ namespace Vostok.Configuration.Sources.Watchers
 
         public IDisposable Subscribe(IObserver<string> observer)
         {
+            if (observers.IsDisposed)
+                observers = new Subject<string>();
             observers.Subscribe(observer);
             if (currentValueWrapper != null)
                 observer.OnNext(currentValueWrapper.Value);

@@ -21,6 +21,46 @@ namespace Vostok.Configuration.Tests
     {
         public class ConfigurationProvider_Tests_ByType : Sources_Test
         {
+            /*      Special test for checking resubscription
+            [ValidateBy(typeof(Validator))]
+            private class ConsoleLogSettings
+            {
+                public int Value1 { get; set; }
+                public int Value2 { get; set; }
+            }
+
+            private class Validator: ISettingsValidator<ConsoleLogSettings>
+            {
+                public void Validate(ConsoleLogSettings value, ISettingsValidationErrors errors)
+                {
+                    if (value.Value1 < 0)
+                        errors.ReportError("Value1 error");
+                    if (value.Value2 < 0)
+                        errors.ReportError("Value2 error");
+                }
+            }
+
+            [Test]
+            public void DoSomething_WhenSomething()
+            {
+                var configProvider = new ConfigurationProvider()
+                    .SetupSourceFor<ConsoleLogSettings>(new JsonFileSource("D:/settings.txt"));
+                while (true)
+                {
+                    try
+                    {
+                        var settings = configProvider.Get<ConsoleLogSettings>();
+                        Console.WriteLine(settings.Value1);
+                        Console.WriteLine(settings.Value2);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                    }
+                    Thread.Sleep(3000);
+                }
+            }*/
+
             [Test]
             public void Get_WithSourceFor_should_work_correctly()
             {
@@ -298,9 +338,10 @@ namespace Vostok.Configuration.Tests
 
                 var next = 0;
                 var error = 0;
-                cp.Observe<int>().SubscribeTo(n => next++, e => error++);
+                var sub = cp.Observe<int>().SubscribeTo(n => next++, e => error++);
                 next.Should().Be(0);
                 error.Should().Be(1);
+                sub.Dispose();
 
                 //update file
                 Task.Run(() =>
@@ -649,9 +690,10 @@ namespace Vostok.Configuration.Tests
 
                 var next = 0;
                 var error = 0;
-                cp.Observe<int>(source).SubscribeTo(n => next++, e => error++);
+                var sub = cp.Observe<int>(source).SubscribeTo(n => next++, e => error++);
                 next.Should().Be(0);
                 error.Should().Be(1);
+                sub.Dispose();
 
                 //update file
                 Task.Run(() =>

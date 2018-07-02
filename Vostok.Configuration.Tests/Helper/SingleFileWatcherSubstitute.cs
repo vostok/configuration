@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Reactive.Disposables;
+using System.Reactive.Subjects;
 using JetBrains.Annotations;
 using Vostok.Configuration.Sources;
 
@@ -8,14 +7,14 @@ namespace Vostok.Configuration.Tests.Helper
 {
     internal class SingleFileWatcherSubstitute : IObservable<string>
     {
-        private readonly List<IObserver<string>> observers;
+        private Subject<string> observers;
         private string currentValue;
         private readonly object locker;
         private bool initialized;
 
         public SingleFileWatcherSubstitute([NotNull] string filePath, FileSourceSettings encoding)
         {
-            observers = new List<IObserver<string>>();
+            observers = new Subject<string>();
             currentValue = null;
             initialized = false;
             locker = new object();
@@ -23,19 +22,14 @@ namespace Vostok.Configuration.Tests.Helper
 
         public IDisposable Subscribe(IObserver<string> observer)
         {
-            if (!observers.Contains(observer))
-                observers.Add(observer);
+            if (observers.IsDisposed)
+                observers = new Subject<string>();
+            observers.Subscribe(observer);
             lock (locker)
                 if (initialized)
                     observer.OnNext(currentValue);
 
-            return Disposable.Create(
-                () =>
-                {
-                    lock (locker)
-                        if (observers.Contains(observer))
-                            observers.Remove(observer);
-                });
+            return observers;
         }
 
         /// <summary>
@@ -49,18 +43,13 @@ namespace Vostok.Configuration.Tests.Helper
             var isNew = newValue != currentValue;
             currentValue = newValue;
             if (isNew || ignoreIfEquals)
-                foreach (var observer in observers.ToArray())
-                    observer.OnNext(currentValue);
+                observers.OnNext(currentValue);
         }
 
         /// <summary>
         /// Imitates throwing exeptions on reading file
         /// </summary>
         /// <param name="e">Some exception</param>
-        public void ThrowException(Exception e)
-        {
-            foreach (var observer in observers.ToArray())
-                observer.OnError(e);
-        }
+        public void ThrowException(Exception e) => observers.OnError(e);
     }
 }
