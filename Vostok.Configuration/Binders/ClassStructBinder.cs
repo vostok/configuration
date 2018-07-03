@@ -44,6 +44,8 @@ namespace Vostok.Configuration.Binders
             object GetDefaultIfOptionalOrThrow(BinderAttribute attr, Type t, string msg) =>
                 attr == BinderAttribute.IsOptional ? t.Default() : throw new InvalidCastException(msg);
 
+            SettingsNode.CheckSettings(settings, false, $"{name} of \"{type.Name}\"");
+
             var rs = settings[name];
             if (rs == null)
                 return GetDefaultIfOptionalOrThrow(binderAttribute, type, $"{nameof(ClassAndStructBinder<T>)}: required key \"{name}\" is absent");

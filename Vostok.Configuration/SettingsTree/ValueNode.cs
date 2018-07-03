@@ -16,7 +16,7 @@ namespace Vostok.Configuration.SettingsTree
 
         public string Name { get; }
         public string Value { get; }
-        IEnumerable<ISettingsNode> ISettingsNode.Children => Enumerable.Empty<ArrayNode>();
+        IEnumerable<ISettingsNode> ISettingsNode.Children => Enumerable.Empty<ValueNode>();
         ISettingsNode ISettingsNode.this[string name] => null;
 
         public ISettingsNode Merge(ISettingsNode other, SettingsMergeOptions options = null) => other;

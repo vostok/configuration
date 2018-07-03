@@ -15,7 +15,7 @@ using Vostok.Configuration.SettingsTree;
 #pragma warning disable 169
 #pragma warning disable 649
 
-namespace Vostok.Configuration.Tests
+namespace Vostok.Configuration.Tests.Binders
 {
     [TestFixture]
     public class DefaultSettingsBinder_Tests
@@ -60,6 +60,22 @@ namespace Vostok.Configuration.Tests
                 new ValueNode("321"),
             });
             binder.Bind<int>(sets2).Should().Be(321);
+        }
+
+        [Test]
+        public void Should_bind_to_string_from_single_children_value()
+        {
+            var sets1 = new ObjectNode(new SortedDictionary<string, ISettingsNode>
+            {
+                { "key", new ValueNode("str1") }
+            });
+            binder.Bind<string>(sets1).Should().Be("str1");
+
+            var sets2 = new ArrayNode(new List<ISettingsNode>
+            {
+                new ValueNode("str2")
+            });
+            binder.Bind<string>(sets2).Should().Be("str2");
         }
 
         [Test]

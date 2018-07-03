@@ -22,14 +22,12 @@ namespace Vostok.Configuration.Tests.Helper
 
         public IDisposable Subscribe(IObserver<string> observer)
         {
-            if (observers.IsDisposed)
-                observers = new Subject<string>();
-            observers.Subscribe(observer);
+            var subscription = observers.Subscribe(observer);
             lock (locker)
                 if (initialized)
                     observer.OnNext(currentValue);
 
-            return observers;
+            return subscription;
         }
 
         /// <summary>

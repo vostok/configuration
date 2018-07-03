@@ -21,7 +21,7 @@ namespace Vostok.Configuration.Tests
     {
         public class ConfigurationProvider_Tests_ByType : Sources_Test
         {
-            /*      Special test for checking resubscription
+            /*// Special test for checking resubscription after first exception
             [ValidateBy(typeof(Validator))]
             private class ConsoleLogSettings
             {
@@ -43,9 +43,9 @@ namespace Vostok.Configuration.Tests
             [Test]
             public void DoSomething_WhenSomething()
             {
-                var configProvider = new ConfigurationProvider()
+                var configProvider = new ConfigurationProvider(new ConfigurationProviderSettings { OnError = e => Console.WriteLine($"OnError: {e}") })
                     .SetupSourceFor<ConsoleLogSettings>(new JsonFileSource("D:/settings.txt"));
-                while (true)
+                for (var i = 0; i < 5; i++)
                 {
                     try
                     {
@@ -59,6 +59,8 @@ namespace Vostok.Configuration.Tests
                     }
                     Thread.Sleep(3000);
                 }
+
+                throw new Exception("done");
             }*/
 
             [Test]

@@ -45,7 +45,11 @@ namespace Vostok.Configuration.Binders
                     return (T)type.Default();
             }
             else
+            {
+                if (settings.Children.Count() == 1)
+                   return (T)(object)settings.Children.First().Value;
                 return (T)(object)settings.Value;
+            }
 
             if (parsers[type].TryParse(value, out var res))
                 return (T)res;

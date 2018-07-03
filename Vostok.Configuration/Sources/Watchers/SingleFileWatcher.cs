@@ -17,9 +17,9 @@ namespace Vostok.Configuration.Sources.Watchers
     {
         private readonly string filePath;
         private readonly FileSourceSettings settings;
-
-        private Subject<string> observers;
         private readonly AtomicBoolean taskIsRun;
+
+        private readonly Subject<string> observers;
 
         private volatile ValueWrapper currentValueWrapper;
         private CancellationTokenSource tokenDelaySource;
@@ -47,16 +47,14 @@ namespace Vostok.Configuration.Sources.Watchers
 
         public IDisposable Subscribe(IObserver<string> observer)
         {
-            if (observers.IsDisposed)
-                observers = new Subject<string>();
-            observers.Subscribe(observer);
+            var subsription = observers.Subscribe(observer);
             if (currentValueWrapper != null)
                 observer.OnNext(currentValueWrapper.Value);
 
             if (taskIsRun.TrySetTrue())
                 Task.Run(WatchFile);
 
-            return observers;
+            return subsription;
         }
 
         private void OnFileWatcherEvent(object sender, FileSystemEventArgs args)
@@ -103,16 +101,12 @@ namespace Vostok.Configuration.Sources.Watchers
                     changes = reader.ReadToEnd();
             }
 
-            return currentValueWrapper == null ||  currentValueWrapper.Value != changes;
+            return currentValueWrapper == null || currentValueWrapper.Value != changes;
         }
 
         private class ValueWrapper
         {
-            public ValueWrapper(string value)
-            {
-                Value = value;
-            }
-
+            public ValueWrapper(string value) => Value = value;
             public string Value { get; }
         }
     }
