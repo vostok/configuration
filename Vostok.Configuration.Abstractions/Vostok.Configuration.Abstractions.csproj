@@ -14,7 +14,4 @@
 		<LangVersion>7.2</LangVersion>
 		<NuspecFile>Vostok.Configuration.Abstractions.nuspec</NuspecFile>
 	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)'=='Release'">
-		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-	</PropertyGroup>
 </Project>

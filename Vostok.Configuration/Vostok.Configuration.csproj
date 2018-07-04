@@ -14,9 +14,6 @@
     <LangVersion>7.2</LangVersion>
 	  <NuspecFile>Vostok.Configuration.nuspec</NuspecFile>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)'=='Release'">
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="ILRepack" Version="2.0.15" />
