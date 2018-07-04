@@ -1,26 +1,18 @@
-default:
+sdk *default:
   build:
     target: Vostok.Configuration.sln
-    configuration: Release
+    configuration: NoTests
     tool:
       name: dotnet
 
   install:
-    - Vostok.Configuration/bin/Release/netstandard2.0/Merged/Vostok.Configuration.dll
+	- Vostok.Configuration/bin/Release/netstandard2.0/Merged/Vostok.Configuration.dll
     - Vostok.Configuration.Abstractions/bin/Release/netstandard2.0/Vostok.Configuration.Abstractions.dll
-    - module vostok.commons
 
   deps:
-    - vostok.commons@dev
+	- vostok.commons@dev
 
-client *default:
+full-build > sdk:
   build:
-    configuration: Client
-
-notests:
-  build:
-    configuration: NoTests
-
-full-build > notests:
-  build:
+    target: Vostok.Configuration.sln
     configuration: Release

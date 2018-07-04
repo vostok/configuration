@@ -8,7 +8,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <licenseUrl>https://github.com/vostok/configuration/blob/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/vostok/configuration</projectUrl>
-    <description>Configuration library for microservice toolkit http://vostok.tools/</description>
+    <description>Configuration abstractions library for microservice toolkit http://vostok.tools/</description>
     <copyright>Copyright (c) 2017-2018 SKB Kontur</copyright>
     <dependencies>
       <group targetFramework=".NETStandard2.0" />

@@ -3,16 +3,19 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Configurations>Debug;Release</Configurations>
-    <Version>0.0.0</Version>
+    <Version>1.0.0</Version>
     <Authors>Vostok team</Authors>
     <Company>SKB Kontur</Company>
     <Product>Vostok</Product>
     <Copyright>Copyright (c) 2017-2018 SKB Kontur</Copyright>
     <PackageProjectUrl>https://github.com/vostok/configuration</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/vostok/configuration/blob/master/LICENSE</PackageLicenseUrl>
+    <Description>Configuration library for microservice toolkit http://vostok.tools/</Description>
     <LangVersion>7.2</LangVersion>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	  <NuspecFile>Vostok.Configuration.nuspec</NuspecFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
