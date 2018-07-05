@@ -7,10 +7,10 @@ sdk *default:
 
   install:
 	- Vostok.Configuration/bin/Release/netstandard2.0/Merged/Vostok.Configuration.dll
-    - Vostok.Configuration.Abstractions/bin/Release/netstandard2.0/Vostok.Configuration.Abstractions.dll
 
   deps:
 	- vostok.commons@dev
+	- vostok.configuration.abstractions@dev
 
 full-build > sdk:
   build:

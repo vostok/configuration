@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vostok.Configuration", "Vos
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vostok.Configuration.Tests", "Vostok.Configuration.Tests\Vostok.Configuration.Tests.csproj", "{22866D16-E0B7-4449-A348-2FF385FF61E0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vostok.Configuration.Abstractions", "Vostok.Configuration.Abstractions\Vostok.Configuration.Abstractions.csproj", "{FEFD2560-2990-4DB8-8031-D91DA5A71811}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Client|Any CPU = Client|Any CPU
@@ -31,14 +29,6 @@ Global
 		{22866D16-E0B7-4449-A348-2FF385FF61E0}.NoTests|Any CPU.ActiveCfg = Release|Any CPU
 		{22866D16-E0B7-4449-A348-2FF385FF61E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{22866D16-E0B7-4449-A348-2FF385FF61E0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FEFD2560-2990-4DB8-8031-D91DA5A71811}.Client|Any CPU.ActiveCfg = Release|Any CPU
-		{FEFD2560-2990-4DB8-8031-D91DA5A71811}.Client|Any CPU.Build.0 = Release|Any CPU
-		{FEFD2560-2990-4DB8-8031-D91DA5A71811}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FEFD2560-2990-4DB8-8031-D91DA5A71811}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FEFD2560-2990-4DB8-8031-D91DA5A71811}.NoTests|Any CPU.ActiveCfg = Release|Any CPU
-		{FEFD2560-2990-4DB8-8031-D91DA5A71811}.NoTests|Any CPU.Build.0 = Release|Any CPU
-		{FEFD2560-2990-4DB8-8031-D91DA5A71811}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FEFD2560-2990-4DB8-8031-D91DA5A71811}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
