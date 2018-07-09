@@ -12,8 +12,8 @@
     <copyright>Copyright (c) 2017-2018 SKB Kontur</copyright>
     <dependencies>
       <group targetFramework=".NETStandard2.0">
-        <dependency id="Vostok.Configuration.Abstractions" version="0.0.3" exclude="Build,Analyzers" />
-		    <dependency id="Vostok.Commons" version="0.0.4" exclude="Build,Analyzers" />
+        <dependency id="Vostok.Configuration.Abstractions" version="0.0.4" exclude="Build,Analyzers" />
+        <dependency id="Vostok.Commons" version="0.0.5" exclude="Build,Analyzers" />
       </group>
     </dependencies>
   </metadata>
