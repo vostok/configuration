@@ -372,7 +372,7 @@ namespace Vostok.Configuration.Tests
                     return watcher;
                 });
                 var msg = string.Empty;
-                var cp = new ConfigurationProvider(new ConfigurationProviderSettings { OnError = e => msg = e.Message })
+                var cp = new ConfigurationProvider(new ConfigurationProviderSettings { ErrorCallBack = e => msg = e.Message })
                     .SetupSourceFor<int>(source);
 
                 cp.Get<int>().Should().Be(123);
@@ -639,7 +639,7 @@ namespace Vostok.Configuration.Tests
                 });
                 var msg = string.Empty;
                 var cp = new ConfigurationProvider(
-                    new ConfigurationProviderSettings { OnError = e => msg = e.Message });
+                    new ConfigurationProviderSettings { ErrorCallBack = e => msg = e.Message });
 
                 cp.Get<int>(source).Should().Be(123);
                 watcher.GetUpdate(null);

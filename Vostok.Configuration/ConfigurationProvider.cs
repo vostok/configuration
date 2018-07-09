@@ -137,7 +137,7 @@ namespace Vostok.Configuration
             {
                 if (typeCache.TryGetValue(typeof(TSettings), out var val) && val != null)
                 {
-                    settings.OnError?.Invoke(e);
+                    settings.ErrorCallBack?.Invoke(e);
                     return (TSettings)val;
                 }
 
@@ -171,7 +171,7 @@ namespace Vostok.Configuration
             {
                 if (sourceCache.TryGetValue(source, out var val) && val != null)
                 {
-                    settings.OnError?.Invoke(e);
+                    settings.ErrorCallBack?.Invoke(e);
                     return (TSettings)val;
                 }
 
@@ -193,7 +193,7 @@ namespace Vostok.Configuration
             {
                 if (typeCache.TryGetValue(typeof(TSettings), out var val) && val != null)
                 {
-                    settings.OnError?.Invoke(e);
+                    settings.ErrorCallBack?.Invoke(e);
                     return (TSettings)val;
                 }
 
