@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reactive.Subjects;
 using JetBrains.Annotations;
 using Vostok.Configuration.Sources;
@@ -7,7 +7,7 @@ namespace Vostok.Configuration.Tests.Helper
 {
     internal class SingleFileWatcherSubstitute : IObservable<string>
     {
-        private Subject<string> observers;
+        private readonly Subject<string> observers;
         private string currentValue;
         private readonly object locker;
         private bool initialized;
