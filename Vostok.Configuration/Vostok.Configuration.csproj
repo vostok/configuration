@@ -43,6 +43,6 @@
       <MergeAssemblies Include="$(USERPROFILE)\.nuget\packages\system.reactive.core\4.0.0\lib\netstandard2.0\System.Reactive.Core.dll" />
       <MergeAssemblies Include="$(USERPROFILE)\.nuget\packages\system.reactive.linq\4.0.0\lib\netstandard2.0\System.Reactive.Linq.dll" />
     </ItemGroup>
-     <Exec WorkingDirectory="$(ProjectDir)$(OutputPath)" Command="$(ILRepack) /internalize /log:ilrepack.log /out:Merged\$(AssemblyName).dll @(MergeAssemblies, ' ')" /> 
+     <Exec WorkingDirectory="$(ProjectDir)$(OutputPath)" Command="&quot;$(ILRepack)&quot; /internalize /log:ilrepack.log /out:Merged\$(AssemblyName).dll @(MergeAssemblies, ' ')" /> 
   </Target>
 </Project>
