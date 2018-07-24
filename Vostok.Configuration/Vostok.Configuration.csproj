@@ -1,18 +1,44 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\vostok.devtools\git-commit-to-assembly-title\Vostok.Tools.GitCommit2AssemblyTitle.props" />
+
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Configurations>Debug;Release</Configurations>
-    <Version>1.0.0</Version>
+    <LangVersion>7.2</LangVersion>
+    <IncludeSymbols>true</IncludeSymbols>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <VersionPrefix>0.0.1</VersionPrefix>
+    <VersionSuffix></VersionSuffix>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <FileVersion>$(Version)</FileVersion>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <PackageVersion>$(Version)</PackageVersion>
+    <PackageReleaseNotes>TODO</PackageReleaseNotes>
+  </PropertyGroup>
+  
+  <PropertyGroup>
     <Authors>Vostok team</Authors>
     <Company>SKB Kontur</Company>
     <Product>Vostok</Product>
     <Copyright>Copyright (c) 2017-2018 SKB Kontur</Copyright>
+    <Title>Vostok configuration library</Title>
+    <Description>Configuration library for microservice toolkit http://vostok.tools/</Description>
+  </PropertyGroup>
+  
+  <PropertyGroup>
     <PackageProjectUrl>https://github.com/vostok/configuration</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/vostok/configuration/blob/master/LICENSE</PackageLicenseUrl>
-    <Description>Configuration library for microservice toolkit http://vostok.tools/</Description>
-    <LangVersion>7.2</LangVersion>
-	  <NuspecFile>Vostok.Configuration.nuspec</NuspecFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageTags>vostok vostok.configuration</PackageTags>
+    <RepositoryUrl>https://github.com/vostok/configuration</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,7 +52,6 @@
   
   <ItemGroup>
     <Reference Include="Vostok.Commons">
-      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\vostok.commons\Vostok.Commons\bin\Release\netstandard2.0\Vostok.Commons.dll</HintPath>
     </Reference>
     <Reference Include="Vostok.Configuration.Abstractions">
