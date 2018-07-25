@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Net;
 using FluentAssertions;
 using NUnit.Framework;
-using Vostok.Commons;
 using Vostok.Commons.Parsers;
+using Vostok.Commons.ValueObjects;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
+using Vostok.Configuration.Parsers;
 using Vostok.Configuration.SettingsTree;
 // ReSharper disable UnusedMember.Local
 // ReSharper disable UnassignedGetOnlyAutoProperty

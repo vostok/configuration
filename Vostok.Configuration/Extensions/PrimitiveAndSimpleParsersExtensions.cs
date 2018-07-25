@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
-using Vostok.Commons;
 using Vostok.Commons.Parsers;
+using Vostok.Commons.ValueObjects;
 using Vostok.Configuration.Binders;
-using UriParser = Vostok.Commons.Parsers.UriParser;
+using Vostok.Configuration.Parsers;
+using UriParser = Vostok.Configuration.Parsers.UriParser;
 
 namespace Vostok.Configuration.Extensions
 {
