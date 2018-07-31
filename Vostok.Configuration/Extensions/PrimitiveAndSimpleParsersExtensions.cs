@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
-using Vostok.Commons.Parsers;
-using Vostok.Commons.ValueObjects;
+using Vostok.Commons.Primitives;
+using Vostok.Commons.Primitives.Parsers;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Parsers;
 using UriParser = Vostok.Configuration.Parsers.UriParser;

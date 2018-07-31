@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Text;
-using Vostok.Commons.Conversions;
+using Vostok.Commons.Helpers.Conversions;
 
 namespace Vostok.Configuration.Sources
 {

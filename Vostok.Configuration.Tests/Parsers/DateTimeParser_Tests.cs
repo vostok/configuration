@@ -1,10 +1,9 @@
 ﻿using System;
 using FluentAssertions;
 using NUnit.Framework;
-using Vostok.Commons.Parsers;
 using Vostok.Configuration.Parsers;
 
-namespace Vostok.Commons.Tests.Parsers
+namespace Vostok.Configuration.Tests.Parsers
 {
     [TestFixture]
     public class DateTimeParser_Tests

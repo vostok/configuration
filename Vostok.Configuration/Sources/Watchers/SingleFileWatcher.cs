@@ -4,8 +4,8 @@ using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
-using Vostok.Commons.Synchronization;
-using Vostok.Commons.Extensions;
+using Vostok.Commons.Helpers.Extensions;
+using Vostok.Commons.Threading.Atomic;
 
 namespace Vostok.Configuration.Sources.Watchers
 {

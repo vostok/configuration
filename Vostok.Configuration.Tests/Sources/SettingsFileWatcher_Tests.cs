@@ -2,7 +2,7 @@
 using System.Threading;
 using FluentAssertions;
 using NUnit.Framework;
-using Vostok.Commons.Conversions;
+using Vostok.Commons.Helpers.Conversions;
 using Vostok.Commons.Testing;
 using Vostok.Configuration.Sources;
 using Vostok.Configuration.Sources.Watchers;

@@ -3,7 +3,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using UriParser = Vostok.Configuration.Parsers.UriParser;
 
-namespace Vostok.Commons.Tests.Parsers
+namespace Vostok.Configuration.Tests.Parsers
 {
     [TestFixture]
     public class UriParser_Tests

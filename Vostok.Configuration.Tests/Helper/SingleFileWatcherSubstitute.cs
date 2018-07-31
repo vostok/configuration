@@ -1,6 +1,5 @@
 using System;
 using System.Reactive.Subjects;
-using JetBrains.Annotations;
 using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests.Helper
@@ -12,7 +11,7 @@ namespace Vostok.Configuration.Tests.Helper
         private readonly object locker;
         private bool initialized;
 
-        public SingleFileWatcherSubstitute([NotNull] string filePath, FileSourceSettings encoding)
+        public SingleFileWatcherSubstitute(string filePath, FileSourceSettings encoding)
         {
             observers = new Subject<string>();
             currentValue = null;

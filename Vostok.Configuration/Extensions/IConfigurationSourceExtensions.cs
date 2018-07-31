@@ -1,5 +1,4 @@
 using System.Linq;
-using Vostok.Commons;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.MergeOptions;
 using Vostok.Configuration.Sources;
