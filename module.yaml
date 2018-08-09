@@ -10,14 +10,15 @@ notests *default:
 
   deps:
     - vostok.commons.collections/src
+    - vostok.commons.helpers/src
     - vostok.commons.threading/src
-    - vostok.commons.helpers
+    - vostok.commons.primitives
     - vostok.configuration.abstractions@dev
     - vostok.devtools
 
 full-build > notests:
   deps:
-    - vostok.commons.testing@dev
+    - vostok.commons.testing
   build:
     target: Vostok.Configuration.sln
     configuration: Release

@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Vostok.Commons.Helpers.Extensions;
-using Vostok.Commons.Threading.Atomic;
+using Vostok.Commons.Threading;
 
 namespace Vostok.Configuration.Sources.Watchers
 {
