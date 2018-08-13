@@ -13,7 +13,7 @@ notests *default:
     - vostok.commons.helpers/src
     - vostok.commons.threading/src
     - vostok.commons.primitives
-    - vostok.configuration.abstractions@dev
+    - vostok.configuration.abstractions
     - vostok.devtools
 
 full-build > notests:
