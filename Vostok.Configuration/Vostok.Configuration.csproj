@@ -57,14 +57,22 @@
     </Reference>
   </ItemGroup>
 
-  <Target Name="RepackAssemblies" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+  <Target Name="Publishing" BeforeTargets="RepackAssemblies" Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'NoTests'">
+    <Exec WorkingDirectory="$(ProjectDir)" Command="dotnet publish -c Publish" />
+  </Target>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'NoTests'">
+    <PubDir>..\..\..\bin\Publish\netstandard2.0\publish\</PubDir>
+  </PropertyGroup>
+
+  <Target Name="RepackAssemblies" AfterTargets="Build" Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'NoTests'">
     <ItemGroup>
       <MergeAssemblies Include="$(AssemblyName).dll" />
-      <MergeAssemblies Include="$(USERPROFILE)\.nuget\packages\newtonsoft.json\11.0.2\lib\netstandard2.0\Newtonsoft.Json.dll" />
-      <MergeAssemblies Include="$(USERPROFILE)\.nuget\packages\simpleinjector\4.3.0\lib\netstandard1.3\SimpleInjector.dll" />
-      <MergeAssemblies Include="$(USERPROFILE)\.nuget\packages\system.reactive\4.0.0\lib\netstandard2.0\System.Reactive.dll" />
-      <MergeAssemblies Include="$(USERPROFILE)\.nuget\packages\system.reactive.core\4.0.0\lib\netstandard2.0\System.Reactive.Core.dll" />
-      <MergeAssemblies Include="$(USERPROFILE)\.nuget\packages\system.reactive.linq\4.0.0\lib\netstandard2.0\System.Reactive.Linq.dll" />
+      <MergeAssemblies Include="$(PubDir)Newtonsoft.Json.dll" />
+      <MergeAssemblies Include="$(PubDir)SimpleInjector.dll" />
+      <MergeAssemblies Include="$(PubDir)System.Reactive.dll" />
+      <MergeAssemblies Include="$(PubDir)System.Reactive.Core.dll" />
+      <MergeAssemblies Include="$(PubDir)System.Reactive.Linq.dll" />
     </ItemGroup>
     <Exec WorkingDirectory="$(ProjectDir)$(OutputPath)" Command="&quot;$(ILRepack)&quot; /internalize /log:ilrepack.log /out:Merged\$(AssemblyName).dll @(MergeAssemblies, ' ')" />
   </Target>
