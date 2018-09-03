@@ -17,8 +17,8 @@ namespace Vostok.Configuration.Extensions
         {
             var attrsDict = new Dictionary<Type, BinderAttribute>
             {
-                { typeof(RequiredAttribute), BinderAttribute.IsRequired },
-                { typeof(OptionalAttribute), BinderAttribute.IsOptional },
+                {typeof(RequiredAttribute), BinderAttribute.IsRequired},
+                {typeof(OptionalAttribute), BinderAttribute.IsOptional},
             };
             var attrs = attributes as Attribute[] ?? attributes.ToArray();
             foreach (var attribute in attrs)

@@ -11,7 +11,7 @@ namespace Vostok.Configuration.Sources
 
         public T Get<T>(IObservable<T> observable)
         {
-            var observer = (CurrentValueObserver<T>)typedValueObservers.GetOrAdd(typeof(T), _ => new CurrentValueObserver<T>());
+            var observer = (CurrentValueObserver<T>) typedValueObservers.GetOrAdd(typeof(T), _ => new CurrentValueObserver<T>());
 
             try
             {

@@ -7,7 +7,10 @@ namespace Vostok.Configuration.Extensions
     internal static class IEnumerableExtensions
     {
         public static SortedDictionary<TKey, TElement> ToSortedDictionary<TSource, TKey, TElement>(
-            this IEnumerable<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> elementSelector, IComparer<TKey> comparer = null) =>
+            this IEnumerable<TSource> source,
+            Func<TSource, TKey> keySelector,
+            Func<TSource, TElement> elementSelector,
+            IComparer<TKey> comparer = null) =>
             new SortedDictionary<TKey, TElement>(source.ToDictionary(keySelector, elementSelector), comparer);
 
         public static IEnumerable<T> Unique<T>(this IEnumerable<T> source, IEnumerable<T> list, IEqualityComparer<T> comparer = null)

@@ -31,24 +31,34 @@ namespace Vostok.Configuration.Binders
         public DefaultSettingsBinder()
         {
             parsers = new Dictionary<Type, ITypeParser>();
-            
+
             Container = new Container();
-            Container.RegisterConditional(typeof(ISettingsBinder<>), typeof(PrimitiveAndSimpleBinder<>),
+            Container.RegisterConditional(
+                typeof(ISettingsBinder<>),
+                typeof(PrimitiveAndSimpleBinder<>),
                 c =>
                 {
                     var type = c.ServiceType.GetGenericArguments()[0];
                     return type.IsPrimitive() || type == typeof(string) || parsers.ContainsKey(type);
                 });
-            Container.RegisterConditional(typeof(ISettingsBinder<>), typeof(NullableBinder<>),
+            Container.RegisterConditional(
+                typeof(ISettingsBinder<>),
+                typeof(NullableBinder<>),
                 c => c.ServiceType.GetGenericArguments()[0].IsNullable());
-            Container.RegisterConditional(typeof(ISettingsBinder<>), typeof(EnumBinder<>),
+            Container.RegisterConditional(
+                typeof(ISettingsBinder<>),
+                typeof(EnumBinder<>),
                 c => c.ServiceType.GetGenericArguments()[0].IsEnum);
             Container.Register(typeof(ISettingsBinder<>), typeof(ListBinder<>));
             Container.Register(typeof(ISettingsBinder<>), typeof(DictionaryBinder<,>));
             Container.Register(typeof(ISettingsBinder<>), typeof(SetBinder<>));
-            Container.RegisterConditional(typeof(ISettingsBinder<>), typeof(ArrayBinder<>),
+            Container.RegisterConditional(
+                typeof(ISettingsBinder<>),
+                typeof(ArrayBinder<>),
                 c => c.ServiceType.GetGenericArguments()[0].IsArray);
-            Container.RegisterConditional(typeof(ISettingsBinder<>), typeof(ClassAndStructBinder<>),
+            Container.RegisterConditional(
+                typeof(ISettingsBinder<>),
+                typeof(ClassAndStructBinder<>),
                 c => !c.Handled);
             Container.Register<ISettingsBinderFactory>(() => new SettingsBinderFactory(Container));
             Container.RegisterInstance(typeof(IDictionary<Type, ITypeParser>), parsers);

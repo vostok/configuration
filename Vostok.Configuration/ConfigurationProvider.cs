@@ -54,7 +54,7 @@ namespace Vostok.Configuration
         {
             var type = typeof(TSettings);
             if (typeCache.TryGetValue(type, out var item))
-                return (TSettings)item;
+                return (TSettings) item;
             if (!typeSources.ContainsKey(type))
                 throw new ArgumentException($"{UnknownTypeExceptionMsg.Replace("typeName", type.Name)}");
             return taskSource.Get(Observe<TSettings>());
@@ -66,7 +66,7 @@ namespace Vostok.Configuration
         /// </summary>
         public TSettings Get<TSettings>(IConfigurationSource source) =>
             sourceCache.TryGetValue(source, out var item)
-                ? (TSettings)item
+                ? (TSettings) item
                 : taskSource.Get(Observe<TSettings>(source));
 
         /// <inheritdoc />
@@ -125,11 +125,28 @@ namespace Vostok.Configuration
             return this;
         }
 
+        internal void Validate(object value, Type type)
+        {
+            var errors = new List<SettingsValidationErrors>();
+
+            Validate(type, value, errors, "");
+            if (errors.Any(e => e.HasErrors))
+            {
+                errors = errors.Where(e => e.HasErrors).ToList();
+                var validationResult = new SettingsValidationErrors();
+
+                foreach (var er in errors)
+                    validationResult.MergeWith(er);
+
+                throw validationResult.ToException();
+            }
+        }
+
         private TSettings TypedSubscriptionPrepare<TSettings>(object node)
         {
             try
             {
-                var value = (TSettings)node;
+                var value = (TSettings) node;
                 AddInCache(value);
                 return value;
             }
@@ -138,7 +155,7 @@ namespace Vostok.Configuration
                 if (typeCache.TryGetValue(typeof(TSettings), out var val) && val != null)
                 {
                     settings.ErrorCallBack?.Invoke(e);
-                    return (TSettings)val;
+                    return (TSettings) val;
                 }
 
                 throw;
@@ -172,7 +189,7 @@ namespace Vostok.Configuration
                 if (sourceCache.TryGetValue(source, out var val) && val != null)
                 {
                     settings.ErrorCallBack?.Invoke(e);
-                    return (TSettings)val;
+                    return (TSettings) val;
                 }
 
                 throw;
@@ -194,7 +211,7 @@ namespace Vostok.Configuration
                 if (typeCache.TryGetValue(typeof(TSettings), out var val) && val != null)
                 {
                     settings.ErrorCallBack?.Invoke(e);
-                    return (TSettings)val;
+                    return (TSettings) val;
                 }
 
                 throw;
@@ -208,22 +225,8 @@ namespace Vostok.Configuration
             return value;
         }
 
-        private static void Validate<TSettings>(TSettings value)
-        {
-            var errors = new List<SettingsValidationErrors>();
-
-            Validate(typeof(TSettings), value, errors, "");
-            if (errors.Any(e => e.HasErrors))
-            {
-                errors = errors.Where(e => e.HasErrors).ToList();
-                var validationResult = new SettingsValidationErrors();
-
-                foreach (var er in errors)
-                    validationResult.MergeWith(er);
-
-                throw validationResult.ToException();
-            }
-        }
+        private void Validate<TSettings>(TSettings value) =>
+            Validate(value, typeof(TSettings));
 
         private static void Validate(Type type, object value, ICollection<SettingsValidationErrors> errors, string prefix)
         {

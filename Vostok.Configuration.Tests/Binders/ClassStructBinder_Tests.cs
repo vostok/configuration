@@ -218,7 +218,7 @@ namespace Vostok.Configuration.Tests.Binders
                     {"String", new ValueNode("str")},
                     {"Float", new ValueNode("not float number")},
                 });
-            var binder = Container.GetInstance<ISettingsBinder<AttributedClasGlobal>>();
+            var binder = Container.GetInstance<ISettingsBinder<AttributedClassGlobal>>();
             var result = binder.Bind(settings);
             result.Long.Should().Be(123456789012L);
             result.String.Should().Be("str");
@@ -287,7 +287,7 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [RequiredByDefault]
-        private struct AttributedClasGlobal
+        private struct AttributedClassGlobal
         {
             public List<int> Ints;
             public long? Long;

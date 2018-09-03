@@ -63,23 +63,23 @@ namespace Vostok.Configuration.SettingsTree.Mutable
         {
             IReadOnlyList<ISettingsNode> list = !settings.ChildrenList.Any()
                 ? null
-                : settings.ChildrenList.Select(c => ConvertNode((UniversalNode)c)).ToList();
+                : settings.ChildrenList.Select(c => ConvertNode((UniversalNode) c)).ToList();
             return new ArrayNode(list, settings.Name);
         }
 
         public static explicit operator ObjectNode(UniversalNode settings)
         {
-            var dict = settings.ChildrenDict.ToSortedDictionary(node => node.Name, node => ConvertNode((UniversalNode)node), StringComparer.InvariantCultureIgnoreCase);
+            var dict = settings.ChildrenDict.ToSortedDictionary(node => node.Name, node => ConvertNode((UniversalNode) node), StringComparer.InvariantCultureIgnoreCase);
             return new ObjectNode(dict, settings.Name);
         }
 
         private static ISettingsNode ConvertNode(UniversalNode universalNode)
         {
             if (universalNode.ChildrenDict.Any())
-                return (ObjectNode)universalNode;
+                return (ObjectNode) universalNode;
             if (universalNode.childrenList.Any())
-                return (ArrayNode)universalNode;
-            return (ValueNode)universalNode;
+                return (ArrayNode) universalNode;
+            return (ValueNode) universalNode;
         }
     }
 }

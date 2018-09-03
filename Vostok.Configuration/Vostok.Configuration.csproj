@@ -41,12 +41,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ILRepack" Version="2.0.15" />
+    <PackageReference Include="ILRepack" Version="2.0.16" />
+    <PackageReference Include="Microsoft.Build.Framework" Version="15.8.166" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="SimpleInjector" Version="4.3.0" />
-    <PackageReference Include="System.Reactive" Version="4.0.0" />
-    <PackageReference Include="System.Reactive.Core" Version="4.0.0" />
-    <PackageReference Include="System.Reactive.Linq" Version="4.0.0" />
+    <PackageReference Include="System.Reactive" Version="4.1.0" />
+    <PackageReference Include="System.Reactive.Core" Version="4.1.0" />
+    <PackageReference Include="System.Reactive.Linq" Version="4.1.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -69,6 +70,7 @@
   <Target Name="RepackAssemblies" AfterTargets="Build" Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'NoTests'">
     <ItemGroup>
       <MergeAssemblies Include="$(AssemblyName).dll" />
+      <MergeAssemblies Include="$(PubDir)Microsoft.Build.Framework.dll" />
       <MergeAssemblies Include="$(PubDir)Newtonsoft.Json.dll" />
       <MergeAssemblies Include="$(PubDir)SimpleInjector.dll" />
       <MergeAssemblies Include="$(PubDir)System.Reactive.dll" />

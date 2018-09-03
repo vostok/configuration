@@ -25,7 +25,7 @@ namespace Vostok.Configuration.Binders
             foreach (var value in settings.Children.Select(n => binder.Bind(n)))
                 instance.SetValue(value, i++);
 
-            return (T)(object)instance;
+            return (T) (object) instance;
         }
     }
 }

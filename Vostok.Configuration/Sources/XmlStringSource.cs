@@ -72,7 +72,7 @@ namespace Vostok.Configuration.Sources
             var res = new UniversalNode(value: null, "root");
             res.Add(root.Name, ParseElement(root, root.Name));
 
-            return res.ChildrenDict.Any() ? (ObjectNode)res : null;
+            return res.ChildrenDict.Any() ? (ObjectNode) res : null;
         }
 
         private UniversalNode ParseElement(XmlElement element, string name)

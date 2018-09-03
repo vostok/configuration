@@ -73,10 +73,10 @@ namespace Vostok.Configuration.Sources
                         dict.Add(token.Key, new ValueNode(null, token.Key));
                         break;
                     case JTokenType.Object:
-                        dict.Add(token.Key, ParseJson((JObject)token.Value, token.Key));
+                        dict.Add(token.Key, ParseJson((JObject) token.Value, token.Key));
                         break;
                     case JTokenType.Array:
-                        dict.Add(token.Key, ParseJson((JArray)token.Value, token.Key));
+                        dict.Add(token.Key, ParseJson((JArray) token.Value, token.Key));
                         break;
                     default:
                         dict.Add(token.Key, new ValueNode(token.Value.ToString(), token.Key));
@@ -102,10 +102,10 @@ namespace Vostok.Configuration.Sources
                         obj = new ValueNode(null);
                         break;
                     case JTokenType.Object:
-                        obj = ParseJson((JObject)item, i.ToString());
+                        obj = ParseJson((JObject) item, i.ToString());
                         break;
                     case JTokenType.Array:
-                        obj = ParseJson((JArray)item, i.ToString());
+                        obj = ParseJson((JArray) item, i.ToString());
                         break;
                     default:
                         obj = new ValueNode(item.ToString());

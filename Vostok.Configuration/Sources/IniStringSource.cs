@@ -89,7 +89,7 @@ namespace Vostok.Configuration.Sources
                 }
             }
 
-            return res.ChildrenDict.Any() ? (ObjectNode)res : null;
+            return res.ChildrenDict.Any() ? (ObjectNode) res : null;
         }
 
         private UniversalNode ParseSection(string section, UniversalNode settings, int currentLine)
@@ -114,7 +114,7 @@ namespace Vostok.Configuration.Sources
                 {
                     if (obj[keys[i]] != null)
                     {
-                        var child = (UniversalNode)obj[keys[i]];
+                        var child = (UniversalNode) obj[keys[i]];
                         if (child.Value != null)
                             throw new FormatException($"{nameof(IniStringSource)}: wrong ini file ({currentLine}): key \"{keys[i]}\" with value \"{child.Value}\" already exists");
                         child.Value = value;
@@ -129,7 +129,7 @@ namespace Vostok.Configuration.Sources
                     obj = newObj;
                 }
                 else
-                    obj = (UniversalNode)obj[keys[i]];
+                    obj = (UniversalNode) obj[keys[i]];
 
                 isObj = !isObj;
             }
