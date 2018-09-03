@@ -5,6 +5,8 @@ using NUnit.Framework;
 using Vostok.Commons.Testing;
 using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Sources;
+using Vostok.Configuration.Sources.Watchers;
+
 // ReSharper disable AccessToModifiedClosure
 
 namespace Vostok.Configuration.Tests.Sources
@@ -68,6 +70,8 @@ namespace Vostok.Configuration.Tests.Sources
         [Test]
         public void Should_invoke_OnError_for_observer_on_wrong_ini_format()
         {
+            SettingsFileWatcher.ClearCache();
+
             const string value = "???";
             var next = 0;
             var error = 0;

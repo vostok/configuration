@@ -31,6 +31,6 @@ namespace Vostok.Configuration.Sources.Watchers
             return watcher;
         }
 
-        internal static void ClreatCache() => Watchers.Clear();
+        internal static void ClearCache() => Watchers.Clear();
     }
 }

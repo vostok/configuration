@@ -6,6 +6,6 @@ namespace Vostok.Configuration.Tests.Sources
     public class Sources_Test
     {
         [TearDown]
-        public void TearDown() => SettingsFileWatcher.ClreatCache();
+        public void TearDown() => SettingsFileWatcher.ClearCache();
     }
 }
