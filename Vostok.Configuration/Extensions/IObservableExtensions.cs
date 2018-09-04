@@ -9,6 +9,6 @@ namespace Vostok.Configuration.Extensions
             source.Subscribe(onNext);
 
         public static IDisposable SubscribeTo<T>(this IObservable<T> source, Action<T> onNext, Action<Exception> onError) =>
-            source.Subscribe(onNext, e => Task.Run(() => onError.Invoke(e)));
+            source.Subscribe(onNext, onError);
     }
 }

@@ -22,7 +22,8 @@ namespace Vostok.Configuration.Tests
 
             var configFile = typeof(MyConfig).Name;
             var dirPath = Path.Combine(Path.GetDirectoryName(task.AssemblyPath), "settings");
-            Directory.Delete(dirPath, true);
+            if (Directory.Exists(dirPath))
+                Directory.Delete(dirPath, true);
             
             var res = false;
             new Action(() => res = task.Execute()).Should().Throw<SettingsValidationException>().WithMessage(ExceptionMessage);
