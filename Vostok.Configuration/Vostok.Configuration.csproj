@@ -65,6 +65,7 @@
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'NoTests'">
     <PubDir>..\..\..\bin\Publish\netstandard2.0\publish\</PubDir>
+    <MergedDir>Merged\</MergedDir>
   </PropertyGroup>
 
   <Target Name="RepackAssemblies" AfterTargets="Build" Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'NoTests'">
@@ -77,7 +78,7 @@
       <MergeAssemblies Include="$(PubDir)System.Reactive.Core.dll" />
       <MergeAssemblies Include="$(PubDir)System.Reactive.Linq.dll" />
     </ItemGroup>
-    <Exec WorkingDirectory="$(ProjectDir)$(OutputPath)" Command="&quot;$(ILRepack)&quot; /internalize /log:ilrepack.log /out:Merged\$(AssemblyName).dll @(MergeAssemblies, ' ')" />
+    <Exec WorkingDirectory="$(ProjectDir)$(OutputPath)" Command="&quot;$(ILRepack)&quot; /internalize /log:ilrepack.log /out:$(MergedDir)$(AssemblyName).dll @(MergeAssemblies, ' ')" />
   </Target>
 
 </Project>
