@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -16,11 +17,16 @@ namespace Vostok.Configuration.Tests
         private const string ExceptionMessage = "Settings are bad";
 
         [Test]
-        public void Should_create_example()
+        public void Should_create_json_example()
         {
-            var task = new ConfigGeneratorTask { AssemblyPath = Assembly.GetAssembly(GetType()).Location };
+            var task = new ConfigGeneratorTask
+            {
+                AssemblyPath = Assembly.GetAssembly(GetType()).Location,
+                // SettingsType = "JsOn",   is default
+            };
 
-            var configFile = typeof(MyConfig).Name;
+            var configFile1 = typeof(MyConfig).Name;
+            var configFile2 = typeof(MyConfig2).Name;
             var dirPath = Path.Combine(Path.GetDirectoryName(task.AssemblyPath), "settings");
             if (Directory.Exists(dirPath))
                 Directory.Delete(dirPath, true);
@@ -28,25 +34,96 @@ namespace Vostok.Configuration.Tests
             var res = false;
             new Action(() => res = task.Execute()).Should().Throw<SettingsValidationException>().WithMessage(ExceptionMessage);
             res.Should().BeFalse();
-            var path = Path.Combine(dirPath, configFile + ".example.json");
-            var path2 = Path.Combine(dirPath, typeof(MyConfig2).Name + ".example.json");
-            File.Exists(path).Should().BeTrue();
+            const string ext = ".example.json";
+            var path1 = Path.Combine(dirPath, configFile1 + ext);
+            var path2 = Path.Combine(dirPath, configFile2 + ext);
+            File.Exists(path1).Should().BeTrue();
             File.Exists(path2).Should().BeTrue();
-            File.ReadAllText(path, Encoding.UTF8)
+            File.ReadAllText(path1, Encoding.UTF8)
                 .Split(new[] {'\r', '\n'}, StringSplitOptions.RemoveEmptyEntries)
                 .Select(s => s.Trim())
                 .Should()
                 .BeEquivalentTo(
                     "{",
-                    "\"Int\": 1,",
-                    "\"String\": \"str\",",
-                    "\"SubConfig\": {",
-                    "\"Long\": 1234567890123,",
-                    "\"Double\": 1.2345",
-                    "}",
+                        "\"Int\": 1,",
+                        "\"String\": \"str\",",
+                        "\"SubConfig\": {",
+                            "\"Long\": 1234567890123,",
+                            "\"Double\": 1.2345",
+                        "}",
+                    "}");
+            File.ReadAllText(path2, Encoding.UTF8)
+                .Split(new[] {'\r', '\n'}, StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .Should()
+                .BeEquivalentTo(
+                    "{",
+                        "\"Int\": 2,",
+                        "\"String\": \"string\",",
+                        "\"NullString\": null",
                     "}");
 
             Directory.EnumerateFiles(dirPath).Count().Should().Be(2);
+        }
+
+        [Test]
+        public void Should_create_ini_example()
+        {
+            var task = new ConfigGeneratorTask
+            {
+                AssemblyPath = Assembly.GetAssembly(GetType()).Location,
+                ConfigType = "iNi",
+            };
+
+            var configFile1 = typeof(MyConfig).Name;
+            var configFile2 = typeof(MyConfig2).Name;
+            var dirPath = Path.Combine(Path.GetDirectoryName(task.AssemblyPath), "settings");
+            if (Directory.Exists(dirPath))
+                Directory.Delete(dirPath, true);
+            
+            var res = false;
+            new Action(() => res = task.Execute()).Should().Throw<SettingsValidationException>().WithMessage(ExceptionMessage);
+            res.Should().BeFalse();
+            const string ext = ".example.ini";
+            var path1 = Path.Combine(dirPath, configFile1 + ext);
+            var path2 = Path.Combine(dirPath, configFile2 + ext);
+            File.Exists(path1).Should().BeTrue();
+            File.Exists(path2).Should().BeTrue();
+            File.ReadAllText(path1, Encoding.UTF8)
+                .Split(new[] {'\r', '\n'}, StringSplitOptions.RemoveEmptyEntries)
+                .Should()
+                .BeEquivalentTo(
+                    "Int = 1",
+                    "String = str",
+                    "SubConfig.Long = 1234567890123",
+                    $"SubConfig.Double = {new MySubConfig().Double.ToString(CultureInfo.CurrentCulture)}");
+            File.ReadAllText(path2, Encoding.UTF8)
+                .Split(new[] {'\r', '\n'}, StringSplitOptions.RemoveEmptyEntries)
+                .Should()
+                .BeEquivalentTo(
+                    "Int = 2",
+                    "String = string",
+                    "NullString = ");
+
+            Directory.EnumerateFiles(dirPath).Count().Should().Be(2);
+        }
+
+        [Test]
+        public void Should_throw_exception_if_type_is_not_specified()
+        {
+            var task = new ConfigGeneratorTask
+            {
+                AssemblyPath = Assembly.GetAssembly(GetType()).Location,
+                ConfigType = "wrong_type",
+            };
+
+            var dirPath = Path.Combine(Path.GetDirectoryName(task.AssemblyPath), "settings");
+            if (Directory.Exists(dirPath))
+                Directory.Delete(dirPath, true);
+
+            var res = false;
+            new Action(() => res = task.Execute()).Should().Throw<ArgumentException>();
+            res.Should().BeFalse();
         }
 
         internal class GoodValidator : ISettingsValidator<MyConfig2>
@@ -82,8 +159,9 @@ namespace Vostok.Configuration.Tests
     [ValidateBy(typeof(ConfigGeneratorTask_Tests.GoodValidator))]
     public class MyConfig2
     {
-        public int Int { get; set; } = 1;
-        public string String { get; set; } = "str";
+        public int Int { get; set; } = 2;
+        public string String { get; set; } = "string";
+        public string NullString { get; set; }
     }
 
     [ValidateBy(typeof(ConfigGeneratorTask_Tests.BadValidator))]

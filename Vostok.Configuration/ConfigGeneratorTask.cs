@@ -17,6 +17,9 @@ namespace Vostok.Configuration
         [Microsoft.Build.Framework.Required]
         public string AssemblyPath { get; set; }
 
+        [Microsoft.Build.Framework.Required]
+        public string ConfigType { get; set; } = "json";
+
         public bool Execute()
         {
             Assembly assembly;
@@ -48,14 +51,25 @@ namespace Vostok.Configuration
                 var configFile = type.Name;
                 Console.Out.WriteLine(configFile);
 
-                var exampleFileName = configFile + ".example.json";
+                var configType = ConfigType.ToLower();
+                var exampleFileName = configFile + ".example." + configType;
                 var path = Path.Combine(Path.GetDirectoryName(AssemblyPath) ?? "", "settings");
                 if (!Directory.Exists(path))
                     Directory.CreateDirectory(path);
                 path = Path.Combine(path, exampleFileName);
 
-                var str = JsonSerializer.Serialize(instance, SerializeOption.Readable);
-                // var str = IniSerializer.Serialize(instance);
+                string str;
+                switch (configType)
+                {
+                    case "json":
+                        str = JsonSerializer.Serialize(instance, SerializeOption.Readable);
+                        break;
+                    case "ini":
+                        str = IniSerializer.Serialize(instance);
+                        break;
+                    default:
+                        throw new ArgumentException("Wrong type. Set 'json' or 'ini'.");
+                }
                 File.WriteAllText(path, str, Encoding.UTF8);
             }
         }
