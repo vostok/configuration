@@ -4,12 +4,13 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration
 {
-    public class ConfigGeneratorTask : ITask
+    public class ConfigGeneratorTask : Task
     {
         public IBuildEngine BuildEngine { get; set; }
         public ITaskHost HostObject { get; set; }
@@ -20,7 +21,7 @@ namespace Vostok.Configuration
         [Microsoft.Build.Framework.Required]
         public string ConfigType { get; set; } = "json";
 
-        public bool Execute()
+        public override bool Execute()
         {
             Assembly assembly;
             try
@@ -31,7 +32,6 @@ namespace Vostok.Configuration
             {
                 foreach (var loaderException in e.LoaderExceptions)
                     Console.Out.WriteLine(loaderException);
-
                 throw;
             }
 
@@ -41,16 +41,14 @@ namespace Vostok.Configuration
 
         private void HandleAssembly(Assembly assembly)
         {
-            var neededAttributes = new[] {typeof(ValidateByAttribute), typeof(RequiredByDefaultAttribute)};
+            var neededAttributes = new[] {typeof(ValidateByAttribute).FullName, typeof(RequiredByDefaultAttribute).FullName};
 
-            foreach (var type in assembly.GetTypes().Where(t => t.IsPublic && t.CustomAttributes.Any(a => neededAttributes.Contains(a.AttributeType))))
+            foreach (var type in assembly.GetTypes().Where(t => t.IsPublic && t.CustomAttributes.Any(a => neededAttributes.Contains(a.AttributeType.FullName))))
             {
                 var instance = Activator.CreateInstance(type);
                 new ConfigurationProvider().Validate(instance, type);
 
                 var configFile = type.Name;
-                Console.Out.WriteLine(configFile);
-
                 var configType = ConfigType.ToLower();
                 var exampleFileName = configFile + ".example." + configType;
                 var path = Path.Combine(Path.GetDirectoryName(AssemblyPath) ?? "", "settings");

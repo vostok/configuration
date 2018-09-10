@@ -43,6 +43,7 @@
   <ItemGroup>
     <PackageReference Include="ILRepack" Version="2.0.16" />
     <PackageReference Include="Microsoft.Build.Framework" Version="15.8.166" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="15.8.166" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="SimpleInjector" Version="4.3.0" />
     <PackageReference Include="System.Reactive" Version="4.0.0" />
@@ -59,26 +60,52 @@
     </Reference>
   </ItemGroup>
 
+   <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+     <ILRepackExecutable>$(MSBuildThisFileDirectory)..\..\vostok.devtools.ilrepack.bin\net40\ILRepack.exe</ILRepackExecutable>
+   </PropertyGroup>
+
+   <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
+     <ILRepackExecutable>dotnet $(MSBuildThisFileDirectory)../../vostok.devtools.ilrepack.bin/netcoreapp2.1/ILRepack.Core.dll</ILRepackExecutable>
+  </PropertyGroup>
+
   <Target Name="Publishing" BeforeTargets="RepackAssemblies" Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'NoTests'">
     <Exec WorkingDirectory="$(ProjectDir)" Command="dotnet publish -c Publish" />
   </Target>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'NoTests'">
-    <PubDir>..\..\..\bin\Publish\netstandard2.0\publish\</PubDir>
-    <MergedDir>Merged\</MergedDir>
+    <PubDirWithoutSlash>$(ProjectDir)bin\Publish\$(TargetFramework)\publish</PubDirWithoutSlash>
+    <PubDir>$(PubDirWithoutSlash)\</PubDir>
+    <MergedDir>$(ProjectDir)bin\Release\$(TargetFramework)\Merged\</MergedDir>
   </PropertyGroup>
+
+  <Target Name="DotnetBuildServerShutdown" BeforeTargets="BeforeBuild">
+    <Exec Command="dotnet build-server shutdown" />
+  </Target>
 
   <Target Name="RepackAssemblies" AfterTargets="Build" Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'NoTests'">
     <ItemGroup>
-      <MergeAssemblies Include="$(AssemblyName).dll" />
-      <MergeAssemblies Include="$(PubDir)Microsoft.Build.Framework.dll" />
+      <MergeAssemblies Include="$(ProjectDir)$(OutputPath)$(AssemblyName).dll" />
       <MergeAssemblies Include="$(PubDir)Newtonsoft.Json.dll" />
       <MergeAssemblies Include="$(PubDir)SimpleInjector.dll" />
       <MergeAssemblies Include="$(PubDir)System.Reactive.dll" />
       <MergeAssemblies Include="$(PubDir)System.Reactive.Core.dll" />
       <MergeAssemblies Include="$(PubDir)System.Reactive.Linq.dll" />
     </ItemGroup>
-    <Exec WorkingDirectory="$(ProjectDir)$(OutputPath)" Command="&quot;$(ILRepack)&quot; /internalize /log:ilrepack.log /out:$(MergedDir)$(AssemblyName).dll @(MergeAssemblies, ' ')" />
+    <Exec Command="$(ILRepackExecutable) /internalize /log:$(ProjectDir)$(OutputPath)ilrepack.log /lib:&quot;$(PubDirWithoutSlash)&quot; /out:$(MergedDir)$(AssemblyName).dll @(MergeAssemblies->'%(RelativeDir)%(FileName)%(Extension)', ' ')" />
+  </Target>
+
+  <Target Name="RepackAssembliesForTask" AfterTargets="Build" Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'NoTests'">
+    <ItemGroup>
+      <MergeAssemblies Include="$(ProjectDir)$(OutputPath)$(AssemblyName).dll" />
+      <MergeAssemblies Include="$(PubDir)Newtonsoft.Json.dll" />
+      <MergeAssemblies Include="$(PubDir)SimpleInjector.dll" />
+      <MergeAssemblies Include="$(PubDir)System.Reactive.dll" />
+      <MergeAssemblies Include="$(PubDir)System.Reactive.Core.dll" />
+      <MergeAssemblies Include="$(PubDir)System.Reactive.Linq.dll" />
+      <MergeAssemblies Include="$(PubDir)Vostok.Commons.Primitives.dll" />
+      <MergeAssemblies Include="$(PubDir)Vostok.Configuration.Abstractions.dll" />
+    </ItemGroup>
+    <Exec Command="$(ILRepackExecutable) /internalize /log:$(ProjectDir)$(OutputPath)ilrepack.log /lib:&quot;$(PubDirWithoutSlash)&quot; /out:$(MergedDir)$(AssemblyName).Task.dll @(MergeAssemblies->'%(RelativeDir)%(FileName)%(Extension)', ' ')" />
   </Target>
 
 </Project>

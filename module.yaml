@@ -15,6 +15,7 @@ notests *default:
     - vostok.commons.primitives
     - vostok.configuration.abstractions
     - vostok.devtools
+    - vostok.devtools.ilrepack.bin
 
 full-build > notests:
   deps:

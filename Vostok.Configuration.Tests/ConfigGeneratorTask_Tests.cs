@@ -49,7 +49,12 @@ namespace Vostok.Configuration.Tests
                         "\"String\": \"str\",",
                         "\"SubConfig\": {",
                             "\"Long\": 1234567890123,",
-                            "\"Double\": 1.2345",
+                            "\"Double\": 1.2345,",
+                            "\"Colors\": [",
+                                "0,",
+                                "15",
+                            "],",
+                            $"\"DateTime\": \"{new DateTime(2000, 1, 1):s}\"",
                         "}",
                     "}");
             File.ReadAllText(path2, Encoding.UTF8)
@@ -96,7 +101,9 @@ namespace Vostok.Configuration.Tests
                     "Int = 1",
                     "String = str",
                     "SubConfig.Long = 1234567890123",
-                    $"SubConfig.Double = {new MySubConfig().Double.ToString(CultureInfo.CurrentCulture)}");
+                    $"SubConfig.Double = {new MySubConfig().Double.ToString(CultureInfo.CurrentCulture)}",
+                    "SubConfig.Colors = ",
+                    $"SubConfig.DateTime = {new DateTime(2000, 1, 1)}");
             File.ReadAllText(path2, Encoding.UTF8)
                 .Split(new[] {'\r', '\n'}, StringSplitOptions.RemoveEmptyEntries)
                 .Should()
@@ -154,6 +161,8 @@ namespace Vostok.Configuration.Tests
     {
         public long Long { get; set; } = 1234567890123L;
         public double Double { get; set; } = 1.2345D;
+        public ConsoleColor[] Colors { get; set; } = {ConsoleColor.Black, ConsoleColor.White};
+        public DateTime DateTime { get; set; } = new DateTime(2000, 1, 1);
     }
 
     [ValidateBy(typeof(ConfigGeneratorTask_Tests.GoodValidator))]
