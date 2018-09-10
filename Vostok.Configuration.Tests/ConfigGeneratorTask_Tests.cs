@@ -14,8 +14,6 @@ namespace Vostok.Configuration.Tests
     [TestFixture]
     public class ConfigGeneratorTask_Tests
     {
-        private const string ExceptionMessage = "Settings are bad";
-
         [Test]
         public void Should_create_json_example()
         {
@@ -31,9 +29,8 @@ namespace Vostok.Configuration.Tests
             if (Directory.Exists(dirPath))
                 Directory.Delete(dirPath, true);
             
-            var res = false;
-            new Action(() => res = task.Execute()).Should().Throw<SettingsValidationException>().WithMessage(ExceptionMessage);
-            res.Should().BeFalse();
+            var res = task.Execute();
+            res.Should().BeTrue();
             const string ext = ".example.json";
             var path1 = Path.Combine(dirPath, configFile1 + ext);
             var path2 = Path.Combine(dirPath, configFile2 + ext);
@@ -85,10 +82,9 @@ namespace Vostok.Configuration.Tests
             var dirPath = Path.Combine(Path.GetDirectoryName(task.AssemblyPath), "settings");
             if (Directory.Exists(dirPath))
                 Directory.Delete(dirPath, true);
-            
-            var res = false;
-            new Action(() => res = task.Execute()).Should().Throw<SettingsValidationException>().WithMessage(ExceptionMessage);
-            res.Should().BeFalse();
+
+            var res = task.Execute();
+            res.Should().BeTrue();
             const string ext = ".example.ini";
             var path1 = Path.Combine(dirPath, configFile1 + ext);
             var path2 = Path.Combine(dirPath, configFile2 + ext);
@@ -133,18 +129,10 @@ namespace Vostok.Configuration.Tests
             res.Should().BeFalse();
         }
 
-        internal class GoodValidator : ISettingsValidator<MyConfig2>
+        internal class Validator : ISettingsValidator<MyConfig2>
         {
             public void Validate(MyConfig2 value, ISettingsValidationErrors errors)
             {
-            }
-        }
-
-        internal class BadValidator : ISettingsValidator<MyConfig3>
-        {
-            public void Validate(MyConfig3 value, ISettingsValidationErrors errors)
-            {
-                errors.ReportError(ExceptionMessage);
             }
         }
     }
@@ -165,17 +153,11 @@ namespace Vostok.Configuration.Tests
         public DateTime DateTime { get; set; } = new DateTime(2000, 1, 1);
     }
 
-    [ValidateBy(typeof(ConfigGeneratorTask_Tests.GoodValidator))]
+    [ValidateBy(typeof(ConfigGeneratorTask_Tests.Validator))]
     public class MyConfig2
     {
         public int Int { get; set; } = 2;
         public string String { get; set; } = "string";
         public string NullString { get; set; }
-    }
-
-    [ValidateBy(typeof(ConfigGeneratorTask_Tests.BadValidator))]
-    public class MyConfig3
-    {
-        public int Int { get; set; } = -1;
     }
 }

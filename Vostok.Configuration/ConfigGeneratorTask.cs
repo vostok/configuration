@@ -46,8 +46,6 @@ namespace Vostok.Configuration
             foreach (var type in assembly.GetTypes().Where(t => t.IsPublic && t.CustomAttributes.Any(a => neededAttributes.Contains(a.AttributeType.FullName))))
             {
                 var instance = Activator.CreateInstance(type);
-                new ConfigurationProvider().Validate(instance, type);
-
                 var configFile = type.Name;
                 var configType = ConfigType.ToLower();
                 var exampleFileName = configFile + ".example." + configType;

@@ -125,23 +125,6 @@ namespace Vostok.Configuration
             return this;
         }
 
-        internal void Validate(object value, Type type)
-        {
-            var errors = new List<SettingsValidationErrors>();
-
-            Validate(type, value, errors, "");
-            if (errors.Any(e => e.HasErrors))
-            {
-                errors = errors.Where(e => e.HasErrors).ToList();
-                var validationResult = new SettingsValidationErrors();
-
-                foreach (var er in errors)
-                    validationResult.MergeWith(er);
-
-                throw validationResult.ToException();
-            }
-        }
-
         private TSettings TypedSubscriptionPrepare<TSettings>(object node)
         {
             try
@@ -225,8 +208,23 @@ namespace Vostok.Configuration
             return value;
         }
 
-        private void Validate<TSettings>(TSettings value) =>
-            Validate(value, typeof(TSettings));
+        private void Validate<TSettings>(TSettings value)
+        {
+            var errors = new List<SettingsValidationErrors>();
+            var type = typeof(TSettings);
+
+            Validate(type, value, errors, "");
+            if (errors.Any(e => e.HasErrors))
+            {
+                errors = errors.Where(e => e.HasErrors).ToList();
+                var validationResult = new SettingsValidationErrors();
+
+                foreach (var er in errors)
+                    validationResult.MergeWith(er);
+
+                throw validationResult.ToException();
+            }
+        }
 
         private static void Validate(Type type, object value, ICollection<SettingsValidationErrors> errors, string prefix)
         {
