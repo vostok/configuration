@@ -4,6 +4,7 @@ using FluentAssertions;
 using FluentAssertions.Extensions;
 using NUnit.Framework;
 using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.Validation;
 using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Sources;

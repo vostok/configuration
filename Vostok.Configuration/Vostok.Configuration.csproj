@@ -12,11 +12,6 @@
 
   <PropertyGroup>
     <VersionPrefix>0.0.1</VersionPrefix>
-    <VersionSuffix></VersionSuffix>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <PackageReleaseNotes>TODO</PackageReleaseNotes>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -77,10 +72,6 @@
     <PubDir>$(PubDirWithoutSlash)\</PubDir>
     <MergedDir>$(ProjectDir)bin\Release\$(TargetFramework)\Merged\</MergedDir>
   </PropertyGroup>
-
-  <Target Name="DotnetBuildServerShutdown" BeforeTargets="BeforeBuild">
-    <Exec Command="dotnet build-server shutdown" />
-  </Target>
 
   <Target Name="RepackAssemblies" AfterTargets="Build" Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'NoTests'">
     <ItemGroup>

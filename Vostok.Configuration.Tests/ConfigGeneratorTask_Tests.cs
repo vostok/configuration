@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text;
 using FluentAssertions;
 using NUnit.Framework;
-using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.Validation;
 
 namespace Vostok.Configuration.Tests

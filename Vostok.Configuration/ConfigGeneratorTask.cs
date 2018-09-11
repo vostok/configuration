@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
-using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration
