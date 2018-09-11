@@ -86,7 +86,7 @@ namespace Vostok.Configuration.Sources.Watchers
                     tokenDelay = tokenDelaySource.Token;
                 }
 
-                await Task.Delay(settings.FileWatcherPeriod, tokenDelay).SilentlyContinue();
+                await Task.Delay(settings.FileWatcherPeriod, tokenDelay).SilentlyContinue().ConfigureAwait(false);
             }
         }
 
