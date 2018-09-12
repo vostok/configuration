@@ -30,7 +30,7 @@ namespace Vostok.Configuration.Parsers
 
         public static bool TryParse(string input, out TimeSpan result)
         {
-            input = StringMethods.PrepareForTimeSpan(input);
+            input = PrepareInput(input);
 
             if (TimeSpan.TryParse(input, out result))
                 return true;
@@ -77,5 +77,8 @@ namespace Vostok.Configuration.Parsers
 
         private static string PrepareInput(string input, string unit) =>
             input.Replace(unit, string.Empty).Trim('.').Trim();
+
+        private static string PrepareInput(string input) =>
+            input.ToLower().Replace(',', '.');
     }
 }
