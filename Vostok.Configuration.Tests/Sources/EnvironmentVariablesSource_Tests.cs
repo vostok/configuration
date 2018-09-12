@@ -2,8 +2,8 @@
 using System.Linq;
 using System.Threading;
 using FluentAssertions;
+using FluentAssertions.Extensions;
 using NUnit.Framework;
-using Vostok.Commons.Helpers.Conversions;
 using Vostok.Commons.Testing;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Sources;

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Threading;
 using FluentAssertions;
+using FluentAssertions.Extensions;
 using NUnit.Framework;
-using Vostok.Commons.Helpers.Conversions;
 using Vostok.Commons.Testing;
 using Vostok.Configuration.Sources;
 using Vostok.Configuration.Sources.Watchers;

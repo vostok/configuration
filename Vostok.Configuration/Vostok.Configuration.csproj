@@ -28,8 +28,9 @@
 
   <ItemGroup>
     <Compile Include="..\..\vostok.commons.collections\Vostok.Commons.Collections\ImmutableArrayDictionary.cs" Link="Commons\ImmutableArrayDictionary.cs" />
-    <Compile Include="..\..\vostok.commons.helpers\Vostok.Commons.Helpers\Conversions\TimeConversionExtensions.cs" Link="Commons\TimeConversionExtensions.cs" />
+    <Compile Include="..\..\vostok.commons.helpers\Vostok.Commons.Helpers\Extensions\TimeConversionExtensions.cs" Link="Commons\TimeConversionExtensions.cs" />
     <Compile Include="..\..\vostok.commons.helpers\Vostok.Commons.Helpers\Extensions\TaskExtensions.cs" Link="Commons\TaskExtensions.cs" />
+    <Compile Include="..\..\vostok.commons.helpers\Vostok.Commons.Helpers\FloatingPointParser.cs" Link="Commons\TaskExtensions.cs" />
     <Compile Include="..\..\vostok.commons.threading\Vostok.Commons.Threading\AtomicBoolean.cs" Link="Commons\AtomicBoolean.cs" />
     <Compile Include="..\..\vostok.configuration.abstractions\Vostok.Configuration.Abstractions\Validation\SettingsValidationErrors.cs" Link="Validation\SettingsValidationErrors.cs" />
     <Compile Include="..\..\vostok.commons.collections\Vostok.Commons.Collections\RecyclingBoundedCache.cs" Link="Commons\RecyclingBoundedCache.cs" />

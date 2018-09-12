@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using Vostok.Commons.Helpers;
 using Vostok.Commons.Primitives;
 using Vostok.Commons.Primitives.Parsers;
 using Vostok.Configuration.Binders;
@@ -16,9 +17,9 @@ namespace Vostok.Configuration.Extensions
             {typeof(bool), new InlineTypeParser<bool>(bool.TryParse)},
             {typeof(byte), new InlineTypeParser<byte>(byte.TryParse)},
             {typeof(char), new InlineTypeParser<char>(char.TryParse)},
-            {typeof(decimal), new InlineTypeParser<decimal>(DecimalParser.TryParse)},
-            {typeof(double), new InlineTypeParser<double>(DoubleParser.TryParse)},
-            {typeof(float), new InlineTypeParser<float>(FloatParser.TryParse)},
+            {typeof(decimal), new InlineTypeParser<decimal>(FloatingPointParser<decimal>.TryParse)},
+            {typeof(double), new InlineTypeParser<double>(FloatingPointParser<double>.TryParse)},
+            {typeof(float), new InlineTypeParser<float>(FloatingPointParser<float>.TryParse)},
             {typeof(int), new InlineTypeParser<int>(int.TryParse)},
             {typeof(long), new InlineTypeParser<long>(long.TryParse)},
             {typeof(sbyte), new InlineTypeParser<sbyte>(sbyte.TryParse)},
@@ -33,8 +34,8 @@ namespace Vostok.Configuration.Extensions
             {typeof(IPEndPoint), new InlineTypeParser<IPEndPoint>(IPEndPointParser.TryParse)},
             {typeof(Guid), new InlineTypeParser<Guid>(Guid.TryParse)},
             {typeof(Uri), new InlineTypeParser<Uri>(UriParser.TryParse)},
-            {typeof(DataSize), new InlineTypeParser<DataSize>(DataSizeParser.TryParse)},
-            {typeof(DataRate), new InlineTypeParser<DataRate>(DataRateParser.TryParse)},
+            {typeof(DataSize), new InlineTypeParser<DataSize>(DataSize.TryParse)},
+            {typeof(DataRate), new InlineTypeParser<DataRate>(DataRate.TryParse)},
         };
 
         public static IDictionary<Type, ITypeParser> AddDefaultParsers(this IDictionary<Type, ITypeParser> parsers)

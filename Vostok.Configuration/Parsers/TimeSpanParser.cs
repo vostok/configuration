@@ -1,5 +1,5 @@
 ﻿using System;
-using Vostok.Commons.Primitives.Parsers;
+using Vostok.Commons.Helpers;
 
 namespace Vostok.Configuration.Parsers
 {
@@ -35,7 +35,7 @@ namespace Vostok.Configuration.Parsers
             if (TimeSpan.TryParse(input, out result))
                 return true;
 
-            bool TryParse(string unit, out double res) => DoubleParser.TryParse(PrepareInput(input, unit), out res);
+            bool TryParse(string unit, out double res) => FloatingPointParser<double>.TryParse(PrepareInput(input, unit), out res);
 
             bool TryGet(FromValue method, string unit, out TimeSpan res)
             {
