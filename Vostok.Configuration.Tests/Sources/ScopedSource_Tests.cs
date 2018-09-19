@@ -7,7 +7,7 @@ using FluentAssertions;
 using FluentAssertions.Extensions;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
-using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.SettingsTree;
 using Vostok.Configuration.Sources;
 using Vostok.Configuration.Tests.Helper;
@@ -144,7 +144,7 @@ namespace Vostok.Configuration.Tests.Sources
                 var rsList = new List<ISettingsNode>();
 
                 var ss = new ScopedSource(jfs, "value", "list", "[1]");
-                var sub = ss.Observe().Subscribe(settings => rsList.Add(settings));
+                var sub = ss.Observe().Subscribe(p => rsList.Add(p.settings));
 
                 content = "{ 'value': { 'list': [3,4,5] } }";
                 //update file

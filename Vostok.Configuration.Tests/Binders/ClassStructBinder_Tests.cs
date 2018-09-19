@@ -4,7 +4,6 @@ using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
-using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.SettingsTree;
 // ReSharper disable ClassNeverInstantiated.Local
 #pragma warning disable 414

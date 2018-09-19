@@ -3,7 +3,6 @@ using System.Collections;
 using System.Reactive.Linq;
 using System.Text;
 using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.Abstractions.SettingsTree;
 
 namespace Vostok.Configuration.Sources
 {
@@ -15,7 +14,7 @@ namespace Vostok.Configuration.Sources
     {
         private readonly TaskSource taskSource;
         private volatile bool neverParsed;
-        private ISettingsNode currentValue;
+        private (ISettingsNode, Exception) currentValue;
 
         /// <inheritdoc />
         /// <summary>
@@ -31,23 +30,7 @@ namespace Vostok.Configuration.Sources
         /// <summary>
         /// Returns previously parsed <see cref="ISettingsNode"/> tree.
         /// </summary>
-        public ISettingsNode Get() => taskSource.Get(Observe());
-
-        /// <inheritdoc />
-        /// <summary>
-        /// <para>Subscribtion to <see cref="ISettingsNode"/> tree changes.</para>
-        /// <para>Returns current value immediately on subscribtion.</para>
-        /// </summary>
-        public IObservable<ISettingsNode> Observe()
-        {
-            if (neverParsed)
-            {
-                currentValue = GetSettings(GetVariables());
-                neverParsed = false;
-            }
-
-            return Observable.Return(currentValue);
-        }
+        public ISettingsNode Get() => taskSource.Get(Observe()).settings;
 
         private static ISettingsNode GetSettings(string vars) => new IniStringSource(vars, false).Get();
 
@@ -57,6 +40,17 @@ namespace Vostok.Configuration.Sources
             foreach (DictionaryEntry ev in Environment.GetEnvironmentVariables())
                 builder.AppendLine($"{ev.Key}={ev.Value}");
             return builder.ToString();
+        }
+
+        public IObservable<(ISettingsNode settings, Exception error)> Observe()
+        {
+            if (neverParsed)
+            {
+                currentValue = (GetSettings(GetVariables()), null as Exception);
+                neverParsed = false;
+            }
+
+            return Observable.Return(currentValue);
         }
     }
 }

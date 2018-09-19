@@ -150,11 +150,11 @@ namespace Vostok.Configuration.Tests.Sources
 
             var iss = new IniStringSource(value);
             var sub = iss.Observe().Subscribe(
-                settings =>
+                p =>
                 {
                     val++;
-                    settings["value"].Value.Should().Be("123");
-                    settings["value2"].Value.Should().Be("321");
+                    p.settings["value"].Value.Should().Be("123");
+                    p.settings["value2"].Value.Should().Be("321");
                 });
             sub.Dispose();
 

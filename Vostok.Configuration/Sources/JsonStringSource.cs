@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Reactive.Linq;
 using Newtonsoft.Json.Linq;
 using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Sources
@@ -16,7 +15,7 @@ namespace Vostok.Configuration.Sources
     {
         private readonly string json;
         private readonly TaskSource taskSource;
-        private ISettingsNode currentSettings;
+        private (ISettingsNode settings, Exception error) currentSettings;
 
         private volatile bool neverParsed;
 
@@ -37,24 +36,24 @@ namespace Vostok.Configuration.Sources
         /// <summary>
         /// Returns previously parsed <see cref="ISettingsNode"/> tree.
         /// </summary>
-        public ISettingsNode Get() => taskSource.Get(Observe());
+        public ISettingsNode Get() => taskSource.Get(Observe()).settings;
 
         /// <inheritdoc />
         /// <summary>
         /// <para>Subscribtion to <see cref="ISettingsNode"/> tree changes.</para>
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
-        public IObservable<ISettingsNode> Observe()
+        public IObservable<(ISettingsNode settings, Exception error)> Observe()
         {
             if (neverParsed)
                 try
                 {
-                    currentSettings = string.IsNullOrWhiteSpace(json) ? null : ParseJson(JObject.Parse(json), "root");
+                    currentSettings = string.IsNullOrWhiteSpace(json) ? (null, null) : (ParseJson(JObject.Parse(json), "root"), null as Exception);
                     neverParsed = false;
                 }
                 catch (Exception e)
                 {
-                    return Observable.Throw<ISettingsNode>(e);
+                    return Observable.Throw<(ISettingsNode, Exception)>(e);
                 }
 
             return Observable.Return(currentSettings);

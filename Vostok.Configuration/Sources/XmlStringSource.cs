@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reactive.Linq;
 using System.Xml;
 using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.SettingsTree;
 using Vostok.Configuration.SettingsTree.Mutable;
 
@@ -19,7 +18,7 @@ namespace Vostok.Configuration.Sources
         private readonly string xml;
         private readonly TaskSource taskSource;
         private volatile bool neverParsed;
-        private ISettingsNode currentSettings;
+        private (ISettingsNode settings, Exception error) currentSettings;
         private XmlDocument doc;
 
         /// <summary>
@@ -39,28 +38,7 @@ namespace Vostok.Configuration.Sources
         /// <summary>
         /// Returns previously parsed <see cref="ISettingsNode"/> tree.
         /// </summary>
-        public ISettingsNode Get() => taskSource.Get(Observe());
-
-        /// <inheritdoc />
-        /// <summary>
-        /// <para>Subscribtion to <see cref="ISettingsNode"/> tree changes.</para>
-        /// <para>Returns current value immediately on subscribtion.</para>
-        /// </summary>
-        public IObservable<ISettingsNode> Observe()
-        {
-            if (neverParsed)
-                try
-                {
-                    currentSettings = string.IsNullOrWhiteSpace(xml) ? null : ParseXml();
-                    neverParsed = false;
-                }
-                catch (Exception e)
-                {
-                    return Observable.Throw<ISettingsNode>(e);
-                }
-
-            return Observable.Return(currentSettings);
-        }
+        public ISettingsNode Get() => taskSource.Get(Observe()).settings;
 
         private ISettingsNode ParseXml()
         {
@@ -69,7 +47,7 @@ namespace Vostok.Configuration.Sources
             var root = doc.DocumentElement;
             if (root == null) return null;
 
-            var res = new UniversalNode(value: null, "root");
+            var res = new UniversalNode(null as string, "root");
             res.Add(root.Name, ParseElement(root, root.Name));
 
             return res.ChildrenDict.Any() ? (ObjectNode) res : null;
@@ -95,7 +73,7 @@ namespace Vostok.Configuration.Sources
                 return new UniversalNode(element.InnerText, name);
 
             var lookup = nodeList.Cast<XmlElement>().ToLookup(l => l.Name);
-            var res = new UniversalNode(value: null, name);
+            var res = new UniversalNode(null as string, name);
             foreach (var elements in lookup)
             {
                 var elem = elements.First();
@@ -103,7 +81,7 @@ namespace Vostok.Configuration.Sources
                     res.Add(elem.Name, ParseElement(elem, elem.Name));
                 else
                 {
-                    var array = new UniversalNode(value: null, elem.Name);
+                    var array = new UniversalNode(null as string, elem.Name);
                     res.Add(elem.Name, array);
                     var i = 0;
                     foreach (var node in elements)
@@ -112,6 +90,22 @@ namespace Vostok.Configuration.Sources
             }
 
             return res;
+        }
+
+        public IObservable<(ISettingsNode settings, Exception error)> Observe()
+        {
+            if (neverParsed)
+                try
+                {
+                    currentSettings = string.IsNullOrWhiteSpace(xml) ? (null, null) : (ParseXml(), null as Exception);
+                    neverParsed = false;
+                }
+                catch (Exception e)
+                {
+                    return Observable.Throw<(ISettingsNode, Exception)>(e);
+                }
+
+            return Observable.Return(currentSettings);
         }
     }
 }

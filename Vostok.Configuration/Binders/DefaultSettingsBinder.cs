@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using SimpleInjector;
 using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Parsers;
 

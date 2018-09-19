@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -6,8 +7,8 @@ using System.Reflection;
 using System.Text;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
-using Vostok.Configuration.Abstractions.Validation;
 
 namespace Vostok.Configuration.Tests
 {
@@ -131,8 +132,9 @@ namespace Vostok.Configuration.Tests
 
         internal class Validator : ISettingsValidator<MyConfig2>
         {
-            public void Validate(MyConfig2 value, ISettingsValidationErrors errors)
+            public IEnumerable<string> Validate(MyConfig2 settings)
             {
+                yield break;
             }
         }
     }

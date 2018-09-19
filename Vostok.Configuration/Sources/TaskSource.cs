@@ -1,15 +1,15 @@
 ﻿using System;
-using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Abstractions;
 
 namespace Vostok.Configuration.Sources
 {
     internal class TaskSource
     {
-        private CurrentValueObserver<ISettingsNode> rawValueObserver;
+        private CurrentValueObserver<(ISettingsNode, Exception)> rawValueObserver;
 
-        public TaskSource() => rawValueObserver = new CurrentValueObserver<ISettingsNode>();
+        public TaskSource() => rawValueObserver = new CurrentValueObserver<(ISettingsNode, Exception)>();
 
-        public ISettingsNode Get(IObservable<ISettingsNode> observable)
+        public (ISettingsNode settings, Exception error) Get(IObservable<(ISettingsNode, Exception)> observable)
         {
             try
             {
@@ -17,7 +17,7 @@ namespace Vostok.Configuration.Sources
             }
             catch
             {
-                rawValueObserver = new CurrentValueObserver<ISettingsNode>();
+                rawValueObserver = new CurrentValueObserver<(ISettingsNode, Exception)>();
                 throw;
             }
         }

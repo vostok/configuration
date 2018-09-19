@@ -1,6 +1,6 @@
 using System.Linq;
 using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.Abstractions.MergeOptions;
+using Vostok.Configuration.Abstractions.Merging;
 using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Extensions

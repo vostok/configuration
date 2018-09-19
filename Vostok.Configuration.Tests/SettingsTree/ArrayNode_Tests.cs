@@ -2,8 +2,8 @@
 using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
-using Vostok.Configuration.Abstractions.MergeOptions;
-using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Abstractions.Merging;
 using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Tests.SettingsTree

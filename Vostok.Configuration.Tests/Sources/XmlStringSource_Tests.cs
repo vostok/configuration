@@ -152,10 +152,10 @@ namespace Vostok.Configuration.Tests.Sources
 
             var xss = new XmlStringSource(value);
             var sub = xss.Observe().Subscribe(
-                settings =>
+                p =>
                 {
                     val++;
-                    settings["Value"].Value.Should().Be("123");
+                    p.settings["Value"].Value.Should().Be("123");
                 });
             sub.Dispose();
 

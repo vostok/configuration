@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Reactive.Linq;
 using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.SettingsTree;
 using Vostok.Configuration.SettingsTree.Mutable;
 
@@ -18,7 +17,7 @@ namespace Vostok.Configuration.Sources
         private readonly bool allowMultiLevelValues;
         private readonly TaskSource taskSource;
         private volatile bool neverParsed;
-        private ISettingsNode currentSettings;
+        private (ISettingsNode settings, Exception error) currentSettings;
 
         /// <summary>
         /// <para>Creates a <see cref="IniStringSource"/> instance using given string in <paramref name="ini"/> parameter</para>
@@ -39,28 +38,7 @@ namespace Vostok.Configuration.Sources
         /// <summary>
         /// Returns previously parsed <see cref="ISettingsNode"/> tree.
         /// </summary>
-        public ISettingsNode Get() => taskSource.Get(Observe());
-
-        /// <inheritdoc />
-        /// <summary>
-        /// <para>Subscribtion to <see cref="ISettingsNode"/> tree changes.</para>
-        /// <para>Returns current value immediately on subscribtion.</para>
-        /// </summary>
-        public IObservable<ISettingsNode> Observe()
-        {
-            if (neverParsed)
-                try
-                {
-                    currentSettings = string.IsNullOrWhiteSpace(ini) ? null : ParseIni(ini, "root");
-                    neverParsed = false;
-                }
-                catch (Exception e)
-                {
-                    return Observable.Throw<ISettingsNode>(e);
-                }
-
-            return Observable.Return(currentSettings);
-        }
+        public ISettingsNode Get() => taskSource.Get(Observe()).settings;
 
         private ISettingsNode ParseIni(string text, string name)
         {
@@ -133,6 +111,22 @@ namespace Vostok.Configuration.Sources
 
                 isObj = !isObj;
             }
+        }
+
+        public IObservable<(ISettingsNode settings, Exception error)> Observe()
+        {
+            if (neverParsed)
+                try
+                {
+                    currentSettings = string.IsNullOrWhiteSpace(ini) ? (null, null) : (ParseIni(ini, "root"), null as Exception);
+                    neverParsed = false;
+                }
+                catch (Exception e)
+                {
+                    return Observable.Throw<(ISettingsNode settings, Exception error)>(e);
+                }
+
+            return Observable.Return(currentSettings);
         }
     }
 }

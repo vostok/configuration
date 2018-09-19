@@ -1,12 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
+using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
-using Vostok.Configuration.Abstractions.Validation;
 using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Sources;
 using Vostok.Configuration.Tests.Helper;
@@ -759,12 +760,12 @@ namespace Vostok.Configuration.Tests
 
         private class MyValidator : ISettingsValidator<ValidatedClass>
         {
-            public void Validate(ValidatedClass value, ISettingsValidationErrors errors)
+            public IEnumerable<string> Validate(ValidatedClass value)
             {
                 if (string.IsNullOrEmpty(value.Str))
-                    errors.ReportError($"'{nameof(value.Str)}' must be non-empty.");
+                    yield return $"'{nameof(value.Str)}' must be non-empty.";
                 if (value.Int < 0)
-                    errors.ReportError($"'{nameof(value.Int)}' must be non-negative.");
+                    yield return $"'{nameof(value.Int)}' must be non-negative.";
             }
         }
 

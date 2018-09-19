@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Abstractions;
 
 namespace Vostok.Configuration.SettingsTree
 {

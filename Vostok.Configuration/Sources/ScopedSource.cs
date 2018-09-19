@@ -3,7 +3,6 @@ using System.Linq;
 using System.Reactive.Linq;
 using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Sources
@@ -18,7 +17,7 @@ namespace Vostok.Configuration.Sources
         private readonly string[] scope;
         private readonly TaskSource taskSource;
         private readonly object locker;
-        private ISettingsNode currentValue;
+        private (ISettingsNode settings, Exception error) currentValue;
         private bool firstRequest = true;
 
         /// <summary>
@@ -58,43 +57,7 @@ namespace Vostok.Configuration.Sources
         /// Gets part of RawSettings tree by specified scope.
         /// </summary>
         /// <returns>Part of RawSettings tree</returns>
-        public ISettingsNode Get() => taskSource.Get(Observe());
-
-        /// <inheritdoc />
-        /// <summary>
-        /// <para>Subscribtion to see <see cref="ISettingsNode"/> scoped subtree changes.</para>
-        /// <para>Returns current value immediately on subscribtion.</para>
-        /// <para>You can get update only if you used scope by source.</para>
-        /// </summary>
-        /// <returns>Event with new RawSettings tree</returns>
-        public IObservable<ISettingsNode> Observe()
-        {
-            if (source != null)
-                return source.Observe()
-                    .Select(
-                        settings =>
-                        {
-                            lock (locker)
-                            {
-                                var newSettings = InnerScope(settings, scope);
-                                if (!Equals(newSettings, currentValue) || firstRequest)
-                                {
-                                    firstRequest = false;
-                                    currentValue = newSettings;
-                                }
-
-                                return currentValue;
-                            }
-                        });
-
-            if (firstRequest)
-            {
-                currentValue = InnerScope(incomeSettings, scope);
-                firstRequest = false;
-            }
-
-            return Observable.Return(currentValue);
-        }
+        public ISettingsNode Get() => taskSource.Get(Observe()).settings;
 
         private static ISettingsNode InnerScope(ISettingsNode settings, params string[] scope)
         {
@@ -129,6 +92,35 @@ namespace Vostok.Configuration.Sources
             }
 
             return null;
+        }
+
+        public IObservable<(ISettingsNode settings, Exception error)> Observe()
+        {
+            if (source != null)
+                return source.Observe()
+                    .Select(
+                        pair =>
+                        {
+                            lock (locker)
+                            {
+                                var newSettings = (InnerScope(pair.settings, scope), null as Exception);
+                                if (!Equals(newSettings, currentValue) || firstRequest)
+                                {
+                                    firstRequest = false;
+                                    currentValue = newSettings;
+                                }
+
+                                return currentValue;
+                            }
+                        });
+
+            if (firstRequest)
+            {
+                currentValue = (InnerScope(incomeSettings, scope), null);
+                firstRequest = false;
+            }
+
+            return Observable.Return(currentValue);
         }
     }
 }

@@ -4,8 +4,7 @@ using System.Linq;
 using System.Reactive.Linq;
 using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.Abstractions.MergeOptions;
-using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Abstractions.Merging;
 
 namespace Vostok.Configuration.Sources
 {
@@ -17,7 +16,7 @@ namespace Vostok.Configuration.Sources
         private readonly IReadOnlyCollection<IConfigurationSource> sources;
         private readonly SettingsMergeOptions options;
         private readonly TypedTaskSource taskSource;
-        private IObservable<ISettingsNode> observer;
+        private IObservable<(ISettingsNode settings, Exception error)> observer;
 
         /// <summary>
         /// <para>Creates a <see cref="CombinedSource"/> instance new source using combining options.</para>
@@ -53,7 +52,7 @@ namespace Vostok.Configuration.Sources
         /// Returns previously combined configurations. Null if sources where not specified.
         /// </summary>
         /// <returns>Combine as RawSettings tree</returns>
-        public ISettingsNode Get() => taskSource.Get(Observe());
+        public ISettingsNode Get() => taskSource.Get(Observe().Select(p => p.settings));
 
         /// <inheritdoc />
         /// <summary>
@@ -61,7 +60,7 @@ namespace Vostok.Configuration.Sources
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
         /// <returns>Event with new RawSettings tree</returns>
-        public IObservable<ISettingsNode> Observe() =>
-            observer ?? (observer = sources.Select(s => s.Observe()).CombineLatest().Select(l => l.Aggregate((a, b) => a.Merge(b, options))));
+        public IObservable<(ISettingsNode settings, Exception error)> Observe() => 
+            observer ?? (observer = sources.Select(s => s.Observe()).CombineLatest().Select(l => l.Aggregate((a, b) => (a.settings.Merge(b.settings, options), null as Exception)))); // TODO(krait):  merge exceptions
     }
 }

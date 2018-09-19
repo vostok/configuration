@@ -1,18 +1,18 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using NUnit.Framework;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
-using Vostok.Configuration.Abstractions.Validation;
 using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Sources;
 using Vostok.Configuration.Tests.Helper;
 
 namespace Vostok.Configuration.Tests
 {
-    [TestFixture]
+    [TestFixture, Explicit]
     public class Additional_Tests
     {
         private const string TestName = nameof(Additional_Tests);
@@ -62,6 +62,7 @@ namespace Vostok.Configuration.Tests
                     subscription.Dispose();
                     Thread.Sleep(100.Milliseconds());
                     Console.WriteLine("Resubscription");
+                    Console.WriteLine(e);
                     subscription = Subscribe(cp);
                 });
 
@@ -74,12 +75,12 @@ namespace Vostok.Configuration.Tests
 
         private class MyClassValidator: ISettingsValidator<MyClass>
         {
-            public void Validate(MyClass value, ISettingsValidationErrors errors)
+            public IEnumerable<string> Validate(MyClass settings)
             {
-                if (string.IsNullOrWhiteSpace(value.String))
-                    errors.ReportError("String is empty");
-                if (value.Integer < 0)
-                    errors.ReportError("Int is negative");
+                if (string.IsNullOrWhiteSpace(settings.String))
+                    yield return "String is empty";
+                if (settings.Integer < 0)
+                    yield return "Int is negative";
             }
         }
     }

@@ -119,19 +119,19 @@ namespace Vostok.Configuration.Tests.Sources
                 watcher = new SingleFileWatcherSubstitute(f, e);
                 return watcher;
             });
-            var sub1 = jfs.Observe().Subscribe(settings =>
+            var sub1 = jfs.Observe().Subscribe(p =>
             {
                 val++;
-                settings["Param2"].Value.Should().Be("set2", "#1 on create file");
+                p.settings["Param2"].Value.Should().Be("set2", "#1 on create file");
             });
 
             //create file
             watcher.GetUpdate(content);
             
-            var sub2 = jfs.Observe().Subscribe(settings =>
+            var sub2 = jfs.Observe().Subscribe(p =>
             {
                 val++;
-                settings["Param2"].Value.Should().Be("set2", "#2 on create file");
+                p.settings["Param2"].Value.Should().Be("set2", "#2 on create file");
             });
 
             Thread.Sleep(100.Milliseconds());
@@ -163,10 +163,10 @@ namespace Vostok.Configuration.Tests.Sources
                 watcher.GetUpdate(content); //create file
                 return watcher;
             });
-            var sub = jfs.Observe().Subscribe(settings =>
+            var sub = jfs.Observe().Subscribe(p =>
             {
                 val++;
-                settings["Param"].Value.Should().Be("set1");
+                p.settings["Param"].Value.Should().Be("set1");
             });
 
             content = "{ 'Param': 'set1' }";

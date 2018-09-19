@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Reactive.Linq;
 using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Sources.Watchers;
 
 namespace Vostok.Configuration.Sources
@@ -14,11 +13,11 @@ namespace Vostok.Configuration.Sources
     {
         private readonly string filePath;
         private readonly FileSourceSettings settings;
-        private readonly Func<string, ISettingsNode> parseSettings;
+        private readonly Func<string, (ISettingsNode, Exception)> parseSettings;
         private readonly Func<string, FileSourceSettings, IObservable<string>> fileWatcherCreator;
         private readonly TaskSource taskSource;
-        private IObservable<ISettingsNode> fileObserver;
-        private ISettingsNode currentValue;
+        private IObservable<(ISettingsNode settings, Exception error)> fileObserver;
+        private (ISettingsNode settings, Exception error) currentValue;
 
         /// <summary>
         /// <para>Creates a <see cref="BaseFileSource"/> instance.</para>
@@ -27,12 +26,12 @@ namespace Vostok.Configuration.Sources
         /// <param name="filePath">File name with settings</param>
         /// <param name="settings">File parsing settings</param>
         /// <param name="parseSettings">"Get" method invocation for string source</param>
-        protected BaseFileSource(string filePath, FileSourceSettings settings, Func<string, ISettingsNode> parseSettings)
+        protected BaseFileSource(string filePath, FileSourceSettings settings, Func<string, (ISettingsNode, Exception)> parseSettings)
             : this(filePath, settings, parseSettings, SettingsFileWatcher.WatchFile)
         {
         }
 
-        internal BaseFileSource(string filePath, FileSourceSettings settings, Func<string, ISettingsNode> parseSettings, Func<string, FileSourceSettings, IObservable<string>> fileWatcherCreator)
+        internal BaseFileSource(string filePath, FileSourceSettings settings, Func<string, (ISettingsNode, Exception)> parseSettings, Func<string, FileSourceSettings, IObservable<string>> fileWatcherCreator)
         {
             this.filePath = filePath;
             this.settings = settings ?? new FileSourceSettings();
@@ -47,16 +46,17 @@ namespace Vostok.Configuration.Sources
         /// <para>Waits for first read.</para>
         /// </summary>
         /// <exception cref="Exception">Only on first read. Otherwise returns last parsed value.</exception>
-        public ISettingsNode Get() => taskSource.Get(Observe());
+        public ISettingsNode Get() => taskSource.Get(Observe()).settings;
 
         /// <inheritdoc />
         /// <summary>
         /// <para>Subscribtion to <see cref="ISettingsNode"/> tree changes.</para>
         /// <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
-        public IObservable<ISettingsNode> Observe()
+        public IObservable<(ISettingsNode settings, Exception error)> Observe()
         {
-            if (fileObserver != null) return fileObserver;
+            if (fileObserver != null)
+                return fileObserver;
 
             var fileWatcher = SettingsFileWatcher.WatchFile(filePath, settings, fileWatcherCreator);
             fileObserver = fileWatcher.Select(

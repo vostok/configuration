@@ -5,8 +5,6 @@ using System.Linq;
 using System.Reactive.Linq;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
-using Vostok.Configuration.Abstractions.SettingsTree;
-using Vostok.Configuration.Abstractions.Validation;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Sources;
@@ -28,9 +26,13 @@ namespace Vostok.Configuration
         private readonly ConcurrentQueue<IConfigurationSource> sourceCacheQueue;
 
         /// <summary>
-        /// Creates a <see cref="ConfigurationProvider"/> instance with given settings <paramref name="configurationProviderSettings"/>
+        ///     Creates a <see cref="ConfigurationProvider" /> instance with given settings
+        ///     <paramref name="configurationProviderSettings" />
         /// </summary>
-        /// <param name="configurationProviderSettings">Provider settings. Uses <see cref="DefaultSettingsBinder"/> if <see cref="ConfigurationProviderSettings.Binder"/> is null.</param>
+        /// <param name="configurationProviderSettings">
+        ///     Provider settings. Uses <see cref="DefaultSettingsBinder" /> if
+        ///     <see cref="ConfigurationProviderSettings.Binder" /> is null.
+        /// </param>
         public ConfigurationProvider(ConfigurationProviderSettings configurationProviderSettings = null)
         {
             settings = configurationProviderSettings ?? new ConfigurationProviderSettings();
@@ -48,14 +50,14 @@ namespace Vostok.Configuration
 
         /// <inheritdoc />
         /// <summary>
-        /// <para>Returns value of given type <typeparamref name="TSettings"/> using binder from constructor.</para>
-        /// <para>Uses cache.</para>
+        ///     <para>Returns value of given type <typeparamref name="TSettings" /> using binder from constructor.</para>
+        ///     <para>Uses cache.</para>
         /// </summary>
         public TSettings Get<TSettings>()
         {
             var type = typeof(TSettings);
             if (typeCache.TryGetValue(type, out var item))
-                return (TSettings) item;
+                return (TSettings)item;
             if (!typeSources.ContainsKey(type))
                 throw new ArgumentException($"{UnknownTypeExceptionMsg.Replace("typeName", type.Name)}");
             return taskSource.Get(Observe<TSettings>());
@@ -63,24 +65,26 @@ namespace Vostok.Configuration
 
         /// <inheritdoc />
         /// <summary>
-        /// Returns value of given type <typeparamref name="TSettings"/> from specified <paramref name="source"/>.
+        ///     Returns value of given type <typeparamref name="TSettings" /> from specified <paramref name="source" />.
         /// </summary>
-        public TSettings Get<TSettings>(IConfigurationSource source) =>
-            sourceCache.TryGetValue(source, out var item)
-                ? (TSettings) item
+        public TSettings Get<TSettings>(IConfigurationSource source)
+        {
+            return sourceCache.TryGetValue(source, out var item)
+                ? (TSettings)item
                 : taskSource.Get(Observe<TSettings>(source));
+        }
 
         /// <inheritdoc />
         /// <summary>
-        /// <para>Subscribtion to see changes in source.</para>
-        /// <para>Returns current value immediately on subscribtion.</para>
+        ///     <para>Subscribtion to see changes in source.</para>
+        ///     <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
         /// <returns>Event with new value</returns>
         public IObservable<TSettings> Observe<TSettings>()
         {
             var type = typeof(TSettings);
             if (!typeWatchers.ContainsKey(type) && typeSources.ContainsKey(type))
-                typeWatchers[type] = typeSources[type].Observe().Select(SubscribeWatcher<TSettings>);
+                typeWatchers[type] = typeSources[type].Observe().Select(p => SubscribeWatcher<TSettings>(p.settings));
 
             if (typeWatchers.TryGetValue(type, out var watcher))
                 return watcher.Select(TypedSubscriptionPrepare<TSettings>);
@@ -90,15 +94,28 @@ namespace Vostok.Configuration
 
         /// <inheritdoc />
         /// <summary>
-        /// <para>Subscribtion to see changes in specified <paramref name="source"/>.</para>
-        /// <para>Returns current value immediately on subscribtion.</para>
+        ///     <para>Subscribtion to see changes in specified <paramref name="source" />.</para>
+        ///     <para>Returns current value immediately on subscribtion.</para>
         /// </summary>
         /// <returns>Event with new value</returns>
-        public IObservable<TSettings> Observe<TSettings>(IConfigurationSource source) =>
-            source.Observe().Select(s => SourcedSubscriptionPrepare<TSettings>(source, s));
+        public IObservable<TSettings> Observe<TSettings>(IConfigurationSource source)
+        {
+            return source.Observe().Select(s => SourcedSubscriptionPrepare<TSettings>(source, s.settings));
+        }
+
+        public IObservable<(TSettings settings, Exception error)> ObserveWithErrors<TSettings>()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IObservable<(TSettings settings, Exception error)> ObserveWithErrors<TSettings>(IConfigurationSource source)
+        {
+            throw new NotImplementedException();
+        }
 
         /// <summary>
-        /// Changes source to combination of source for given type <typeparamref name="TSettings"/> and <paramref name="source"/>
+        ///     Changes source to combination of source for given type <typeparamref name="TSettings" /> and
+        ///     <paramref name="source" />
         /// </summary>
         /// <typeparam name="TSettings">Type of souce to combine with</typeparam>
         /// <param name="source">Second souce to combine with</param>
@@ -130,7 +147,7 @@ namespace Vostok.Configuration
         {
             try
             {
-                var value = (TSettings) node;
+                var value = (TSettings)node;
                 AddInCache(value);
                 return value;
             }
@@ -139,7 +156,7 @@ namespace Vostok.Configuration
                 if (typeCache.TryGetValue(typeof(TSettings), out var val) && val != null)
                 {
                     settings.ErrorCallBack?.Invoke(e);
-                    return (TSettings) val;
+                    return (TSettings)val;
                 }
 
                 throw;
@@ -173,7 +190,7 @@ namespace Vostok.Configuration
                 if (sourceCache.TryGetValue(source, out var val) && val != null)
                 {
                     settings.ErrorCallBack?.Invoke(e);
-                    return (TSettings) val;
+                    return (TSettings)val;
                 }
 
                 throw;
@@ -195,7 +212,7 @@ namespace Vostok.Configuration
                 if (typeCache.TryGetValue(typeof(TSettings), out var val) && val != null)
                 {
                     settings.ErrorCallBack?.Invoke(e);
-                    return (TSettings) val;
+                    return (TSettings)val;
                 }
 
                 throw;
@@ -211,43 +228,40 @@ namespace Vostok.Configuration
 
         private void Validate<TSettings>(TSettings value)
         {
-            var errors = new List<SettingsValidationErrors>();
             var type = typeof(TSettings);
 
-            Validate(type, value, errors, "");
-            if (errors.Any(e => e.HasErrors))
+            var errors = Validate(type, value, "").ToList();
+            if (errors.Any())
             {
-                errors = errors.Where(e => e.HasErrors).ToList();
-                var validationResult = new SettingsValidationErrors();
-
-                foreach (var er in errors)
-                    validationResult.MergeWith(er);
-
-                throw validationResult.ToException();
+                throw new SettingsValidationException(string.Join(Environment.NewLine, errors));
             }
         }
 
-        private static void Validate(Type type, object value, ICollection<SettingsValidationErrors> errors, string prefix)
+        private static IEnumerable<string> Validate(Type type, object value, string prefix)
         {
-            if (value == null) return;
-            var validAttribute = type.GetCustomAttributes(typeof(ValidateByAttribute), false).FirstOrDefault() as ValidateByAttribute;
-            if (validAttribute == null) return;
+            if (value == null)
+                yield break;
+            if (!(type.GetCustomAttributes(typeof(ValidateByAttribute), false).FirstOrDefault() is ValidateByAttribute validAttribute))
+                yield break;
 
-            var validator = validAttribute.Validator;
-            var validateMethod = validator.GetType().GetMethod(nameof(ISettingsValidator<string>.Validate));
-            var validationResult = new SettingsValidationErrors();
-            validateMethod?.Invoke(validator, new[] {value, validationResult});
-            validationResult.Prefix = prefix;
-            errors.Add(validationResult);
+            var validator = Activator.CreateInstance(validAttribute.ValidatorType);
+            var validateMethod = validator.GetType().GetMethod(nameof(ISettingsValidator<object>.Validate));
+            if (validateMethod == null)
+                yield break; // TODO(krait): Report error.
+            foreach (var error in (IEnumerable<string>)validateMethod.Invoke(validator, new[] { value }))
+                yield return prefix + error;
 
-            string SetPrefix(string name) => prefix.Replace(": ", ".") + name + ": ";
-            bool IsAllowedType(Type f) => !f.IsValueType && !f.IsArray && f.IsClass && f != typeof(string);
+            foreach (var field in type.GetFields())
+            {
+                foreach (var error in Validate(field.FieldType, field.GetValue(value), field.Name))
+                    yield return prefix + error;
+            }
 
-            foreach (var field in type.GetFields().Where(f => IsAllowedType(f.FieldType)))
-                Validate(field.FieldType, field.GetValue(value), errors, SetPrefix(field.Name));
-
-            foreach (var prop in type.GetProperties().Where(p => IsAllowedType(p.PropertyType)))
-                Validate(prop.PropertyType, prop.GetValue(value), errors, SetPrefix(prop.Name));
+            foreach (var prop in type.GetProperties())
+            {
+                foreach (var error in Validate(prop.PropertyType, prop.GetValue(value), prop.Name))
+                    yield return prefix + error;
+            }
         }
     }
 }

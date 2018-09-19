@@ -5,7 +5,7 @@ using FluentAssertions;
 using FluentAssertions.Extensions;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
-using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration.Tests.Sources
@@ -31,10 +31,10 @@ namespace Vostok.Configuration.Tests.Sources
         {
             var val = false;
             var evs = new EnvironmentVariablesSource();
-            var sub = evs.Observe().Subscribe(settings =>
+            var sub = evs.Observe().Subscribe(p =>
             {
                 val = true;
-                CheckResult(settings);
+                CheckResult(p.settings);
             });
             Thread.Sleep(200.Milliseconds());
             sub.Dispose();

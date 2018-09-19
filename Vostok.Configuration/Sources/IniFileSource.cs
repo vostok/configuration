@@ -1,6 +1,6 @@
 ﻿using System;
 using JetBrains.Annotations;
-using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Abstractions;
 
 namespace Vostok.Configuration.Sources
 {
@@ -26,6 +26,6 @@ namespace Vostok.Configuration.Sources
         {
         }
 
-        private static ISettingsNode ParseSettings(string str) => new IniStringSource(str).Get();
+        private static (ISettingsNode settings, Exception error) ParseSettings(string str) => (new IniStringSource(str).Get(), null);
     }
 }

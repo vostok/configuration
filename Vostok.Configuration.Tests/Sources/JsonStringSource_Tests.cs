@@ -139,10 +139,10 @@ namespace Vostok.Configuration.Tests.Sources
 
             var jss = new JsonStringSource(value);
             var sub = jss.Observe().Subscribe(
-                settings =>
+                p =>
                 {
                     val++;
-                    settings["IntValue"].Value.Should().Be("123");
+                    p.settings["IntValue"].Value.Should().Be("123");
                 });
             sub.Dispose();
 

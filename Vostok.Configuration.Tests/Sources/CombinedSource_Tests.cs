@@ -6,7 +6,7 @@ using FluentAssertions;
 using FluentAssertions.Extensions;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
-using Vostok.Configuration.Abstractions.MergeOptions;
+using Vostok.Configuration.Abstractions.Merging;
 using Vostok.Configuration.Sources;
 using Vostok.Configuration.Tests.Helper;
 
@@ -90,8 +90,9 @@ namespace Vostok.Configuration.Tests.Sources
             var val = 0;
 
             var ccs = CreateCombinedSource(filesContent, new SettingsMergeOptions {ObjectMergeStyle = ObjectMergeStyle.Deep});
-            var sub = ccs.Observe().Subscribe(settings =>
+            var sub = ccs.Observe().Subscribe(p =>
             {
+                var settings = p.settings;
                 val++;
                 settings["value 1"].Value.Should().Be("1");
                 settings["value 2"].Value.Should().Be("2");

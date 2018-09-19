@@ -5,7 +5,6 @@ using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons.Primitives;
 using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.SettingsTree;
 
 namespace Vostok.Configuration.Tests.Binders
