@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 
-namespace Vostok.Configuration.Sources
+namespace Vostok.Configuration
 {
     internal class TypedTaskSource
     {
@@ -11,7 +11,7 @@ namespace Vostok.Configuration.Sources
 
         public T Get<T>(IObservable<T> observable)
         {
-            var observer = (CurrentValueObserver<T>) typedValueObservers.GetOrAdd(typeof(T), _ => new CurrentValueObserver<T>());
+            var observer = (CurrentValueObserver<T>)typedValueObservers.GetOrAdd(typeof(T), _ => new CurrentValueObserver<T>());
 
             try
             {

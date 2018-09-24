@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.SettingsTree;
+using Vostok.Configuration.Abstractions.SettingsTree;
 
 namespace Vostok.Configuration.Tests.Binders
 {
@@ -53,14 +53,14 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var settings = new ObjectNode(new SortedDictionary<string, ISettingsNode>
             {
-                { "1", new ObjectNode(new SortedDictionary<string, ISettingsNode>
+                { "1", new ObjectNode("1", new SortedDictionary<string, ISettingsNode>
                 {
                     { "100", new ValueNode("true", "100") },
-                }, "1") },
-                { "2", new ObjectNode(new SortedDictionary<string, ISettingsNode>
+                }) },
+                { "2", new ObjectNode("2", new SortedDictionary<string, ISettingsNode>
                 {
                     { "200", new ValueNode("false", "200") },
-                }, "2") },
+                }) },
             });
             var binder = Container.GetInstance<ISettingsBinder<Dictionary<int, Dictionary<long, bool>>>>();
             var result = binder.Bind(settings);

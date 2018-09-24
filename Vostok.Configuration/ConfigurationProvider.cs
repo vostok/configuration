@@ -5,9 +5,8 @@ using System.Linq;
 using System.Reactive.Linq;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
+using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
-using Vostok.Configuration.Extensions;
-using Vostok.Configuration.Sources;
 
 namespace Vostok.Configuration
 {
@@ -119,7 +118,7 @@ namespace Vostok.Configuration
         /// </summary>
         /// <typeparam name="TSettings">Type of souce to combine with</typeparam>
         /// <param name="source">Second souce to combine with</param>
-        public ConfigurationProvider SetupSourceFor<TSettings>(IConfigurationSource source)
+        public void SetupSourceFor<TSettings>(IConfigurationSource source)
         {
             var type = typeof(TSettings);
             var hasWatcher = typeWatchers.ContainsKey(type);
@@ -128,11 +127,7 @@ namespace Vostok.Configuration
             if (!hasWatcher && typeCache.ContainsKey(type))
                 throw new InvalidOperationException($"{nameof(ConfigurationProvider)}: it is not allowed to add sources for \"{type.Name}\" to a {nameof(ConfigurationProvider)} after {nameof(SetManually)}() was called for this type.");
 
-            if (typeSources.TryGetValue(type, out var existingSource))
-                source = existingSource.Combine(source);
             typeSources[type] = source;
-
-            return this;
         }
 
         public ConfigurationProvider SetManually<TSettings>(TSettings value, bool validate = false)

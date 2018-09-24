@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Linq;
-using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Abstractions.SettingsTree;
 
-namespace Vostok.Configuration.SettingsTree
+namespace Vostok.Configuration.Extensions
 {
     internal static class SettingsNode
     {

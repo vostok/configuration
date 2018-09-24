@@ -4,11 +4,10 @@ using System.Net;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons.Primitives;
-using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
+using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Parsers;
-using Vostok.Configuration.SettingsTree;
 // ReSharper disable UnusedMember.Local
 // ReSharper disable UnassignedGetOnlyAutoProperty
 #pragma warning disable 414
@@ -605,15 +604,15 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var settings = new ObjectNode(new SortedDictionary<string, ISettingsNode>
             {
-                { "key1", new ObjectNode(new SortedDictionary<string, ISettingsNode>
+                { "key1", new ObjectNode("key1", new SortedDictionary<string, ISettingsNode>
                     {
                         { "PublicIntProp", new ValueNode("1", "PublicIntProp") },
-                    }, "key1")
+                    })
                 },
-                { "key2", new ObjectNode(new SortedDictionary<string, ISettingsNode>
+                { "key2", new ObjectNode("key2", new SortedDictionary<string, ISettingsNode>
                     {
                         { "PublicIntProp", new ValueNode("2", "PublicIntProp") },
-                    }, "key2")
+                    })
                 },
             });
             binder.Bind<Dictionary<string, MyClass2>>(settings)

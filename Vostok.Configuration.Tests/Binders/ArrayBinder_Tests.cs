@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.SettingsTree;
+using Vostok.Configuration.Abstractions.SettingsTree;
 
 namespace Vostok.Configuration.Tests.Binders
 {
