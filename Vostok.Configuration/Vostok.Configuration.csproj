@@ -31,8 +31,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ILRepack" Version="2.0.16" />
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="SimpleInjector" Version="4.3.0" />
     <PackageReference Include="System.Reactive" Version="4.0.0" />
     <PackageReference Include="System.Reactive.Core" Version="4.0.0" />
@@ -42,9 +40,6 @@
   <ItemGroup>
     <Reference Include="Vostok.Configuration.Abstractions">
       <HintPath>..\..\vostok.configuration.abstractions\Vostok.Configuration.Abstractions\bin\Release\netstandard2.0\Vostok.Configuration.Abstractions.dll</HintPath>
-    </Reference>
-    <Reference Include="Vostok.Commons.Primitives">
-      <HintPath>..\..\vostok.commons.primitives\Vostok.Commons.Primitives\bin\Release\netstandard2.0\Vostok.Commons.Primitives.dll</HintPath>
     </Reference>
   </ItemGroup>
 

@@ -9,10 +9,8 @@ notests *default:
       - Vostok.Configuration/bin/Release/netstandard2.0/Merged/Vostok.Configuration.dll
 
   deps:
-    - vostok.commons.collections/src
     - vostok.commons.helpers/src
     - vostok.commons.threading/src
-    - vostok.commons.primitives
     - vostok.configuration.abstractions
     - vostok.devtools
     - vostok.devtools.ilrepack.bin
