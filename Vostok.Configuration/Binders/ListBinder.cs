@@ -2,7 +2,6 @@
 using System.Linq;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
-using Vostok.Configuration.Extensions;
 
 namespace Vostok.Configuration.Binders
 {
@@ -19,16 +18,16 @@ namespace Vostok.Configuration.Binders
         public ListBinder(ISettingsBinder<T> elementBinder) =>
             this.elementBinder = elementBinder;
 
-        public List<T> Bind(ISettingsNode settings)
-        {
-            SettingsNode.CheckSettings(settings);
-            return settings.Children.Select(n => elementBinder.Bind(n)).ToList();
-        }
+        public List<T> Bind(ISettingsNode settings) => settings.Children.Select(n => elementBinder.Bind(n)).ToList();
 
         IList<T> ISettingsBinder<IList<T>>.Bind(ISettingsNode settings) => Bind(settings);
+
         IEnumerable<T> ISettingsBinder<IEnumerable<T>>.Bind(ISettingsNode settings) => Bind(settings);
+
         ICollection<T> ISettingsBinder<ICollection<T>>.Bind(ISettingsNode settings) => Bind(settings);
+
         IReadOnlyCollection<T> ISettingsBinder<IReadOnlyCollection<T>>.Bind(ISettingsNode settings) => Bind(settings);
+
         IReadOnlyList<T> ISettingsBinder<IReadOnlyList<T>>.Bind(ISettingsNode settings) => Bind(settings);
     }
 }

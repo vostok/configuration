@@ -8,14 +8,6 @@ using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Binders
 {
-    /// <summary>
-    /// Delegate for adding own parser into <see cref="ISettingsBinder"/>
-    /// </summary>
-    /// <typeparam name="T">Type to parse in</typeparam>
-    /// <param name="s">SOurce string</param>
-    /// <param name="value">Result value</param>
-    public delegate bool TryParse<T>(string s, out T value);
-
     /// <inheritdoc />
     /// <summary>
     /// Default binder
@@ -73,6 +65,9 @@ namespace Vostok.Configuration.Binders
         /// <returns></returns>
         public TSettings Bind<TSettings>(ISettingsNode settings)
         {
+            if (settings == null)
+                throw new ArgumentNullException(nameof(settings));
+
             var factory = Container.GetInstance<ISettingsBinderFactory>();
             var binder = factory.CreateFor<TSettings>();
             return binder.Bind(settings);

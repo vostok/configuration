@@ -1,70 +1,59 @@
 ﻿using System;
 using System.Collections.Generic;
 using FluentAssertions;
+using NSubstitute;
+using NSubstitute.ExceptionExtensions;
+using NSubstitute.Extensions;
 using NUnit.Framework;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Binders;
 
 namespace Vostok.Configuration.Tests.Binders
 {
-    public class ArrayBinder_Tests: Binders_Test
+    public class ArrayBinder_Tests
     {
+        private ArrayBinder<bool[]> binder;
+
+        [SetUp]
+        public void TestSetup()
+        {
+            var boolBinder = Substitute.For<ISettingsBinder<object>>();
+            boolBinder.Bind(Arg.Is<ISettingsNode>(n => n is ValueNode && ((ValueNode)n).Value == "true")).Returns(true);
+            boolBinder.ReturnsForAll<object>(_ => throw new InvalidCastException());
+
+            var factory = Substitute.For<ISettingsBinderFactory>();
+            factory.CreateFor(typeof(bool)).Returns(boolBinder);
+
+            binder = new ArrayBinder<bool[]>(factory);
+        }
+
         [Test]
-        public void Should_bind_to_Array_of_primitives()
+        public void Should_bind_arrays_with_items()
         {
             var settings = new ArrayNode(new List<ISettingsNode>
             {
-                new ValueNode("TRUE"),
-                new ValueNode("false"),
+                new ValueNode("true"),
+                new ValueNode("true"),
             });
-            var binder = Container.GetInstance<ISettingsBinder<bool[]>>();
-            var result = binder.Bind(settings);
-            result.Should().BeEquivalentTo(new[] { true, false });
+
+            binder.Bind(settings).Should().Equal(true, true);
         }
 
         [Test]
-        public void Should_bind_to_Array_of_structs()
+        public void Should_bind_arrays_without_items()
         {
-            var settings = new ArrayNode(new List<ISettingsNode>
-            {
-                new ObjectNode(new SortedDictionary<string, ISettingsNode>
-                {
-                    ["Int"] = new ValueNode("1"),
-                    ["String"] = new ValueNode("str1"),
-                }),
-                new ObjectNode(new SortedDictionary<string, ISettingsNode>
-                {
-                    ["Int"] = new ValueNode("2"),
-                    ["String"] = new ValueNode("str2"),
-                }),
-            });
-            var binder = Container.GetInstance<ISettingsBinder<SimpleStruct[]>>();
-            var result = binder.Bind(settings);
-            result.Should().BeEquivalentTo(new[]
-            {
-                new SimpleStruct{ Int = 1, String = "str1" },
-                new SimpleStruct{ Int = 2, String = "str2" },
-            });
+            var settings = new ArrayNode(new List<ISettingsNode>());
+
+            binder.Bind(settings).Should().BeEmpty();
         }
 
         [Test]
-        public void Should_throw_exception_if_tree_is_null()
+        public void Should_throw_if_inner_binder_throws()
         {
-            var binder = Container.GetInstance<ISettingsBinder<SimpleStruct[]>>();
-            new Action(() => binder.Bind(null)).Should().Throw<ArgumentNullException>();
-        }
+            var settings = new ArrayNode(new List<ISettingsNode> {new ValueNode("xxx")});
 
-        [Test]
-        public void Should_throw_exception_if_tree_is_empty()
-        {
-            var binder = Container.GetInstance<ISettingsBinder<SimpleStruct[]>>();
-            new Action(() => binder.Bind(new ArrayNode(name:null))).Should().Throw<ArgumentNullException>();
-        }
-
-        private struct SimpleStruct
-        {
-            public int Int { get; set; }
-            public string String { get; set; }
+            new Action(() => binder.Bind(settings)).Should().Throw<InvalidCastException>();
         }
     }
 }

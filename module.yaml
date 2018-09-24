@@ -11,6 +11,7 @@ notests *default:
   deps:
     - vostok.commons.helpers/src
     - vostok.commons.threading/src
+    - vostok.commons.primitives
     - vostok.configuration.abstractions
     - vostok.devtools
     - vostok.devtools.ilrepack.bin
