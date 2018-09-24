@@ -11,11 +11,11 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <VersionPrefix>0.0.1</VersionPrefix>
+    <VersionPrefix>0.0.4</VersionPrefix>
   </PropertyGroup>
 
   <PropertyGroup>
-    <Title>Vostok configuration library</Title>
+    <Title>Vostok.Configuration</Title>
     <Description>Configuration library for microservice toolkit http://vostok.tools/</Description>
   </PropertyGroup>
 
@@ -64,7 +64,6 @@
   <Target Name="RepackAssemblies" AfterTargets="Build" Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'NoTests'">
     <ItemGroup>
       <MergeAssemblies Include="$(ProjectDir)$(OutputPath)$(AssemblyName).dll" />
-      <MergeAssemblies Include="$(PubDir)Newtonsoft.Json.dll" />
       <MergeAssemblies Include="$(PubDir)SimpleInjector.dll" />
       <MergeAssemblies Include="$(PubDir)System.Reactive.dll" />
       <MergeAssemblies Include="$(PubDir)System.Reactive.Core.dll" />
@@ -76,12 +75,10 @@
   <Target Name="RepackAssembliesForTask" AfterTargets="Build" Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'NoTests'">
     <ItemGroup>
       <MergeAssemblies Include="$(ProjectDir)$(OutputPath)$(AssemblyName).dll" />
-      <MergeAssemblies Include="$(PubDir)Newtonsoft.Json.dll" />
       <MergeAssemblies Include="$(PubDir)SimpleInjector.dll" />
       <MergeAssemblies Include="$(PubDir)System.Reactive.dll" />
       <MergeAssemblies Include="$(PubDir)System.Reactive.Core.dll" />
       <MergeAssemblies Include="$(PubDir)System.Reactive.Linq.dll" />
-      <MergeAssemblies Include="$(PubDir)Vostok.Commons.Primitives.dll" />
       <MergeAssemblies Include="$(PubDir)Vostok.Configuration.Abstractions.dll" />
     </ItemGroup>
     <Exec Command="$(ILRepackExecutable) /internalize /log:$(ProjectDir)$(OutputPath)ilrepack.log /lib:&quot;$(PubDirWithoutSlash)&quot; /out:$(MergedDir)$(AssemblyName).Task.dll @(MergeAssemblies->'%(RelativeDir)%(FileName)%(Extension)', ' ')" />
