@@ -9,10 +9,10 @@ namespace Vostok.Configuration.Binders
 {
     internal class ClassAndStructBinder<T> : ISettingsBinder<T>
     {
-        private readonly ISettingsBinderFactory binderFactory;
+        private readonly ISettingsBinderProvider binderProvider;
 
-        public ClassAndStructBinder(ISettingsBinderFactory binderFactory) =>
-            this.binderFactory = binderFactory;
+        public ClassAndStructBinder(ISettingsBinderProvider binderProvider) =>
+            this.binderProvider = binderProvider;
 
         public T Bind(ISettingsNode settings)
         {
@@ -40,7 +40,7 @@ namespace Vostok.Configuration.Binders
             if (value == null)
                 return isRequired ? throw new InvalidCastException($"{nameof(ClassAndStructBinder<T>)}: required key \"{name}\" is absent") : defaultValue;
 
-            return binderFactory.CreateFor(type).Bind(value);
+            return binderProvider.CreateFor(type).Bind(value);
         }
 
         private static bool IsRequired(MemberInfo member, bool requiredByDefault)

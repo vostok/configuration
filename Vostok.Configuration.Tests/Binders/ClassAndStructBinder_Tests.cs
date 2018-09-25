@@ -14,7 +14,7 @@ namespace Vostok.Configuration.Tests.Binders
 {
     public class ClassAndStructBinder_Tests
     {
-        private ISettingsBinderFactory factory;
+        private ISettingsBinderProvider provider;
 
         [SetUp]
         public void TestSetup()
@@ -23,8 +23,8 @@ namespace Vostok.Configuration.Tests.Binders
             boolBinder.Bind(Arg.Is<ISettingsNode>(n => n is ValueNode && ((ValueNode)n).Value == "true")).Returns(true);
             boolBinder.ReturnsForAll<object>(_ => throw new InvalidCastException());
 
-            factory = Substitute.For<ISettingsBinderFactory>();
-            factory.CreateFor(typeof(bool)).Returns(boolBinder);
+            provider = Substitute.For<ISettingsBinderProvider>();
+            provider.CreateFor(typeof(bool)).Returns(boolBinder);
         }
 
         [Test]
@@ -281,6 +281,6 @@ namespace Vostok.Configuration.Tests.Binders
             return obj == null ? null : (field?.GetValue(obj) as bool? ?? property?.GetValue(obj) as bool?);
         }
         
-        private ClassAndStructBinder<T> CreateBinder<T>() => new ClassAndStructBinder<T>(factory);
+        private ClassAndStructBinder<T> CreateBinder<T>() => new ClassAndStructBinder<T>(provider);
     }
 }

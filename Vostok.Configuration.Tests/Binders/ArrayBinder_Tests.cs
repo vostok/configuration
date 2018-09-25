@@ -22,7 +22,7 @@ namespace Vostok.Configuration.Tests.Binders
             boolBinder.Bind(Arg.Is<ISettingsNode>(n => n is ValueNode && ((ValueNode)n).Value == "true")).Returns(true);
             boolBinder.ReturnsForAll<object>(_ => throw new InvalidCastException());
 
-            var factory = Substitute.For<ISettingsBinderFactory>();
+            var factory = Substitute.For<ISettingsBinderProvider>();
             factory.CreateFor(typeof(bool)).Returns(boolBinder);
 
             binder = new ArrayBinder<bool[]>(factory);

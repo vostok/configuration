@@ -7,15 +7,15 @@ namespace Vostok.Configuration.Binders
 {
     internal class ArrayBinder<T> : ISettingsBinder<T>
     {
-        private readonly ISettingsBinderFactory binderFactory;
+        private readonly ISettingsBinderProvider binderProvider;
 
-        public ArrayBinder(ISettingsBinderFactory binderFactory) =>
-            this.binderFactory = binderFactory;
+        public ArrayBinder(ISettingsBinderProvider binderProvider) =>
+            this.binderProvider = binderProvider;
 
         public T Bind(ISettingsNode settings)
         {
             var subType = typeof(T).GetElementType();
-            var binder = binderFactory.CreateFor(subType);
+            var binder = binderProvider.CreateFor(subType);
 
             var i = 0;
             var instance = Array.CreateInstance(subType, settings.Children.Count());

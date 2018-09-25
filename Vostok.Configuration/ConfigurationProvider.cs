@@ -36,7 +36,7 @@ namespace Vostok.Configuration
         {
             settings = configurationProviderSettings ?? new ConfigurationProviderSettings();
             if (settings.Binder == null)
-                settings.Binder = new DefaultSettingsBinder().WithDefaultParsers();
+                settings.Binder = new DefaultSettingsBinder();
 
             typeSources = new ConcurrentDictionary<Type, IConfigurationSource>();
             typeWatchers = new ConcurrentDictionary<Type, IObservable<object>>();
