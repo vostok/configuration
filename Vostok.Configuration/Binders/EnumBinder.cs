@@ -1,7 +1,6 @@
 ﻿using System;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
-using Vostok.Configuration.Extensions;
 
 namespace Vostok.Configuration.Binders
 {

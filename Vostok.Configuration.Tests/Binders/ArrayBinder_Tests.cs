@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using FluentAssertions;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using NSubstitute.Extensions;
 using NUnit.Framework;
 using Vostok.Configuration.Abstractions;
