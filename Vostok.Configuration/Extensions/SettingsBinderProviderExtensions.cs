@@ -15,9 +15,9 @@ namespace Vostok.Configuration.Extensions
             return binderProvider
                 .WithParserFor<bool>(bool.TryParse)
                 .WithParserFor<char>(char.TryParse)
-                .WithParserFor<decimal>(FloatingPointParser<decimal>.TryParse)
-                .WithParserFor<double>(FloatingPointParser<double>.TryParse)
-                .WithParserFor<float>(FloatingPointParser<float>.TryParse)
+                .WithParserFor<decimal>(NumericTypeParser<decimal>.TryParse)
+                .WithParserFor<double>(NumericTypeParser<double>.TryParse)
+                .WithParserFor<float>(NumericTypeParser<float>.TryParse)
                 .WithParserFor<sbyte>(sbyte.TryParse)
                 .WithParserFor<short>(short.TryParse)
                 .WithParserFor<int>(int.TryParse)

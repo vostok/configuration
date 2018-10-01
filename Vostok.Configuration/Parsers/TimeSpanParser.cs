@@ -35,7 +35,7 @@ namespace Vostok.Configuration.Parsers
             if (TimeSpan.TryParse(input, out result))
                 return true;
 
-            bool TryParse(string unit, out double res) => FloatingPointParser<double>.TryParse(PrepareInput(input, unit), out res);
+            bool TryParse(string unit, out double res) => NumericTypeParser<double>.TryParse(PrepareInput(input, unit), out res);
 
             bool TryGet(FromValue method, string unit, out TimeSpan res)
             {
