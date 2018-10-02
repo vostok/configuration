@@ -2,29 +2,24 @@
 using System.Collections.Generic;
 using FluentAssertions;
 using NSubstitute;
-using NSubstitute.Extensions;
 using NUnit.Framework;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
-using Vostok.Configuration.Binders;
+using Vostok.Configuration.Binders.Collection;
 
-namespace Vostok.Configuration.Tests.Binders
+namespace Vostok.Configuration.Tests.Binders.Collection
 {
-    public class ArrayBinder_Tests
+    public class ReadOnlyListBinder_Tests
     {
-        private ArrayBinder<bool[]> binder;
+        private ReadOnlyListBinder<bool> binder;
 
         [SetUp]
         public void TestSetup()
         {
-            var boolBinder = Substitute.For<ISettingsBinder<object>>();
-            boolBinder.Bind(Arg.Is<ISettingsNode>(n => n is ValueNode && ((ValueNode)n).Value == "true")).Returns(true);
-            boolBinder.ReturnsForAll<object>(_ => throw new InvalidCastException());
+            var boolBinder = Substitute.For<ISettingsBinder<bool>>();
+            boolBinder.Bind(Arg.Any<ISettingsNode>()).Returns(callInfo => (callInfo.Arg<ISettingsNode>() as ValueNode)?.Value == "true" ? true : throw new InvalidCastException());
 
-            var factory = Substitute.For<ISettingsBinderProvider>();
-            factory.CreateFor(typeof(bool)).Returns(boolBinder);
-
-            binder = new ArrayBinder<bool[]>(factory);
+            binder = new ReadOnlyListBinder<bool>(boolBinder);
         }
 
         [Test]

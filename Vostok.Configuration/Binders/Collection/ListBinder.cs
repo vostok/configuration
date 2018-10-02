@@ -3,15 +3,12 @@ using System.Linq;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 
-namespace Vostok.Configuration.Binders
+namespace Vostok.Configuration.Binders.Collection
 {
     internal class ListBinder<T> :
         ISettingsBinder<List<T>>,
         ISettingsBinder<IList<T>>,
-        ISettingsBinder<IEnumerable<T>>,
-        ISettingsBinder<ICollection<T>>,
-        ISettingsBinder<IReadOnlyCollection<T>>,
-        ISettingsBinder<IReadOnlyList<T>>
+        ISettingsBinder<ICollection<T>>
     {
         private readonly ISettingsBinder<T> elementBinder;
 
@@ -22,12 +19,6 @@ namespace Vostok.Configuration.Binders
 
         IList<T> ISettingsBinder<IList<T>>.Bind(ISettingsNode settings) => Bind(settings);
 
-        IEnumerable<T> ISettingsBinder<IEnumerable<T>>.Bind(ISettingsNode settings) => Bind(settings);
-
         ICollection<T> ISettingsBinder<ICollection<T>>.Bind(ISettingsNode settings) => Bind(settings);
-
-        IReadOnlyCollection<T> ISettingsBinder<IReadOnlyCollection<T>>.Bind(ISettingsNode settings) => Bind(settings);
-
-        IReadOnlyList<T> ISettingsBinder<IReadOnlyList<T>>.Bind(ISettingsNode settings) => Bind(settings);
     }
 }

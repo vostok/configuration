@@ -6,11 +6,11 @@ namespace Vostok.Configuration.Binders
     internal class NullableBinder<T> : ISettingsBinder<T?>
         where T : struct
     {
-        private readonly ISettingsBinder<T> elementBinder;
+        private readonly ISettingsBinder<T> valueBinder;
 
         public NullableBinder(ISettingsBinder<T> elementBinder) =>
-            this.elementBinder = elementBinder;
+            this.valueBinder = elementBinder;
 
-        public T? Bind(ISettingsNode settings) => settings.Value == null ? (T?)null : elementBinder.Bind(settings);
+        public T? Bind(ISettingsNode settings) => settings.Value == null ? (T?)null : valueBinder.Bind(settings);
     }
 }

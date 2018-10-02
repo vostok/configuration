@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Binders;
+using Vostok.Configuration.Binders.Collection;
 using Vostok.Configuration.Extensions;
 
 namespace Vostok.Configuration.Tests.Binders
@@ -102,17 +103,17 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_select_ArrayBinder_for_arrays_of_primitive_type()
+        public void Should_select_ReadOnlyListBinder_for_arrays_of_primitive_type()
         {
-            provider.CreateFor<int[]>().Should().BeOfType<ArrayBinder<int[]>>();
-            provider.CreateFor<bool[]>().Should().BeOfType<ArrayBinder<bool[]>>();
+            provider.CreateFor<int[]>().Should().BeOfType<ReadOnlyListBinder<int>>();
+            provider.CreateFor<bool[]>().Should().BeOfType<ReadOnlyListBinder<bool>>();
         }
 
         [Test]
-        public void Should_select_ArrayBinder_for_arrays_of_custom_type()
+        public void Should_select_ReadOnlyListBinder_for_arrays_of_custom_type()
         {
-            provider.CreateFor<MyClass[]>().Should().BeOfType<ArrayBinder<MyClass[]>>();
-            provider.CreateFor<MyStruct[]>().Should().BeOfType<ArrayBinder<MyStruct[]>>();
+            provider.CreateFor<MyClass[]>().Should().BeOfType<ReadOnlyListBinder<MyClass>>();
+            provider.CreateFor<MyStruct[]>().Should().BeOfType<ReadOnlyListBinder<MyStruct>>();
         }
 
         [Test]
@@ -134,21 +135,21 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_select_ListBinder_for_IEnumerable()
+        public void Should_select_ReadOnlyListBinder_for_IEnumerable()
         {
-            provider.CreateFor<IEnumerable<string>>().Should().BeOfType<ListBinder<string>>();
+            provider.CreateFor<IEnumerable<string>>().Should().BeOfType<ReadOnlyListBinder<string>>();
         }
 
         [Test]
-        public void Should_select_ListBinder_for_IReadOnlyList()
+        public void Should_select_ReadOnlyListBinder_for_IReadOnlyList()
         {
-            provider.CreateFor<IReadOnlyList<string>>().Should().BeOfType<ListBinder<string>>();
+            provider.CreateFor<IReadOnlyList<string>>().Should().BeOfType<ReadOnlyListBinder<string>>();
         }
 
         [Test]
-        public void Should_select_ListBinder_for_IReadOnlyCollection()
+        public void Should_select_ReadOnlyListBinder_for_IReadOnlyCollection()
         {
-            provider.CreateFor<IReadOnlyCollection<string>>().Should().BeOfType<ListBinder<string>>();
+            provider.CreateFor<IReadOnlyCollection<string>>().Should().BeOfType<ReadOnlyListBinder<string>>();
         }
 
         [Test]

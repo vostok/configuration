@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using SimpleInjector;
 using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Binders.Collection;
 using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Parsers;
 
@@ -34,12 +35,9 @@ namespace Vostok.Configuration.Binders
                 typeof(EnumBinder<>),
                 c => c.ServiceType.GetGenericArguments()[0].IsEnum);
             container.Register(typeof(ISettingsBinder<>), typeof(ListBinder<>));
+            container.RegisterConditional(typeof(ISettingsBinder<>), typeof(ReadOnlyListBinder<>), c => !c.Handled);
             container.Register(typeof(ISettingsBinder<>), typeof(DictionaryBinder<,>));
             container.Register(typeof(ISettingsBinder<>), typeof(SetBinder<>));
-            container.RegisterConditional(
-                typeof(ISettingsBinder<>),
-                typeof(ArrayBinder<>),
-                c => c.ServiceType.GetGenericArguments()[0].IsArray);
             container.RegisterConditional(
                 typeof(ISettingsBinder<>),
                 typeof(ClassAndStructBinder<>),

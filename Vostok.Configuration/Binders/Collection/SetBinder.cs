@@ -3,7 +3,7 @@ using System.Linq;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 
-namespace Vostok.Configuration.Binders
+namespace Vostok.Configuration.Binders.Collection
 {
     internal class SetBinder<T> :
         ISettingsBinder<HashSet<T>>,
