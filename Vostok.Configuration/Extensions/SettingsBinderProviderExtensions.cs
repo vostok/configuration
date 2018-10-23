@@ -13,6 +13,7 @@ namespace Vostok.Configuration.Extensions
         public static ISettingsBinderProvider WithDefaultParsers(this ISettingsBinderProvider binderProvider)
         {
             return binderProvider
+                .WithParserFor<string>(StringParser.TryParse)
                 .WithParserFor<bool>(bool.TryParse)
                 .WithParserFor<char>(char.TryParse)
                 .WithParserFor<decimal>(NumericTypeParser<decimal>.TryParse)

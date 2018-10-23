@@ -20,7 +20,7 @@ namespace Vostok.Configuration.Binders
             container = new Container();
             container.RegisterConditional(
                 typeof(ISettingsBinder<>),
-                typeof(PrimitiveAndSimpleBinder<>),
+                typeof(PrimitiveBinder<>),
                 c =>
                 {
                     var type = c.ServiceType.GetGenericArguments()[0];
@@ -40,7 +40,7 @@ namespace Vostok.Configuration.Binders
             container.Register(typeof(ISettingsBinder<>), typeof(SetBinder<>));
             container.RegisterConditional(
                 typeof(ISettingsBinder<>),
-                typeof(ClassAndStructBinder<>),
+                typeof(ClassStructBinder<>),
                 c => !c.Handled);
             container.RegisterInstance(typeof(ISettingsBinderProvider), this);
             container.RegisterInstance(typeof(IDictionary<Type, ITypeParser>), parsers);

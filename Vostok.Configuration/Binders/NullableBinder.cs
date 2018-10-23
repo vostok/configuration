@@ -8,9 +8,10 @@ namespace Vostok.Configuration.Binders
     {
         private readonly ISettingsBinder<T> valueBinder;
 
-        public NullableBinder(ISettingsBinder<T> elementBinder) =>
-            this.valueBinder = elementBinder;
+        public NullableBinder(ISettingsBinder<T> valueBinder) =>
+            this.valueBinder = valueBinder;
 
-        public T? Bind(ISettingsNode settings) => settings.Value == null ? (T?)null : valueBinder.Bind(settings);
+        public T? Bind(ISettingsNode settings) => 
+            settings.Value == null ? (T?)null : valueBinder.Bind(settings);
     }
 }

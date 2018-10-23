@@ -8,14 +8,14 @@ using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Tests.Binders
 {
-    public class PrimitiveAndSimpleBinder_Tests
+    public class PrimitiveBinder_Tests
     {
-        private PrimitiveAndSimpleBinder<int> binder;
+        private PrimitiveBinder<int> binder;
 
         [SetUp]
         public void TestSetup()
         {
-            binder = new PrimitiveAndSimpleBinder<int>(
+            binder = new PrimitiveBinder<int>(
                 new Dictionary<Type, ITypeParser>
                 {
                     {typeof(int), new InlineTypeParser<int>(int.TryParse)}
@@ -52,14 +52,14 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_throw_if_parser_throws()
         {
             new Action(() => binder.Bind(new ValueNode(null)))
-                .Should().Throw<ArgumentNullException>();
+                .Should().Throw<InvalidCastException>();
         }
 
         [Test]
         public void Should_throw_if_there_is_no_parser_for_type()
         {
-            new Action(() => new PrimitiveAndSimpleBinder<int>(new Dictionary<Type, ITypeParser>()).Bind(new ValueNode("1")))
-                .Should().Throw<ArgumentException>();
+            new Action(() => new PrimitiveBinder<int>(new Dictionary<Type, ITypeParser>()).Bind(new ValueNode("1")))
+                .Should().Throw<InvalidCastException>();
         }
     }
 }

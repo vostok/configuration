@@ -12,7 +12,7 @@ using Vostok.Configuration.Binders;
 
 namespace Vostok.Configuration.Tests.Binders
 {
-    public class ClassAndStructBinder_Tests
+    public class ClassStructBinder_Tests
     {
         private ISettingsBinderProvider provider;
 
@@ -281,6 +281,6 @@ namespace Vostok.Configuration.Tests.Binders
             return obj == null ? null : (field?.GetValue(obj) as bool? ?? property?.GetValue(obj) as bool?);
         }
         
-        private ClassAndStructBinder<T> CreateBinder<T>() => new ClassAndStructBinder<T>(provider);
+        private ClassStructBinder<T> CreateBinder<T>() => new ClassStructBinder<T>(provider);
     }
 }

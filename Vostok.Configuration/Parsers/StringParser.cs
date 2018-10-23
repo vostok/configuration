@@ -1,10 +1,10 @@
 ﻿namespace Vostok.Configuration.Parsers
 {
-    internal class StringParser : ITypeParser
+    internal static class StringParser
     {
-        public bool TryParse(string s, out object value)
+        public static bool TryParse(string input, out string value)
         {
-            value = s;
+            value = input;
 
             return true;
         }

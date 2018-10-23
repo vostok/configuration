@@ -20,66 +20,66 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_select_PrimitiveAndSimpleBinder_for_boolean()
+        public void Should_select_PrimitiveBinder_for_boolean()
         {
-            provider.CreateFor<bool>().Should().BeOfType<PrimitiveAndSimpleBinder<bool>>();
+            provider.CreateFor<bool>().Should().BeOfType<PrimitiveBinder<bool>>();
         }
 
         [Test]
-        public void Should_select_PrimitiveAndSimpleBinder_for_signed_integral_types()
+        public void Should_select_PrimitiveBinder_for_signed_integral_types()
         {
-            provider.CreateFor<sbyte>().Should().BeOfType<PrimitiveAndSimpleBinder<sbyte>>();
-            provider.CreateFor<short>().Should().BeOfType<PrimitiveAndSimpleBinder<short>>();
-            provider.CreateFor<int>().Should().BeOfType<PrimitiveAndSimpleBinder<int>>();
-            provider.CreateFor<long>().Should().BeOfType<PrimitiveAndSimpleBinder<long>>();
+            provider.CreateFor<sbyte>().Should().BeOfType<PrimitiveBinder<sbyte>>();
+            provider.CreateFor<short>().Should().BeOfType<PrimitiveBinder<short>>();
+            provider.CreateFor<int>().Should().BeOfType<PrimitiveBinder<int>>();
+            provider.CreateFor<long>().Should().BeOfType<PrimitiveBinder<long>>();
         }
 
         [Test]
-        public void Should_select_PrimitiveAndSimpleBinder_for_unsigned_integral_types()
+        public void Should_select_PrimitiveBinder_for_unsigned_integral_types()
         {
-            provider.CreateFor<byte>().Should().BeOfType<PrimitiveAndSimpleBinder<byte>>();
-            provider.CreateFor<ushort>().Should().BeOfType<PrimitiveAndSimpleBinder<ushort>>();
-            provider.CreateFor<uint>().Should().BeOfType<PrimitiveAndSimpleBinder<uint>>();
-            provider.CreateFor<ulong>().Should().BeOfType<PrimitiveAndSimpleBinder<ulong>>();
+            provider.CreateFor<byte>().Should().BeOfType<PrimitiveBinder<byte>>();
+            provider.CreateFor<ushort>().Should().BeOfType<PrimitiveBinder<ushort>>();
+            provider.CreateFor<uint>().Should().BeOfType<PrimitiveBinder<uint>>();
+            provider.CreateFor<ulong>().Should().BeOfType<PrimitiveBinder<ulong>>();
         }
 
         [Test]
-        public void Should_select_PrimitiveAndSimpleBinder_for_floating_point_types()
+        public void Should_select_PrimitiveBinder_for_floating_point_types()
         {
-            provider.CreateFor<float>().Should().BeOfType<PrimitiveAndSimpleBinder<float>>();
-            provider.CreateFor<double>().Should().BeOfType<PrimitiveAndSimpleBinder<double>>();
+            provider.CreateFor<float>().Should().BeOfType<PrimitiveBinder<float>>();
+            provider.CreateFor<double>().Should().BeOfType<PrimitiveBinder<double>>();
         }
 
         [Test]
-        public void Should_select_PrimitiveAndSimpleBinder_for_char()
+        public void Should_select_PrimitiveBinder_for_char()
         {
-            provider.CreateFor<char>().Should().BeOfType<PrimitiveAndSimpleBinder<char>>();
+            provider.CreateFor<char>().Should().BeOfType<PrimitiveBinder<char>>();
         }
 
         [Test]
-        public void Should_select_PrimitiveAndSimpleBinder_for_IntPtr()
+        public void Should_select_PrimitiveBinder_for_IntPtr()
         {
-            provider.CreateFor<IntPtr>().Should().BeOfType<PrimitiveAndSimpleBinder<IntPtr>>();
+            provider.CreateFor<IntPtr>().Should().BeOfType<PrimitiveBinder<IntPtr>>();
         }
 
         [Test]
-        public void Should_select_PrimitiveAndSimpleBinder_for_UIntPtr()
+        public void Should_select_PrimitiveBinder_for_UIntPtr()
         {
-            provider.CreateFor<UIntPtr>().Should().BeOfType<PrimitiveAndSimpleBinder<UIntPtr>>();
+            provider.CreateFor<UIntPtr>().Should().BeOfType<PrimitiveBinder<UIntPtr>>();
         }
 
         [Test]
-        public void Should_select_PrimitiveAndSimpleBinder_for_string()
+        public void Should_select_PrimitiveBinder_for_string()
         {
-            provider.CreateFor<string>().Should().BeOfType<PrimitiveAndSimpleBinder<string>>();
+            provider.CreateFor<string>().Should().BeOfType<PrimitiveBinder<string>>();
         }
 
         [Test]
-        public void Should_select_PrimitiveAndSimpleBinder_for_custom_configured_type()
+        public void Should_select_PrimitiveBinder_for_custom_configured_type()
         {
             provider.WithParserFor<MyClass>(MyClass.TryParse);
 
-            provider.CreateFor<MyClass>().Should().BeOfType<PrimitiveAndSimpleBinder<MyClass>>();
+            provider.CreateFor<MyClass>().Should().BeOfType<PrimitiveBinder<MyClass>>();
         }
 
         [Test]
@@ -183,27 +183,27 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_select_ClassAndStructBinder_for_unknown_classes()
+        public void Should_select_ClassStructBinder_for_unknown_classes()
         {
-            provider.CreateFor<MyClass>().Should().BeOfType<ClassAndStructBinder<MyClass>>();
+            provider.CreateFor<MyClass>().Should().BeOfType<ClassStructBinder<MyClass>>();
         }
 
         [Test]
-        public void Should_select_ClassAndStructBinder_for_unknown_structs()
+        public void Should_select_ClassStructBinder_for_unknown_structs()
         {
-            provider.CreateFor<MyStruct>().Should().BeOfType<ClassAndStructBinder<MyStruct>>();
+            provider.CreateFor<MyStruct>().Should().BeOfType<ClassStructBinder<MyStruct>>();
         }
 
         [Test]
-        public void Should_select_ClassAndStructBinder_for_unknown_generic_classes()
+        public void Should_select_ClassStructBinder_for_unknown_generic_classes()
         {
-            provider.CreateFor<MyClass2<int>>().Should().BeOfType<ClassAndStructBinder<MyClass2<int>>>();
+            provider.CreateFor<MyClass2<int>>().Should().BeOfType<ClassStructBinder<MyClass2<int>>>();
         }
 
         [Test]
-        public void Should_select_ClassAndStructBinder_for_unknown_generic_structs()
+        public void Should_select_ClassStructBinder_for_unknown_generic_structs()
         {
-            provider.CreateFor<MyStruct2<int>>().Should().BeOfType<ClassAndStructBinder<MyStruct2<int>>>();
+            provider.CreateFor<MyStruct2<int>>().Should().BeOfType<ClassStructBinder<MyStruct2<int>>>();
         }
 
         public class MyClass
