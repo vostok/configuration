@@ -1,6 +1,7 @@
 ﻿using System;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.Commons.Testing;
 using UriParser = Vostok.Configuration.Parsers.UriParser;
 
 namespace Vostok.Configuration.Tests.Parsers
@@ -8,20 +9,26 @@ namespace Vostok.Configuration.Tests.Parsers
     [TestFixture]
     public class UriParser_Tests
     {
-        [TestCase("http://example.com", true, UriKind.Absolute)]
-        [TestCase("example.com/some", true, UriKind.RelativeOrAbsolute)]
-        [TestCase("/part/of/path", true, UriKind.Relative)]
-        //[TestCase("/////", false, UriKind.RelativeOrAbsolute)]    always true whatever i write
-        public void Should_TryParse(string uri, bool boolRes, UriKind kind)
+        [TestCase("http://example.com", UriKind.Absolute)]
+        [TestCase("example.com/some", UriKind.RelativeOrAbsolute)]
+        [TestCase("/part/of/path", UriKind.Relative)]
+        public void TryParse_should_return_true_for_valid_input(string uri, UriKind kind)
         {
-            UriParser.TryParse(uri, out var res).Should().Be(boolRes);
+            UriParser.TryParse(uri, out var res).Should().BeTrue();
             res.Should().BeEquivalentTo(new Uri(uri, kind));
         }
 
-        /*[Test]
-        public void Should_throw_FormatException_on_Parse_wrong_format()
+        [TestCase(null)]
+        [TestCase("http://")]
+        public void TryParse_should_return_false_for_invalid_input(string input)
         {
-            new Action(() => UriParser.Parse("\u0001 ")).Should().Throw<FormatException>();
-        }*/
+            UriParser.TryParse(input, out var _).Should().BeFalse();
+        }
+
+        [Test]
+        public void Parse_should_throw_for_invalid_input()
+        {
+            new Action(() => UriParser.Parse(null)).Should().Throw<FormatException>().Which.ShouldBePrinted();
+        }
     }
 }

@@ -2,6 +2,7 @@
 using System.Net;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.Commons.Testing;
 using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Tests.Parsers
@@ -35,7 +36,7 @@ namespace Vostok.Configuration.Tests.Parsers
         [Test]
         public void Should_throw_FormatException_on_Parse_wrong_format()
         {
-            new Action(() => IPEndPointParser.Parse("900.0.0.1:5")).Should().Throw<FormatException>();
+            new Action(() => IPEndPointParser.Parse("900.0.0.1:5")).Should().Throw<FormatException>().Which.ShouldBePrinted();
         }
     }
 }

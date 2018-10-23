@@ -42,7 +42,7 @@ namespace Vostok.Configuration.Tests.Binders
         {
             innerBinder.Bind(Arg.Any<ISettingsNode>()).Throws<Exception>();
 
-            new Action(() => binder.Bind(new ValueNode(""))).Should().Throw<Exception>().Which.ShouldBePrinted();
+            new Action(() => binder.Bind(new ValueNode(""))).Should().Throw<Exception>();
         }
     }
 }

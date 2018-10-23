@@ -1,6 +1,7 @@
 ﻿using System;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.Commons.Testing;
 using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Tests.Parsers
@@ -46,7 +47,7 @@ namespace Vostok.Configuration.Tests.Parsers
         [Test]
         public void Should_throw_FormatException_on_Parse_wrong_format()
         {
-            new Action(() => DateTimeOffsetParser.Parse(@"123")).Should().Throw<FormatException>();
+            new Action(() => DateTimeOffsetParser.Parse(@"123")).Should().Throw<FormatException>().Which.ShouldBePrinted();
         }
     }
 }
