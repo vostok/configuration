@@ -3,6 +3,7 @@ using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
+using Vostok.Commons.Testing;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
@@ -41,7 +42,7 @@ namespace Vostok.Configuration.Tests.Binders
         {
             innerBinder.Bind(Arg.Any<ISettingsNode>()).Throws<Exception>();
 
-            new Action(() => binder.Bind(new ValueNode(""))).Should().Throw<Exception>();
+            new Action(() => binder.Bind(new ValueNode(""))).Should().Throw<Exception>().Which.ShouldBePrinted();
         }
     }
 }

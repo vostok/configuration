@@ -1,6 +1,7 @@
 ﻿using System;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.Commons.Testing;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 
@@ -49,7 +50,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_throw_for_invalid_values()
         {
-            new Action(() => binder.Bind(new ValueNode("xxx"))).Should().Throw<InvalidCastException>();
+            new Action(() => binder.Bind(new ValueNode("xxx"))).Should().Throw<BindingException>().Which.ShouldBePrinted();
         }
 
         [Flags]

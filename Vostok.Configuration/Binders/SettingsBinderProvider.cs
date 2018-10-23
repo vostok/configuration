@@ -21,11 +21,7 @@ namespace Vostok.Configuration.Binders
             container.RegisterConditional(
                 typeof(ISettingsBinder<>),
                 typeof(PrimitiveBinder<>),
-                c =>
-                {
-                    var type = c.ServiceType.GetGenericArguments()[0];
-                    return type.IsPrimitive() || type == typeof(string) || parsers.ContainsKey(type);
-                });
+                c => parsers.ContainsKey(c.ServiceType.GetGenericArguments()[0]));
             container.RegisterConditional(
                 typeof(ISettingsBinder<>),
                 typeof(NullableBinder<>),
@@ -50,7 +46,7 @@ namespace Vostok.Configuration.Binders
             container.GetInstance<ISettingsBinder<T>>();
 
         public ISettingsBinder<object> CreateFor(Type type) =>
-            new BinderWrapper(container.GetInstance(typeof(ISettingsBinder<>).MakeGenericType(type)));
+            (ISettingsBinder<object>)container.GetInstance(typeof(BinderWrapper<>).MakeGenericType(type));
 
         public void SetupParserFor<T>(ITypeParser parser) => parsers[typeof(T)] = parser;
     }

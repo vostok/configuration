@@ -5,6 +5,7 @@ using FluentAssertions;
 using NSubstitute;
 using NSubstitute.Extensions;
 using NUnit.Framework;
+using Vostok.Commons.Testing;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
@@ -21,7 +22,7 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var boolBinder = Substitute.For<ISettingsBinder<object>>();
             boolBinder.Bind(Arg.Is<ISettingsNode>(n => n is ValueNode && ((ValueNode)n).Value == "true")).Returns(true);
-            boolBinder.ReturnsForAll<object>(_ => throw new InvalidCastException());
+            boolBinder.ReturnsForAll<object>(_ => throw new BindingException(""));
 
             provider = Substitute.For<ISettingsBinderProvider>();
             provider.CreateFor(typeof(bool)).Returns(boolBinder);
@@ -128,7 +129,7 @@ namespace Vostok.Configuration.Tests.Binders
                 { "Field1", new ValueNode("xxx") }
             });
 
-            new Action(() => CreateBinder<MyClass1>().Bind(settings)).Should().Throw<InvalidCastException>();
+            new Action(() => CreateBinder<MyClass1>().Bind(settings)).Should().Throw<BindingException>();
         }
 
         [Test]
@@ -139,7 +140,7 @@ namespace Vostok.Configuration.Tests.Binders
                 { "Property1", new ValueNode("true") }
             });
 
-            new Action(() => CreateBinder<MyClass2>().Bind(settings)).Should().Throw<InvalidCastException>();
+            new Action(() => CreateBinder<MyClass2>().Bind(settings)).Should().Throw<BindingException>().Which.ShouldBePrinted();
         }
 
         [Test]
@@ -150,7 +151,7 @@ namespace Vostok.Configuration.Tests.Binders
                 { "Field1", new ValueNode("true") }
             });
 
-            new Action(() => CreateBinder<MyClass2>().Bind(settings)).Should().Throw<InvalidCastException>();
+            new Action(() => CreateBinder<MyClass2>().Bind(settings)).Should().Throw<BindingException>().Which.ShouldBePrinted();
         }
 
         [Test]
@@ -161,7 +162,7 @@ namespace Vostok.Configuration.Tests.Binders
                 { "Property1", new ValueNode("true") }
             });
 
-            new Action(() => CreateBinder<MyClass3>().Bind(settings)).Should().Throw<InvalidCastException>();
+            new Action(() => CreateBinder<MyClass3>().Bind(settings)).Should().Throw<BindingException>().Which.ShouldBePrinted();
         }
 
         [Test]
@@ -172,7 +173,7 @@ namespace Vostok.Configuration.Tests.Binders
                 { "Field1", new ValueNode("true") }
             });
 
-            new Action(() => CreateBinder<MyClass3>().Bind(settings)).Should().Throw<InvalidCastException>(); // TODO(krait): choose another exception
+            new Action(() => CreateBinder<MyClass3>().Bind(settings)).Should().Throw<BindingException>().Which.ShouldBePrinted();
         }
 
         [Test]

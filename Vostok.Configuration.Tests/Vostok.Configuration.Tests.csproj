@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <Compile Include="..\..\vostok.commons.testing\Vostok.Commons.Testing\AssertionAssertions.cs" Link="Commons\AssertionAssertions.cs" />
+    <Compile Include="..\..\vostok.commons.testing\Vostok.Commons.Testing\ExceptionAssertions.cs" Link="Commons\ExceptionAssertions.cs" />
   </ItemGroup>
   
   <ItemGroup>

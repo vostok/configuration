@@ -5,6 +5,7 @@ using NSubstitute;
 using NUnit.Framework;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Binders;
 using Vostok.Configuration.Binders.Collection;
 
 namespace Vostok.Configuration.Tests.Binders.Collection
@@ -17,7 +18,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         public void TestSetup()
         {
             var boolBinder = Substitute.For<ISettingsBinder<bool>>();
-            boolBinder.Bind(Arg.Any<ISettingsNode>()).Returns(callInfo => (callInfo.Arg<ISettingsNode>() as ValueNode)?.Value == "true" ? true : throw new InvalidCastException());
+            boolBinder.Bind(Arg.Any<ISettingsNode>()).Returns(callInfo => (callInfo.Arg<ISettingsNode>() as ValueNode)?.Value == "true" ? true : throw new BindingException(""));
 
             binder = new ListBinder<bool>(boolBinder);
         }
@@ -47,7 +48,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         {
             var settings = new ArrayNode(new List<ISettingsNode> { new ValueNode("xxx") });
 
-            new Action(() => binder.Bind(settings)).Should().Throw<InvalidCastException>();
+            new Action(() => binder.Bind(settings)).Should().Throw<BindingException>();
         }
 
         [Test]

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.Commons.Testing;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Parsers;
@@ -29,7 +30,7 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_bind_array_node_with_single_child() // TODO(krait): Should it really be handled on this level?
+        public void Should_bind_array_node_with_single_child()
         {
             binder.Bind(new ArrayNode(new[] {new ValueNode("42")})).Should().Be(42);
         }
@@ -45,21 +46,21 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_throw_if_parser_returns_false()
         {
             new Action(() => binder.Bind(new ValueNode("xx")))
-                .Should().Throw<InvalidCastException>();
+                .Should().Throw<BindingException>().Which.ShouldBePrinted();
         }
 
         [Test]
         public void Should_throw_if_parser_throws()
         {
             new Action(() => binder.Bind(new ValueNode(null)))
-                .Should().Throw<InvalidCastException>();
+                .Should().Throw<BindingException>().Which.ShouldBePrinted();
         }
 
         [Test]
         public void Should_throw_if_there_is_no_parser_for_type()
         {
             new Action(() => new PrimitiveBinder<int>(new Dictionary<Type, ITypeParser>()).Bind(new ValueNode("1")))
-                .Should().Throw<InvalidCastException>();
+                .Should().Throw<BindingException>().Which.ShouldBePrinted();
         }
     }
 }

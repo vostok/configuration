@@ -9,8 +9,5 @@ namespace Vostok.Configuration.Extensions
 
         public static bool IsNullable(this Type type) =>
             type.IsValueType && type.IsGenericType;
-
-        public static object Default(this Type type) =>
-            !type.IsValueType || type.IsNullable() ? null : Activator.CreateInstance(type);
     }
 }

@@ -1,20 +1,15 @@
-﻿using System.Reflection;
-using Vostok.Configuration.Abstractions;
+﻿using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 
 namespace Vostok.Configuration.Binders
 {
-    internal class BinderWrapper : ISettingsBinder<object>
+    internal class BinderWrapper<T> : ISettingsBinder<object>
     {
-        private readonly object binder;
+        private readonly ISettingsBinder<T> binder;
 
-        public BinderWrapper(object binder) =>
+        public BinderWrapper(ISettingsBinder<T> binder) =>
             this.binder = binder;
 
-        private MethodInfo BinderBindMethod =>
-            binder.GetType().GetMethod(nameof(Bind));
-
-        public object Bind(ISettingsNode rawSettings) =>
-            BinderBindMethod.Invoke(binder, new object[] {rawSettings});
+        public object Bind(ISettingsNode rawSettings) => binder.Bind(rawSettings);
     }
 }

@@ -11,12 +11,12 @@ namespace Vostok.Configuration.Tests.Binders
     [TestFixture]
     public class SettingsBinderProvider_Tests
     {
-        private SettingsBinderProvider provider;
+        private ISettingsBinderProvider provider;
 
         [SetUp]
         public void TestSetup()
         {
-            provider = new SettingsBinderProvider();
+            provider = new SettingsBinderProvider().WithDefaultParsers();
         }
 
         [Test]
@@ -54,18 +54,6 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_select_PrimitiveBinder_for_char()
         {
             provider.CreateFor<char>().Should().BeOfType<PrimitiveBinder<char>>();
-        }
-
-        [Test]
-        public void Should_select_PrimitiveBinder_for_IntPtr()
-        {
-            provider.CreateFor<IntPtr>().Should().BeOfType<PrimitiveBinder<IntPtr>>();
-        }
-
-        [Test]
-        public void Should_select_PrimitiveBinder_for_UIntPtr()
-        {
-            provider.CreateFor<UIntPtr>().Should().BeOfType<PrimitiveBinder<UIntPtr>>();
         }
 
         [Test]

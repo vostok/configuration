@@ -18,7 +18,7 @@ namespace Vostok.Configuration.Binders
         {
         }
 
-        internal DefaultSettingsBinder(ISettingsBinderProvider binderProvider) => 
+        internal DefaultSettingsBinder(ISettingsBinderProvider binderProvider) =>
             this.binderProvider = binderProvider.WithDefaultParsers();
 
         public TSettings Bind<TSettings>(ISettingsNode settings)

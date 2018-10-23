@@ -2,6 +2,7 @@
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
+using Vostok.Commons.Testing;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Parsers;
@@ -31,7 +32,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Bind_should_throw_if_provided_settings_is_null()
         {
-            new Action(() => binder.Bind<object>(null)).Should().Throw<ArgumentNullException>();
+            new Action(() => binder.Bind<object>(null)).Should().Throw<ArgumentNullException>().Which.ShouldBePrinted();
         }
 
         [Test]
