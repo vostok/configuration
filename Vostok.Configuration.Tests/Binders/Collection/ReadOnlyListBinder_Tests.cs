@@ -18,7 +18,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         public void TestSetup()
         {
             var boolBinder = Substitute.For<ISettingsBinder<bool>>();
-            boolBinder.Bind(Arg.Any<ISettingsNode>()).Returns(callInfo => (callInfo.Arg<ISettingsNode>() as ValueNode)?.Value == "true" ? true : throw new BindingException(""));
+            boolBinder.Bind(Arg.Any<ISettingsNode>()).Returns(callInfo => (callInfo.Arg<ISettingsNode>() as ValueNode)?.Value == "true" ? true : throw new SettingsBindingException(""));
 
             binder = new ReadOnlyListBinder<bool>(boolBinder);
         }
@@ -48,7 +48,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         {
             var settings = new ArrayNode(new List<ISettingsNode> {new ValueNode("xxx")});
 
-            new Action(() => binder.Bind(settings)).Should().Throw<BindingException>();
+            new Action(() => binder.Bind(settings)).Should().Throw<SettingsBindingException>();
         }
     }
 }

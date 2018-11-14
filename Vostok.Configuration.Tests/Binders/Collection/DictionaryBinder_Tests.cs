@@ -22,7 +22,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
             stringBinder.Bind(Arg.Any<ISettingsNode>()).Returns(callInfo => callInfo.Arg<ISettingsNode>().Value);
 
             var boolBinder = Substitute.For<ISettingsBinder<bool>>();
-            boolBinder.Bind(Arg.Any<ISettingsNode>()).Returns(callInfo => (callInfo.Arg<ISettingsNode>() as ValueNode)?.Value == "true" ? true : throw new BindingException(""));
+            boolBinder.Bind(Arg.Any<ISettingsNode>()).Returns(callInfo => (callInfo.Arg<ISettingsNode>() as ValueNode)?.Value == "true" ? true : throw new SettingsBindingException(""));
 
             binder = new DictionaryBinder<string, bool>(stringBinder, boolBinder);
         }
@@ -61,7 +61,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
                 new ValueNode("key2", "xxx"),
             });
 
-            new Action(() => binder.Bind(settings)).Should().Throw<BindingException>();
+            new Action(() => binder.Bind(settings)).Should().Throw<SettingsBindingException>();
         }
     }
 }

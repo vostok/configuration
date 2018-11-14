@@ -21,7 +21,7 @@ namespace Vostok.Configuration.Binders
                 return default;
 
             if (!(settings is ObjectNode))
-                throw new BindingException($"A settings node of type '{settings.GetType()}' cannot be bound by {nameof(ClassStructBinder<T>)}.");
+                throw new SettingsBindingException($"A settings node of type '{settings.GetType()}' cannot be bound by {nameof(ClassStructBinder<T>)}.");
 
             var type = typeof(T);
             var instance = Activator.CreateInstance(type);
@@ -53,7 +53,7 @@ namespace Vostok.Configuration.Binders
         {
             var value = settings[name];
             if (value == null)
-                return isRequired ? throw new BindingException($"Required field or property '{name}' must have a non-null value.") : defaultValue;
+                return isRequired ? throw new SettingsBindingException($"Required field or property '{name}' must have a non-null value.") : defaultValue;
 
             return binderProvider.CreateFor(type).Bind(value);
         }

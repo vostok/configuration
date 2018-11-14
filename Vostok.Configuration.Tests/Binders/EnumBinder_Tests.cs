@@ -50,7 +50,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_throw_for_invalid_values()
         {
-            new Action(() => binder.Bind(new ValueNode("xxx"))).Should().Throw<BindingException>().Which.ShouldBePrinted();
+            new Action(() => binder.Bind(new ValueNode("xxx"))).Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
 
         [Flags]

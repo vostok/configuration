@@ -21,16 +21,16 @@ namespace Vostok.Configuration.Binders
                 valueNode = settings.Children.Single() as ValueNode;
 
             if (valueNode == null)
-                throw new BindingException($"Provided settings node of type '{settings.GetType()}' cannot be bound by {nameof(PrimitiveBinder<T>)}.");
+                throw new SettingsBindingException($"Provided settings node of type '{settings.GetType()}' cannot be bound by {nameof(PrimitiveBinder<T>)}.");
 
             if (valueNode.Value == null && !typeof(T).IsValueType)
                 return default;
 
             if (!parsers.TryGetValue(typeof(T), out var parser))
-                throw new BindingException($"There is no parser configured for primitive type '{typeof(T)}'.");
+                throw new SettingsBindingException($"There is no parser configured for primitive type '{typeof(T)}'.");
 
             if (!parser.TryParse(valueNode.Value, out var result))
-                throw new BindingException($"Value '{valueNode.Value}' cannot be parsed as '{typeof(T)}'.");
+                throw new SettingsBindingException($"Value '{valueNode.Value}' cannot be parsed as '{typeof(T)}'.");
 
             return (T)result;
         }

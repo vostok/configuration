@@ -46,21 +46,21 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_throw_if_parser_returns_false()
         {
             new Action(() => binder.Bind(new ValueNode("xx")))
-                .Should().Throw<BindingException>().Which.ShouldBePrinted();
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
 
         [Test]
         public void Should_throw_if_parser_throws()
         {
             new Action(() => binder.Bind(new ValueNode(null)))
-                .Should().Throw<BindingException>().Which.ShouldBePrinted();
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
 
         [Test]
         public void Should_throw_if_there_is_no_parser_for_type()
         {
             new Action(() => new PrimitiveBinder<int>(new Dictionary<Type, ITypeParser>()).Bind(new ValueNode("1")))
-                .Should().Throw<BindingException>().Which.ShouldBePrinted();
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
     }
 }

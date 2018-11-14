@@ -2,9 +2,9 @@
 
 namespace Vostok.Configuration.Binders
 {
-    internal class BindingException : Exception
+    internal class SettingsBindingException : Exception
     {
-        public BindingException(string message)
+        public SettingsBindingException(string message)
             : base(message)
         {
         }
