@@ -4,12 +4,11 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using FluentAssertions;
 using NUnit.Framework;
-using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 
 namespace Vostok.Configuration.Tests.Integration
 {
-    public class DefaultSettingsBinder_Tests
+    public class DefaultSettingsBinder_Tests : TreeConstructionSet
     {
         private DefaultSettingsBinder binder;
 
@@ -125,30 +124,5 @@ namespace Vostok.Configuration.Tests.Integration
                 public int[] AnotherArray { get; set; }
             }
         }
-
-
-        #region Tree construction
-
-        private ValueNode Value(string name, string value) => new ValueNode(name, value);
-
-        private ValueNode Value(string value) => new ValueNode(value);
-
-        private ArrayNode Array(string name, params ISettingsNode[] children) => new ArrayNode(name, children);
-
-        private ArrayNode Array(params ISettingsNode[] children) => new ArrayNode(children);
-
-        private ArrayNode Array(string name, params string[] children) => new ArrayNode(name, children.Select(e => new ValueNode(e)).ToArray());
-
-        private ArrayNode Array(params string[] children) => new ArrayNode(children.Select(e => new ValueNode(e)).ToArray());
-
-        private ObjectNode Object(string name, params ISettingsNode[] children) => new ObjectNode(name, children.ToDictionary(e => e.Name, e => e, StringComparer.InvariantCultureIgnoreCase)); // TODO(krait): Shouldn't we force using ignorecase comparer for ObjectNode children?
-
-        private ObjectNode Object(params ISettingsNode[] children) => new ObjectNode(children.ToDictionary(e => e.Name, e => e, StringComparer.InvariantCultureIgnoreCase));
-
-        private ObjectNode Object(string name, params (string key, string value)[] children) => new ObjectNode(name, children.ToDictionary(e => e.key, e => new ValueNode(e.value) as ISettingsNode, StringComparer.InvariantCultureIgnoreCase));
-
-        private ObjectNode Object(params (string key, string value)[] children) => new ObjectNode(children.ToDictionary(e => e.key, e => new ValueNode(e.value) as ISettingsNode, StringComparer.InvariantCultureIgnoreCase));
-
-        #endregion
     }
 }

@@ -10,7 +10,7 @@ using Vostok.Configuration.Binders.Collection;
 
 namespace Vostok.Configuration.Tests.Binders.Collection
 {
-    public class DictionaryBinder_Tests
+    public class DictionaryBinder_Tests : TreeConstructionSet
     {
         private DictionaryBinder<string, bool> binder;
         private ISettingsBinder<string> stringBinder;
@@ -30,11 +30,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         [Test]
         public void Should_bind_arrays_with_items()
         {
-            var settings = new ArrayNode(new List<ISettingsNode>
-            {
-                new ValueNode("key1", "true"),
-                new ValueNode("key2", "true"),
-            });
+            var settings = Array(Value("key1", "true"), Value("key2", "true"));
 
             binder.Bind(settings).Should().BeEquivalentTo(
                     new Dictionary<string, bool>
@@ -47,7 +43,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         [Test]
         public void Should_bind_arrays_without_items()
         {
-            var settings = new ArrayNode(new List<ISettingsNode>());
+            var settings = Array(new string[] {});
 
             binder.Bind(settings).Should().BeEmpty();
         }
@@ -55,11 +51,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         [Test]
         public void Should_throw_if_inner_binder_throws()
         {
-            var settings = new ArrayNode(new List<ISettingsNode>
-            {
-                new ValueNode("key1", "true"),
-                new ValueNode("key2", "xxx"),
-            });
+            var settings = Array(Value("key1", "true"), Value("key2", "xxx"));
 
             new Action(() => binder.Bind(settings)).Should().Throw<SettingsBindingException>();
         }

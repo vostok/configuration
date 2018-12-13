@@ -3,14 +3,13 @@ using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
-using Vostok.Commons.Testing;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 
 namespace Vostok.Configuration.Tests.Binders
 {
-    public class NullableBinder_Tests
+    public class NullableBinder_Tests : TreeConstructionSet
     {
         private NullableBinder<int> binder;
         private ISettingsBinder<int> innerBinder;
@@ -27,13 +26,13 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_value_using_inner_binder()
         {
-            binder.Bind(new ValueNode("42")).Should().Be(42);
+            binder.Bind(Value("42")).Should().Be(42);
         }
 
         [Test]
         public void Should_return_null_if_value_is_null()
         {
-            binder.Bind(new ValueNode(null)).Should().BeNull();
+            binder.Bind(Value(null)).Should().BeNull();
             innerBinder.DidNotReceive().Bind(Arg.Any<ISettingsNode>());
         }
 
@@ -42,7 +41,7 @@ namespace Vostok.Configuration.Tests.Binders
         {
             innerBinder.Bind(Arg.Any<ISettingsNode>()).Throws<Exception>();
 
-            new Action(() => binder.Bind(new ValueNode(""))).Should().Throw<Exception>();
+            new Action(() => binder.Bind(Value(""))).Should().Throw<Exception>();
         }
     }
 }

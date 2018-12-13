@@ -2,12 +2,11 @@
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
-using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 
 namespace Vostok.Configuration.Tests.Binders
 {
-    public class EnumBinder_Tests
+    public class EnumBinder_Tests : TreeConstructionSet
     {
         private EnumBinder<MyEnum> binder;
 
@@ -20,37 +19,37 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_support_single_enum_values()
         {
-            binder.Bind(new ValueNode("FirstOption")).Should().Be(MyEnum.FirstOption);
+            binder.Bind(Value("FirstOption")).Should().Be(MyEnum.FirstOption);
         }
 
         [Test]
         public void Should_support_combined_enum_values()
         {
-            binder.Bind(new ValueNode("FirstOption,SecondOption")).Should().Be(MyEnum.BothOptions);
+            binder.Bind(Value("FirstOption,SecondOption")).Should().Be(MyEnum.BothOptions);
         }
 
         [Test]
         public void Should_support_numeric_values()
         {
-            binder.Bind(new ValueNode("1")).Should().Be(MyEnum.FirstOption);
+            binder.Bind(Value("1")).Should().Be(MyEnum.FirstOption);
         }
 
         [Test]
         public void Should_support_undefined_values() // TODO(krait): Should it?
         {
-            binder.Bind(new ValueNode("4")).Should().Be((MyEnum)4);
+            binder.Bind(Value("4")).Should().Be((MyEnum)4);
         }
 
         [Test]
         public void Should_be_case_insensitive()
         {
-            binder.Bind(new ValueNode("firstoption")).Should().Be(MyEnum.FirstOption);
+            binder.Bind(Value("firstoption")).Should().Be(MyEnum.FirstOption);
         }
 
         [Test]
         public void Should_throw_for_invalid_values()
         {
-            new Action(() => binder.Bind(new ValueNode("xxx"))).Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
+            new Action(() => binder.Bind(Value("xxx"))).Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
 
         [Flags]
