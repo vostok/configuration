@@ -4,16 +4,16 @@ using System.Threading.Tasks;
 
 namespace Vostok.Configuration
 {
-    internal class CurrentValueObserver<T>
+    internal class CurrentValueObserver<T> : IDisposable
     {
         private volatile TaskCompletionSource<T> resultSource = new TaskCompletionSource<T>();
         private IDisposable innerSubscription;
 
-        public T Get(IObservable<T> observable)
+        public T Get(Func<IObservable<T>> observableProvider)
         {
             while (innerSubscription == null)
             {
-                var newSubscription = observable.Subscribe(OnNextValue, OnError);
+                var newSubscription = observableProvider().Subscribe(OnNextValue, OnError);
 
                 if (Interlocked.CompareExchange(ref innerSubscription, newSubscription, null) == null)
                     break;
@@ -38,6 +38,13 @@ namespace Vostok.Configuration
             var newSource = new TaskCompletionSource<T>();
             newSource.TrySetResult(value);
             return newSource;
+        }
+
+        public void Dispose()
+        {
+            var subscription = innerSubscription;
+            if (subscription != null && ReferenceEquals(Interlocked.CompareExchange(ref innerSubscription, null, subscription), subscription))
+                subscription.Dispose();
         }
     }
 }
