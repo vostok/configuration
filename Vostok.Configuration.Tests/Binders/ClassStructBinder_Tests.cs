@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Reflection;
 using FluentAssertions;
 using NSubstitute;
@@ -13,7 +12,7 @@ using Vostok.Configuration.Binders;
 
 namespace Vostok.Configuration.Tests.Binders
 {
-    public class ClassStructBinder_Tests
+    public class ClassStructBinder_Tests : TreeConstructionSet
     {
         private ISettingsBinderProvider provider;
 
@@ -31,10 +30,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_set_public_fields()
         {
-            var settings = new ObjectNode(new Dictionary<string, ISettingsNode>
-            {
-                { "Field1", new ValueNode("true") }
-            });
+            var settings = Object(("Field1", "true"));
 
             var myClass = CreateBinder<MyClass1>().Bind(settings);
 
@@ -45,10 +41,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_set_public_properties()
         {
-            var settings = new ObjectNode(new Dictionary<string, ISettingsNode>
-            {
-                { "Property1", new ValueNode("true") }
-            });
+            var settings = Object(("Property1", "true"));
 
             var myClass = CreateBinder<MyClass1>().Bind(settings);
 
@@ -59,12 +52,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_ignore_non_public_fields()
         {
-            var settings = new ObjectNode(new Dictionary<string, ISettingsNode>
-            {
-                { "Field2", new ValueNode("true") },
-                { "Field3", new ValueNode("true") },
-                { "Field4", new ValueNode("true") },
-            });
+            var settings = Object(("Field2", "true"), ("Field3", "true"), ("Field4", "true"));
 
             var myClass = CreateBinder<MyClass1>().Bind(settings);
 
@@ -77,12 +65,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_ignore_non_public_properties()
         {
-            var settings = new ObjectNode(new Dictionary<string, ISettingsNode>
-            {
-                { "Property2", new ValueNode("true") },
-                { "Property3", new ValueNode("true") },
-                { "Property4", new ValueNode("true") },
-            });
+            var settings = Object(("Property2", "true"), ("Property3", "true"), ("Property4", "true"));
 
             var myClass = CreateBinder<MyClass1>().Bind(settings);
 
@@ -95,10 +78,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_ignore_readonly_properties()
         {
-            var settings = new ObjectNode(new Dictionary<string, ISettingsNode>
-            {
-                { "Property5", new ValueNode("true") }
-            });
+            var settings = Object(("Property5", "true"));
 
             var myClass = CreateBinder<MyClass1>().Bind(settings);
 
@@ -110,10 +90,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_set_properties_with_non_public_setter()
         {
-            var settings = new ObjectNode(new Dictionary<string, ISettingsNode>
-            {
-                { "Property6", new ValueNode("true") }
-            });
+            var settings = Object(("Property6", "true"));
 
             var myClass = CreateBinder<MyClass1>().Bind(settings);
 
@@ -124,10 +101,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_throw_if_inner_binder_throws()
         {
-            var settings = new ObjectNode(new Dictionary<string, ISettingsNode>
-            {
-                { "Field1", new ValueNode("xxx") }
-            });
+            var settings = Object(("Field1", "xxx"));
 
             new Action(() => CreateBinder<MyClass1>().Bind(settings)).Should().Throw<SettingsBindingException>();
         }
@@ -135,10 +109,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_throw_if_required_field_is_not_set()
         {
-            var settings = new ObjectNode(new Dictionary<string, ISettingsNode>
-            {
-                { "Property1", new ValueNode("true") }
-            });
+            var settings = Object(("Field1", "true"));
 
             new Action(() => CreateBinder<MyClass2>().Bind(settings)).Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
@@ -146,10 +117,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_throw_if_required_property_is_not_set()
         {
-            var settings = new ObjectNode(new Dictionary<string, ISettingsNode>
-            {
-                { "Field1", new ValueNode("true") }
-            });
+            var settings = Object(("Property1", "true"));
 
             new Action(() => CreateBinder<MyClass2>().Bind(settings)).Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
@@ -157,10 +125,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_throw_if_required_by_default_field_is_not_set()
         {
-            var settings = new ObjectNode(new Dictionary<string, ISettingsNode>
-            {
-                { "Property1", new ValueNode("true") }
-            });
+            var settings = Object(("Field1", "true"));
 
             new Action(() => CreateBinder<MyClass3>().Bind(settings)).Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
@@ -168,10 +133,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_throw_if_required_by_default_property_is_not_set()
         {
-            var settings = new ObjectNode(new Dictionary<string, ISettingsNode>
-            {
-                { "Field1", new ValueNode("true") }
-            });
+            var settings = Object(("Property1", "true"));
 
             new Action(() => CreateBinder<MyClass3>().Bind(settings)).Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
@@ -179,7 +141,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_keep_default_value_of_field()
         {
-            var settings = new ObjectNode(new Dictionary<string, ISettingsNode>());
+            var settings = new ObjectNode(null as string);
 
             var myClass = CreateBinder<MyClass4>().Bind(settings);
 
@@ -190,7 +152,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_keep_default_value_of_property()
         {
-            var settings = new ObjectNode(new Dictionary<string, ISettingsNode>());
+            var settings = new ObjectNode(null as string);
 
             var myClass = CreateBinder<MyClass4>().Bind(settings);
 
@@ -201,10 +163,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_throw_if_type_has_no_parameterless_constructor()
         {
-            var settings = new ObjectNode(new Dictionary<string, ISettingsNode>
-            {
-                { "Field1", new ValueNode("true") }
-            });
+            var settings = Object(("Field1", "true"));
 
             new Action(() => CreateBinder<MyClass5>().Bind(settings)).Should().Throw<MissingMethodException>(); // TODO(krait): wrap exception
         }
@@ -212,11 +171,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_set_multiple_properties_of_struct()
         {
-            var settings = new ObjectNode(new Dictionary<string, ISettingsNode>
-            {
-                { "Property1", new ValueNode("true") },
-                { "Property2", new ValueNode("true") }
-            });
+            var settings = Object(("Property1", "true"), ("Property2", "true"));
 
             var myStruct = CreateBinder<MyStruct>().Bind(settings);
 

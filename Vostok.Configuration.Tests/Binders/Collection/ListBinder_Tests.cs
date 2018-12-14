@@ -10,7 +10,7 @@ using Vostok.Configuration.Binders.Collection;
 
 namespace Vostok.Configuration.Tests.Binders.Collection
 {
-    public class ListBinder_Tests
+    public class ListBinder_Tests : TreeConstructionSet
     {
         private ListBinder<bool> binder;
 
@@ -26,11 +26,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         [Test]
         public void Should_bind_arrays_with_items()
         {
-            var settings = new ArrayNode(new List<ISettingsNode>
-            {
-                new ValueNode("true"),
-                new ValueNode("true"),
-            });
+            var settings = Array(null, "true", "true");
 
             binder.Bind(settings).Should().Equal(true, true);
         }
@@ -38,7 +34,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         [Test]
         public void Should_bind_arrays_without_items()
         {
-            var settings = new ArrayNode(new List<ISettingsNode>());
+            var settings = Array(new string[] {});
 
             binder.Bind(settings).Should().BeEmpty();
         }
@@ -46,7 +42,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         [Test]
         public void Should_throw_if_inner_binder_throws()
         {
-            var settings = new ArrayNode(new List<ISettingsNode> { new ValueNode("xxx") });
+            var settings = Array(null, "xxx");
 
             new Action(() => binder.Bind(settings)).Should().Throw<SettingsBindingException>();
         }
@@ -55,11 +51,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         public void Should_return_mutable_collection_as_ICollection()
         {
             var myBinder = binder as ISettingsBinder<ICollection<bool>>;
-            var settings = new ArrayNode(new List<ISettingsNode>
-            {
-                new ValueNode("true"),
-                new ValueNode("true"),
-            });
+            var settings = Array(null, "true", "true");
 
             var collection = myBinder.Bind(settings);
 

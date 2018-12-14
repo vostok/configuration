@@ -10,7 +10,7 @@ using Vostok.Configuration.Binders.Collection;
 
 namespace Vostok.Configuration.Tests.Binders.Collection
 {
-    public class SetBinder_Tests
+    public class SetBinder_Tests : TreeConstructionSet
     {
         private SetBinder<string> binder;
         private ISettingsBinder<string> stringBinder;
@@ -27,13 +27,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         [Test]
         public void Should_bind_arrays_with_items()
         {
-            var settings = new ArrayNode(new List<ISettingsNode>
-            {
-                new ValueNode("a"),
-                new ValueNode("b"),
-                new ValueNode("c"),
-                new ValueNode("a"),
-            });
+            var settings = Array(null, "a", "b", "c", "a");
 
             binder.Bind(settings).Should().BeEquivalentTo("a", "b", "c");
         }
@@ -41,7 +35,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         [Test]
         public void Should_bind_arrays_without_items()
         {
-            var settings = new ArrayNode(new List<ISettingsNode>());
+            var settings = Array(new string[] {});
 
             binder.Bind(settings).Should().BeEmpty();
         }
@@ -50,7 +44,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         public void Should_throw_if_inner_binder_throws()
         {
             stringBinder.Bind(Arg.Any<ISettingsNode>()).Throws<Exception>();
-            var settings = new ArrayNode(new List<ISettingsNode> { new ValueNode("xxx") });
+            var settings = Array(null, "xxx");
 
             new Action(() => binder.Bind(settings)).Should().Throw<Exception>();
         }
