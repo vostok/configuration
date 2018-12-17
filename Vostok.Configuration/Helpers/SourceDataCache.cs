@@ -11,7 +11,8 @@ namespace Vostok.Configuration.Helpers
 
         public SourceDataCache(int limitedCacheCapacity)
         {
-            limitedSourceCache = new WindowedCache<(IConfigurationSource, Type), object>(limitedCacheCapacity);
+            limitedSourceCache = new WindowedCache<(IConfigurationSource, Type), object>(
+                limitedCacheCapacity, kv => ((IDisposable)kv.Value).Dispose());
             persistentSourceCache = new ConcurrentDictionary<(IConfigurationSource, Type), object>();
         }
 

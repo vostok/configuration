@@ -2,8 +2,8 @@ using System;
 
 namespace Vostok.Configuration.Helpers
 {
-    public interface ITaskSource<T>
+    public interface ITaskSource<out T> : IDisposable    
     {
-        T Get(Func<IObservable<T>> observableProvider);
+        T Get();
     }
 }

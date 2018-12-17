@@ -1,15 +1,20 @@
 using System;
+using System.Reactive;
 using System.Threading;
 
 namespace Vostok.Configuration.Helpers
 {
-    public class TaskSource<T> : IDisposable, ITaskSource<T>
+    public class TaskSource<T> : ITaskSource<T>
     {
-        private CurrentValueObserver<T> rawValueObserver;
+        private readonly Func<IObservable<T>> observableProvider;
+        private CurrentValueObserver<T> rawValueObserver = new CurrentValueObserver<T>();
 
-        public TaskSource() => rawValueObserver = new CurrentValueObserver<T>();
+        public TaskSource(Func<IObservable<T>> observableProvider)
+        {
+            this.observableProvider = observableProvider;
+        }
 
-        public T Get(Func<IObservable<T>> observableProvider)
+        public T Get()
         {
             try
             {

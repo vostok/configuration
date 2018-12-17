@@ -36,7 +36,7 @@ namespace Vostok.Configuration
             
             configurationWithErrorsObservable = new ConfigurationWithErrorsObservable(GetSource, observableBinder, sourceDataCache);
             configurationObservable = new ConfigurationObservable(configurationWithErrorsObservable, settings.ErrorCallBack);
-            configurationGetter = new ConfigurationGetter(configurationObservable, cachingBinder, sourceDataCache, taskSourceFactory);
+            configurationGetter = new ConfigurationGetter(GetSource, configurationObservable, sourceDataCache, taskSourceFactory);
         }
 
         internal ConfigurationProvider(IConfigurationGetter configurationGetter, IConfigurationObservable configurationObservable, IConfigurationWithErrorsObservable configurationWithErrorsObservable)

@@ -24,6 +24,13 @@ namespace Vostok.Configuration
             return resultSource.Task.GetAwaiter().GetResult();
         }
 
+        public void Dispose()
+        {
+            var subscription = innerSubscription;
+            if (subscription != null && ReferenceEquals(Interlocked.CompareExchange(ref innerSubscription, null, subscription), subscription))
+                subscription.Dispose();
+        }
+
         private void OnError(Exception e) =>
             resultSource.TrySetException(e);
 
@@ -38,13 +45,6 @@ namespace Vostok.Configuration
             var newSource = new TaskCompletionSource<T>();
             newSource.TrySetResult(value);
             return newSource;
-        }
-
-        public void Dispose()
-        {
-            var subscription = innerSubscription;
-            if (subscription != null && ReferenceEquals(Interlocked.CompareExchange(ref innerSubscription, null, subscription), subscription))
-                subscription.Dispose();
         }
     }
 }

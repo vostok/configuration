@@ -1,13 +1,10 @@
 using System;
-using System.Reactive.Linq;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.Abstractions.SettingsTree;
-using Vostok.Configuration.Helpers;
 
-namespace Vostok.Configuration.Tests
+namespace Vostok.Configuration.Tests.Provider
 {
     [TestFixture]
     public class ConfigurationProvider_Tests
@@ -26,7 +23,7 @@ namespace Vostok.Configuration.Tests
             configurationObservable = Substitute.For<IConfigurationObservable>();
             configurationWithErrorsObservable = Substitute.For<IConfigurationWithErrorsObservable>();
 
-            provider = new ConfigurationProvider(configurationGetter, configurationObservable, configurationWithErrorsObservable);
+            provider = new Configuration.ConfigurationProvider(configurationGetter, configurationObservable, configurationWithErrorsObservable);
             source = Substitute.For<IConfigurationSource>();
             settings = new object();
         }

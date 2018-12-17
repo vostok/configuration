@@ -19,7 +19,7 @@ using Vostok.Configuration.Helpers;
 namespace Vostok.Configuration.Tests
 {
     [TestFixture]
-    public class ConfigurationSourceObserver_Tests
+    public class ObservableBinder_Tests
     {
         private ISettingsBinder binder;
         private ObservableBinder observer;
