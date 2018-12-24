@@ -2,7 +2,9 @@ using System;
 using System.Collections.Concurrent;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Binders;
-using Vostok.Configuration.Helpers;
+using Vostok.Configuration.Cache;
+using Vostok.Configuration.ProviderComponents;
+using Vostok.Configuration.TaskSource;
 
 namespace Vostok.Configuration
 {

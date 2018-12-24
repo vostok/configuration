@@ -28,8 +28,9 @@
   <ItemGroup>
     <Compile Include="..\..\vostok.commons.testing\Vostok.Commons.Testing\AssertionAssertions.cs" Link="Commons\AssertionAssertions.cs" />
     <Compile Include="..\..\vostok.commons.testing\Vostok.Commons.Testing\ExceptionAssertions.cs" Link="Commons\ExceptionAssertions.cs" />
-    <Compile Include="..\..\vostok.commons.testing\Vostok.Commons.Testing\ObservableHelpers\ObservableHelpers.cs" Link="Commons\ObservableHelpers.cs" />
-    <Compile Include="..\..\vostok.commons.testing\Vostok.Commons.Testing\ObservableHelpers\TestObserver.cs" Link="Commons\TestObserver.cs" />
+    <Compile Include="..\..\vostok.commons.testing\Vostok.Commons.Testing\Observable\ObservableHelpers.cs" Link="Commons\ObservableHelpers.cs" />
+    <Compile Include="..\..\vostok.commons.testing\Vostok.Commons.Testing\Observable\TestObserver.cs" Link="Commons\TestObserver.cs" />
+    <Compile Include="..\..\vostok.commons.testing\Vostok.Commons.Testing\Observable\ObservableAssertions.cs" Link="Commons\ObservableAssertions.cs" />
   </ItemGroup>
   
   <ItemGroup>
