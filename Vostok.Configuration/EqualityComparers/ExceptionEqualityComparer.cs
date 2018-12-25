@@ -25,6 +25,7 @@ namespace Vostok.Configuration.EqualityComparers
         {
             if (exception is AggregateException aggregateException)
                 return aggregateException.InnerExceptions;
+
             return new[] {exception.InnerException};
         }
 

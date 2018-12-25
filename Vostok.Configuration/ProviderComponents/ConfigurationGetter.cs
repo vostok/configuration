@@ -19,14 +19,14 @@ namespace Vostok.Configuration.ProviderComponents
             this.sourceDataCache = sourceDataCache;
             this.taskSourceFactory = taskSourceFactory;
         }
-        
+
         public TSettings Get<TSettings>()
         {
-            var type = typeof(TSettings);
-            var source = sourceProvider(type);
+            var source = sourceProvider(typeof(TSettings));
             var cacheItem = sourceDataCache.GetPersistentCacheItem<TSettings>(source);
             if (cacheItem.TaskSource == null)
                 cacheItem.TrySetTaskSource(taskSourceFactory.Create(configurationObservable.Observe<TSettings>));
+
             return cacheItem.TaskSource.Get();
         }
 
@@ -35,10 +35,12 @@ namespace Vostok.Configuration.ProviderComponents
             var cacheItem = sourceDataCache.GetLimitedCacheItem<TSettings>(source);
             if (cacheItem.TaskSource != null)
                 return cacheItem.TaskSource.Get();
+
             var taskSource = taskSourceFactory.Create(() => configurationObservable.Observe<TSettings>(source));
             var result = taskSource.Get();
             if (!cacheItem.TrySetTaskSource(taskSource) || cacheItem.IsDisposed)
                 taskSource.Dispose();
+
             return result;
         }
     }

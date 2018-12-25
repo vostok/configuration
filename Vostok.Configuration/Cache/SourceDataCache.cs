@@ -30,7 +30,7 @@ namespace Vostok.Configuration.Cache
             return (SourceCacheItem<TSettings>)GetFromLimitedOrPersistentCache(key, newItem, limitedSourceCache, persistentSourceCache);
         }
 
-        private object GetFromLimitedOrPersistentCache<T>(T key, object newItem, WindowedCache<T, object> limitedCache, ConcurrentDictionary<T, object> persistentCache)
+        private static object GetFromLimitedOrPersistentCache<T>(T key, object newItem, WindowedCache<T, object> limitedCache, ConcurrentDictionary<T, object> persistentCache)
         {
             if (limitedCache.TryRemove(key, out var result))
                 persistentCache.AddOrUpdate(key, result, (k, obj) => result);

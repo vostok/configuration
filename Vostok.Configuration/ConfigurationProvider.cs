@@ -10,8 +10,6 @@ namespace Vostok.Configuration
 {
     public class ConfigurationProvider : IConfigurationProvider
     {
-        private static readonly string UnknownTypeExceptionMsg = $"{nameof(IConfigurationSource)} for specified type \"typeName\" is absent. Use {nameof(SetupSourceFor)} to add source.";
-
         private readonly IConfigurationGetter configurationGetter;
         private readonly IConfigurationObservable configurationObservable;
         private readonly IConfigurationWithErrorsObservable configurationWithErrorsObservable;
@@ -20,9 +18,14 @@ namespace Vostok.Configuration
         private readonly ConcurrentDictionary<Type, IConfigurationSource> typeSources = new ConcurrentDictionary<Type, IConfigurationSource>();
         private readonly ConcurrentDictionary<Type, bool> setupDisabled = new ConcurrentDictionary<Type, bool>();
 
-        public ConfigurationProvider(ConfigurationProviderSettings configurationProviderSettings = null)
+        public ConfigurationProvider()
+            : this(new ConfigurationProviderSettings())
         {
-            settings = configurationProviderSettings ?? new ConfigurationProviderSettings();
+        }
+
+        public ConfigurationProvider(ConfigurationProviderSettings settings)
+        {
+            this.settings = settings;
 
             var cachingBinder = new CachingBinder(new ValidatingBinder(settings.Binder ?? new DefaultSettingsBinder()));
             var observableBinder = new ObservableBinder(cachingBinder);
@@ -30,7 +33,7 @@ namespace Vostok.Configuration
             var taskSourceFactory = new TaskSourceFactory();
 
             configurationWithErrorsObservable = new ConfigurationWithErrorsObservable(GetSource, observableBinder, sourceDataCache);
-            configurationObservable = new ConfigurationObservable(configurationWithErrorsObservable, settings.ErrorCallBack);
+            configurationObservable = new ConfigurationObservable(configurationWithErrorsObservable, settings.ErrorCallback);
             configurationGetter = new ConfigurationGetter(GetSource, configurationObservable, sourceDataCache, taskSourceFactory);
         }
 
@@ -90,7 +93,7 @@ namespace Vostok.Configuration
         {
             var type = typeof(TSettings);
             if (setupDisabled.ContainsKey(type))
-                throw new InvalidOperationException($"{nameof(ConfigurationProvider)}: it is not allowed to add sources for \"{type.Name}\" to a {nameof(ConfigurationProvider)} after {nameof(Get)}() or {nameof(Observe)}() was called for this type.");
+                throw new InvalidOperationException($"Cannot set up source for type '{type}' after {nameof(Get)}() or {nameof(Observe)}() was called for this type.");
 
             typeSources[type] = source;
         }
@@ -108,13 +111,12 @@ namespace Vostok.Configuration
         private void EnsureSourceExists(Type type)
         {
             if (!typeSources.ContainsKey(type))
-                throw new ArgumentException($"{UnknownTypeExceptionMsg.Replace("typeName", type.Name)}");
+                throw new ArgumentException($"There is no preconfigured source for settings of type '{type}'. Use {nameof(SetupSourceFor)} to configure it.");
         }
 
         private bool IsConfiguredFor<TSettings>(IConfigurationSource source)
         {
-            var type = typeof(TSettings);
-            return typeSources.ContainsKey(type) && ReferenceEquals(typeSources[type], source);
+            return typeSources.TryGetValue(typeof(TSettings), out var preconfiguredSource) && ReferenceEquals(source, preconfiguredSource);
         }
 
         private IConfigurationSource GetSource(Type type)

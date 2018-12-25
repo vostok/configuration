@@ -12,7 +12,7 @@ namespace Vostok.Configuration.Cache
         private readonly ConcurrentQueue<TKey> queue = new ConcurrentQueue<TKey>();
 
         public WindowedCache(int capacity)
-            :this(capacity, _ => {})
+            : this(capacity, _ => {})
         {
         }
 
@@ -22,31 +22,27 @@ namespace Vostok.Configuration.Cache
             this.onAutoRemove = onAutoRemove;
         }
 
-        public bool TryGetValue(TKey key, out TValue value)
-        {
-            return cache.TryGetValue(key, out value);
-        }
+        public bool TryGetValue(TKey key, out TValue value) => cache.TryGetValue(key, out value);
 
         public TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory)
         {
             if (!cache.ContainsKey(key))
                 queue.Enqueue(key);
+
             var value = cache.GetOrAdd(key, _ => valueFactory(key));
+
             RemoveOutOfWindowItems();
+
             return value;
         }
 
-        public bool TryRemove(TKey key, out TValue value)
-        {
-            return cache.TryRemove(key, out value);
-        }
-        
+        public bool TryRemove(TKey key, out TValue value) => cache.TryRemove(key, out value);
+
         private void RemoveOutOfWindowItems()
         {
             while (queue.Count > capacity && queue.TryDequeue(out var keyToRemove))
                 if (cache.TryRemove(keyToRemove, out var removedValue))
                     onAutoRemove(new KeyValuePair<TKey, TValue>(keyToRemove, removedValue));
-                    
         }
     }
 }

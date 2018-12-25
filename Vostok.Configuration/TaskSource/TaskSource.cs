@@ -43,9 +43,6 @@ namespace Vostok.Configuration.TaskSource
             currentObserver.Dispose();
         }
 
-        public void Dispose()
-        {
-            rawValueObserver?.Dispose();
-        }
+        public void Dispose() => rawValueObserver?.Dispose();
     }
 }

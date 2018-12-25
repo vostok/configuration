@@ -19,8 +19,8 @@ namespace Vostok.Configuration.ProviderComponents
 
         public IObservable<(TSettings settings, Exception error)> ObserveWithErrors<TSettings>()
         {
-            var type = typeof(TSettings);
-            var source = sourceProvider(type);
+            var source = sourceProvider(typeof(TSettings));
+
             return observableBinder.SelectBound(source.Observe(), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source));
         }
 

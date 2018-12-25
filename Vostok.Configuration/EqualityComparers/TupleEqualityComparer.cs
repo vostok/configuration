@@ -12,7 +12,7 @@ namespace Vostok.Configuration.EqualityComparers
             this.comparer1 = comparer1;
             this.comparer2 = comparer2;
         }
-        
+
         public bool Equals((T1, T2) x, (T1, T2) y) => comparer1.Equals(x.Item1, y.Item1) && comparer2.Equals(x.Item2, y.Item2);
 
         public int GetHashCode((T1, T2) obj)

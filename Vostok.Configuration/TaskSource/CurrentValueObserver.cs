@@ -31,20 +31,19 @@ namespace Vostok.Configuration.TaskSource
                 subscription.Dispose();
         }
 
-        private void OnError(Exception e) =>
-            resultSource.TrySetException(e);
-
-        private void OnNextValue(T value)
-        {
-            if (!resultSource.TrySetResult(value))
-                resultSource = NewCompletedSource(value);
-        }
-
         private static TaskCompletionSource<T> NewCompletedSource(T value)
         {
             var newSource = new TaskCompletionSource<T>();
             newSource.TrySetResult(value);
             return newSource;
+        }
+
+        private void OnError(Exception e) => resultSource.TrySetException(e);
+
+        private void OnNextValue(T value)
+        {
+            if (!resultSource.TrySetResult(value))
+                resultSource = NewCompletedSource(value);
         }
     }
 }

@@ -16,7 +16,7 @@ namespace Vostok.Configuration.ProviderComponents
         {
             this.binder = binder;
         }
-        
+
         public IObservable<(TSettings settings, Exception error)> SelectBound<TSettings>(IObservable<(ISettingsNode settings, Exception error)> sourceObservable, Func<SourceCacheItem<TSettings>> cacheItemProvider)
         {
             return sourceObservable
@@ -24,9 +24,8 @@ namespace Vostok.Configuration.ProviderComponents
                     sourceValue =>
                     {
                         var cacheItem = cacheItemProvider();
-                        
-                        var resultError = sourceValue.error;
 
+                        var resultError = sourceValue.error;
                         if (resultError == null)
                         {
                             try
@@ -39,9 +38,9 @@ namespace Vostok.Configuration.ProviderComponents
                                 resultError = error;
                             }
                         }
-                        
+
                         var cachedValue = cacheItem.LastValue;
-                        
+
                         return cachedValue == null
                             ? Notification.CreateOnError<(TSettings, Exception)>(resultError)
                             : Notification.CreateOnNext((cachedValue.Value.settings, resultError));

@@ -50,21 +50,21 @@ namespace Vostok.Configuration.Cache
 
         public class CacheItemValue<TSettings>
         {
-            public ISettingsNode LastBoundNode { get; }
-            public TSettings LastSettings { get; }
-            public Exception LastError { get; }
-
             public CacheItemValue(ISettingsNode lastBoundNode, TSettings settings)
             {
                 LastBoundNode = lastBoundNode;
                 LastSettings = settings;
             }
-            
+
             public CacheItemValue(ISettingsNode lastBoundNode, Exception error)
             {
                 LastBoundNode = lastBoundNode;
                 LastError = error;
             }
+
+            public ISettingsNode LastBoundNode { get; }
+            public TSettings LastSettings { get; }
+            public Exception LastError { get; }
         }
     }
 }
