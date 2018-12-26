@@ -13,7 +13,8 @@ namespace Vostok.Configuration.Cache
         public SourceDataCache(int limitedCacheCapacity)
         {
             limitedSourceCache = new WindowedCache<(IConfigurationSource, Type), object>(
-                limitedCacheCapacity, kv => ((IDisposable)kv.Value).Dispose());
+                limitedCacheCapacity,
+                kv => ((IDisposable)kv.Value).Dispose());
             persistentSourceCache = new ConcurrentDictionary<(IConfigurationSource, Type), object>();
         }
 
@@ -23,12 +24,18 @@ namespace Vostok.Configuration.Cache
             var newItem = new SourceCacheItem<TSettings>();
             return (SourceCacheItem<TSettings>)limitedSourceCache.GetOrAdd(key, _ => newItem);
         }
-        
+
         public SourceCacheItem<TSettings> GetPersistentCacheItem<TSettings>(IConfigurationSource source)
         {
             var key = (source, typeof(TSettings));
             var newItem = new SourceCacheItem<TSettings>();
             return (SourceCacheItem<TSettings>)GetFromLimitedOrPersistentCache(key, newItem, limitedSourceCache, persistentSourceCache);
+        }
+
+        public void Dispose()
+        {
+            foreach (var cacheItem in persistentSourceCache.Values.Concat(limitedSourceCache.Values).Cast<IDisposable>())
+                cacheItem.Dispose();
         }
 
         private static object GetFromLimitedOrPersistentCache<T>(T key, object newItem, WindowedCache<T, object> limitedCache, ConcurrentDictionary<T, object> persistentCache)
@@ -39,12 +46,6 @@ namespace Vostok.Configuration.Cache
                 result = persistentCache.GetOrAdd(key, newItem);
 
             return result;
-        }
-
-        public void Dispose()
-        {
-            foreach (var cacheItem in persistentSourceCache.Values.Concat(limitedSourceCache.Values).Cast<IDisposable>())
-                cacheItem.Dispose();
         }
     }
 }

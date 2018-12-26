@@ -34,6 +34,8 @@ namespace Vostok.Configuration.TaskSource
             }
         }
 
+        public void Dispose() => rawValueObserver?.Dispose();
+
         private void ReplaceObserver()
         {
             var currentObserver = rawValueObserver;
@@ -42,7 +44,5 @@ namespace Vostok.Configuration.TaskSource
                 newObserver.Dispose();
             currentObserver.Dispose();
         }
-
-        public void Dispose() => rawValueObserver?.Dispose();
     }
 }

@@ -7,17 +7,16 @@ namespace Vostok.Configuration.Cache
 {
     internal class SourceCacheItem<TSettings> : IBindingCacheItem<TSettings>, IDisposable
     {
+        private readonly AtomicBoolean isDisposed = new AtomicBoolean(false);
+
+        private ITaskSource<TSettings> taskSource;
         public (TSettings settings, Exception error)? LastValue { get; set; }
 
         public BindingCacheValue<TSettings> BindingCacheValue { get; set; }
-        
+
         public ITaskSource<TSettings> TaskSource => taskSource;
 
         public bool IsDisposed => isDisposed;
-        
-        private ITaskSource<TSettings> taskSource;
-        
-        private readonly AtomicBoolean isDisposed = new AtomicBoolean(false);
 
         public bool TrySetTaskSource(ITaskSource<TSettings> taskSource)
         {

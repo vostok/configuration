@@ -24,7 +24,8 @@ namespace Vostok.Configuration
         }
 
         public ConfigurationProvider(ConfigurationProviderSettings settings)
-            : this(settings.ErrorCallback,
+            : this(
+                settings.ErrorCallback,
                 new ObservableBinder(new CachingBinder(new ValidatingBinder(settings.Binder ?? new DefaultSettingsBinder()))),
                 new SourceDataCache(settings.MaxSourceCacheSize),
                 new TaskSourceFactory())
@@ -43,7 +44,7 @@ namespace Vostok.Configuration
         {
             EnsureSourceExists<TSettings>();
             DisableSetupSourceFor<TSettings>();
-            
+
             var source = GetSource<TSettings>();
             var cacheItem = sourceDataCache.GetPersistentCacheItem<TSettings>(source);
             if (cacheItem.TaskSource == null)
@@ -83,7 +84,7 @@ namespace Vostok.Configuration
         {
             EnsureSourceExists<TSettings>();
             DisableSetupSourceFor<TSettings>();
-            
+
             var source = GetSource<TSettings>();
 
             return observableBinder.SelectBound(source.Observe(), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source));
