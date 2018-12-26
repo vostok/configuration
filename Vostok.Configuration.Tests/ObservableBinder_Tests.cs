@@ -9,9 +9,9 @@ using Vostok.Commons.Testing.Observable;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Cache;
-using Vostok.Configuration.ProviderComponents;
+using Vostok.Configuration.ObservableBinding;
 
-namespace Vostok.Configuration.Tests.ProviderComponents
+namespace Vostok.Configuration.Tests
 {
     [TestFixture]
     public class ObservableBinder_Tests

@@ -3,20 +3,20 @@ using System.Collections.Concurrent;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Cache;
-using Vostok.Configuration.ProviderComponents;
+using Vostok.Configuration.Extensions;
+using Vostok.Configuration.ObservableBinding;
 using Vostok.Configuration.TaskSource;
 
 namespace Vostok.Configuration
 {
-    public class ConfigurationProvider : IConfigurationProvider
+    public class ConfigurationProvider : IConfigurationProvider, IDisposable
     {
-        private readonly IConfigurationGetter configurationGetter;
-        private readonly IConfigurationObservable configurationObservable;
-        private readonly IConfigurationWithErrorsObservable configurationWithErrorsObservable;
-        private readonly ConfigurationProviderSettings settings;
-
         private readonly ConcurrentDictionary<Type, IConfigurationSource> typeSources = new ConcurrentDictionary<Type, IConfigurationSource>();
         private readonly ConcurrentDictionary<Type, bool> setupDisabled = new ConcurrentDictionary<Type, bool>();
+        private readonly Action<Exception> errorCallback;
+        private readonly IObservableBinder observableBinder;
+        private readonly ISourceDataCache sourceDataCache;
+        private readonly ITaskSourceFactory taskSourceFactory;
 
         public ConfigurationProvider()
             : this(new ConfigurationProviderSettings())
@@ -24,31 +24,32 @@ namespace Vostok.Configuration
         }
 
         public ConfigurationProvider(ConfigurationProviderSettings settings)
+            : this(settings.ErrorCallback,
+                new ObservableBinder(new CachingBinder(new ValidatingBinder(settings.Binder ?? new DefaultSettingsBinder()))),
+                new SourceDataCache(settings.MaxSourceCacheSize),
+                new TaskSourceFactory())
         {
-            this.settings = settings;
-
-            var cachingBinder = new CachingBinder(new ValidatingBinder(settings.Binder ?? new DefaultSettingsBinder()));
-            var observableBinder = new ObservableBinder(cachingBinder);
-            var sourceDataCache = new SourceDataCache(settings.MaxSourceCacheSize);
-            var taskSourceFactory = new TaskSourceFactory();
-
-            configurationWithErrorsObservable = new ConfigurationWithErrorsObservable(GetSource, observableBinder, sourceDataCache);
-            configurationObservable = new ConfigurationObservable(configurationWithErrorsObservable, settings.ErrorCallback);
-            configurationGetter = new ConfigurationGetter(GetSource, configurationObservable, sourceDataCache, taskSourceFactory);
         }
 
-        internal ConfigurationProvider(IConfigurationGetter configurationGetter, IConfigurationObservable configurationObservable, IConfigurationWithErrorsObservable configurationWithErrorsObservable)
+        internal ConfigurationProvider(Action<Exception> errorCallback, IObservableBinder observableBinder, ISourceDataCache sourceDataCache, ITaskSourceFactory taskSourceFactory)
         {
-            this.configurationGetter = configurationGetter;
-            this.configurationObservable = configurationObservable;
-            this.configurationWithErrorsObservable = configurationWithErrorsObservable;
+            this.errorCallback = errorCallback ?? (_ => {});
+            this.observableBinder = observableBinder;
+            this.sourceDataCache = sourceDataCache;
+            this.taskSourceFactory = taskSourceFactory;
         }
 
         public TSettings Get<TSettings>()
         {
             EnsureSourceExists<TSettings>();
             DisableSetupSourceFor<TSettings>();
-            return configurationGetter.Get<TSettings>();
+            
+            var source = GetSource<TSettings>();
+            var cacheItem = sourceDataCache.GetPersistentCacheItem<TSettings>(source);
+            if (cacheItem.TaskSource == null)
+                cacheItem.TrySetTaskSource(taskSourceFactory.Create(Observe<TSettings>));
+
+            return cacheItem.TaskSource.Get();
         }
 
         public TSettings Get<TSettings>(IConfigurationSource source)
@@ -56,29 +57,36 @@ namespace Vostok.Configuration
             if (IsConfiguredFor<TSettings>(source))
                 return Get<TSettings>();
 
-            return configurationGetter.Get<TSettings>(source);
+            var cacheItem = sourceDataCache.GetLimitedCacheItem<TSettings>(source);
+            if (cacheItem.TaskSource != null)
+                return cacheItem.TaskSource.Get();
+
+            var taskSource = taskSourceFactory.Create(() => Observe<TSettings>(source));
+            var result = taskSource.Get();
+            if (!cacheItem.TrySetTaskSource(taskSource))
+                taskSource.Dispose();
+
+            return result;
         }
 
         public IObservable<TSettings> Observe<TSettings>()
         {
-            EnsureSourceExists<TSettings>();
-            DisableSetupSourceFor<TSettings>();
-            return configurationObservable.Observe<TSettings>();
+            return ObserveWithErrors<TSettings>().SendErrorsToCallback(errorCallback);
         }
 
         public IObservable<TSettings> Observe<TSettings>(IConfigurationSource source)
         {
-            if (IsConfiguredFor<TSettings>(source))
-                return Observe<TSettings>();
-
-            return configurationObservable.Observe<TSettings>(source);
+            return ObserveWithErrors<TSettings>(source).SendErrorsToCallback(errorCallback);
         }
 
         public IObservable<(TSettings settings, Exception error)> ObserveWithErrors<TSettings>()
         {
             EnsureSourceExists<TSettings>();
             DisableSetupSourceFor<TSettings>();
-            return configurationWithErrorsObservable.ObserveWithErrors<TSettings>();
+            
+            var source = GetSource<TSettings>();
+
+            return observableBinder.SelectBound(source.Observe(), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source));
         }
 
         public IObservable<(TSettings settings, Exception error)> ObserveWithErrors<TSettings>(IConfigurationSource source)
@@ -86,7 +94,7 @@ namespace Vostok.Configuration
             if (IsConfiguredFor<TSettings>(source))
                 return ObserveWithErrors<TSettings>();
 
-            return configurationWithErrorsObservable.ObserveWithErrors<TSettings>(source);
+            return observableBinder.SelectBound(source.Observe(), () => sourceDataCache.GetLimitedCacheItem<TSettings>(source));
         }
 
         public void SetupSourceFor<TSettings>(IConfigurationSource source)
@@ -96,6 +104,11 @@ namespace Vostok.Configuration
                 throw new InvalidOperationException($"Cannot set up source for type '{type}' after {nameof(Get)}() or {nameof(Observe)}() was called for this type.");
 
             typeSources[type] = source;
+        }
+
+        public void Dispose()
+        {
+            sourceDataCache.Dispose();
         }
 
         private void DisableSetupSourceFor<TSettings>()
@@ -119,10 +132,10 @@ namespace Vostok.Configuration
             return typeSources.TryGetValue(typeof(TSettings), out var preconfiguredSource) && ReferenceEquals(source, preconfiguredSource);
         }
 
-        private IConfigurationSource GetSource(Type type)
+        private IConfigurationSource GetSource<TSettings>()
         {
-            EnsureSourceExists(type);
-            return typeSources[type];
+            EnsureSourceExists<TSettings>();
+            return typeSources[typeof(TSettings)];
         }
     }
 }

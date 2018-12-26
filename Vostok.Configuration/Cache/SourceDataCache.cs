@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using Vostok.Configuration.Abstractions;
 
 namespace Vostok.Configuration.Cache
@@ -38,6 +39,12 @@ namespace Vostok.Configuration.Cache
                 result = persistentCache.GetOrAdd(key, newItem);
 
             return result;
+        }
+
+        public void Dispose()
+        {
+            foreach (var cacheItem in persistentSourceCache.Values.Concat(limitedSourceCache.Values).Cast<IDisposable>())
+                cacheItem.Dispose();
         }
     }
 }

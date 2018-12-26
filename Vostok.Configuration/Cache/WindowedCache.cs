@@ -6,6 +6,8 @@ namespace Vostok.Configuration.Cache
 {
     internal class WindowedCache<TKey, TValue>
     {
+        public ICollection<TValue> Values => cache.Values;
+        
         private readonly int capacity;
         private readonly Action<KeyValuePair<TKey, TValue>> onAutoRemove;
         private readonly ConcurrentDictionary<TKey, TValue> cache = new ConcurrentDictionary<TKey, TValue>();

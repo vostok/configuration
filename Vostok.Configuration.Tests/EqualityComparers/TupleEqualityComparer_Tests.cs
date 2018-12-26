@@ -5,7 +5,7 @@ using NSubstitute;
 using NUnit.Framework;
 using Vostok.Configuration.EqualityComparers;
 
-namespace Vostok.Configuration.Tests.Comparers
+namespace Vostok.Configuration.Tests.EqualityComparers
 {
     [TestFixture]
     internal class TupleEqualityComparer_Tests

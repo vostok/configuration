@@ -19,7 +19,10 @@ namespace Vostok.Configuration.Cache
 
         public bool IsDisposed => isDisposed;
 
-        public bool TrySetTaskSource(ITaskSource<TSettings> taskSource) => Interlocked.CompareExchange(ref this.taskSource, taskSource, null) == null;
+        public bool TrySetTaskSource(ITaskSource<TSettings> taskSource)
+        {
+            return Interlocked.CompareExchange(ref this.taskSource, taskSource, null) == null && !IsDisposed;
+        }
 
         public void Dispose()
         {

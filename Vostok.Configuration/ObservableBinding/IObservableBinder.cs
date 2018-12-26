@@ -2,7 +2,7 @@ using System;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Cache;
 
-namespace Vostok.Configuration.ProviderComponents
+namespace Vostok.Configuration.ObservableBinding
 {
     internal interface IObservableBinder
     {

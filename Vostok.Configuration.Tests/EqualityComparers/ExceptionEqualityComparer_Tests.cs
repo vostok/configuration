@@ -5,7 +5,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.EqualityComparers;
 
-namespace Vostok.Configuration.Tests.Comparers
+namespace Vostok.Configuration.Tests.EqualityComparers
 {
     [TestFixture]
     internal class ExceptionEqualityComparer_Tests

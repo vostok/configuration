@@ -6,7 +6,7 @@ using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Cache;
 using Vostok.Configuration.EqualityComparers;
 
-namespace Vostok.Configuration.ProviderComponents
+namespace Vostok.Configuration.ObservableBinding
 {
     internal class ObservableBinder : IObservableBinder
     {
