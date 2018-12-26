@@ -42,7 +42,7 @@ namespace Vostok.Configuration.Tests
             
             observableBinder.SelectBound(subject, () => cacheItem).WaitFirstValue(100.Milliseconds());
 
-            binder.Received(1).Bind(node, cacheItem.BindingCacheItem);
+            binder.Received(1).Bind(node, cacheItem);
         }
 
         [Test]
@@ -221,7 +221,7 @@ namespace Vostok.Configuration.Tests
 
         private object Bind(ISettingsNode node)
         {
-            return binder.Bind(node, Arg.Any<CachingBinder.BindingCacheItem<object>>());
+            return binder.Bind(node, Arg.Any<SourceCacheItem<object>>());
         }
     }
 }

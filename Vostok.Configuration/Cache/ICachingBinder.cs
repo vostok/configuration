@@ -4,6 +4,6 @@ namespace Vostok.Configuration.Cache
 {
     internal interface ICachingBinder
     {
-        TSettings Bind<TSettings>(ISettingsNode rawSettings, CachingBinder.BindingCacheItem<TSettings> cacheItem);
+        TSettings Bind<TSettings>(ISettingsNode rawSettings, IBindingCacheItem<TSettings> cacheItem);
     }
 }

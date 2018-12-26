@@ -5,19 +5,19 @@ using Vostok.Configuration.TaskSource;
 
 namespace Vostok.Configuration.Cache
 {
-    internal class SourceCacheItem<TSettings> : IDisposable
+    internal class SourceCacheItem<TSettings> : IBindingCacheItem<TSettings>, IDisposable
     {
-        private readonly AtomicBoolean isDisposed = new AtomicBoolean(false);
+        public (TSettings settings, Exception error)? LastValue { get; set; }
 
-        private ITaskSource<TSettings> taskSource;
-
-        public ValueWrapper<(TSettings settings, Exception error)> LastValue { get; set; }
-
-        public CachingBinder.BindingCacheItem<TSettings> BindingCacheItem { get; } = new CachingBinder.BindingCacheItem<TSettings>();
-
+        public BindingCacheValue<TSettings> BindingCacheValue { get; set; }
+        
         public ITaskSource<TSettings> TaskSource => taskSource;
 
         public bool IsDisposed => isDisposed;
+        
+        private ITaskSource<TSettings> taskSource;
+        
+        private readonly AtomicBoolean isDisposed = new AtomicBoolean(false);
 
         public bool TrySetTaskSource(ITaskSource<TSettings> taskSource)
         {

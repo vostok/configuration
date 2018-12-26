@@ -30,7 +30,7 @@ namespace Vostok.Configuration.ObservableBinding
                         {
                             try
                             {
-                                var boundSettings = binder.Bind(sourceValue.settings, cacheItem.BindingCacheItem);
+                                var boundSettings = binder.Bind(sourceValue.settings, cacheItem);
                                 return Notification.CreateOnNext((boundSettings, null as Exception));
                             }
                             catch (Exception error)
