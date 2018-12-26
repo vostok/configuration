@@ -38,27 +38,29 @@ namespace Vostok.Configuration.Binders
         {
             if (value == null)
                 yield break;
-            if (!(type.GetCustomAttributes(typeof(ValidateByAttribute), false).FirstOrDefault() is ValidateByAttribute validAttribute))
+            if (!(type.GetCustomAttributes(typeof(ValidateByAttribute), false).FirstOrDefault() is ValidateByAttribute validateByAttribute))
                 yield break;
 
-            var validator = Activator.CreateInstance(validAttribute.ValidatorType);
-            var validateMethod = validator.GetType().GetMethod(nameof(ISettingsValidator<object>.Validate));
+            var validator = Activator.CreateInstance(validateByAttribute.ValidatorType);
+            var validateMethod = validator.GetType().GetMethod(nameof(ISettingsValidator<object>.Validate), new[] {type});
             if (validateMethod == null)
-                yield break; // TODO(krait): Report error.
+                throw new SettingsValidationException($"Type '{validator.GetType()}' specified as validator for settings of type '{type}' does not contain a suitable {nameof(ISettingsValidator<object>.Validate)} method.");
             foreach (var error in (IEnumerable<string>)validateMethod.Invoke(validator, new[] {value}))
-                yield return prefix + error;
+                yield return FormatError(prefix, error);
 
             foreach (var field in type.GetFields())
             {
                 foreach (var error in Validate(field.FieldType, field.GetValue(value), field.Name))
-                    yield return prefix + error;
+                    yield return FormatError(prefix, error);
             }
 
             foreach (var prop in type.GetProperties())
             {
                 foreach (var error in Validate(prop.PropertyType, prop.GetValue(value), prop.Name))
-                    yield return prefix + error;
+                    yield return FormatError(prefix, error);
             }
         }
+
+        private static string FormatError(string prefix, string error) => prefix == "" ? error : prefix + "." + error;
     }
 }
