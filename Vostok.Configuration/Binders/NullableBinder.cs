@@ -12,6 +12,6 @@ namespace Vostok.Configuration.Binders
             this.valueBinder = valueBinder;
 
         public T? Bind(ISettingsNode settings) =>
-            settings.Value == null ? (T?)null : valueBinder.Bind(settings);
+            settings?.Value == null ? (T?)null : valueBinder.Bind(settings);
     }
 }

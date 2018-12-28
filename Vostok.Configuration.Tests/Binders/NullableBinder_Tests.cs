@@ -37,6 +37,13 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
+        public void Should_return_null_if_node_is_null()
+        {
+            binder.Bind(null).Should().BeNull();
+            innerBinder.DidNotReceive().Bind(Arg.Any<ISettingsNode>());
+        }
+
+        [Test]
         public void Should_throw_if_inner_binder_throws()
         {
             innerBinder.Bind(Arg.Any<ISettingsNode>()).Throws<Exception>();

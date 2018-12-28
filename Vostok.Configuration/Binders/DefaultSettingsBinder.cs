@@ -23,9 +23,6 @@ namespace Vostok.Configuration.Binders
 
         public TSettings Bind<TSettings>(ISettingsNode settings)
         {
-            if (settings == null)
-                throw new ArgumentNullException(nameof(settings));
-
             var binder = binderProvider.CreateFor<TSettings>();
             return binder.Bind(settings);
         }

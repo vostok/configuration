@@ -42,6 +42,12 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
+        public void Should_bind_null_node_to_default_value()
+        {
+            binder.Bind(null).Should().Be(0);
+        }
+
+        [Test]
         public void Should_throw_if_parser_returns_false()
         {
             new Action(() => binder.Bind(Value("xx")))

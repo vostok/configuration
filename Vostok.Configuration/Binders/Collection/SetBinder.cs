@@ -14,7 +14,7 @@ namespace Vostok.Configuration.Binders.Collection
         public SetBinder(ISettingsBinder<T> elementBinder) =>
             this.elementBinder = elementBinder;
 
-        public HashSet<T> Bind(ISettingsNode settings) => new HashSet<T>(settings.Children.Select(n => elementBinder.Bind(n)));
+        public HashSet<T> Bind(ISettingsNode settings) => settings != null ? new HashSet<T>(settings.Children.Select(n => elementBinder.Bind(n))) : null;
 
         ISet<T> ISettingsBinder<ISet<T>>.Bind(ISettingsNode settings) => Bind(settings);
     }
