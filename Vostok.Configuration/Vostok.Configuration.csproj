@@ -54,7 +54,7 @@
      <ILRepackExecutable>dotnet "$(MSBuildThisFileDirectory)../../vostok.devtools.ilrepack.bin/netcoreapp2.1/ILRepack.Core.dll"</ILRepackExecutable>
   </PropertyGroup>
   
-  <Target Name="aaaaa" BeforeTargets="Build">
+  <Target Name="RestorePackageReferences" BeforeTargets="Build">
     <ItemGroup>
       <PackageReference Remove="SimpleInjector" />
       <PackageReference Remove="System.Reactive" />
@@ -65,7 +65,6 @@
       <PackageReference Include="System.Reactive.Core" Version="4.0.0" />
       <PackageReference Include="System.Reactive.Linq" Version="4.0.0" />
     </ItemGroup>
-    <Message Text="@(PackageReference)"/>
   </Target>
 
   <Target Name="SetupILRepackProperties" AfterTargets="Build">
