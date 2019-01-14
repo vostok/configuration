@@ -29,12 +29,12 @@
   <ItemGroup>
     <Compile Include="..\..\vostok.commons.helpers\Vostok.Commons.Helpers\NumericTypeParser.cs" Link="Commons\NumericTypeParser.cs" />
   </ItemGroup>
-
+  
   <ItemGroup>
-    <PackageReference Include="SimpleInjector" Version="4.3.0" />
-    <PackageReference Include="System.Reactive" Version="4.0.0" />
-    <PackageReference Include="System.Reactive.Core" Version="4.0.0" />
-    <PackageReference Include="System.Reactive.Linq" Version="4.0.0" />
+    <PackageReference Include="System.Reactive" Version="4.0.0" PrivateAssets="all"/>
+    <PackageReference Include="System.Reactive.Core" Version="4.0.0" PrivateAssets="all"/>
+    <PackageReference Include="System.Reactive.Linq" Version="4.0.0" PrivateAssets="all"/>
+    <PackageReference Include="SimpleInjector" Version="4.3.0" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
@@ -47,24 +47,39 @@
   </ItemGroup>
 
    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
-     <ILRepackExecutable>$(MSBuildThisFileDirectory)..\..\vostok.devtools.ilrepack.bin\net40\ILRepack.exe</ILRepackExecutable>
+     <ILRepackExecutable>"$(MSBuildThisFileDirectory)..\..\vostok.devtools.ilrepack.bin\net40\ILRepack.exe"</ILRepackExecutable>
    </PropertyGroup>
 
    <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
-     <ILRepackExecutable>dotnet $(MSBuildThisFileDirectory)../../vostok.devtools.ilrepack.bin/netcoreapp2.1/ILRepack.Core.dll</ILRepackExecutable>
+     <ILRepackExecutable>dotnet "$(MSBuildThisFileDirectory)../../vostok.devtools.ilrepack.bin/netcoreapp2.1/ILRepack.Core.dll"</ILRepackExecutable>
   </PropertyGroup>
-
-  <Target Name="Publishing" BeforeTargets="RepackAssemblies" Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'NoTests'">
-    <Exec WorkingDirectory="$(ProjectDir)" Command="dotnet publish -c Publish" />
+  
+  <Target Name="aaaaa" BeforeTargets="Build">
+    <ItemGroup>
+      <PackageReference Remove="SimpleInjector" />
+      <PackageReference Remove="System.Reactive" />
+      <PackageReference Remove="System.Reactive.Core" />
+      <PackageReference Remove="System.Reactive.Linq" />
+      <PackageReference Include="SimpleInjector" Version="4.3.0" />
+      <PackageReference Include="System.Reactive" Version="4.0.0" />
+      <PackageReference Include="System.Reactive.Core" Version="4.0.0" />
+      <PackageReference Include="System.Reactive.Linq" Version="4.0.0" />
+    </ItemGroup>
+    <Message Text="@(PackageReference)"/>
   </Target>
 
-  <PropertyGroup Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'NoTests'">
-    <PubDirWithoutSlash>$(ProjectDir)bin\Publish\$(TargetFramework)\publish</PubDirWithoutSlash>
-    <PubDir>$(PubDirWithoutSlash)\</PubDir>
-    <MergedDir>$(ProjectDir)bin\Release\$(TargetFramework)\Merged\</MergedDir>
-  </PropertyGroup>
+  <Target Name="SetupILRepackProperties" AfterTargets="Build">
+    <PropertyGroup>
+      <PubDirWithoutSlash>$(ProjectDir)bin/Publish/$(TargetFramework)/publish</PubDirWithoutSlash>
+      <PubDir>$(PubDirWithoutSlash)\</PubDir>
+    </PropertyGroup>
+  </Target>
+  
+  <Target Name="Publishing" AfterTargets="SetupILRepackProperties" Condition="'$(Configuration)' != 'Publish'">
+    <Exec WorkingDirectory="$(ProjectDir)" Command="dotnet publish -c Publish -f $(TargetFramework)" />
+  </Target>
 
-  <Target Name="RepackAssemblies" AfterTargets="Build" Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'NoTests'">
+  <Target Name="RepackAssemblies" AfterTargets="Publishing" Condition="'$(Configuration)' != 'Publish'">
     <ItemGroup>
       <MergeAssemblies Include="$(ProjectDir)$(OutputPath)$(AssemblyName).dll" />
       <MergeAssemblies Include="$(PubDir)SimpleInjector.dll" />
@@ -72,19 +87,17 @@
       <MergeAssemblies Include="$(PubDir)System.Reactive.Core.dll" />
       <MergeAssemblies Include="$(PubDir)System.Reactive.Linq.dll" />
     </ItemGroup>
-    <Exec Command="$(ILRepackExecutable) /internalize /log:$(ProjectDir)$(OutputPath)ilrepack.log /lib:&quot;$(PubDirWithoutSlash)&quot; /out:$(MergedDir)$(AssemblyName).dll @(MergeAssemblies->'%(RelativeDir)%(FileName)%(Extension)', ' ')" />
+    <Exec
+            WorkingDirectory="$(PubDir)"
+            Command="$(ILRepackExecutable) /internalize /log:ilrepack.log /lib:&quot;$(PubDirWithoutSlash)&quot; /out:$(ProjectDir)$(OutputPath)$(AssemblyName).dll @(MergeAssemblies->'%(RelativeDir)%(FileName)%(Extension)', ' ')" />
   </Target>
 
-  <Target Name="RepackAssembliesForTask" AfterTargets="Build" Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'NoTests'">
-    <ItemGroup>
-      <MergeAssemblies Include="$(ProjectDir)$(OutputPath)$(AssemblyName).dll" />
-      <MergeAssemblies Include="$(PubDir)SimpleInjector.dll" />
-      <MergeAssemblies Include="$(PubDir)System.Reactive.dll" />
-      <MergeAssemblies Include="$(PubDir)System.Reactive.Core.dll" />
-      <MergeAssemblies Include="$(PubDir)System.Reactive.Linq.dll" />
-      <MergeAssemblies Include="$(PubDir)Vostok.Configuration.Abstractions.dll" />
-    </ItemGroup>
-    <Exec Command="$(ILRepackExecutable) /internalize /log:$(ProjectDir)$(OutputPath)ilrepack.log /lib:&quot;$(PubDirWithoutSlash)&quot; /out:$(MergedDir)$(AssemblyName).Task.dll @(MergeAssemblies->'%(RelativeDir)%(FileName)%(Extension)', ' ')" />
-  </Target>
+  <!--<Target Name="RepackAssembliesForTask" AfterTargets="Build" Condition="'$(Configuration)' != 'Publish'">-->
+    <!--<ItemGroup>-->
+      <!--<MergeAssembliesForTask Include="$(ProjectDir)$(OutputPath)$(AssemblyName).dll" />-->
+      <!--<MergeAssembliesForTask Include="$(PubDir)Vostok.Configuration.Abstractions.dll" />-->
+    <!--</ItemGroup>-->
+    <!--<Exec Command="$(ILRepackExecutable) /internalize /log:$(ProjectDir)$(OutputPath)ilrepack.log /lib:&quot;$(PubDirWithoutSlash)&quot; /out:$(ProjectDir)$(OutputPath)Merged\$(AssemblyName).Task.dll @(MergeAssembliesForTask->'%(RelativeDir)%(FileName)%(Extension)', ' ')" />-->
+  <!--</Target>-->
 
 </Project>

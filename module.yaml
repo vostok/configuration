@@ -6,7 +6,7 @@ notests *default:
       name: dotnet
 
   install:
-      - Vostok.Configuration/bin/Release/netstandard2.0/Merged/Vostok.Configuration.dll
+      - Vostok.Configuration/bin/Release/netstandard2.0/Vostok.Configuration.dll
 
   deps:
     - vostok.commons.helpers/src
