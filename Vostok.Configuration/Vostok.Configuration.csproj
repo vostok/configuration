@@ -91,12 +91,4 @@
             Command="$(ILRepackExecutable) /internalize /log:ilrepack.log /lib:&quot;$(PubDirWithoutSlash)&quot; /out:$(ProjectDir)$(OutputPath)$(AssemblyName).dll @(MergeAssemblies->'%(RelativeDir)%(FileName)%(Extension)', ' ')" />
   </Target>
 
-  <!--<Target Name="RepackAssembliesForTask" AfterTargets="Build" Condition="'$(Configuration)' != 'Publish'">-->
-    <!--<ItemGroup>-->
-      <!--<MergeAssembliesForTask Include="$(ProjectDir)$(OutputPath)$(AssemblyName).dll" />-->
-      <!--<MergeAssembliesForTask Include="$(PubDir)Vostok.Configuration.Abstractions.dll" />-->
-    <!--</ItemGroup>-->
-    <!--<Exec Command="$(ILRepackExecutable) /internalize /log:$(ProjectDir)$(OutputPath)ilrepack.log /lib:&quot;$(PubDirWithoutSlash)&quot; /out:$(ProjectDir)$(OutputPath)Merged\$(AssemblyName).Task.dll @(MergeAssembliesForTask->'%(RelativeDir)%(FileName)%(Extension)', ' ')" />-->
-  <!--</Target>-->
-
 </Project>
