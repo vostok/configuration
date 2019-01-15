@@ -1,262 +1,159 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reactive.Linq;
+using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.Abstractions.Attributes;
-using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
+using Vostok.Configuration.Cache;
+using Vostok.Configuration.Extensions;
+using Vostok.Configuration.ObservableBinding;
+using Vostok.Configuration.TaskSource;
 
 namespace Vostok.Configuration
 {
-    public class ConfigurationProvider : IConfigurationProvider
+    /// <summary>
+    /// Use this class to obtain settings for your application.
+    /// </summary>
+    [PublicAPI]
+    public class ConfigurationProvider : IConfigurationProvider, IDisposable
     {
-        private static readonly string UnknownTypeExceptionMsg = $"{nameof(IConfigurationSource)} for specified type \"typeName\" is absent. User {nameof(SetupSourceFor)} to add source.";
-        private readonly ConfigurationProviderSettings settings;
-
-        private readonly ConcurrentDictionary<Type, object> typeCache;
-        private readonly ConcurrentQueue<Type> typeCacheQueue;
-        private readonly ConcurrentDictionary<Type, IConfigurationSource> typeSources;
-        private readonly ConcurrentDictionary<Type, IObservable<object>> typeWatchers;
-        private readonly TypedTaskSource taskSource;
-
-        private readonly ConcurrentDictionary<IConfigurationSource, object> sourceCache;
-        private readonly ConcurrentQueue<IConfigurationSource> sourceCacheQueue;
+        private readonly ConcurrentDictionary<Type, IConfigurationSource> typeSources = new ConcurrentDictionary<Type, IConfigurationSource>();
+        private readonly ConcurrentDictionary<Type, bool> setupDisabled = new ConcurrentDictionary<Type, bool>();
+        private readonly Action<Exception> errorCallback;
+        private readonly IObservableBinder observableBinder;
+        private readonly ISourceDataCache sourceDataCache;
+        private readonly ITaskSourceFactory taskSourceFactory;
 
         /// <summary>
-        ///     Creates a <see cref="ConfigurationProvider" /> instance with given settings
-        ///     <paramref name="configurationProviderSettings" />
+        /// Create a new <see cref="ConfigurationProvider"/> instance.
         /// </summary>
-        /// <param name="configurationProviderSettings">
-        ///     Provider settings. Uses <see cref="DefaultSettingsBinder" /> if
-        ///     <see cref="ConfigurationProviderSettings.Binder" /> is null.
-        /// </param>
-        public ConfigurationProvider(ConfigurationProviderSettings configurationProviderSettings = null)
+        public ConfigurationProvider()
+            : this(new ConfigurationProviderSettings())
         {
-            settings = configurationProviderSettings ?? new ConfigurationProviderSettings();
-            if (settings.Binder == null)
-                settings.Binder = new DefaultSettingsBinder();
+        }
 
-            typeSources = new ConcurrentDictionary<Type, IConfigurationSource>();
-            typeWatchers = new ConcurrentDictionary<Type, IObservable<object>>();
-            typeCache = new ConcurrentDictionary<Type, object>();
-            typeCacheQueue = new ConcurrentQueue<Type>();
-            sourceCache = new ConcurrentDictionary<IConfigurationSource, object>();
-            sourceCacheQueue = new ConcurrentQueue<IConfigurationSource>();
-            taskSource = new TypedTaskSource();
+        /// <inheritdoc cref="ConfigurationProvider()"/>
+        public ConfigurationProvider(ConfigurationProviderSettings settings)
+            : this(
+                settings.ErrorCallback,
+                new ObservableBinder(new CachingBinder(new ValidatingBinder(settings.Binder ?? new DefaultSettingsBinder()))),
+                new SourceDataCache(settings.MaxSourceCacheSize),
+                new TaskSourceFactory())
+        {
+        }
+
+        internal ConfigurationProvider(Action<Exception> errorCallback, IObservableBinder observableBinder, ISourceDataCache sourceDataCache, ITaskSourceFactory taskSourceFactory)
+        {
+            this.errorCallback = errorCallback ?? (_ => {});
+            this.observableBinder = observableBinder;
+            this.sourceDataCache = sourceDataCache;
+            this.taskSourceFactory = taskSourceFactory;
         }
 
         /// <inheritdoc />
-        /// <summary>
-        ///     <para>Returns value of given type <typeparamref name="TSettings" /> using binder from constructor.</para>
-        ///     <para>Uses cache.</para>
-        /// </summary>
         public TSettings Get<TSettings>()
         {
-            var type = typeof(TSettings);
-            if (typeCache.TryGetValue(type, out var item))
-                return (TSettings)item;
-            if (!typeSources.ContainsKey(type))
-                throw new ArgumentException($"{UnknownTypeExceptionMsg.Replace("typeName", type.Name)}");
-            return taskSource.Get(Observe<TSettings>());
+            EnsureSourceExists<TSettings>();
+            DisableSetupSourceFor<TSettings>();
+
+            var source = GetSource<TSettings>();
+            var cacheItem = sourceDataCache.GetPersistentCacheItem<TSettings>(source);
+            if (cacheItem.TaskSource == null)
+                cacheItem.TrySetTaskSource(taskSourceFactory.Create(Observe<TSettings>));
+
+            return cacheItem.TaskSource.Get();
         }
 
         /// <inheritdoc />
-        /// <summary>
-        ///     Returns value of given type <typeparamref name="TSettings" /> from specified <paramref name="source" />.
-        /// </summary>
         public TSettings Get<TSettings>(IConfigurationSource source)
         {
-            return sourceCache.TryGetValue(source, out var item)
-                ? (TSettings)item
-                : taskSource.Get(Observe<TSettings>(source));
+            if (IsConfiguredFor<TSettings>(source))
+                return Get<TSettings>();
+
+            var cacheItem = sourceDataCache.GetLimitedCacheItem<TSettings>(source);
+            if (cacheItem.TaskSource != null)
+                return cacheItem.TaskSource.Get();
+
+            var taskSource = taskSourceFactory.Create(() => Observe<TSettings>(source));
+            var result = taskSource.Get();
+            if (!cacheItem.TrySetTaskSource(taskSource))
+                taskSource.Dispose();
+
+            return result;
         }
 
         /// <inheritdoc />
-        /// <summary>
-        ///     <para>Subscribtion to see changes in source.</para>
-        ///     <para>Returns current value immediately on subscribtion.</para>
-        /// </summary>
-        /// <returns>Event with new value</returns>
         public IObservable<TSettings> Observe<TSettings>()
         {
-            var type = typeof(TSettings);
-            if (!typeWatchers.ContainsKey(type) && typeSources.ContainsKey(type))
-                typeWatchers[type] = typeSources[type].Observe().Select(p => SubscribeWatcher<TSettings>(p.settings));
-
-            if (typeWatchers.TryGetValue(type, out var watcher))
-                return watcher.Select(TypedSubscriptionPrepare<TSettings>);
-
-            throw new NullReferenceException($"{nameof(ConfigurationProvider)}: watcher for type \"{type.Name}\" not found.");
+            return ObserveWithErrors<TSettings>().SendErrorsToCallback(errorCallback);
         }
 
         /// <inheritdoc />
-        /// <summary>
-        ///     <para>Subscribtion to see changes in specified <paramref name="source" />.</para>
-        ///     <para>Returns current value immediately on subscribtion.</para>
-        /// </summary>
-        /// <returns>Event with new value</returns>
         public IObservable<TSettings> Observe<TSettings>(IConfigurationSource source)
         {
-            return source.Observe().Select(s => SourcedSubscriptionPrepare<TSettings>(source, s.settings));
+            return ObserveWithErrors<TSettings>(source).SendErrorsToCallback(errorCallback);
         }
 
+        /// <inheritdoc />
         public IObservable<(TSettings settings, Exception error)> ObserveWithErrors<TSettings>()
         {
-            throw new NotImplementedException();
+            EnsureSourceExists<TSettings>();
+            DisableSetupSourceFor<TSettings>();
+
+            var source = GetSource<TSettings>();
+
+            return observableBinder.SelectBound(source.Observe(), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source));
         }
 
+        /// <inheritdoc />
         public IObservable<(TSettings settings, Exception error)> ObserveWithErrors<TSettings>(IConfigurationSource source)
         {
-            throw new NotImplementedException();
+            if (IsConfiguredFor<TSettings>(source))
+                return ObserveWithErrors<TSettings>();
+
+            return observableBinder.SelectBound(source.Observe(), () => sourceDataCache.GetLimitedCacheItem<TSettings>(source));
         }
 
-        /// <summary>
-        ///     Changes source to combination of source for given type <typeparamref name="TSettings" /> and
-        ///     <paramref name="source" />
-        /// </summary>
-        /// <typeparam name="TSettings">Type of souce to combine with</typeparam>
-        /// <param name="source">Second souce to combine with</param>
+        /// <inheritdoc />
         public void SetupSourceFor<TSettings>(IConfigurationSource source)
         {
             var type = typeof(TSettings);
-            var hasWatcher = typeWatchers.ContainsKey(type);
-            if (hasWatcher)
-                throw new InvalidOperationException($"{nameof(ConfigurationProvider)}: it is not allowed to add sources for \"{type.Name}\" to a {nameof(ConfigurationProvider)} after {nameof(Get)}() or {nameof(Observe)}() was called for this type.");
-            if (!hasWatcher && typeCache.ContainsKey(type))
-                throw new InvalidOperationException($"{nameof(ConfigurationProvider)}: it is not allowed to add sources for \"{type.Name}\" to a {nameof(ConfigurationProvider)} after {nameof(SetManually)}() was called for this type.");
+            if (setupDisabled.ContainsKey(type))
+                throw new InvalidOperationException($"Cannot set up source for type '{type}' after {nameof(Get)}() or {nameof(Observe)}() was called for this type.");
 
             typeSources[type] = source;
         }
 
-        public ConfigurationProvider SetManually<TSettings>(TSettings value, bool validate = false)
+        /// <inheritdoc />
+        public void Dispose()
         {
-            if (validate)
-                Validate(value);
-            AddInCache(value);
-            return this;
+            sourceDataCache.Dispose();
         }
 
-        private static IEnumerable<string> Validate(Type type, object value, string prefix)
+        private void DisableSetupSourceFor<TSettings>()
         {
-            if (value == null)
-                yield break;
-            if (!(type.GetCustomAttributes(typeof(ValidateByAttribute), false).FirstOrDefault() is ValidateByAttribute validAttribute))
-                yield break;
-
-            var validator = Activator.CreateInstance(validAttribute.ValidatorType);
-            var validateMethod = validator.GetType().GetMethod(nameof(ISettingsValidator<object>.Validate));
-            if (validateMethod == null)
-                yield break; // TODO(krait): Report error.
-            foreach (var error in (IEnumerable<string>)validateMethod.Invoke(validator, new[] {value}))
-                yield return prefix + error;
-
-            foreach (var field in type.GetFields())
-            {
-                foreach (var error in Validate(field.FieldType, field.GetValue(value), field.Name))
-                    yield return prefix + error;
-            }
-
-            foreach (var prop in type.GetProperties())
-            {
-                foreach (var error in Validate(prop.PropertyType, prop.GetValue(value), prop.Name))
-                    yield return prefix + error;
-            }
+            setupDisabled[typeof(TSettings)] = true;
         }
 
-        private TSettings TypedSubscriptionPrepare<TSettings>(object node)
+        private void EnsureSourceExists<TSettings>()
         {
-            try
-            {
-                var value = (TSettings)node;
-                AddInCache(value);
-                return value;
-            }
-            catch (Exception e)
-            {
-                if (typeCache.TryGetValue(typeof(TSettings), out var val) && val != null)
-                {
-                    settings.ErrorCallBack?.Invoke(e);
-                    return (TSettings)val;
-                }
-
-                throw;
-            }
+            EnsureSourceExists(typeof(TSettings));
         }
 
-        private void AddInCache<TSettings>(TSettings value)
+        private void EnsureSourceExists(Type type)
         {
-            var type = typeof(TSettings);
-            if (!typeCache.ContainsKey(type))
-                typeCacheQueue.Enqueue(type);
-            typeCache.AddOrUpdate(type, value, (t, o) => value);
-            if (typeCache.Count > settings.MaxTypeCacheSize && typeCacheQueue.TryDequeue(out var tp))
-                typeCache.TryRemove(tp, out _);
+            if (!typeSources.ContainsKey(type))
+                throw new ArgumentException($"There is no preconfigured source for settings of type '{type}'. Use {nameof(SetupSourceFor)} to configure it.");
         }
 
-        private TSettings SourcedSubscriptionPrepare<TSettings>(IConfigurationSource source, ISettingsNode node)
+        private bool IsConfiguredFor<TSettings>(IConfigurationSource source)
         {
-            try
-            {
-                var value = ValidatedBind<TSettings>(node);
-                if (!sourceCache.ContainsKey(source))
-                    sourceCacheQueue.Enqueue(source);
-                sourceCache.AddOrUpdate(source, value, (t, o) => value);
-                if (sourceCache.Count > settings.MaxSourceCacheSize && sourceCacheQueue.TryDequeue(out var src))
-                    sourceCache.TryRemove(src, out _);
-                return value;
-            }
-            catch (Exception e)
-            {
-                if (sourceCache.TryGetValue(source, out var val) && val != null)
-                {
-                    settings.ErrorCallBack?.Invoke(e);
-                    return (TSettings)val;
-                }
-
-                throw;
-            }
+            return typeSources.TryGetValue(typeof(TSettings), out var preconfiguredSource) && ReferenceEquals(source, preconfiguredSource);
         }
 
-        private object SubscribeWatcher<TSettings>(ISettingsNode rs)
+        private IConfigurationSource GetSource<TSettings>()
         {
-            var type = typeof(TSettings);
-            if (!typeSources.TryGetValue(type, out _))
-                throw new ArgumentException($"{UnknownTypeExceptionMsg.Replace("typeName", type.Name)}");
-
-            try
-            {
-                return ValidatedBind<TSettings>(rs);
-            }
-            catch (Exception e)
-            {
-                if (typeCache.TryGetValue(typeof(TSettings), out var val) && val != null)
-                {
-                    settings.ErrorCallBack?.Invoke(e);
-                    return (TSettings)val;
-                }
-
-                throw;
-            }
-        }
-
-        private TSettings ValidatedBind<TSettings>(ISettingsNode rs)
-        {
-            var value = settings.Binder.Bind<TSettings>(rs);
-            Validate(value);
-            return value;
-        }
-
-        private void Validate<TSettings>(TSettings value)
-        {
-            var type = typeof(TSettings);
-
-            var errors = Validate(type, value, "").ToList();
-            if (errors.Any())
-            {
-                throw new SettingsValidationException(string.Join(Environment.NewLine, errors));
-            }
+            EnsureSourceExists<TSettings>();
+            return typeSources[typeof(TSettings)];
         }
     }
 }

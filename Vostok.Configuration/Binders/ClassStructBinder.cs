@@ -17,10 +17,10 @@ namespace Vostok.Configuration.Binders
 
         public T Bind(ISettingsNode settings)
         {
-            if (settings.IsNull() && !typeof(T).IsValueType) // TODO(krait): Test this behavior.
+            if (settings.IsNull() && !typeof(T).IsValueType)
                 return default;
 
-            if (!(settings is ObjectNode))
+            if (settings != null && !(settings is ObjectNode))
                 throw new SettingsBindingException($"A settings node of type '{settings.GetType()}' cannot be bound by {nameof(ClassStructBinder<T>)}.");
 
             var type = typeof(T);
@@ -51,10 +51,14 @@ namespace Vostok.Configuration.Binders
 
         private object GetValue(Type type, string name, bool isRequired, ISettingsNode settings, object defaultValue)
         {
-            var value = settings[name];
+            if (settings == null && isRequired)
+                throw new SettingsBindingException($"Null settings node cannot be bound by {nameof(ClassStructBinder<T>)}: required field or property '{name}' must have a non-default value.");
+            
+            var value = settings?[name];
             if (value == null)
                 return isRequired ? throw new SettingsBindingException($"Required field or property '{name}' must have a non-null value.") : defaultValue;
 
+            
             return binderProvider.CreateFor(type).Bind(value);
         }
     }

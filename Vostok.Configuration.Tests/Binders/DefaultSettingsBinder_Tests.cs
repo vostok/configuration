@@ -1,8 +1,6 @@
-﻿using System;
-using FluentAssertions;
+﻿using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
-using Vostok.Commons.Testing;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Parsers;
@@ -27,12 +25,6 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_add_default_parsers_to_given_SettingsBinderProvider()
         {
             provider.Received().SetupParserFor<bool>(Arg.Any<ITypeParser>());
-        }
-
-        [Test]
-        public void Bind_should_throw_if_provided_settings_is_null()
-        {
-            new Action(() => binder.Bind<object>(null)).Should().Throw<ArgumentNullException>().Which.ShouldBePrinted();
         }
 
         [Test]

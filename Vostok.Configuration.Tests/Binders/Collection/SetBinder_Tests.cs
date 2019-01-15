@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -38,6 +37,12 @@ namespace Vostok.Configuration.Tests.Binders.Collection
             var settings = Array(new string[] {});
 
             binder.Bind(settings).Should().BeEmpty();
+        }
+
+        [Test]
+        public void Should_bind_null_node_to_null()
+        {
+            binder.Bind(null).Should().BeNull();
         }
 
         [Test]

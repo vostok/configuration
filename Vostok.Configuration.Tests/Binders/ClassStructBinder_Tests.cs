@@ -179,6 +179,22 @@ namespace Vostok.Configuration.Tests.Binders
             myStruct.Property2.Should().BeTrue();
         }
 
+        [Test]
+        public void Should_set_members_to_default_values_if_node_is_null_and_all_members_are_optional()
+        {
+            var myClass = CreateBinder<MyClass6>().Bind(null);
+
+            myClass.Property1.Should().BeTrue();
+            myClass.Field1.Should().BeTrue();
+            myClass.Field2.Should().NotBeNull().And.BeOfType<MyClass6.Inner>();
+        }
+        
+        [Test]
+        public void Should_throw_if_node_is_null_and_some_of_members_are_required()
+        {
+            new Action(() => CreateBinder<MyClass7>().Bind(null)).Should().Throw<SettingsBindingException>();
+        }
+
         private class MyClass1
         {
             public bool Field1;
@@ -207,7 +223,7 @@ namespace Vostok.Configuration.Tests.Binders
         private class MyClass3
         {
             public bool Field1;
-            public bool Property1;
+            public bool Property1 { get; set; }
         }
 
         private class MyClass4
@@ -221,6 +237,26 @@ namespace Vostok.Configuration.Tests.Binders
             public MyClass5(bool field1) => Field1 = field1;
 
             public bool Field1;
+        }
+        
+        private class MyClass6
+        {
+            public bool Field1 = true;
+            public Inner Field2 = new Inner();
+            public bool Property1 { get; set; } = true;
+            
+            public class Inner
+            {
+                public bool Field;
+            }
+        }
+        
+        private class MyClass7
+        {
+            public bool Property1 { get; set; }
+            
+            [Required]
+            public bool Property2 { get; set; }
         }
 
         private struct MyStruct

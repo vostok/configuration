@@ -39,6 +39,12 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         }
 
         [Test]
+        public void Should_bind_null_node_to_null()
+        {
+            binder.Bind(null).Should().BeNull();
+        }
+
+        [Test]
         public void Should_throw_if_inner_binder_throws()
         {
             var settings = Array(null, "xxx");

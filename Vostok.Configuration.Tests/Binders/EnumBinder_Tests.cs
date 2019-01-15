@@ -41,6 +41,12 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
+        public void Should_support_null_settings_node()
+        {
+            binder.Bind(null).Should().Be(default(MyEnum));
+        }
+
+        [Test]
         public void Should_be_case_insensitive()
         {
             binder.Bind(Value("firstoption")).Should().Be(MyEnum.FirstOption);

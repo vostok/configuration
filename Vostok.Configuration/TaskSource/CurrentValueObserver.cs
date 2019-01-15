@@ -2,18 +2,18 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Vostok.Configuration
+namespace Vostok.Configuration.TaskSource
 {
-    internal class CurrentValueObserver<T>
+    internal class CurrentValueObserver<T> : ICurrentValueObserver<T>
     {
         private volatile TaskCompletionSource<T> resultSource = new TaskCompletionSource<T>();
         private IDisposable innerSubscription;
 
-        public T Get(IObservable<T> observable)
+        public T Get(Func<IObservable<T>> observableProvider)
         {
             while (innerSubscription == null)
             {
-                var newSubscription = observable.Subscribe(OnNextValue, OnError);
+                var newSubscription = observableProvider().Subscribe(OnNextValue, OnError);
 
                 if (Interlocked.CompareExchange(ref innerSubscription, newSubscription, null) == null)
                     break;
@@ -24,13 +24,11 @@ namespace Vostok.Configuration
             return resultSource.Task.GetAwaiter().GetResult();
         }
 
-        private void OnError(Exception e) =>
-            resultSource.TrySetException(e);
-
-        private void OnNextValue(T value)
+        public void Dispose()
         {
-            if (!resultSource.TrySetResult(value))
-                resultSource = NewCompletedSource(value);
+            var subscription = innerSubscription;
+            if (subscription != null && ReferenceEquals(Interlocked.CompareExchange(ref innerSubscription, null, subscription), subscription))
+                subscription.Dispose();
         }
 
         private static TaskCompletionSource<T> NewCompletedSource(T value)
@@ -38,6 +36,14 @@ namespace Vostok.Configuration
             var newSource = new TaskCompletionSource<T>();
             newSource.TrySetResult(value);
             return newSource;
+        }
+
+        private void OnError(Exception e) => resultSource.TrySetException(e);
+
+        private void OnNextValue(T value)
+        {
+            if (!resultSource.TrySetResult(value))
+                resultSource = NewCompletedSource(value);
         }
     }
 }

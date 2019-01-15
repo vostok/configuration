@@ -9,8 +9,8 @@ namespace Vostok.Configuration.Parsers
 
         public static Uri Parse(string input)
         {
-            if (TryParse(input, out var res))
-                return res;
+            if (TryParse(input, out var result))
+                return result;
             throw new FormatException($"{nameof(UriParser)}. Failed to parse from string '{input}'.");
         }
     }

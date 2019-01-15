@@ -73,12 +73,12 @@ namespace Vostok.Configuration.Parsers
             throw new FormatException($"{nameof(TimeSpanParser)}. Failed to parse from string '{input}'.");
         }
 
-        private delegate TimeSpan FromValue(double value);
-
         private static string PrepareInput(string input, string unit) =>
             input.Replace(unit, string.Empty).Trim('.').Trim();
 
         private static string PrepareInput(string input) =>
             input.ToLower().Replace(',', '.');
+
+        private delegate TimeSpan FromValue(double value);
     }
 }
