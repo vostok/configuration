@@ -142,7 +142,7 @@ namespace Vostok.Configuration
         private void EnsureSourceExists(Type type)
         {
             if (!typeSources.ContainsKey(type))
-                throw new ArgumentException($"There is no preconfigured source for settings of type '{type}'. Use {nameof(SetupSourceFor)} to configure it.");
+                throw new ArgumentException($"There is no preconfigured source for settings of type '{type}'. Use '{nameof(SetupSourceFor)}' method to configure it.");
         }
 
         private bool IsConfiguredFor<TSettings>(IConfigurationSource source)
