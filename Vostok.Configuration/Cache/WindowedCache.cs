@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Vostok.Configuration.Cache
 {
@@ -22,7 +23,7 @@ namespace Vostok.Configuration.Cache
             this.onAutoRemove = onAutoRemove;
         }
 
-        public ICollection<TValue> Values => cache.Values;
+        public IEnumerable<TValue> Values => cache.Select(pair => pair.Value);
 
         public bool TryGetValue(TKey key, out TValue value) => cache.TryGetValue(key, out value);
 
