@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Cache;
-using Vostok.Configuration.Extensions;
+using Vostok.Configuration.Helpers;
 using Vostok.Configuration.ObservableBinding;
 using Vostok.Configuration.TaskSource;
 

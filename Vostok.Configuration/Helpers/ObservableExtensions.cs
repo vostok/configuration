@@ -1,7 +1,7 @@
 using System;
 using System.Reactive.Linq;
 
-namespace Vostok.Configuration.Extensions
+namespace Vostok.Configuration.Helpers
 {
     internal static class ObservableExtensions
     {

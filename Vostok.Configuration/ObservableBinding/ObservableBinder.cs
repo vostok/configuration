@@ -4,7 +4,7 @@ using System.Reactive;
 using System.Reactive.Linq;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Cache;
-using Vostok.Configuration.EqualityComparers;
+using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.ObservableBinding
 {

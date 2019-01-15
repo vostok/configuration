@@ -3,7 +3,7 @@ using System.Linq;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
-using Vostok.Configuration.EqualityComparers;
+using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Tests.EqualityComparers
 {

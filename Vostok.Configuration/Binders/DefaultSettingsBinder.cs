@@ -1,7 +1,6 @@
 ﻿using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
-using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Binders

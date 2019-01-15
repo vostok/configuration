@@ -4,7 +4,6 @@ using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Binders.Collection;
-using Vostok.Configuration.Extensions;
 
 namespace Vostok.Configuration.Tests.Binders
 {

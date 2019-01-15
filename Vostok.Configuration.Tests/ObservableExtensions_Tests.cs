@@ -3,8 +3,8 @@ using System.Reactive.Subjects;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
+using Vostok.Configuration.Helpers;
 using Vostok.Commons.Testing.Observable;
-using Vostok.Configuration.Extensions;
 
 namespace Vostok.Configuration.Tests
 {

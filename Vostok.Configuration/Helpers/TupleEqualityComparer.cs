@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Vostok.Configuration.EqualityComparers
+namespace Vostok.Configuration.Helpers
 {
     internal class TupleEqualityComparer<T1, T2> : IEqualityComparer<(T1, T2)>
     {

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Vostok.Configuration.EqualityComparers
+namespace Vostok.Configuration.Helpers
 {
     internal class ExceptionEqualityComparer : IEqualityComparer<Exception>
     {

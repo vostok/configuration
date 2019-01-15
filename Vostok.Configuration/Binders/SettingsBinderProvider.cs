@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using SimpleInjector;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Binders.Collection;
-using Vostok.Configuration.Extensions;
+using Vostok.Configuration.Helpers;
 using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Binders

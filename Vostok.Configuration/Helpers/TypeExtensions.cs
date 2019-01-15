@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Vostok.Configuration.Extensions
+namespace Vostok.Configuration.Helpers
 {
     internal static class TypeExtensions
     {

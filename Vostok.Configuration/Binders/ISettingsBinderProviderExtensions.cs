@@ -2,13 +2,12 @@
 using System.Net;
 using Vostok.Commons.Helpers;
 using Vostok.Commons.Primitives;
-using Vostok.Configuration.Binders;
 using Vostok.Configuration.Parsers;
 using UriParser = Vostok.Configuration.Parsers.UriParser;
 
-namespace Vostok.Configuration.Extensions
+namespace Vostok.Configuration.Binders
 {
-    internal static class SettingsBinderProviderExtensions
+    internal static class ISettingsBinderProviderExtensions
     {
         public static ISettingsBinderProvider WithDefaultParsers(this ISettingsBinderProvider binderProvider)
         {
