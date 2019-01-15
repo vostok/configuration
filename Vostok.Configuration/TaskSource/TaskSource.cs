@@ -42,7 +42,7 @@ namespace Vostok.Configuration.TaskSource
             var newObserver = currentValueObserverFactory();
             if (Interlocked.CompareExchange(ref rawValueObserver, newObserver, currentObserver) != currentObserver)
                 newObserver.Dispose();
-            currentObserver.Dispose();
+            currentObserver?.Dispose();
         }
     }
 }

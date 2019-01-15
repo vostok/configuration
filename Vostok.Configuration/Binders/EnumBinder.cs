@@ -15,7 +15,7 @@ namespace Vostok.Configuration.Binders
             if (Enum.TryParse<T>(settings.Value, true, out var result))
                 return result;
 
-            throw new SettingsBindingException($"Value '{settings?.Value}' is not valid for enum of type '{typeof(T)}'.");
+            throw new SettingsBindingException($"Value '{settings.Value}' is not valid for enum of type '{typeof(T)}'.");
         }
     }
 }
