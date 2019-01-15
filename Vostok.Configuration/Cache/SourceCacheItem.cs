@@ -10,6 +10,7 @@ namespace Vostok.Configuration.Cache
         private readonly AtomicBoolean isDisposed = new AtomicBoolean(false);
 
         private ITaskSource<TSettings> taskSource;
+
         public (TSettings settings, Exception error)? LastValue { get; set; }
 
         public BindingCacheValue<TSettings> BindingCacheValue { get; set; }
@@ -18,9 +19,9 @@ namespace Vostok.Configuration.Cache
 
         public bool IsDisposed => isDisposed;
 
-        public bool TrySetTaskSource(ITaskSource<TSettings> taskSource)
+        public bool TrySetTaskSource(ITaskSource<TSettings> source)
         {
-            return Interlocked.CompareExchange(ref this.taskSource, taskSource, null) == null && !IsDisposed;
+            return Interlocked.CompareExchange(ref taskSource, source, null) == null && !IsDisposed;
         }
 
         public void Dispose()
