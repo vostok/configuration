@@ -12,11 +12,6 @@ namespace Vostok.Configuration.Cache
         private readonly ConcurrentDictionary<TKey, TValue> cache = new ConcurrentDictionary<TKey, TValue>();
         private readonly ConcurrentQueue<TKey> queue = new ConcurrentQueue<TKey>();
 
-        public WindowedCache(int capacity)
-            : this(capacity, _ => {})
-        {
-        }
-
         public WindowedCache(int capacity, Action<KeyValuePair<TKey, TValue>> onAutoRemove)
         {
             this.capacity = capacity;
