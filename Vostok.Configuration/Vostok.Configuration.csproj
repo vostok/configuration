@@ -32,10 +32,10 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="System.Reactive" Version="4.0.0" PrivateAssets="all"/>
-    <PackageReference Include="System.Reactive.Core" Version="4.0.0" PrivateAssets="all"/>
-    <PackageReference Include="System.Reactive.Linq" Version="4.0.0" PrivateAssets="all"/>
-    <PackageReference Include="SimpleInjector" Version="4.3.0" PrivateAssets="all" />
+    <PackageReference Include="System.Reactive" Version="4.1.2" PrivateAssets="all" />
+    <PackageReference Include="System.Reactive.Core" Version="4.1.2" PrivateAssets="all" />
+    <PackageReference Include="System.Reactive.Linq" Version="4.1.2" PrivateAssets="all" />
+    <PackageReference Include="SimpleInjector" Version="4.4.3" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
@@ -57,14 +57,14 @@
   
   <Target Name="RestorePackageReferences" BeforeTargets="Build">
     <ItemGroup>
-      <PackageReference Remove="SimpleInjector" />
       <PackageReference Remove="System.Reactive" />
       <PackageReference Remove="System.Reactive.Core" />
       <PackageReference Remove="System.Reactive.Linq" />
-      <PackageReference Include="SimpleInjector" Version="4.3.0" />
-      <PackageReference Include="System.Reactive" Version="4.0.0" />
-      <PackageReference Include="System.Reactive.Core" Version="4.0.0" />
-      <PackageReference Include="System.Reactive.Linq" Version="4.0.0" />
+      <PackageReference Remove="SimpleInjector" />
+      <PackageReference Include="System.Reactive" Version="4.1.2" />
+      <PackageReference Include="System.Reactive.Core" Version="4.1.2" />
+      <PackageReference Include="System.Reactive.Linq" Version="4.1.2" />
+      <PackageReference Include="SimpleInjector" Version="4.4.3" />
     </ItemGroup>
   </Target>
 
@@ -87,9 +87,7 @@
       <MergeAssemblies Include="$(PubDir)System.Reactive.Core.dll" />
       <MergeAssemblies Include="$(PubDir)System.Reactive.Linq.dll" />
     </ItemGroup>
-    <Exec
-            WorkingDirectory="$(PubDir)"
-            Command="$(ILRepackExecutable) /internalize /log:ilrepack.log /lib:&quot;$(PubDirWithoutSlash)&quot; /out:$(ProjectDir)$(OutputPath)$(AssemblyName).dll @(MergeAssemblies->'%(RelativeDir)%(FileName)%(Extension)', ' ')" />
+    <Exec WorkingDirectory="$(PubDir)" Command="$(ILRepackExecutable) /internalize /log:ilrepack.log /lib:&quot;$(PubDirWithoutSlash)&quot; /out:$(ProjectDir)$(OutputPath)$(AssemblyName).dll @(MergeAssemblies->'%(RelativeDir)%(FileName)%(Extension)', ' ')" />
   </Target>
 
 </Project>
