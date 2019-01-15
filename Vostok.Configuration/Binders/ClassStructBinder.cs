@@ -17,7 +17,7 @@ namespace Vostok.Configuration.Binders
 
         public T Bind(ISettingsNode settings)
         {
-            if (settings.IsNull() && !typeof(T).IsValueType) // TODO(krait): Test this behavior.
+            if (settings.IsNull() && !typeof(T).IsValueType)
                 return default;
 
             if (settings != null && !(settings is ObjectNode))

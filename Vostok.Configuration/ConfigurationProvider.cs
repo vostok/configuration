@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Cache;
@@ -9,6 +10,10 @@ using Vostok.Configuration.TaskSource;
 
 namespace Vostok.Configuration
 {
+    /// <summary>
+    /// Use this class to obtain settings for your application.
+    /// </summary>
+    [PublicAPI]
     public class ConfigurationProvider : IConfigurationProvider, IDisposable
     {
         private readonly ConcurrentDictionary<Type, IConfigurationSource> typeSources = new ConcurrentDictionary<Type, IConfigurationSource>();
@@ -18,11 +23,15 @@ namespace Vostok.Configuration
         private readonly ISourceDataCache sourceDataCache;
         private readonly ITaskSourceFactory taskSourceFactory;
 
+        /// <summary>
+        /// Create a new <see cref="ConfigurationProvider"/> instance.
+        /// </summary>
         public ConfigurationProvider()
             : this(new ConfigurationProviderSettings())
         {
         }
 
+        /// <inheritdoc cref="ConfigurationProvider()"/>
         public ConfigurationProvider(ConfigurationProviderSettings settings)
             : this(
                 settings.ErrorCallback,
@@ -40,6 +49,7 @@ namespace Vostok.Configuration
             this.taskSourceFactory = taskSourceFactory;
         }
 
+        /// <inheritdoc />
         public TSettings Get<TSettings>()
         {
             EnsureSourceExists<TSettings>();
@@ -53,6 +63,7 @@ namespace Vostok.Configuration
             return cacheItem.TaskSource.Get();
         }
 
+        /// <inheritdoc />
         public TSettings Get<TSettings>(IConfigurationSource source)
         {
             if (IsConfiguredFor<TSettings>(source))
@@ -70,16 +81,19 @@ namespace Vostok.Configuration
             return result;
         }
 
+        /// <inheritdoc />
         public IObservable<TSettings> Observe<TSettings>()
         {
             return ObserveWithErrors<TSettings>().SendErrorsToCallback(errorCallback);
         }
 
+        /// <inheritdoc />
         public IObservable<TSettings> Observe<TSettings>(IConfigurationSource source)
         {
             return ObserveWithErrors<TSettings>(source).SendErrorsToCallback(errorCallback);
         }
 
+        /// <inheritdoc />
         public IObservable<(TSettings settings, Exception error)> ObserveWithErrors<TSettings>()
         {
             EnsureSourceExists<TSettings>();
@@ -90,6 +104,7 @@ namespace Vostok.Configuration
             return observableBinder.SelectBound(source.Observe(), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source));
         }
 
+        /// <inheritdoc />
         public IObservable<(TSettings settings, Exception error)> ObserveWithErrors<TSettings>(IConfigurationSource source)
         {
             if (IsConfiguredFor<TSettings>(source))
@@ -98,6 +113,7 @@ namespace Vostok.Configuration
             return observableBinder.SelectBound(source.Observe(), () => sourceDataCache.GetLimitedCacheItem<TSettings>(source));
         }
 
+        /// <inheritdoc />
         public void SetupSourceFor<TSettings>(IConfigurationSource source)
         {
             var type = typeof(TSettings);
@@ -107,6 +123,7 @@ namespace Vostok.Configuration
             typeSources[type] = source;
         }
 
+        /// <inheritdoc />
         public void Dispose()
         {
             sourceDataCache.Dispose();
