@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Concurrent;
+using System.Reactive.Concurrency;
+using System.Reactive.Linq;
 using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Binders;
@@ -18,6 +20,7 @@ namespace Vostok.Configuration
     {
         private readonly ConcurrentDictionary<Type, IConfigurationSource> typeSources = new ConcurrentDictionary<Type, IConfigurationSource>();
         private readonly ConcurrentDictionary<Type, bool> setupDisabled = new ConcurrentDictionary<Type, bool>();
+        private readonly EventLoopScheduler scheduler = new EventLoopScheduler();
         private readonly Action<Exception> errorCallback;
         private readonly IObservableBinder observableBinder;
         private readonly ISourceDataCache sourceDataCache;
@@ -52,10 +55,9 @@ namespace Vostok.Configuration
         /// <inheritdoc />
         public TSettings Get<TSettings>()
         {
-            EnsureSourceExists<TSettings>();
+            EnsureSourceExists<TSettings>(out var source);
             DisableSetupSourceFor<TSettings>();
 
-            var source = GetSource<TSettings>();
             var cacheItem = sourceDataCache.GetPersistentCacheItem<TSettings>(source);
             if (cacheItem.TaskSource == null)
                 cacheItem.TrySetTaskSource(taskSourceFactory.Create(Observe<TSettings>));
@@ -96,12 +98,10 @@ namespace Vostok.Configuration
         /// <inheritdoc />
         public IObservable<(TSettings settings, Exception error)> ObserveWithErrors<TSettings>()
         {
-            EnsureSourceExists<TSettings>();
+            EnsureSourceExists<TSettings>(out var source);
             DisableSetupSourceFor<TSettings>();
 
-            var source = GetSource<TSettings>();
-
-            return observableBinder.SelectBound(source.Observe(), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source));
+            return observableBinder.SelectBound(source.Observe(), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source)).ObserveOn(scheduler);
         }
 
         /// <inheritdoc />
@@ -110,7 +110,7 @@ namespace Vostok.Configuration
             if (IsConfiguredFor<TSettings>(source))
                 return ObserveWithErrors<TSettings>();
 
-            return observableBinder.SelectBound(source.Observe(), () => sourceDataCache.GetLimitedCacheItem<TSettings>(source));
+            return observableBinder.SelectBound(source.Observe(), () => sourceDataCache.GetLimitedCacheItem<TSettings>(source)).ObserveOn(scheduler);
         }
 
         /// <inheritdoc />
@@ -126,6 +126,7 @@ namespace Vostok.Configuration
         /// <inheritdoc />
         public void Dispose()
         {
+            scheduler.Dispose();
             sourceDataCache.Dispose();
         }
 
@@ -134,26 +135,20 @@ namespace Vostok.Configuration
             setupDisabled[typeof(TSettings)] = true;
         }
 
-        private void EnsureSourceExists<TSettings>()
+        private void EnsureSourceExists<TSettings>(out IConfigurationSource source)
         {
-            EnsureSourceExists(typeof(TSettings));
+            EnsureSourceExists(typeof(TSettings), out source);
         }
 
-        private void EnsureSourceExists(Type type)
+        private void EnsureSourceExists(Type type, out IConfigurationSource source)
         {
-            if (!typeSources.ContainsKey(type))
+            if (!typeSources.TryGetValue(type, out source))
                 throw new ArgumentException($"There is no preconfigured source for settings of type '{type}'. Use '{nameof(SetupSourceFor)}' method to configure it.");
         }
 
         private bool IsConfiguredFor<TSettings>(IConfigurationSource source)
         {
             return typeSources.TryGetValue(typeof(TSettings), out var preconfiguredSource) && ReferenceEquals(source, preconfiguredSource);
-        }
-
-        private IConfigurationSource GetSource<TSettings>()
-        {
-            EnsureSourceExists<TSettings>();
-            return typeSources[typeof(TSettings)];
         }
     }
 }
