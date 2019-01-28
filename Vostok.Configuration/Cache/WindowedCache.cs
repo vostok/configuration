@@ -5,14 +5,14 @@ using System.Linq;
 
 namespace Vostok.Configuration.Cache
 {
-    internal class WindowedCache<TKey, TValue>
+    internal class WindowedCache<TKey, TValue> where TValue : class
     {
         private readonly int capacity;
-        private readonly Action<KeyValuePair<TKey, TValue>> onAutoRemove;
+        private readonly Action<TKey, TValue> onAutoRemove;
         private readonly ConcurrentDictionary<TKey, TValue> cache = new ConcurrentDictionary<TKey, TValue>();
         private readonly ConcurrentQueue<TKey> queue = new ConcurrentQueue<TKey>();
 
-        public WindowedCache(int capacity, Action<KeyValuePair<TKey, TValue>> onAutoRemove)
+        public WindowedCache(int capacity, Action<TKey, TValue> onAutoRemove)
         {
             this.capacity = capacity;
             this.onAutoRemove = onAutoRemove;
@@ -24,10 +24,10 @@ namespace Vostok.Configuration.Cache
 
         public TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory)
         {
-            if (!cache.ContainsKey(key))
+            TValue newValue = null;
+            var value = cache.GetOrAdd(key, _ => newValue = valueFactory(key));
+            if (ReferenceEquals(value, newValue))
                 queue.Enqueue(key);
-
-            var value = cache.GetOrAdd(key, _ => valueFactory(key));
 
             RemoveOutOfWindowItems();
 
@@ -40,7 +40,7 @@ namespace Vostok.Configuration.Cache
         {
             while (queue.Count > capacity && queue.TryDequeue(out var keyToRemove))
                 if (cache.TryRemove(keyToRemove, out var removedValue))
-                    onAutoRemove(new KeyValuePair<TKey, TValue>(keyToRemove, removedValue));
+                    onAutoRemove(keyToRemove, removedValue);
         }
     }
 }

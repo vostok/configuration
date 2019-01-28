@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
 using NSubstitute;
@@ -11,14 +10,14 @@ namespace Vostok.Configuration.Tests.Cache
     [TestFixture]
     internal class WindowedCache_Tests
     {
-        private WindowedCache<string, int> cache;
-        private Action<KeyValuePair<string, int>> onRemove;
+        private WindowedCache<string, object> cache;
+        private Action<string, object> onRemove;
 
         [SetUp]
         public void SetUp()
         {
-            onRemove = Substitute.For<Action<KeyValuePair<string, int>>>();
-            cache = new WindowedCache<string, int>(2, onRemove);
+            onRemove = Substitute.For<Action<string, object>>();
+            cache = new WindowedCache<string, object>(2, onRemove);
         }
         
         [Test]
@@ -49,7 +48,7 @@ namespace Vostok.Configuration.Tests.Cache
                 cache.GetOrAdd($"key{i}", _ => i);
 
             onRemove.ReceivedCalls().Count().Should().Be(1);
-            onRemove.Received(1).Invoke(new KeyValuePair<string, int>("key1", 1));
+            onRemove.Received(1).Invoke("key1", 1);
         }
 
         private void AssertHasValue(string key, int expectedValue)

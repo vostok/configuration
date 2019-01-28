@@ -14,7 +14,7 @@ namespace Vostok.Configuration.Cache
         {
             limitedSourceCache = new WindowedCache<(IConfigurationSource, Type), object>(
                 limitedCacheCapacity,
-                kv => ((IDisposable)kv.Value).Dispose());
+                (key, value) => ((IDisposable)value).Dispose());
             persistentSourceCache = new ConcurrentDictionary<(IConfigurationSource, Type), object>();
         }
 
