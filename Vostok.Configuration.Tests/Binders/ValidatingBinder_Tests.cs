@@ -8,7 +8,7 @@ using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Binders;
 
-namespace Vostok.Configuration.Tests
+namespace Vostok.Configuration.Tests.Binders
 {
     [TestFixture]
     public class ValidatingBinder_Tests

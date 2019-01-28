@@ -1,12 +1,12 @@
 using System;
-using System.Reactive.Subjects;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
-using Vostok.Configuration.Helpers;
 using Vostok.Commons.Testing.Observable;
+using Vostok.Configuration.Helpers;
+using System.Reactive.Subjects;
 
-namespace Vostok.Configuration.Tests
+namespace Vostok.Configuration.Tests.Helpers
 {
     [TestFixture]
     internal class ObservableExtensions_Tests
