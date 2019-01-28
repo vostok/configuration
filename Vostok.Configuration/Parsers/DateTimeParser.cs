@@ -7,15 +7,8 @@ namespace Vostok.Configuration.Parsers
         public static bool TryParse(string input, out DateTime result)
         {
             var res = DateTimeOffsetParser.TryParse(input, out var dt);
-            result = res ? dt.UtcDateTime : default;
+            result = res ? dt.DateTime : default;
             return res;
-        }
-
-        public static DateTime Parse(string input)
-        {
-            if (TryParse(input, out var res))
-                return res;
-            throw new FormatException($"{nameof(DateTimeParser)}. Failed to parse from string '{input}'.");
         }
     }
 }

@@ -32,11 +32,5 @@ namespace Vostok.Configuration.Tests.Parsers
         {
             TimeSpanParser.TryParse(val, out var res).Should().Be(boolRes && res == new TimeSpan(d, h, m, s, ms));
         }
-
-        [Test]
-        public void Should_throw_FormatException_on_Parse_wrong_format()
-        {
-            new Action(() => TimeSpanParser.Parse("1 kg")).Should().Throw<FormatException>().Which.ShouldBePrinted();
-        }
     }
 }

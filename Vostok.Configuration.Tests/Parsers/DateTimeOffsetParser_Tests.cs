@@ -43,11 +43,5 @@ namespace Vostok.Configuration.Tests.Parsers
             DateTimeOffsetParser.TryParse(input, out var res).Should()
                 .Be(boolRes && res == expectedDatetime.DateTime, $"parse result={boolRes}, parsed={res}, expected={expectedDatetime}, diff={res - expectedDatetime.DateTime}");
         }
-
-        [Test]
-        public void Should_throw_FormatException_on_Parse_wrong_format()
-        {
-            new Action(() => DateTimeOffsetParser.Parse(@"123")).Should().Throw<FormatException>().Which.ShouldBePrinted();
-        }
     }
 }

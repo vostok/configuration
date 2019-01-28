@@ -1,8 +1,10 @@
 using System;
+using JetBrains.Annotations;
 
 namespace Vostok.Configuration
 {
-    internal class SettingsValidationException : Exception
+    [PublicAPI]
+    public class SettingsValidationException : Exception
     {
         public SettingsValidationException(string message)
             : base(message)

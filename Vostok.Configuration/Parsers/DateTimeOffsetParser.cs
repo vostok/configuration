@@ -30,13 +30,6 @@ namespace Vostok.Configuration.Parsers
                 ;
         }
 
-        public static DateTimeOffset Parse(string input)
-        {
-            if (TryParse(input, out var res))
-                return res;
-            throw new FormatException($"{nameof(DateTimeOffsetParser)}. Failed to parse from string '{input}'.");
-        }
-
         private static bool TryParseDatetimeOffset(string value, string dateSeparator, out DateTimeOffset dt)
         {
             var formatInfo = new DateTimeFormatInfo {DateSeparator = dateSeparator, TimeSeparator = ":"};

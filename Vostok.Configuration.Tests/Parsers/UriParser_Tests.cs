@@ -24,11 +24,5 @@ namespace Vostok.Configuration.Tests.Parsers
         {
             UriParser.TryParse(input, out var _).Should().BeFalse();
         }
-
-        [Test]
-        public void Parse_should_throw_for_invalid_input()
-        {
-            new Action(() => UriParser.Parse(null)).Should().Throw<FormatException>().Which.ShouldBePrinted();
-        }
     }
 }

@@ -66,13 +66,6 @@ namespace Vostok.Configuration.Parsers
                 TryGet(TimeSpan.FromDays, Days1, out result);
         }
 
-        public static TimeSpan Parse(string input)
-        {
-            if (TryParse(input, out var res))
-                return res;
-            throw new FormatException($"{nameof(TimeSpanParser)}. Failed to parse from string '{input}'.");
-        }
-
         private static string PrepareInput(string input, string unit) =>
             input.Replace(unit, string.Empty).Trim('.').Trim();
 

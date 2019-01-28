@@ -17,9 +17,11 @@ namespace Vostok.Configuration.Tests.Parsers
         }
 
         [Test]
-        public void Should_throw_FormatException_on_Parse_wrong_format()
+        public void Should_interpret_dates_without_timezone_as_local()
         {
-            new Action(() => DateTimeParser.Parse("123")).Should().Throw<FormatException>().Which.ShouldBePrinted();
+            DateTimeParser.TryParse("2018-01-28 15:26:00", out var datetime).Should().BeTrue();
+
+            datetime.Should().Be(new DateTime(2018, 1, 28, 15, 26, 0, DateTimeKind.Local));
         }
     }
 }

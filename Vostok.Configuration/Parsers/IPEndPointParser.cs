@@ -33,12 +33,5 @@ namespace Vostok.Configuration.Parsers
 
             return false;
         }
-
-        public static IPEndPoint Parse(string input)
-        {
-            if (TryParse(input, out var res))
-                return res;
-            throw new FormatException($"{nameof(IPEndPointParser)}. Failed to parse from string '{input}'.");
-        }
     }
 }

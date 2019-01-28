@@ -32,11 +32,5 @@ namespace Vostok.Configuration.Tests.Parsers
             IPEndPointParser.TryParse($"[{ipV6}]:80", out res).Should().BeTrue();
             res.Should().BeEquivalentTo(new IPEndPoint(new IPAddress(ipV6Bytes), 80));
         }
-
-        [Test]
-        public void Should_throw_FormatException_on_Parse_wrong_format()
-        {
-            new Action(() => IPEndPointParser.Parse("900.0.0.1:5")).Should().Throw<FormatException>().Which.ShouldBePrinted();
-        }
     }
 }
