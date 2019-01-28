@@ -1,7 +1,6 @@
 ﻿using System;
 using FluentAssertions;
 using NUnit.Framework;
-using Vostok.Commons.Testing;
 using UriParser = Vostok.Configuration.Parsers.UriParser;
 
 namespace Vostok.Configuration.Tests.Parsers

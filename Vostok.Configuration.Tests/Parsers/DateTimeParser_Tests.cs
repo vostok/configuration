@@ -1,7 +1,6 @@
 ﻿using System;
 using FluentAssertions;
 using NUnit.Framework;
-using Vostok.Commons.Testing;
 using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Tests.Parsers
@@ -12,7 +11,8 @@ namespace Vostok.Configuration.Tests.Parsers
         [Test]
         public void Should_TryParse()
         {
-            DateTimeParser.TryParse("20050809T181142+0330", out var res).Should().BeTrue().And.Be(res == new DateTime(2005, 8, 9, 14, 41, 42));
+            DateTimeParser.TryParse("20050809T181142+0330", out var datetime).Should().BeTrue();
+            datetime.Should().Be(new DateTime(2005, 8, 9, 18, 11, 42)); // +3:30
             DateTimeParser.TryParse("123", out _).Should().BeFalse();
         }
 

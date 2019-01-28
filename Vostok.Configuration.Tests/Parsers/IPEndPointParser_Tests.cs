@@ -1,8 +1,6 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 using FluentAssertions;
 using NUnit.Framework;
-using Vostok.Commons.Testing;
 using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Tests.Parsers
