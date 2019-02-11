@@ -2,14 +2,20 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Vostok.Configuration.TaskSource
+namespace Vostok.Configuration.CurrentValueProvider
 {
-    internal class CurrentValueObserver<T> : ICurrentValueObserver<T>
+    internal class RawCurrentValueProvider<T> : ICurrentValueProvider<T>
     {
+        private readonly Func<IObservable<T>> observableProvider;
         private volatile TaskCompletionSource<T> resultSource = new TaskCompletionSource<T>();
         private IDisposable innerSubscription;
 
-        public T Get(Func<IObservable<T>> observableProvider)
+        public RawCurrentValueProvider(Func<IObservable<T>> observableProvider)
+        {
+            this.observableProvider = observableProvider;
+        }
+
+        public T Get()
         {
             while (innerSubscription == null)
             {

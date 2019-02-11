@@ -6,9 +6,9 @@ using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Cache;
+using Vostok.Configuration.CurrentValueProvider;
 using Vostok.Configuration.Helpers;
 using Vostok.Configuration.ObservableBinding;
-using Vostok.Configuration.TaskSource;
 
 namespace Vostok.Configuration
 {
@@ -24,7 +24,7 @@ namespace Vostok.Configuration
         private readonly Action<Exception> errorCallback;
         private readonly IObservableBinder observableBinder;
         private readonly ISourceDataCache sourceDataCache;
-        private readonly ITaskSourceFactory taskSourceFactory;
+        private readonly ICurrentValueProviderFactory currentValueProviderFactory;
 
         /// <summary>
         /// Create a new <see cref="ConfigurationProvider"/> instance.
@@ -40,16 +40,16 @@ namespace Vostok.Configuration
                 settings.ErrorCallback,
                 new ObservableBinder(new CachingBinder(new ValidatingBinder(settings.Binder ?? new DefaultSettingsBinder()))),
                 new SourceDataCache(settings.MaxSourceCacheSize),
-                new TaskSourceFactory())
+                new RetryingCurrentValueProviderFactory())
         {
         }
 
-        internal ConfigurationProvider(Action<Exception> errorCallback, IObservableBinder observableBinder, ISourceDataCache sourceDataCache, ITaskSourceFactory taskSourceFactory)
+        internal ConfigurationProvider(Action<Exception> errorCallback, IObservableBinder observableBinder, ISourceDataCache sourceDataCache, ICurrentValueProviderFactory currentValueProviderFactory)
         {
             this.errorCallback = errorCallback ?? (_ => {});
             this.observableBinder = observableBinder;
             this.sourceDataCache = sourceDataCache;
-            this.taskSourceFactory = taskSourceFactory;
+            this.currentValueProviderFactory = currentValueProviderFactory;
         }
 
         /// <inheritdoc />
@@ -59,10 +59,10 @@ namespace Vostok.Configuration
             DisableSetupSourceFor<TSettings>();
 
             var cacheItem = sourceDataCache.GetPersistentCacheItem<TSettings>(source);
-            if (cacheItem.TaskSource == null)
-                cacheItem.TrySetTaskSource(taskSourceFactory.Create(Observe<TSettings>));
+            if (cacheItem.CurrentValueProvider == null)
+                cacheItem.TrySetCurrentValueProvider(currentValueProviderFactory.Create(Observe<TSettings>));
 
-            return cacheItem.TaskSource.Get();
+            return cacheItem.CurrentValueProvider.Get();
         }
 
         /// <inheritdoc />
@@ -72,13 +72,13 @@ namespace Vostok.Configuration
                 return Get<TSettings>();
 
             var cacheItem = sourceDataCache.GetLimitedCacheItem<TSettings>(source);
-            if (cacheItem.TaskSource != null)
-                return cacheItem.TaskSource.Get();
+            if (cacheItem.CurrentValueProvider != null)
+                return cacheItem.CurrentValueProvider.Get();
 
-            var taskSource = taskSourceFactory.Create(() => Observe<TSettings>(source));
-            var result = taskSource.Get();
-            if (!cacheItem.TrySetTaskSource(taskSource))
-                taskSource.Dispose();
+            var currentValueProvider = currentValueProviderFactory.Create(() => Observe<TSettings>(source));
+            var result = currentValueProvider.Get();
+            if (!cacheItem.TrySetCurrentValueProvider(currentValueProvider))
+                currentValueProvider.Dispose();
 
             return result;
         }

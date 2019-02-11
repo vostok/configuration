@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using Vostok.Commons.Threading;
-using Vostok.Configuration.TaskSource;
+using Vostok.Configuration.CurrentValueProvider;
 
 namespace Vostok.Configuration.Cache
 {
@@ -9,25 +9,25 @@ namespace Vostok.Configuration.Cache
     {
         private readonly AtomicBoolean isDisposed = new AtomicBoolean(false);
 
-        private ITaskSource<TSettings> taskSource;
+        private ICurrentValueProvider<TSettings> currentValueProvider;
 
         public (TSettings settings, Exception error)? LastValue { get; set; }
 
         public BindingCacheValue<TSettings> BindingCacheValue { get; set; }
 
-        public ITaskSource<TSettings> TaskSource => taskSource;
+        public ICurrentValueProvider<TSettings> CurrentValueProvider => currentValueProvider;
 
         public bool IsDisposed => isDisposed;
 
-        public bool TrySetTaskSource(ITaskSource<TSettings> source)
+        public bool TrySetCurrentValueProvider(ICurrentValueProvider<TSettings> currentValueProvider)
         {
-            return Interlocked.CompareExchange(ref taskSource, source, null) == null && !IsDisposed;
+            return Interlocked.CompareExchange(ref this.currentValueProvider, currentValueProvider, null) == null && !IsDisposed;
         }
 
         public void Dispose()
         {
             if (isDisposed.TrySetTrue())
-                taskSource?.Dispose();
+                currentValueProvider?.Dispose();
         }
     }
 }

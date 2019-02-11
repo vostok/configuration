@@ -9,8 +9,8 @@ using Vostok.Commons.Testing.Observable;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Cache;
+using Vostok.Configuration.CurrentValueProvider;
 using Vostok.Configuration.ObservableBinding;
-using Vostok.Configuration.TaskSource;
 
 namespace Vostok.Configuration.Tests
 {
@@ -24,8 +24,8 @@ namespace Vostok.Configuration.Tests
         private IObservableBinder observableBinder;
         private ISourceDataCache sourceDataCache;
         private IObservable<(ISettingsNode, Exception)> sourceObservable;
-        private ITaskSource<object> taskSource;
-        private ITaskSourceFactory taskSourceFactory;
+        private ICurrentValueProvider<object> currentValueProvider;
+        private ICurrentValueProviderFactory currentValueProviderFactory;
 
         [SetUp]
         public void SetUp()
@@ -33,8 +33,8 @@ namespace Vostok.Configuration.Tests
             errorCallback = Substitute.For<Action<Exception>>();
             observableBinder = Substitute.For<IObservableBinder>();
             sourceDataCache = Substitute.ForPartsOf<SourceDataCache>(10);
-            taskSourceFactory = Substitute.For<ITaskSourceFactory>();
-            provider = new ConfigurationProvider(errorCallback, observableBinder, sourceDataCache, taskSourceFactory);
+            currentValueProviderFactory = Substitute.For<ICurrentValueProviderFactory>();
+            provider = new ConfigurationProvider(errorCallback, observableBinder, sourceDataCache, currentValueProviderFactory);
             
             settings = new object();
             
@@ -42,10 +42,10 @@ namespace Vostok.Configuration.Tests
             sourceObservable = Substitute.For<IObservable<(ISettingsNode, Exception)>>();
             source.Observe().Returns(sourceObservable);
             
-            taskSource = Substitute.For<ITaskSource<object>>();
-            taskSource.Get().Returns(settings);
-            taskSourceFactory.Create<object>(default).ReturnsForAnyArgs(taskSource);
-            taskSourceFactory.WhenForAnyArgs(f => f.Create<object>(default))
+            currentValueProvider = Substitute.For<ICurrentValueProvider<object>>();
+            currentValueProvider.Get().Returns(settings);
+            currentValueProviderFactory.Create<object>(default).ReturnsForAnyArgs(currentValueProvider);
+            currentValueProviderFactory.WhenForAnyArgs(f => f.Create<object>(default))
                 .Do(callInfo => callInfo.ArgAt<Func<IObservable<object>>>(0).Invoke());
             
         }
@@ -57,7 +57,7 @@ namespace Vostok.Configuration.Tests
         }
         
         [Test]
-        public void Get_should_use_taskSource([Values] bool customSource)
+        public void Get_should_use_currentValueProvider([Values] bool customSource)
         {
             if (!customSource)
                 provider.SetupSourceFor<object>(source);
@@ -65,7 +65,7 @@ namespace Vostok.Configuration.Tests
         }
 
         [Test]
-        public void Get_should_cache_taskSource_by_type_and_source([Values] bool customSource)
+        public void Get_should_cache_currentValueProvider_by_type_and_source([Values] bool customSource)
         {
             if (!customSource)
             {
@@ -78,53 +78,53 @@ namespace Vostok.Configuration.Tests
 
             Get<int>(customSource);
 
-            taskSourceFactory.ReceivedWithAnyArgs(1).Create<object>(default);
-            taskSourceFactory.ReceivedWithAnyArgs(1).Create<int>(default);
+            currentValueProviderFactory.ReceivedWithAnyArgs(1).Create<object>(default);
+            currentValueProviderFactory.ReceivedWithAnyArgs(1).Create<int>(default);
         }
 
         [Test]
-        public void Get_should_wait_for_value_before_saving_taskSource_to_cache_when_custom_source()
+        public void Get_should_wait_for_value_before_saving_currentValueProvider_to_cache_when_custom_source()
         {
             var taskCompletionSource = new TaskCompletionSource<object>();
             
-            taskSource.When(ts => ts.Get()).Do(_ => taskCompletionSource.Task.GetAwaiter().GetResult());
+            currentValueProvider.When(ts => ts.Get()).Do(_ => taskCompletionSource.Task.GetAwaiter().GetResult());
 
             var task = Task.Run(() => provider.Get<object>(source));
             task.Wait(100.Milliseconds());
             task.IsCompleted.Should().BeFalse();
 
             var cacheItem = sourceDataCache.GetLimitedCacheItem<object>(source);
-            cacheItem.TaskSource.Should().BeNull();
+            cacheItem.CurrentValueProvider.Should().BeNull();
             
             taskCompletionSource.SetResult(null);
 
             task.Wait(1.Seconds());
             task.IsCompleted.Should().BeTrue();
             
-            cacheItem.TaskSource.Should().BeSameAs(taskSource);
+            cacheItem.CurrentValueProvider.Should().BeSameAs(currentValueProvider);
         }
         
         [Test]
-        public void Get_should_dispose_taskSource_when_custom_source_and_failed_to_save_it_to_cacheItem()
+        public void Get_should_dispose_currentValueProvider_when_custom_source_and_failed_to_save_it_to_cacheItem()
         {
             var taskCompletionSource = new TaskCompletionSource<object>();
             
-            taskSource.When(ts => ts.Get()).Do(_ => taskCompletionSource.Task.GetAwaiter().GetResult());
+            currentValueProvider.When(ts => ts.Get()).Do(_ => taskCompletionSource.Task.GetAwaiter().GetResult());
 
             var task = Task.Run(() => provider.Get<object>(source));
             task.Wait(50.Milliseconds());
             task.IsCompleted.Should().BeFalse();
 
-            var taskSource2 = Substitute.For<ITaskSource<object>>();
+            var currentValueProvider2 = Substitute.For<ICurrentValueProvider<object>>();
             var cacheItem = sourceDataCache.GetLimitedCacheItem<object>(source);
-            cacheItem.TrySetTaskSource(taskSource2).Should().BeTrue();
+            cacheItem.TrySetCurrentValueProvider(currentValueProvider2).Should().BeTrue();
             
             taskCompletionSource.SetResult(null);
 
             task.Wait(1.Seconds());
             task.IsCompleted.Should().BeTrue();
             
-            taskSource.Received(1).Dispose();
+            currentValueProvider.Received(1).Dispose();
         }
         
         [Test]
@@ -188,7 +188,7 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Observe_should_ignore_error_when_no_callback([Values] bool hasError, [Values] bool customSource)
         {
-            provider = new ConfigurationProvider(null, observableBinder, sourceDataCache, taskSourceFactory);
+            provider = new ConfigurationProvider(null, observableBinder, sourceDataCache, currentValueProviderFactory);
             if (!customSource)
                 provider.SetupSourceFor<object>(source);
             
