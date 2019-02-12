@@ -40,6 +40,8 @@ namespace Vostok.Configuration.Binders
                 c => !c.Handled);
             container.RegisterInstance(typeof(ISettingsBinderProvider), this);
             container.RegisterInstance(typeof(IDictionary<Type, ITypeParser>), parsers);
+
+            container.Verify();
         }
 
         public ISettingsBinder<T> CreateFor<T>() =>

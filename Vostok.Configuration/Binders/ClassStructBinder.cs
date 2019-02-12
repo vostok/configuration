@@ -33,8 +33,8 @@ namespace Vostok.Configuration.Binders
                     instance,
                     GetValue(field.FieldType, field.Name, IsRequired(field, requiredByDefault), settings, field.GetValue(instance)));
 
-            foreach (var property in type.GetProperties().Where(p => p.CanWrite))
-                property.SetValue(
+            foreach (var property in type.GetProperties())
+                property.ForceSetValue(
                     instance,
                     GetValue(property.PropertyType, property.Name, IsRequired(property, requiredByDefault), settings, property.GetValue(instance)));
 
@@ -58,7 +58,6 @@ namespace Vostok.Configuration.Binders
             if (value == null)
                 return isRequired ? throw new SettingsBindingException($"Required field or property '{name}' must have a non-null value.") : defaultValue;
 
-            
             return binderProvider.CreateFor(type).Bind(value);
         }
     }

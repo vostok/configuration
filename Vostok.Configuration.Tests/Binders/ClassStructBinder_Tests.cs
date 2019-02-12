@@ -76,16 +76,15 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_ignore_readonly_properties()
+        public void Should_set_properties_without_setter()
         {
             var settings = Object(("Property5", "true"));
 
             var myClass = CreateBinder<MyClass1>().Bind(settings);
 
             myClass.Should().NotBeNull();
-            myClass.Property5.Should().BeFalse();
+            myClass.Property5.Should().BeTrue();
         }
-
 
         [Test]
         public void Should_set_properties_with_non_public_setter()
