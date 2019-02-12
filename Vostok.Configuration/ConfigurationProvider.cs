@@ -4,6 +4,7 @@ using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Cache;
 using Vostok.Configuration.CurrentValueProvider;
@@ -25,6 +26,7 @@ namespace Vostok.Configuration
         private readonly IObservableBinder observableBinder;
         private readonly ISourceDataCache sourceDataCache;
         private readonly ICurrentValueProviderFactory currentValueProviderFactory;
+        private readonly TimeSpan sourceRetryCooldown;
 
         /// <summary>
         /// Create a new <see cref="ConfigurationProvider"/> instance.
@@ -40,16 +42,23 @@ namespace Vostok.Configuration
                 settings.ErrorCallback,
                 new ObservableBinder(new CachingBinder(new ValidatingBinder(settings.Binder ?? new DefaultSettingsBinder()))),
                 new SourceDataCache(settings.MaxSourceCacheSize),
-                new RetryingCurrentValueProviderFactory())
+                new RetryingCurrentValueProviderFactory(),
+                settings.SourceRetryCooldown)
         {
         }
 
-        internal ConfigurationProvider(Action<Exception> errorCallback, IObservableBinder observableBinder, ISourceDataCache sourceDataCache, ICurrentValueProviderFactory currentValueProviderFactory)
+        internal ConfigurationProvider(
+            Action<Exception> errorCallback, 
+            IObservableBinder observableBinder, 
+            ISourceDataCache sourceDataCache, 
+            ICurrentValueProviderFactory currentValueProviderFactory,
+            TimeSpan sourceRetryCooldown = default)
         {
             this.errorCallback = errorCallback ?? (_ => {});
             this.observableBinder = observableBinder;
             this.sourceDataCache = sourceDataCache;
             this.currentValueProviderFactory = currentValueProviderFactory;
+            this.sourceRetryCooldown = sourceRetryCooldown;
         }
 
         /// <inheritdoc />
@@ -101,7 +110,7 @@ namespace Vostok.Configuration
             EnsureSourceExists<TSettings>(out var source);
             DisableSetupSourceFor<TSettings>();
 
-            return observableBinder.SelectBound(source.Observe(), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source)).ObserveOn(scheduler);
+            return observableBinder.SelectBound(SubscribeToSource(source), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source)).ObserveOn(scheduler);
         }
 
         /// <inheritdoc />
@@ -110,7 +119,7 @@ namespace Vostok.Configuration
             if (IsConfiguredFor<TSettings>(source))
                 return ObserveWithErrors<TSettings>();
 
-            return observableBinder.SelectBound(source.Observe(), () => sourceDataCache.GetLimitedCacheItem<TSettings>(source)).ObserveOn(scheduler);
+            return observableBinder.SelectBound(SubscribeToSource(source), () => sourceDataCache.GetLimitedCacheItem<TSettings>(source)).ObserveOn(scheduler);
         }
 
         /// <inheritdoc />
@@ -149,6 +158,11 @@ namespace Vostok.Configuration
         private bool IsConfiguredFor<TSettings>(IConfigurationSource source)
         {
             return typeSources.TryGetValue(typeof(TSettings), out var preconfiguredSource) && ReferenceEquals(source, preconfiguredSource);
+        }
+
+        private IObservable<(ISettingsNode, Exception)> SubscribeToSource(IConfigurationSource source)
+        {
+            return HealingObservable.Create(source.Observe, sourceRetryCooldown);
         }
     }
 }

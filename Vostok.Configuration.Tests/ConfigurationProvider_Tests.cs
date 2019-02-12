@@ -252,7 +252,7 @@ namespace Vostok.Configuration.Tests
                 provider.SetupSourceFor<object>(source);
             
             var result = Substitute.For<IObservable<(object, Exception)>>();
-            observableBinder.SelectBound(sourceObservable, Arg.Any<Func<SourceCacheItem<object>>>()).Returns(result);
+            observableBinder.SelectBound(Arg.Any<IObservable<(ISettingsNode, Exception)>>(), Arg.Any<Func<SourceCacheItem<object>>>()).Returns(result);
 
             ExtractSource(ObserveWithErrors<object>(customSource)).Should().Be(result);
         }

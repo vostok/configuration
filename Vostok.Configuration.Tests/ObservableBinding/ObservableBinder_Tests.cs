@@ -225,13 +225,13 @@ namespace Vostok.Configuration.Tests.ObservableBinding
         public void Should_deduplicate_settings_from_source()
         {
             Bind(Arg.Any<ISettingsNode>()).Returns(_ => new object());
-            Bind(node).Returns(null);
+            Bind(node).Returns(settings);
                 
             subject.OnNext((Value("xx"), null));
             subject.OnNext((Value("xx"), null));
             subject.OnNext((node, null));
 
-            observableBinder.SelectBound(subject, () => cacheItem).TakeUntil(item => item.settings == null).ToTask().Wait(5.Seconds());
+            observableBinder.SelectBound(subject, () => cacheItem).TakeUntil(item => item.settings == settings).ToTask().Wait(5.Seconds());
 
             binder.Received(2).Bind(Arg.Any<ISettingsNode>(), Arg.Any<SourceCacheItem<object>>());
         }

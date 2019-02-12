@@ -29,5 +29,10 @@ namespace Vostok.Configuration
         /// Specifies how many <see cref="IConfigurationSource"/>s passed to <see cref="ConfigurationProvider.Get{TSettings}(IConfigurationSource)"/>, <see cref="ConfigurationProvider.Observe{TSettings}(IConfigurationSource)"/> or <see cref="ConfigurationProvider.ObserveWithErrors{TSettings}(IConfigurationSource)"/> method a <see cref="ConfigurationProvider"/> should cache.
         /// </summary>
         public int MaxSourceCacheSize { get; set; } = 10;
+
+        /// <summary>
+        /// In case OnError() notification is received from a <see cref="IConfigurationSource"/>, the <see cref="ConfigurationProvider"/> will wait for <see cref="SourceRetryCooldown"/> and then restart observing that source.
+        /// </summary>
+        public TimeSpan SourceRetryCooldown = TimeSpan.FromSeconds(10);
     }
 }
