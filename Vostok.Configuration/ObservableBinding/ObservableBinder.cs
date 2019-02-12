@@ -20,6 +20,7 @@ namespace Vostok.Configuration.ObservableBinding
         public IObservable<(TSettings settings, Exception error)> SelectBound<TSettings>(IObservable<(ISettingsNode settings, Exception error)> sourceObservable, Func<SourceCacheItem<TSettings>> cacheItemProvider)
         {
             return sourceObservable
+                .DistinctUntilChanged()
                 .Select(
                     sourceValue =>
                     {

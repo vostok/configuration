@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Reactive.Linq;
 using FluentAssertions.Extensions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -10,11 +11,12 @@ using Vostok.Configuration.Binders;
 using Vostok.Configuration.Cache;
 using Vostok.Configuration.ObservableBinding;
 using System.Reactive.Subjects;
+using System.Reactive.Threading.Tasks;
 
 namespace Vostok.Configuration.Tests.ObservableBinding
 {
     [TestFixture]
-    public class ObservableBinder_Tests
+    public class ObservableBinder_Tests : TreeConstructionSet
     {
         private ICachingBinder binder;
         private ObservableBinder observableBinder;
@@ -217,6 +219,21 @@ namespace Vostok.Configuration.Tests.ObservableBinding
             subject.OnError(error);
             
             observableBinder.SelectBound(subject, () => cacheItem).ShouldCompleteWithError(error);
+        }
+
+        [Test]
+        public void Should_deduplicate_settings_from_source()
+        {
+            Bind(Arg.Any<ISettingsNode>()).Returns(_ => new object());
+            Bind(node).Returns(null);
+                
+            subject.OnNext((Value("xx"), null));
+            subject.OnNext((Value("xx"), null));
+            subject.OnNext((node, null));
+
+            observableBinder.SelectBound(subject, () => cacheItem).TakeUntil(item => item.settings == null).ToTask().Wait(5.Seconds());
+
+            binder.Received(2).Bind(Arg.Any<ISettingsNode>(), Arg.Any<SourceCacheItem<object>>());
         }
 
         private object Bind(ISettingsNode node)
