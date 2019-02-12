@@ -1,10 +1,13 @@
 using System;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using System.Reflection;
 using System.Threading.Tasks;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using NSubstitute;
 using NUnit.Framework;
+using Vostok.Commons.Testing;
 using Vostok.Commons.Testing.Observable;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
@@ -176,7 +179,8 @@ namespace Vostok.Configuration.Tests
                 
                 subject.OnNext((settings, error));
 
-                testObserver.Values.Should().Equal(settings);
+                new Action(() => testObserver.Values.Should().Equal(settings))
+                    .ShouldPassIn(5.Seconds());
 
                 if (hasError)
                     errorCallback.Received(1).Invoke(error);
@@ -203,7 +207,8 @@ namespace Vostok.Configuration.Tests
                 
                 subject.OnNext((settings, error));
 
-                testObserver.Values.Should().Equal(settings);
+                new Action(() => testObserver.Values.Should().Equal(settings))
+                    .ShouldPassIn(5.Seconds());
             }
         }
 
@@ -249,7 +254,7 @@ namespace Vostok.Configuration.Tests
             var result = Substitute.For<IObservable<(object, Exception)>>();
             observableBinder.SelectBound(sourceObservable, Arg.Any<Func<SourceCacheItem<object>>>()).Returns(result);
 
-            ObserveWithErrors<object>(customSource).Should().Be(result);
+            ExtractSource(ObserveWithErrors<object>(customSource)).Should().Be(result);
         }
 
         [Test]
@@ -322,6 +327,11 @@ namespace Vostok.Configuration.Tests
         {
             sourceDataCache.ReceivedWithAnyArgs(1).GetLimitedCacheItem<object>(default);
             sourceDataCache.DidNotReceiveWithAnyArgs().GetPersistentCacheItem<object>(default);
+        }
+
+        private IObservable<T> ExtractSource<T>(IObservable<T> wrappedObservable)
+        {
+            return wrappedObservable.GetType().GetField("_source", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(wrappedObservable) as IObservable <T> ?? wrappedObservable;
         }
     }
 }
