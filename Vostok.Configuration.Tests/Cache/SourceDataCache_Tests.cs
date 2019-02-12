@@ -40,16 +40,6 @@ namespace Vostok.Configuration.Tests.Cache
             GetItemsFromCache(10, false).Should().Equal(GetItemsFromCache(10, false));
         }
 
-        [Test]
-        public void Should_move_items_from_limited_to_persistent_cache_when_same_key()
-        {
-            var item = cache.GetLimitedCacheItem<int>(sources[0]);
-            cache.GetLimitedCacheItem<int>(sources[0]).Should().BeSameAs(item);
-            
-            cache.GetPersistentCacheItem<int>(sources[0]).Should().BeSameAs(item);
-            cache.GetLimitedCacheItem<int>(sources[0]).Should().NotBe(item);
-        }
-
         private SourceCacheItem<int>[] GetItemsFromCache(int count, bool limited = true)
         {
             return sources.Take(count).Select(source => limited

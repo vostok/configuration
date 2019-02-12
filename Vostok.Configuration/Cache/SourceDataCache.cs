@@ -29,23 +29,13 @@ namespace Vostok.Configuration.Cache
         {
             var key = (source, typeof(TSettings));
             var newItem = new SourceCacheItem<TSettings>();
-            return (SourceCacheItem<TSettings>)GetFromLimitedOrPersistentCache(key, newItem, limitedSourceCache, persistentSourceCache);
+            return (SourceCacheItem<TSettings>)persistentSourceCache.GetOrAdd(key, newItem);
         }
 
         public void Dispose()
         {
             foreach (var cacheItem in persistentSourceCache.Values.Concat(limitedSourceCache.Values).Cast<IDisposable>())
                 cacheItem.Dispose();
-        }
-
-        private static object GetFromLimitedOrPersistentCache<T>(T key, object newItem, WindowedCache<T, object> limitedCache, ConcurrentDictionary<T, object> persistentCache)
-        {
-            if (limitedCache.TryRemove(key, out var result))
-                persistentCache.AddOrUpdate(key, result, (k, obj) => result);
-            else
-                result = persistentCache.GetOrAdd(key, newItem);
-
-            return result;
         }
     }
 }
