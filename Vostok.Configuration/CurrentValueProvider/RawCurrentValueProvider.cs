@@ -6,20 +6,20 @@ namespace Vostok.Configuration.CurrentValueProvider
 {
     internal class RawCurrentValueProvider<T> : ICurrentValueProvider<T>
     {
-        private readonly Func<IObservable<T>> observableProvider;
+        private readonly Lazy<IObservable<T>> observable;
         private volatile TaskCompletionSource<T> resultSource = new TaskCompletionSource<T>();
         private IDisposable innerSubscription;
 
         public RawCurrentValueProvider(Func<IObservable<T>> observableProvider)
         {
-            this.observableProvider = observableProvider;
+            observable = new Lazy<IObservable<T>>(observableProvider, LazyThreadSafetyMode.ExecutionAndPublication);
         }
 
         public T Get()
         {
             while (innerSubscription == null)
             {
-                var newSubscription = observableProvider().Subscribe(OnNextValue, OnError);
+                var newSubscription = observable.Value.Subscribe(OnNextValue, OnError);
 
                 if (Interlocked.CompareExchange(ref innerSubscription, newSubscription, null) == null)
                     break;
@@ -30,12 +30,7 @@ namespace Vostok.Configuration.CurrentValueProvider
             return resultSource.Task.GetAwaiter().GetResult();
         }
 
-        public void Dispose()
-        {
-            var subscription = innerSubscription;
-            if (subscription != null && ReferenceEquals(Interlocked.CompareExchange(ref innerSubscription, null, subscription), subscription))
-                subscription.Dispose();
-        }
+        public void Dispose() => Interlocked.Exchange(ref innerSubscription, null)?.Dispose();
 
         private static TaskCompletionSource<T> NewCompletedSource(T value)
         {
