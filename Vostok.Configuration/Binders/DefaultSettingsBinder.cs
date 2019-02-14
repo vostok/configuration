@@ -40,5 +40,11 @@ namespace Vostok.Configuration.Binders
             binderProvider.WithParserFor(parser);
             return this;
         }
+
+        public DefaultSettingsBinder WithCustomBinder<T>(ISettingsBinder<T> binder)
+        {
+            binderProvider.SetupCustomBinder(binder);
+            return this;
+        }
     }
 }

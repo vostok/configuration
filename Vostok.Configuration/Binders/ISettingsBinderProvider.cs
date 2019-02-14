@@ -10,6 +10,8 @@ namespace Vostok.Configuration.Binders
 
         ISettingsBinder<object> CreateFor(Type type);
 
+        void SetupCustomBinder<T>(ISettingsBinder<T> binder);
+        
         void SetupParserFor<T>(ITypeParser parser);
     }
 }

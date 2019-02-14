@@ -15,11 +15,7 @@ namespace Vostok.Configuration.Tests.Binders
         [SetUp]
         public void TestSetup()
         {
-            binder = new PrimitiveBinder<int>(
-                new Dictionary<Type, ITypeParser>
-                {
-                    {typeof(int), new InlineTypeParser<int>(int.TryParse)}
-                });
+            binder = new PrimitiveBinder<int>(new InlineTypeParser<int>(int.TryParse));
         }
 
         [Test]
@@ -58,13 +54,6 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_throw_if_parser_throws()
         {
             new Action(() => binder.Bind(Value(null)))
-                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
-        }
-
-        [Test]
-        public void Should_throw_if_there_is_no_parser_for_type()
-        {
-            new Action(() => new PrimitiveBinder<int>(new Dictionary<Type, ITypeParser>()).Bind(Value("1")))
                 .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
     }

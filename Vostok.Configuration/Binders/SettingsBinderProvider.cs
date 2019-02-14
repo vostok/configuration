@@ -11,17 +11,17 @@ namespace Vostok.Configuration.Binders
     internal class SettingsBinderProvider : ISettingsBinderProvider
     {
         private readonly Container container;
-        private readonly Dictionary<Type, ITypeParser> parsers;
+        private readonly Dictionary<Type, object> customBinders;
 
         public SettingsBinderProvider()
         {
-            parsers = new Dictionary<Type, ITypeParser>();
+            customBinders = new Dictionary<Type, object>();
 
             container = new Container();
             container.RegisterConditional(
                 typeof(ISettingsBinder<>),
-                typeof(PrimitiveBinder<>),
-                c => parsers.ContainsKey(c.ServiceType.GetGenericArguments()[0]));
+                typeof(CustomBinderWrapper<>),
+                c => customBinders.ContainsKey(c.ServiceType.GetGenericArguments()[0]));
             container.RegisterConditional(
                 typeof(ISettingsBinder<>),
                 typeof(NullableBinder<>),
@@ -39,7 +39,7 @@ namespace Vostok.Configuration.Binders
                 typeof(ClassStructBinder<>),
                 c => !c.Handled);
             container.RegisterInstance(typeof(ISettingsBinderProvider), this);
-            container.RegisterInstance(typeof(IDictionary<Type, ITypeParser>), parsers);
+            container.RegisterInstance(typeof(IDictionary<Type, object>), customBinders);
 
             container.Verify();
         }
@@ -50,6 +50,8 @@ namespace Vostok.Configuration.Binders
         public ISettingsBinder<object> CreateFor(Type type) =>
             (ISettingsBinder<object>)container.GetInstance(typeof(BinderWrapper<>).MakeGenericType(type));
 
-        public void SetupParserFor<T>(ITypeParser parser) => parsers[typeof(T)] = parser;
+        public void SetupCustomBinder<T>(ISettingsBinder<T> binder) => customBinders[typeof(T)] = binder;
+        
+        public void SetupParserFor<T>(ITypeParser parser) => customBinders[typeof(T)] = new PrimitiveBinder<T>(parser);
     }
 }

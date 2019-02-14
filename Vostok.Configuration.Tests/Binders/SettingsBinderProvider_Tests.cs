@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Binders.Collection;
 
@@ -19,54 +21,82 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_select_PrimitiveBinder_for_boolean()
+        public void Should_select_CustomBinderWrapper_when_configured_for_unknown_classes()
         {
-            provider.CreateFor<bool>().Should().BeOfType<PrimitiveBinder<bool>>();
+            provider.SetupCustomBinder(new MyClassBinder());
+            ShouldBeCustomBinderWrapperOver<MyClassBinder, MyClass>(provider.CreateFor<MyClass>());
         }
 
         [Test]
-        public void Should_select_PrimitiveBinder_for_signed_integral_types()
+        public void Should_select_CustomBinderWrapper_when_configured_for_unknown_generic_classes()
         {
-            provider.CreateFor<sbyte>().Should().BeOfType<PrimitiveBinder<sbyte>>();
-            provider.CreateFor<short>().Should().BeOfType<PrimitiveBinder<short>>();
-            provider.CreateFor<int>().Should().BeOfType<PrimitiveBinder<int>>();
-            provider.CreateFor<long>().Should().BeOfType<PrimitiveBinder<long>>();
+            provider.SetupCustomBinder(new MyClass2Binder<int>());
+            ShouldBeCustomBinderWrapperOver<MyClass2Binder<int>, MyClass2<int>>(provider.CreateFor<MyClass2<int>>());
         }
 
         [Test]
-        public void Should_select_PrimitiveBinder_for_unsigned_integral_types()
+        public void Should_select_CustomBinderWrapper_when_configured_for_unknown_structs()
         {
-            provider.CreateFor<byte>().Should().BeOfType<PrimitiveBinder<byte>>();
-            provider.CreateFor<ushort>().Should().BeOfType<PrimitiveBinder<ushort>>();
-            provider.CreateFor<uint>().Should().BeOfType<PrimitiveBinder<uint>>();
-            provider.CreateFor<ulong>().Should().BeOfType<PrimitiveBinder<ulong>>();
+            provider.SetupCustomBinder(new MyStructBinder());
+            ShouldBeCustomBinderWrapperOver<MyStructBinder, MyStruct>(provider.CreateFor<MyStruct>());
         }
 
         [Test]
-        public void Should_select_PrimitiveBinder_for_floating_point_types()
+        public void Should_select_CustomBinderWrapper_when_configured_for_unknown_generic_structs()
         {
-            provider.CreateFor<float>().Should().BeOfType<PrimitiveBinder<float>>();
-            provider.CreateFor<double>().Should().BeOfType<PrimitiveBinder<double>>();
+            provider.SetupCustomBinder(new MyStruct2Binder<int>());
+            ShouldBeCustomBinderWrapperOver<MyStruct2Binder<int>, MyStruct2<int>>(provider.CreateFor<MyStruct2<int>>());
         }
 
         [Test]
-        public void Should_select_PrimitiveBinder_for_char()
+        public void Should_select_CustomBinderWrapper_over_PrimitiveBinder_for_boolean()
         {
-            provider.CreateFor<char>().Should().BeOfType<PrimitiveBinder<char>>();
+            ShouldBeCustomBinderWrapperOverPrimitiveBinder(provider.CreateFor<bool>());
         }
 
         [Test]
-        public void Should_select_PrimitiveBinder_for_string()
+        public void Should_select_CustomBinderWrapper_over_PrimitiveBinder_for_signed_integral_types()
         {
-            provider.CreateFor<string>().Should().BeOfType<PrimitiveBinder<string>>();
+            ShouldBeCustomBinderWrapperOverPrimitiveBinder(provider.CreateFor<sbyte>());
+            ShouldBeCustomBinderWrapperOverPrimitiveBinder(provider.CreateFor<short>());
+            ShouldBeCustomBinderWrapperOverPrimitiveBinder(provider.CreateFor<int>());
+            ShouldBeCustomBinderWrapperOverPrimitiveBinder(provider.CreateFor<long>());
         }
 
         [Test]
-        public void Should_select_PrimitiveBinder_for_custom_configured_type()
+        public void Should_select_CustomBinderWrapper_over_PrimitiveBinder_for_unsigned_integral_types()
+        {
+            ShouldBeCustomBinderWrapperOverPrimitiveBinder(provider.CreateFor<byte>());
+            ShouldBeCustomBinderWrapperOverPrimitiveBinder(provider.CreateFor<ushort>());
+            ShouldBeCustomBinderWrapperOverPrimitiveBinder(provider.CreateFor<uint>());
+            ShouldBeCustomBinderWrapperOverPrimitiveBinder(provider.CreateFor<ulong>());
+        }
+
+        [Test]
+        public void Should_select_CustomBinderWrapper_over_PrimitiveBinder_for_floating_point_types()
+        {
+            ShouldBeCustomBinderWrapperOverPrimitiveBinder(provider.CreateFor<float>());
+            ShouldBeCustomBinderWrapperOverPrimitiveBinder(provider.CreateFor<double>());
+        }
+
+        [Test]
+        public void Should_select_CustomBinderWrapper_over_PrimitiveBinder_for_char()
+        {
+            ShouldBeCustomBinderWrapperOverPrimitiveBinder(provider.CreateFor<char>());
+        }
+
+        [Test]
+        public void Should_select_CustomBinderWrapper_over_PrimitiveBinder_for_string()
+        {
+            ShouldBeCustomBinderWrapperOverPrimitiveBinder(provider.CreateFor<string>());
+        }
+
+        [Test]
+        public void Should_select_CustomBinderWrapper_over_PrimitiveBinder_for_custom_configured_type()
         {
             provider.WithParserFor<MyClass>(MyClass.TryParse);
 
-            provider.CreateFor<MyClass>().Should().BeOfType<PrimitiveBinder<MyClass>>();
+            ShouldBeCustomBinderWrapperOverPrimitiveBinder(provider.CreateFor<MyClass>());
         }
 
         [Test]
@@ -193,6 +223,17 @@ namespace Vostok.Configuration.Tests.Binders
             provider.CreateFor<MyStruct2<int>>().Should().BeOfType<ClassStructBinder<MyStruct2<int>>>();
         }
 
+        public void ShouldBeCustomBinderWrapperOver<TBinder, TSettings>(ISettingsBinder<TSettings> binder)
+        {
+            binder.Should().BeOfType<CustomBinderWrapper<TSettings>>();
+            ((CustomBinderWrapper<TSettings>)binder).Binder.Should().BeOfType<TBinder>();
+        }
+
+        public void ShouldBeCustomBinderWrapperOverPrimitiveBinder<T>(ISettingsBinder<T> binder)
+        {
+            ShouldBeCustomBinderWrapperOver<PrimitiveBinder<T>, T>(binder);
+        }
+
         public class MyClass
         {
             public static bool TryParse(string s, out MyClass v)
@@ -215,6 +256,30 @@ namespace Vostok.Configuration.Tests.Binders
         public struct MyStruct2<T>
         {
             
+        }
+        
+        public class MyClassBinder: ISettingsBinder<MyClass>
+        {
+            public MyClass Bind(ISettingsNode rawSettings) =>
+                throw new NotImplementedException();
+        }
+        
+        public class MyClass2Binder<T>: ISettingsBinder<MyClass2<T>>
+        {
+            public MyClass2<T> Bind(ISettingsNode rawSettings) =>
+                throw new NotImplementedException();
+        }
+        
+        public class MyStructBinder: ISettingsBinder<MyStruct>
+        {
+            public MyStruct Bind(ISettingsNode rawSettings) =>
+                throw new NotImplementedException();
+        }
+        
+        public class MyStruct2Binder<T>: ISettingsBinder<MyStruct2<T>>
+        {
+            public MyStruct2<T> Bind(ISettingsNode rawSettings) =>
+                throw new NotImplementedException();
         }
     }
 }

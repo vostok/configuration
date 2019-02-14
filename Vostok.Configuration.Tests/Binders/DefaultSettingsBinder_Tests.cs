@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
+using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Parsers;
@@ -47,6 +48,21 @@ namespace Vostok.Configuration.Tests.Binders
         public void WithParserFor_should_return_self()
         {
             binder.WithParserFor<MyClass>(MyClass.TryParse).Should().BeSameAs(binder);
+        }
+
+        [Test]
+        public void WithCustomBinder_should_setup_binder()
+        {
+            var customBinder = Substitute.For<ISettingsBinder<int>>();
+            binder.WithCustomBinder(customBinder);
+
+            provider.Received().SetupCustomBinder(customBinder);
+        }
+
+        [Test]
+        public void WithCustomBinder_should_return_self()
+        {
+            binder.WithCustomBinder(Substitute.For<ISettingsBinder<int>>()).Should().BeSameAs(binder);
         }
 
         public class MyClass
