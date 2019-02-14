@@ -17,17 +17,17 @@ namespace Vostok.Configuration.Cache
         public TSettings Bind<TSettings>(ISettingsNode rawSettings, IBindingCacheItem<TSettings> cacheItem)
         {
             var cachedValue = cacheItem.BindingCacheValue;
-            if (cachedValue != null && Equals(cachedValue.LastBoundNode, rawSettings))
+            if (cachedValue != null && ReferenceEquals(cachedValue.UsedBinder, binder) && Equals(cachedValue.LastBoundNode, rawSettings))
                 return GetSettingsOrRethrow(cachedValue);
 
             try
             {
                 var result = binder.Bind<TSettings>(rawSettings);
-                cacheItem.BindingCacheValue = new BindingCacheValue<TSettings>(rawSettings, result);
+                cacheItem.BindingCacheValue = new BindingCacheValue<TSettings>(binder, rawSettings, result);
             }
             catch (Exception e)
             {
-                cacheItem.BindingCacheValue = new BindingCacheValue<TSettings>(rawSettings, e);
+                cacheItem.BindingCacheValue = new BindingCacheValue<TSettings>(binder,  rawSettings, e);
             }
 
             return GetSettingsOrRethrow(cacheItem.BindingCacheValue);

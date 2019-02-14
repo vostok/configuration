@@ -36,13 +36,26 @@ namespace Vostok.Configuration.Tests.Cache
         }
 
         [Test]
-        public void Should_use_underlying_binder_when_different_cached_value()
+        public void Should_use_underlying_binder_when_different_binder_in_cached_value()
         {
             binder.Bind<object>(node).Returns(settings);
 
             var cacheItem = new SourceCacheItem<object>
             {
-                BindingCacheValue = new BindingCacheValue<object>(Substitute.For<ISettingsNode>(), new object())
+                BindingCacheValue = new BindingCacheValue<object>(Substitute.For<ISettingsBinder>(), node, new object())
+            };
+            
+            cachingBinder.Bind(node, cacheItem).Should().Be(settings);
+        }
+
+        [Test]
+        public void Should_use_underlying_binder_when_different_settings_in_cached_value()
+        {
+            binder.Bind<object>(node).Returns(settings);
+
+            var cacheItem = new SourceCacheItem<object>
+            {
+                BindingCacheValue = new BindingCacheValue<object>(binder, Substitute.For<ISettingsNode>(), new object())
             };
             
             cachingBinder.Bind(node, cacheItem).Should().Be(settings);
@@ -65,7 +78,7 @@ namespace Vostok.Configuration.Tests.Cache
             var cacheItem = new SourceCacheItem<object>();
             cachingBinder.Bind(node, cacheItem);
             
-            cacheItem.BindingCacheValue.Should().BeEquivalentTo(new BindingCacheValue<object>(node, settings));
+            cacheItem.BindingCacheValue.Should().BeEquivalentTo(new BindingCacheValue<object>(binder, node, settings));
         }
 
         [Test]
@@ -84,15 +97,15 @@ namespace Vostok.Configuration.Tests.Cache
                 // ignored
             }
 
-            cacheItem.BindingCacheValue.Should().BeEquivalentTo(new BindingCacheValue<object>(node, error));
+            cacheItem.BindingCacheValue.Should().BeEquivalentTo(new BindingCacheValue<object>(binder, node, error));
         }
 
         [Test]
-        public void Should_return_cached_settings_when_node_equals_to_cached()
+        public void Should_return_cached_settings_when_binder_and_node_equals_to_cached()
         {
             var cacheItem = new SourceCacheItem<object>
             {
-                BindingCacheValue = new BindingCacheValue<object>(node, settings)
+                BindingCacheValue = new BindingCacheValue<object>(binder, node, settings)
             };
             
             cachingBinder.Bind(new ValueNode("value"), cacheItem).Should().Be(settings);
@@ -101,12 +114,12 @@ namespace Vostok.Configuration.Tests.Cache
         }
         
         [Test]
-        public void Should_rethrow_cached_error_when_node_equals_to_cached()
+        public void Should_rethrow_cached_error_when_binder_and_node_equals_to_cached()
         {
             var error = new FormatException();
             var cacheItem = new SourceCacheItem<object>
             {
-                BindingCacheValue = new BindingCacheValue<object>(node, error)
+                BindingCacheValue = new BindingCacheValue<object>(binder, node, error)
             };
 
             new Action(() => cachingBinder.Bind(new ValueNode("value"), cacheItem)).Should().Throw<FormatException>();
