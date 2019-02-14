@@ -17,15 +17,8 @@ namespace Vostok.Configuration.CurrentValueProvider
 
         public T Get()
         {
-            while (innerSubscription == null)
-            {
-                var newSubscription = observable.Value.Subscribe(OnNextValue, OnError);
-
-                if (Interlocked.CompareExchange(ref innerSubscription, newSubscription, null) == null)
-                    break;
-
-                newSubscription.Dispose();
-            }
+            if (innerSubscription == null && !resultSource.Task.IsCompleted)
+                Subscribe();
 
             return resultSource.Task.GetAwaiter().GetResult();
         }
@@ -45,6 +38,19 @@ namespace Vostok.Configuration.CurrentValueProvider
         {
             if (!resultSource.TrySetResult(value))
                 resultSource = NewCompletedSource(value);
+        }
+
+        private void Subscribe()
+        {
+            while (innerSubscription == null)
+            {
+                var newSubscription = observable.Value.Subscribe(OnNextValue, OnError);
+
+                if (Interlocked.CompareExchange(ref innerSubscription, newSubscription, null) == null)
+                    break;
+
+                newSubscription.Dispose();
+            }
         }
     }
 }
