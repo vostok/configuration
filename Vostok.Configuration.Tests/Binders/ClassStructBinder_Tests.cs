@@ -98,6 +98,39 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
+        public void Should_ignore_static_properties()
+        {
+            var settings = Object(("StaticProperty", "true"));
+
+            var myClass = CreateBinder<MyClass1>().Bind(settings);
+
+            myClass.Should().NotBeNull();
+            MyClass1.StaticProperty.Should().BeFalse();
+        }
+
+        [Test]
+        public void Should_ignore_static_fieds()
+        {
+            var settings = Object(("StaticField", "true"));
+
+            var myClass = CreateBinder<MyClass1>().Bind(settings);
+
+            myClass.Should().NotBeNull();
+            MyClass1.StaticField.Should().BeFalse();
+        }
+
+        [Test]
+        public void Should_ignore_consts()
+        {
+            var settings = Object(("Const", "true"));
+
+            var myClass = CreateBinder<MyClass1>().Bind(settings);
+
+            myClass.Should().NotBeNull();
+            MyClass1.Const.Should().BeFalse();
+        }
+
+        [Test]
         public void Should_throw_if_inner_binder_throws()
         {
             var settings = Object(("Field1", "xxx"));
@@ -207,6 +240,10 @@ namespace Vostok.Configuration.Tests.Binders
             internal bool Property4 { get; set; }
             public bool Property5 { get; }
             public bool Property6 { get; private set; }
+
+            public static bool StaticProperty { get; set; }
+            public static bool StaticField;
+            public const bool Const = false;
         }
 
         private class MyClass2

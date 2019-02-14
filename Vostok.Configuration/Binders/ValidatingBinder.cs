@@ -4,6 +4,7 @@ using System.Linq;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Binders
 {
@@ -48,13 +49,13 @@ namespace Vostok.Configuration.Binders
             foreach (var error in (IEnumerable<string>)validateMethod.Invoke(validator, new[] {value}))
                 yield return FormatError(prefix, error);
 
-            foreach (var field in type.GetFields())
+            foreach (var field in type.GetInstanceFields())
             {
                 foreach (var error in Validate(field.FieldType, field.GetValue(value), field.Name))
                     yield return FormatError(prefix, error);
             }
 
-            foreach (var prop in type.GetProperties())
+            foreach (var prop in type.GetInstanceProperties())
             {
                 foreach (var error in Validate(prop.PropertyType, prop.GetValue(value), prop.Name))
                     yield return FormatError(prefix, error);

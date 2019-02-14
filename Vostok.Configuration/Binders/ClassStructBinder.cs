@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Reflection;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
@@ -28,12 +27,12 @@ namespace Vostok.Configuration.Binders
 
             var requiredByDefault = type.GetCustomAttribute<RequiredByDefaultAttribute>() != null;
 
-            foreach (var field in type.GetFields())
+            foreach (var field in type.GetInstanceFields())
                 field.SetValue(
                     instance,
                     GetValue(field.FieldType, field.Name, IsRequired(field, requiredByDefault), settings, field.GetValue(instance)));
 
-            foreach (var property in type.GetProperties())
+            foreach (var property in type.GetInstanceProperties())
                 property.ForceSetValue(
                     instance,
                     GetValue(property.PropertyType, property.Name, IsRequired(property, requiredByDefault), settings, property.GetValue(instance)));
