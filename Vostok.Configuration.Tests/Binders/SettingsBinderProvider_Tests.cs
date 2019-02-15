@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Binders.Collection;
+using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Tests.Binders
 {
@@ -223,13 +225,31 @@ namespace Vostok.Configuration.Tests.Binders
             provider.CreateFor<MyStruct2<int>>().Should().BeOfType<ClassStructBinder<MyStruct2<int>>>();
         }
 
-        public void ShouldBeCustomBinderWrapperOver<TBinder, TSettings>(ISettingsBinder<TSettings> binder)
+        [Test]
+        public void Should_throw_when_SetupCustomBinder_called_for_type_after_CreateFor()
+        {
+            provider.CreateFor<MyClass>();
+            new Action(() => provider.SetupCustomBinder(Substitute.For<ISettingsBinder<MyClass>>()))
+                .Should()
+                .Throw<InvalidOperationException>();
+        }
+
+        [Test]
+        public void Should_throw_when_SetupParserFor_called_for_type_after_CreateFor()
+        {
+            provider.CreateFor<MyClass>();
+            new Action(() => provider.SetupParserFor<MyClass>(Substitute.For<ITypeParser>()))
+                .Should()
+                .Throw<InvalidOperationException>();
+        }
+
+        private void ShouldBeCustomBinderWrapperOver<TBinder, TSettings>(ISettingsBinder<TSettings> binder)
         {
             binder.Should().BeOfType<CustomBinderWrapper<TSettings>>();
             ((CustomBinderWrapper<TSettings>)binder).Binder.Should().BeOfType<TBinder>();
         }
 
-        public void ShouldBeCustomBinderWrapperOverPrimitiveBinder<T>(ISettingsBinder<T> binder)
+        private void ShouldBeCustomBinderWrapperOverPrimitiveBinder<T>(ISettingsBinder<T> binder)
         {
             ShouldBeCustomBinderWrapperOver<PrimitiveBinder<T>, T>(binder);
         }

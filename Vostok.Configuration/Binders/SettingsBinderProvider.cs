@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using SimpleInjector;
 using Vostok.Configuration.Abstractions;
@@ -12,6 +13,7 @@ namespace Vostok.Configuration.Binders
     {
         private readonly Container container;
         private readonly Dictionary<Type, object> customBinders;
+        private readonly ConcurrentDictionary<Type, bool> setupDisabled = new ConcurrentDictionary<Type, bool>();
 
         public SettingsBinderProvider()
         {
@@ -44,14 +46,34 @@ namespace Vostok.Configuration.Binders
             container.Verify();
         }
 
-        public ISettingsBinder<T> CreateFor<T>() =>
-            container.GetInstance<ISettingsBinder<T>>();
+        public ISettingsBinder<T> CreateFor<T>()
+        {
+            setupDisabled[typeof(T)] = true;
+            return container.GetInstance<ISettingsBinder<T>>();
+        }
 
-        public ISettingsBinder<object> CreateFor(Type type) =>
-            (ISettingsBinder<object>)container.GetInstance(typeof(BinderWrapper<>).MakeGenericType(type));
+        public ISettingsBinder<object> CreateFor(Type type)
+        {
+            setupDisabled[type] = true;
+            return (ISettingsBinder<object>)container.GetInstance(typeof(BinderWrapper<>).MakeGenericType(type));
+        }
 
-        public void SetupCustomBinder<T>(ISettingsBinder<T> binder) => customBinders[typeof(T)] = binder;
-        
-        public void SetupParserFor<T>(ITypeParser parser) => customBinders[typeof(T)] = new PrimitiveBinder<T>(parser);
+        public void SetupCustomBinder<T>(ISettingsBinder<T> binder)
+        {
+            var type = typeof(T);
+            EnsureSetupEnabledFor(type);
+            customBinders[type] = binder;
+        }
+
+        public void SetupParserFor<T>(ITypeParser parser)
+        {
+            SetupCustomBinder(new PrimitiveBinder<T>(parser));
+        }
+
+        private void EnsureSetupEnabledFor(Type type)
+        {
+            if (setupDisabled.ContainsKey(type))
+                throw new InvalidOperationException($"Cannot set up custom binder for type '{type}' after {nameof(CreateFor)}() was called for this type.");
+        }
     }
 }
