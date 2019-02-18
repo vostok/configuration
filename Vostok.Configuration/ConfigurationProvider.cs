@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using JetBrains.Annotations;
+using Vostok.Commons.Helpers.Observable;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
@@ -177,7 +178,7 @@ namespace Vostok.Configuration
 
         private IObservable<(ISettingsNode, Exception)> SubscribeToSource(IConfigurationSource source)
         {
-            return HealingObservable.Create(source.Observe, sourceRetryCooldown);
+            return HealingObservable.CatchErrors(source.Observe, sourceRetryCooldown);
         }
     }
 }
