@@ -19,13 +19,14 @@ namespace Vostok.Configuration.Cache
 
         public bool IsDisposed => isDisposed;
 
-        public bool TrySetCurrentValueProvider(ICurrentValueProvider<TSettings> currentValueProvider)
+        public bool TrySetCurrentValueProvider(ICurrentValueProvider<TSettings> currentValueProvider) // TODO(krait): maybe use simple bool & locks
         {
             return Interlocked.CompareExchange(ref this.currentValueProvider, currentValueProvider, null) == null && !IsDisposed;
         }
 
         public void Dispose()
         {
+            // TODO(krait): comment
             if (isDisposed.TrySetTrue())
                 currentValueProvider?.Dispose();
         }

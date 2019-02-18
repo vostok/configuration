@@ -17,6 +17,7 @@ namespace Vostok.Configuration.CurrentValueProvider
 
         public T Get()
         {
+            // TODO(krait): comment
             if (innerSubscription == null && !resultSource.Task.IsCompleted)
                 Subscribe();
 

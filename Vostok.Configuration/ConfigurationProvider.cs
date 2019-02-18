@@ -98,6 +98,7 @@ namespace Vostok.Configuration
             if (cacheItem.CurrentValueProvider != null)
                 return cacheItem.CurrentValueProvider.Get();
 
+            // TODO(krait): comment
             var currentValueProvider = currentValueProviderFactory.Create(() => Observe<TSettings>(source));
             var result = currentValueProvider.Get();
             if (!cacheItem.TrySetCurrentValueProvider(currentValueProvider))
