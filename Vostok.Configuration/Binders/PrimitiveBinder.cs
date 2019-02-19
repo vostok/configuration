@@ -1,11 +1,12 @@
 ﻿using System.Linq;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Helpers;
 using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Binders
 {
-    internal class PrimitiveBinder<T> : ISettingsBinder<T>
+    internal class PrimitiveBinder<T> : ISettingsBinder<T>, INullValuePolicy
     {
         private readonly ITypeParser parser;
 
@@ -31,6 +32,17 @@ namespace Vostok.Configuration.Binders
                 throw new SettingsBindingException($"Value '{valueNode.Value}' cannot be parsed as '{typeof(T)}'.");
 
             return (T)result;
+        }
+
+        public bool IsNullValue(ISettingsNode node)
+        {
+            if (node.IsNullValue())
+                return true;
+
+            if (node?.Children.Count() != 1)
+                return false;
+
+            return node.Children.Single().IsNullValue();
         }
     }
 }

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Helpers;
+using OptionalAttribute = Vostok.Configuration.Abstractions.Attributes.OptionalAttribute;
 
 namespace Vostok.Configuration.Binders
 {
@@ -16,12 +18,12 @@ namespace Vostok.Configuration.Binders
 
         public T Bind(ISettingsNode settings)
         {
-            if (settings.IsNull() && !typeof(T).IsValueType)
+            if (settings.IsNullValue())
                 return default;
-
+            
             if (settings != null && !(settings is ObjectNode))
                 throw new SettingsBindingException($"A settings node of type '{settings.GetType()}' cannot be bound by {nameof(ClassStructBinder<T>)}.");
-
+            
             var type = typeof(T);
             var instance = Activator.CreateInstance(type);
 
@@ -50,14 +52,17 @@ namespace Vostok.Configuration.Binders
 
         private object GetValue(Type type, string name, bool isRequired, ISettingsNode settings, object defaultValue)
         {
-            if (settings == null && isRequired)
-                throw new SettingsBindingException($"Null settings node cannot be bound by {nameof(ClassStructBinder<T>)}: required field or property '{name}' must have a non-default value.");
-            
-            var value = settings?[name];
-            if (value == null)
-                return isRequired ? throw new SettingsBindingException($"Required field or property '{name}' must have a non-null value.") : defaultValue;
+            var binder = binderProvider.CreateFor(type);
 
-            return binderProvider.CreateFor(type).Bind(value);
+            var value = settings?[name];
+            if (value != null && !value.IsNullValue(binder))
+                return binder.Bind(value);
+            
+            if (isRequired)
+                throw new SettingsBindingException($"Required field or property '{name}' must have a non-null value.");
+
+            return value == null ? defaultValue : null;
+
         }
     }
 }

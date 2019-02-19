@@ -1,9 +1,10 @@
 ﻿using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Binders
 {
-    internal class NullableBinder<T> : ISettingsBinder<T?>
+    internal class NullableBinder<T> : ISettingsBinder<T?>, INullValuePolicy
         where T : struct
     {
         private readonly ISettingsBinder<T> valueBinder;
@@ -12,6 +13,14 @@ namespace Vostok.Configuration.Binders
             this.valueBinder = valueBinder;
 
         public T? Bind(ISettingsNode settings) =>
-            settings?.Value == null ? (T?)null : valueBinder.Bind(settings);
+            settings == null || IsNullValue(settings) ? (T?)null : valueBinder.Bind(settings);
+
+        public bool IsNullValue(ISettingsNode node)
+        {
+            if (node.IsNullValue())
+                return true;
+
+            return node is ValueNode valueNode && valueNode.Value?.ToLower() == "null";
+        }
     }
 }

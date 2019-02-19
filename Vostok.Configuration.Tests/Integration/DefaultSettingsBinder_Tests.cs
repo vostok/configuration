@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.Commons.Testing;
+using Vostok.Configuration.Abstractions.Attributes;
+using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 
 namespace Vostok.Configuration.Tests.Integration
@@ -103,7 +106,31 @@ namespace Vostok.Configuration.Tests.Integration
             result.First().InnerObject.AnotherArray.Should().Equal(167);
         }
 
-        private bool TryParseRegex(string s, out Regex regex)
+        [Test]
+        public void Should_not_allow_to_set_required_property_to_null()
+        {
+            var tree = Object(Value("RequiredProperty", null));
+
+            new Action(() => binder.Bind<MyClass>(tree)).Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
+        }
+
+        [Test]
+        public void Should_not_allow_to_set_required_property_to_node_of_invaild_type()
+        {
+            var tree = Object(Object("RequiredProperty", new ISettingsNode[0]));
+
+            new Action(() => binder.Bind<MyClass>(tree)).Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
+        }
+
+        [Test]
+        public void Should_not_allow_to_set_required_property_to_nested_null()
+        {
+            var tree = Object(Object("RequiredProperty", ("Value", null)));
+
+            new Action(() => binder.Bind<MyClass>(tree)).Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
+        }
+
+        private static bool TryParseRegex(string s, out Regex regex)
         {
             regex = new Regex(s);
             return true;
@@ -123,6 +150,12 @@ namespace Vostok.Configuration.Tests.Integration
             {
                 public int[] AnotherArray { get; set; }
             }
+        }
+
+        private class MyClass
+        {
+            [Required]
+            public string RequiredProperty { get; set; }
         }
     }
 }
