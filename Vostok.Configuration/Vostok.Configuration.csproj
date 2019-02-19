@@ -28,7 +28,6 @@
 
   <ItemGroup>
     <Compile Include="..\..\vostok.commons.helpers\Vostok.Commons.Helpers\NumericTypeParser.cs" Link="Commons\NumericTypeParser.cs" />
-    <Compile Include="..\..\vostok.commons.helpers\Vostok.Commons.Helpers\Observable\HealingObservable.cs" Link="Commons\HealingObservable.cs" />
     <Compile Include="..\..\vostok.commons.threading\Vostok.Commons.Threading\AtomicBoolean.cs" Link="Commons\AtomicBoolean.cs" />
   </ItemGroup>
   
