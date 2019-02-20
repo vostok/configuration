@@ -226,7 +226,7 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var settings = Object(("Field1", "true"));
 
-            new Action(() => CreateBinder<MyClass5>().Bind(settings)).Should().Throw<MissingMethodException>(); // TODO(krait): wrap exception
+            new Action(() => CreateBinder<MyClass5>().Bind(settings)).Should().Throw<MissingMethodException>();
         }
 
         [Test]

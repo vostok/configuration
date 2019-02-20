@@ -7,28 +7,38 @@ namespace Vostok.Configuration.Cache
 {
     internal class SourceCacheItem<TSettings> : IBindingCacheItem<TSettings>, IDisposable
     {
-        private readonly AtomicBoolean isDisposed = new AtomicBoolean(false);
-
-        private ICurrentValueProvider<TSettings> currentValueProvider;
+        private readonly object currentValueProviderSync = new object();
 
         public (TSettings settings, Exception error)? LastValue { get; set; }
 
         public BindingCacheValue<TSettings> BindingCacheValue { get; set; }
 
-        public ICurrentValueProvider<TSettings> CurrentValueProvider => currentValueProvider;
+        public ICurrentValueProvider<TSettings> CurrentValueProvider { get; private set; }
 
-        public bool IsDisposed => isDisposed;
+        public bool IsDisposed { get; private set; }
 
-        public bool TrySetCurrentValueProvider(ICurrentValueProvider<TSettings> currentValueProvider) // TODO(krait): maybe use simple bool & locks
+        public bool TrySetCurrentValueProvider(ICurrentValueProvider<TSettings> currentValueProvider)
         {
-            return Interlocked.CompareExchange(ref this.currentValueProvider, currentValueProvider, null) == null && !IsDisposed;
+            if (IsDisposed || CurrentValueProvider != null)
+                return false;
+
+            lock (currentValueProviderSync)
+            {
+                if (IsDisposed || CurrentValueProvider != null)
+                    return false;
+
+                CurrentValueProvider = currentValueProvider;
+                return true;
+            }
         }
 
         public void Dispose()
         {
-            // TODO(krait): comment
-            if (isDisposed.TrySetTrue())
-                currentValueProvider?.Dispose();
+            lock (currentValueProviderSync)
+            {
+                IsDisposed = true;
+                CurrentValueProvider?.Dispose();
+            }
         }
     }
 }
