@@ -1,19 +1,18 @@
 ﻿using System;
-using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
-using Vostok.Configuration.Helpers;
+using Vostok.Configuration.Binders.Results;
 
 namespace Vostok.Configuration.Binders
 {
     internal class EnumBinder<T> : ISettingsBinder<T>
         where T : struct
     {
-        public T Bind(ISettingsNode settings)
+        public SettingsBindingResult<T> Bind(ISettingsNode settings)
         {
             if (Enum.TryParse<T>(settings.Value, true, out var result))
-                return result;
+                return SettingsBindingResult.Success(result);
 
-            throw new SettingsBindingException($"Value '{settings.Value}' is not valid for enum of type '{typeof(T)}'.");
+            return SettingsBindingResult.ParsingError<T>(settings.Value);
         }
     }
 }

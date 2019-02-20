@@ -6,6 +6,7 @@ using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Binders.Collection;
+using Vostok.Configuration.Binders.Results;
 
 namespace Vostok.Configuration.Tests.Binders.Collection
 {
@@ -17,7 +18,9 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         public void TestSetup()
         {
             var boolBinder = Substitute.For<ISettingsBinder<bool>>();
-            boolBinder.Bind(Arg.Any<ISettingsNode>()).Returns(callInfo => (callInfo.Arg<ISettingsNode>() as ValueNode)?.Value == "true" ? true : throw new SettingsBindingException(""));
+            boolBinder.Bind(Arg.Any<ISettingsNode>())
+                .Returns(callInfo => (callInfo.Arg<ISettingsNode>() as ValueNode)?.Value == "true" ? 
+                    SettingsBindingResult.Success(true) : throw new SettingsBindingException(""));
 
             binder = new ReadOnlyListBinder<bool>(boolBinder);
         }
@@ -27,7 +30,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         {
             var settings = Array(null, "true", "true");
 
-            binder.Bind(settings).Should().Equal(true, true);
+            binder.Bind(settings).UnwrapIfNoErrors().Should().Equal(true, true);
         }
 
         [Test]
@@ -35,7 +38,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         {
             var settings = Array(new string[] {});
 
-            binder.Bind(settings).Should().BeEmpty();
+            binder.Bind(settings).UnwrapIfNoErrors().Should().BeEmpty();
         }
 
         [Test]

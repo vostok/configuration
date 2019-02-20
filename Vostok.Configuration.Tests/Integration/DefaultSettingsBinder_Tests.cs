@@ -81,8 +81,6 @@ namespace Vostok.Configuration.Tests.Integration
             binder.Bind<int>(tree).Should().Be(42);
         }
 
-        // TODO(krait): Separate test cases.
-
         [Test]
         public void Should_bind_complex_stuff()
         {
@@ -104,6 +102,27 @@ namespace Vostok.Configuration.Tests.Integration
             result.First().InnerRegex.ToString().Should().Be(@"\d+");
             result.First().InnerArray.Should().Equal(ConsoleColor.Yellow, ConsoleColor.Red, ConsoleColor.Black);
             result.First().InnerObject.AnotherArray.Should().Equal(167);
+        }
+
+        [Test]
+        public void Should_print_out_errors_nicely()
+        {
+            var tree = Object(
+                Array("ListOfLists", Array(Value("1"), Value("2"), Value("xx"))),
+                Array("SetOfInts", "10", "xx", "20"),
+                Array("ListOfObjects",
+                    Object(
+                        Object("innerObject", Value("anotherArray", "xxx"))
+                    )),
+                Object("JustAProperty", Value("zz")),
+                Array("NestedDictionaries",
+                    Array("zz40", Value("key1", "300")),
+                    Array("50", Value("key2", "100"), Value("key3", "yy"))
+                )
+            );
+            
+            new Action(() => binder.Bind<ComplexConfig2>(tree))
+                .Should().Throw<Exception>().Which.ShouldBePrinted();
         }
 
         [Test]
@@ -150,6 +169,19 @@ namespace Vostok.Configuration.Tests.Integration
             {
                 public int[] AnotherArray { get; set; }
             }
+        }
+
+        private class ComplexConfig2
+        {
+            public List<List<int>> NestedLists { get; }
+
+            public List<ComplexConfig> ListOfObjects;
+            
+            public Dictionary<int, Dictionary<string, int>> NestedDictionaries { get; set; }
+            
+            public int JustAProperty { get; private set; }
+
+            public HashSet<int> SetOfInts;
         }
 
         private class MyClass

@@ -1,5 +1,5 @@
-﻿using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.Abstractions.SettingsTree;
+﻿using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Binders.Results;
 using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Binders
@@ -10,7 +10,8 @@ namespace Vostok.Configuration.Binders
 
         public BinderWrapper(ISettingsBinder<T> binder) => this.binder = binder;
 
-        public object Bind(ISettingsNode rawSettings) => binder.Bind(rawSettings);
+        public SettingsBindingResult<object> Bind(ISettingsNode rawSettings) => 
+            binder.Bind(rawSettings).Convert<T, object>();
 
         public bool IsNullValue(ISettingsNode node) => node.IsNullValue(binder);
     }

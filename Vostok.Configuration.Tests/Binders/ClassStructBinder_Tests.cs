@@ -9,6 +9,7 @@ using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
+using Vostok.Configuration.Binders.Results;
 
 namespace Vostok.Configuration.Tests.Binders
 {
@@ -20,7 +21,8 @@ namespace Vostok.Configuration.Tests.Binders
         public void TestSetup()
         {
             var boolBinder = Substitute.For<ISettingsBinder<object>>();
-            boolBinder.Bind(Arg.Is<ISettingsNode>(n => n is ValueNode && ((ValueNode)n).Value == "true")).Returns(true);
+            boolBinder.Bind(Arg.Is<ISettingsNode>(n => n is ValueNode && ((ValueNode)n).Value == "true"))
+                .Returns(SettingsBindingResult.Success<object>(true));
             boolBinder.ReturnsForAll<object>(_ => throw new SettingsBindingException(""));
 
             provider = Substitute.For<ISettingsBinderProvider>();
@@ -44,7 +46,7 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var settings = Object(("Field1", "true"));
 
-            var myClass = CreateBinder<MyClass1>().Bind(settings);
+            var myClass = CreateBinder<MyClass1>().Bind(settings).UnwrapIfNoErrors();
 
             myClass.Should().NotBeNull();
             myClass.Field1.Should().BeTrue();
@@ -55,7 +57,7 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var settings = Object(("Property1", "true"));
 
-            var myClass = CreateBinder<MyClass1>().Bind(settings);
+            var myClass = CreateBinder<MyClass1>().Bind(settings).UnwrapIfNoErrors();
 
             myClass.Should().NotBeNull();
             myClass.Property1.Should().BeTrue();
@@ -66,7 +68,7 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var settings = Object(("Field2", "true"), ("Field3", "true"), ("Field4", "true"));
 
-            var myClass = CreateBinder<MyClass1>().Bind(settings);
+            var myClass = CreateBinder<MyClass1>().Bind(settings).UnwrapIfNoErrors();
 
             myClass.Should().NotBeNull();
             GetValue(myClass, "Field2").Should().BeFalse();
@@ -79,7 +81,7 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var settings = Object(("Property2", "true"), ("Property3", "true"), ("Property4", "true"));
 
-            var myClass = CreateBinder<MyClass1>().Bind(settings);
+            var myClass = CreateBinder<MyClass1>().Bind(settings).UnwrapIfNoErrors();
 
             myClass.Should().NotBeNull();
             GetValue(myClass, "Property2").Should().BeFalse();
@@ -92,7 +94,7 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var settings = Object(("Property5", "true"));
 
-            var myClass = CreateBinder<MyClass1>().Bind(settings);
+            var myClass = CreateBinder<MyClass1>().Bind(settings).UnwrapIfNoErrors();
 
             myClass.Should().NotBeNull();
             myClass.Property5.Should().BeTrue();
@@ -103,7 +105,7 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var settings = Object(("Property6", "true"));
 
-            var myClass = CreateBinder<MyClass1>().Bind(settings);
+            var myClass = CreateBinder<MyClass1>().Bind(settings).UnwrapIfNoErrors();
 
             myClass.Should().NotBeNull();
             myClass.Property6.Should().BeTrue();
@@ -187,7 +189,7 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var settings = new ObjectNode(null as string);
 
-            var myClass = CreateBinder<MyClass4>().Bind(settings);
+            var myClass = CreateBinder<MyClass4>().Bind(settings).UnwrapIfNoErrors();
 
             myClass.Should().NotBeNull();
             myClass.Field1.Should().BeTrue();
@@ -198,7 +200,7 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var settings = new ObjectNode(null as string);
 
-            var myClass = CreateBinder<MyClass4>().Bind(settings);
+            var myClass = CreateBinder<MyClass4>().Bind(settings).UnwrapIfNoErrors();
 
             myClass.Should().NotBeNull();
             myClass.Property1.Should().BeTrue();
@@ -209,7 +211,7 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var settings = Object(("Field1", null));
 
-            var myClass = CreateBinder<MyClass4>().Bind(settings);
+            var myClass = CreateBinder<MyClass4>().Bind(settings).UnwrapIfNoErrors();
 
             myClass.Should().NotBeNull();
             myClass.Field1.Should().BeFalse();
@@ -220,7 +222,7 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var settings = Object(("Property1", null));
 
-            var myClass = CreateBinder<MyClass4>().Bind(settings);
+            var myClass = CreateBinder<MyClass4>().Bind(settings).UnwrapIfNoErrors();
 
             myClass.Should().NotBeNull();
             myClass.Property1.Should().BeFalse();
@@ -239,7 +241,7 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var settings = Object(("Property1", "true"), ("Property2", "true"));
 
-            var myStruct = CreateBinder<MyStruct>().Bind(settings);
+            var myStruct = CreateBinder<MyStruct>().Bind(settings).UnwrapIfNoErrors();
 
             myStruct.Property1.Should().BeTrue();
             myStruct.Property2.Should().BeTrue();
@@ -248,7 +250,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_set_members_to_default_values_if_node_is_null_and_all_members_are_optional()
         {
-            var myClass = CreateBinder<MyClass6>().Bind(null);
+            var myClass = CreateBinder<MyClass6>().Bind(null).UnwrapIfNoErrors();
 
             myClass.Property1.Should().BeTrue();
             myClass.Field1.Should().BeTrue();

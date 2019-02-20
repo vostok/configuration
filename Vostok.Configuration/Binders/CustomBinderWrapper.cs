@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Binders.Results;
 using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Binders
@@ -12,7 +12,7 @@ namespace Vostok.Configuration.Binders
 
         public CustomBinderWrapper(IDictionary<Type, object> binders) => Binder = (ISettingsBinder<T>)binders[typeof(T)];
 
-        public T Bind(ISettingsNode settings) => Binder.Bind(settings);
+        public SettingsBindingResult<T> Bind(ISettingsNode settings) => Binder.Bind(settings);
         
         public bool IsNullValue(ISettingsNode node) => node.IsNullValue(Binder);
     }

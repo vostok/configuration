@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Binders.Results;
+using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Binders.Collection
 {
@@ -16,12 +17,25 @@ namespace Vostok.Configuration.Binders.Collection
         public ReadOnlyListBinder(ISettingsBinder<T> elementBinder) =>
             this.elementBinder = elementBinder;
 
-        public T[] Bind(ISettingsNode settings) => settings.Children.Select(n => elementBinder.Bind(n)).ToArray();
+        public SettingsBindingResult<T[]> Bind(ISettingsNode settings)
+        {
+            if (!(settings is ArrayNode) && !(settings is ObjectNode))
+                return SettingsBindingResult.NodeTypeMismatch<T[]>(settings);
+            
+            var results = settings.Children.Select((n, i) => (index: i, value: elementBinder.BindOrDefault(n))).ToList();
 
-        IReadOnlyCollection<T> ISettingsBinder<IReadOnlyCollection<T>>.Bind(ISettingsNode settings) => Bind(settings);
+            var value = results.Select(r => r.value.Value).ToArray();
+            var errors = results.SelectMany(r => r.value.Errors.ForIndex(r.index));
+            return SettingsBindingResult.Create(value, errors);
+        }
 
-        IReadOnlyList<T> ISettingsBinder<IReadOnlyList<T>>.Bind(ISettingsNode settings) => Bind(settings);
+        SettingsBindingResult<IReadOnlyCollection<T>> ISettingsBinder<IReadOnlyCollection<T>>.Bind(ISettingsNode settings) => 
+            Bind(settings).Convert<T[], IReadOnlyCollection<T>>();
 
-        IEnumerable<T> ISettingsBinder<IEnumerable<T>>.Bind(ISettingsNode settings) => Bind(settings);
+        SettingsBindingResult<IReadOnlyList<T>> ISettingsBinder<IReadOnlyList<T>>.Bind(ISettingsNode settings) => 
+            Bind(settings).Convert<T[], IReadOnlyList<T>>();
+
+        SettingsBindingResult<IEnumerable<T>> ISettingsBinder<IEnumerable<T>>.Bind(ISettingsNode settings) => 
+            Bind(settings).Convert<T[], IEnumerable<T>>();
     }
 }

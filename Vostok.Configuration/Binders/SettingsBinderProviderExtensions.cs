@@ -7,7 +7,7 @@ using UriParser = Vostok.Configuration.Parsers.UriParser;
 
 namespace Vostok.Configuration.Binders
 {
-    internal static class ISettingsBinderProviderExtensions
+    internal static class SettingsBinderProviderExtensions
     {
         public static ISettingsBinderProvider WithDefaultParsers(this ISettingsBinderProvider binderProvider)
         {

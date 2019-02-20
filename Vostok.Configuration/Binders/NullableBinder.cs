@@ -1,5 +1,5 @@
-﻿using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.Abstractions.SettingsTree;
+﻿using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Binders.Results;
 using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Binders
@@ -12,7 +12,8 @@ namespace Vostok.Configuration.Binders
         public NullableBinder(ISettingsBinder<T> valueBinder) =>
             this.valueBinder = valueBinder;
 
-        public T? Bind(ISettingsNode settings) => valueBinder.Bind(settings);
+        public SettingsBindingResult<T?> Bind(ISettingsNode settings) => 
+            valueBinder.BindOrDefault(settings).ConvertToNullable();
 
         public bool IsNullValue(ISettingsNode node)
         {

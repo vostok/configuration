@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Binders.Results;
+using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Binders.Collection
 {
@@ -19,11 +20,26 @@ namespace Vostok.Configuration.Binders.Collection
             this.valueBinder = valueBinder;
         }
 
-        public Dictionary<T1, T2> Bind(ISettingsNode settings) =>
-            settings.Children.ToDictionary(n => keyBinder.Bind(new ValueNode(n.Name)), n => valueBinder.Bind(n));
+        public SettingsBindingResult<Dictionary<T1, T2>> Bind(ISettingsNode settings)
+        {
+            if (!(settings is ArrayNode) && !(settings is ObjectNode))
+                return SettingsBindingResult.NodeTypeMismatch<Dictionary<T1, T2>>(settings);
 
-        IDictionary<T1, T2> ISettingsBinder<IDictionary<T1, T2>>.Bind(ISettingsNode settings) => Bind(settings);
+            var results = settings.Children.Select(n => 
+                (index: n.Name, key: keyBinder.BindOrDefault(new ValueNode(n.Name)), value: valueBinder.BindOrDefault(n)))
+                .ToList();
 
-        IReadOnlyDictionary<T1, T2> ISettingsBinder<IReadOnlyDictionary<T1, T2>>.Bind(ISettingsNode settings) => Bind(settings);
+            var value = results.ToDictionary(p => p.key.Value, p => p.value.Value);
+            var errors = results.SelectMany(p => 
+                p.key.Errors.ForIndex(p.index)
+                    .Concat(p.value.Errors.ForIndex(p.index)));
+            return SettingsBindingResult.Create(value, errors);
+        }
+
+        SettingsBindingResult<IDictionary<T1, T2>> ISettingsBinder<IDictionary<T1, T2>>.Bind(ISettingsNode settings) => 
+            Bind(settings).Convert<Dictionary<T1, T2>, IDictionary<T1, T2>>();
+
+        SettingsBindingResult<IReadOnlyDictionary<T1, T2>> ISettingsBinder<IReadOnlyDictionary<T1, T2>>.Bind(ISettingsNode settings) => 
+            Bind(settings).Convert<Dictionary<T1, T2>, IReadOnlyDictionary<T1, T2>>();
     }
 }

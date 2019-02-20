@@ -7,6 +7,7 @@ using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Binders.Collection;
+using Vostok.Configuration.Binders.Results;
 using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Tests.Binders
@@ -280,25 +281,25 @@ namespace Vostok.Configuration.Tests.Binders
         
         public class MyClassBinder: ISettingsBinder<MyClass>
         {
-            public MyClass Bind(ISettingsNode rawSettings) =>
+            public SettingsBindingResult<MyClass> Bind(ISettingsNode rawSettings) =>
                 throw new NotImplementedException();
         }
         
         public class MyClass2Binder<T>: ISettingsBinder<MyClass2<T>>
         {
-            public MyClass2<T> Bind(ISettingsNode rawSettings) =>
+            public SettingsBindingResult<MyClass2<T>> Bind(ISettingsNode rawSettings) =>
                 throw new NotImplementedException();
         }
         
         public class MyStructBinder: ISettingsBinder<MyStruct>
         {
-            public MyStruct Bind(ISettingsNode rawSettings) =>
+            public SettingsBindingResult<MyStruct> Bind(ISettingsNode rawSettings) =>
                 throw new NotImplementedException();
         }
         
         public class MyStruct2Binder<T>: ISettingsBinder<MyStruct2<T>>
         {
-            public MyStruct2<T> Bind(ISettingsNode rawSettings) =>
+            public SettingsBindingResult<MyStruct2<T>>Bind(ISettingsNode rawSettings) =>
                 throw new NotImplementedException();
         }
     }

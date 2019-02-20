@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Binders.Results;
 using Vostok.Configuration.Helpers;
 using OptionalAttribute = Vostok.Configuration.Abstractions.Attributes.OptionalAttribute;
 
@@ -16,27 +16,33 @@ namespace Vostok.Configuration.Binders
         public ClassStructBinder(ISettingsBinderProvider binderProvider) =>
             this.binderProvider = binderProvider;
 
-        public T Bind(ISettingsNode settings)
+        public SettingsBindingResult<T> Bind(ISettingsNode settings)
         {
-            if (settings != null && !(settings is ObjectNode))
-                throw new SettingsBindingException($"A settings node of type '{settings.GetType()}' cannot be bound by {nameof(ClassStructBinder<T>)}.");
+            if (!(settings is ObjectNode))
+                return SettingsBindingResult.NodeTypeMismatch<T>(settings);
             
             var type = typeof(T);
             var instance = Activator.CreateInstance(type);
 
             var requiredByDefault = type.GetCustomAttribute<RequiredByDefaultAttribute>() != null;
 
+            var errors = Enumerable.Empty<SettingsBindingError>();
+
             foreach (var field in type.GetInstanceFields())
-                field.SetValue(
-                    instance,
-                    GetValue(field.FieldType, field.Name, IsRequired(field, requiredByDefault), settings, field.GetValue(instance)));
+            {
+                var result = GetValue(field.FieldType, field.Name, IsRequired(field, requiredByDefault), settings, field.GetValue(instance));
+                errors = errors.Concat(result.Errors.ForProperty(field.Name));
+                field.SetValue(instance, result.Value);
+            }
 
             foreach (var property in type.GetInstanceProperties())
-                property.ForceSetValue(
-                    instance,
-                    GetValue(property.PropertyType, property.Name, IsRequired(property, requiredByDefault), settings, property.GetValue(instance)));
+            {
+                var result = GetValue(property.PropertyType, property.Name, IsRequired(property, requiredByDefault), settings, property.GetValue(instance));
+                errors = errors.Concat(result.Errors.ForProperty(property.Name));
+                property.ForceSetValue(instance, result.Value);
+            }
 
-            return (T)instance;
+            return SettingsBindingResult.Create((T)instance, errors);
         }
 
         private static bool IsRequired(MemberInfo member, bool requiredByDefault)
@@ -47,19 +53,18 @@ namespace Vostok.Configuration.Binders
             return member.GetCustomAttribute<RequiredAttribute>() != null;
         }
 
-        private object GetValue(Type type, string name, bool isRequired, ISettingsNode settings, object defaultValue)
+        private SettingsBindingResult<object> GetValue(Type type, string name, bool isRequired, ISettingsNode settings, object defaultValue)
         {
             var binder = binderProvider.CreateFor(type);
 
             var value = settings?[name];
             if (value != null && !value.IsNullValue(binder))
-                return binder.Bind(value);
-            
+                return binder.BindOrDefault(value);
+
             if (isRequired)
-                throw new SettingsBindingException($"Required field or property '{name}' must have a non-null value.");
+                return SettingsBindingResult.RequiredPropertyIsNull<object>(name);
 
-            return value == null ? defaultValue : null;
-
+            return SettingsBindingResult.Success(value.IsMissing() ? defaultValue : null);
         }
     }
 }

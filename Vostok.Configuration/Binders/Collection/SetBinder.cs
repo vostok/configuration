@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Binders.Results;
 using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Binders.Collection
@@ -15,8 +15,19 @@ namespace Vostok.Configuration.Binders.Collection
         public SetBinder(ISettingsBinder<T> elementBinder) =>
             this.elementBinder = elementBinder;
 
-        public HashSet<T> Bind(ISettingsNode settings) =>  new HashSet<T>(settings.Children.Select(n => elementBinder.Bind(n)));
+        public SettingsBindingResult<HashSet<T>> Bind(ISettingsNode settings)
+        {
+            if (!(settings is ArrayNode) && !(settings is ObjectNode))
+                return SettingsBindingResult.NodeTypeMismatch<HashSet<T>>(settings);
 
-        ISet<T> ISettingsBinder<ISet<T>>.Bind(ISettingsNode settings) => Bind(settings);
+            var results = settings.Children.Select((n, i) => (index: i, value: elementBinder.BindOrDefault(n))).ToList();
+
+            var value = new HashSet<T>(results.Select(r => r.value.Value));
+            var errors = results.SelectMany(r => r.value.Errors.ForIndex(r.index));
+            return SettingsBindingResult.Create(value, errors);
+        }
+
+        SettingsBindingResult<ISet<T>> ISettingsBinder<ISet<T>>.Bind(ISettingsNode settings) => 
+            Bind(settings).Convert<HashSet<T>, ISet<T>>();
     }
 }
