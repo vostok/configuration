@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -154,6 +155,25 @@ namespace Vostok.Configuration.Tests.Integration
             new Action(() => binder.Bind<MyClass>(tree)).Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
 
+        [Test]
+        public void Should_support_custom_collections()
+        {
+            binder.WithCustomBinder(typeof(MyListBinder<>), _ => true);
+
+            var tree = Array(Array(Value("1"), Value("2")), Array(Value("3"), Value("4")));
+
+            var result = binder.Bind<MyList<List<int>>>(tree);
+
+            result.Should()
+                .BeEquivalentTo(
+                    new MyList<List<int>>(
+                        new[]
+                        {
+                            new List<int> {1, 2},
+                            new List<int> {3, 4},
+                        }));
+        }
+
         private static bool TryParseRegex(string s, out Regex regex)
         {
             regex = new Regex(s);
@@ -210,6 +230,30 @@ namespace Vostok.Configuration.Tests.Integration
         {
             [Required]
             public string RequiredProperty { get; set; }
+        }
+
+        private class MyList<T> : IEnumerable<T>
+        {
+            private readonly List<T> data;
+
+            public MyList(IEnumerable<T> data) => this.data = data.ToList();
+
+            public IEnumerator<T> GetEnumerator() => data.GetEnumerator();
+
+            IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)data).GetEnumerator();
+        }
+        
+        private class MyListBinder<T> : ISettingsBinder<MyList<T>>
+        {
+            private readonly ISettingsBinder<T> innerBinder;
+
+            public MyListBinder(ISettingsBinder<T> innerBinder) => this.innerBinder = innerBinder;
+
+            public SettingsBindingResult<MyList<T>> Bind(ISettingsNode rawSettings)
+            {
+                return SettingsBindingResult.Success(
+                    new MyList<T>(rawSettings.Children.Select(c => innerBinder.Bind(c).UnwrapIfNoErrors())));
+            }
         }
     }
 }

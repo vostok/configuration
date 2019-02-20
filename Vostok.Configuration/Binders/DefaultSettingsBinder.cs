@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using System;
+using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Helpers;
@@ -42,9 +43,15 @@ namespace Vostok.Configuration.Binders
             return this;
         }
 
-        public DefaultSettingsBinder WithCustomBinder<T>(ISettingsBinder<T> binder)
+        public DefaultSettingsBinder WithCustomBinder<TValue>(ISettingsBinder<TValue> binder)
         {
             binderProvider.SetupCustomBinder(binder);
+            return this;
+        }
+
+        public DefaultSettingsBinder WithCustomBinder(Type binderType, Predicate<Type> condition)
+        {
+            binderProvider.SetupCustomBinder(binderType, condition);
             return this;
         }
     }

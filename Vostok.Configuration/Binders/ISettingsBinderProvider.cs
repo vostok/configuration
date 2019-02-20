@@ -9,7 +9,9 @@ namespace Vostok.Configuration.Binders
 
         ISettingsBinder<object> CreateFor(Type type);
 
-        void SetupCustomBinder<T>(ISettingsBinder<T> binder);
+        void SetupCustomBinder<TValue>(ISettingsBinder<TValue> binder);
+
+        void SetupCustomBinder(Type binderType, Predicate<Type> condition);
         
         void SetupParserFor<T>(ITypeParser parser);
     }
