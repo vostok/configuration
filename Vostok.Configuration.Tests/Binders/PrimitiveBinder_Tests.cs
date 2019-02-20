@@ -21,45 +21,33 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_value_node()
         {
-            binder.Bind(Value("42")).Should().Be(42);
+            binder.Bind(Value("42")).UnwrapIfNoErrors().Should().Be(42);
         }
 
         [Test]
         public void Should_bind_array_node_with_single_child()
         {
-            binder.Bind(Array(Value("42"))).Should().Be(42);
+            binder.Bind(Array(Value("42"))).UnwrapIfNoErrors().Should().Be(42);
         }
 
         [Test]
         public void Should_bind_object_node_with_single_child()
         {
-            binder.Bind(Object(("value", "42")))
+            binder.Bind(Object(("value", "42"))).UnwrapIfNoErrors()
                 .Should().Be(42);
         }
 
         [Test]
-        public void Should_bind_missing_node_to_default_value()
+        public void Should_treat_node_with_single_null_value_child_as_null()
         {
-            binder.Bind(null).Should().Be(0);
-        }
-
-        [Test]
-        public void Should_bind_null_value_node_to_default_value()
-        {
-            binder.Bind(Value(null)).Should().Be(0);
+            binder.IsNullValue(Object(Value("xx", null))).Should().BeTrue();
+            binder.IsNullValue(Array(Value(null))).Should().BeTrue();
         }
 
         [Test]
         public void Should_throw_if_parser_returns_false()
         {
-            new Action(() => binder.Bind(Value("xx")))
-                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
-        }
-
-        [Test]
-        public void Should_throw_if_parser_throws()
-        {
-            new Action(() => binder.Bind(Value(null)))
+            new Action(() => binder.Bind(Value("xx")).UnwrapIfNoErrors())
                 .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
     }

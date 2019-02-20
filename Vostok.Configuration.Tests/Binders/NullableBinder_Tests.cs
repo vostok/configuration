@@ -3,6 +3,7 @@ using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
+using Vostok.Commons.Testing;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
@@ -19,7 +20,10 @@ namespace Vostok.Configuration.Tests.Binders
         public void TestSetup()
         {
             innerBinder = Substitute.For<ISettingsBinder<int>>();
-            innerBinder.Bind(Arg.Any<ISettingsNode>()).Returns(SettingsBindingResult.Success(42));
+            innerBinder.Bind(Arg.Any<ISettingsNode>()).Returns(
+                callInfo => callInfo.Arg<ISettingsNode>()?.Value == "42" ?
+                    SettingsBindingResult.Success(42) :
+                    SettingsBindingResult.Error<int>(":("));
 
             binder = new NullableBinder<int>(innerBinder);
         }
@@ -27,29 +31,21 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_value_using_inner_binder()
         {
-            binder.Bind(Value("42")).Should().Be(42);
+            binder.Bind(Value("42")).UnwrapIfNoErrors().Should().Be(42);
         }
 
         [Test]
-        public void Should_bind_missing_node_to_default_value()
+        public void Should_treat_null_literal_as_null_value()
         {
-            binder.Bind(null).Should().BeNull();
-            innerBinder.DidNotReceive().Bind(Arg.Any<ISettingsNode>());
+            binder.IsNullValue(Value("null")).Should().BeTrue();
+            binder.IsNullValue(Value("NULL")).Should().BeTrue();
         }
 
         [Test]
-        public void Should_bind_null_value_node_to_default_value()
+        public void Should_report_errors_from_inner_binder()
         {
-            binder.Bind(Value(null)).Should().BeNull();
-            innerBinder.DidNotReceive().Bind(Arg.Any<ISettingsNode>());
-        }
-
-        [Test]
-        public void Should_throw_if_inner_binder_throws()
-        {
-            innerBinder.Bind(Arg.Any<ISettingsNode>()).Throws<Exception>();
-
-            new Action(() => binder.Bind(Value(""))).Should().Throw<Exception>();
+            new Action(() => binder.Bind(Value("")).UnwrapIfNoErrors())
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
     }
 }

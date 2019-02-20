@@ -23,22 +23,10 @@ namespace Vostok.Configuration.Tests.Binders
             var boolBinder = Substitute.For<ISettingsBinder<object>>();
             boolBinder.Bind(Arg.Is<ISettingsNode>(n => n is ValueNode && ((ValueNode)n).Value == "true"))
                 .Returns(SettingsBindingResult.Success<object>(true));
-            boolBinder.ReturnsForAll<object>(_ => throw new SettingsBindingException(""));
+            boolBinder.ReturnsForAll<SettingsBindingResult<object>>(_ => SettingsBindingResult.Error<object>(":("));
 
             provider = Substitute.For<ISettingsBinderProvider>();
             provider.CreateFor(typeof(bool)).Returns(boolBinder);
-        }
-        
-        [Test]
-        public void Should_bind_missing_node_to_default_value()
-        {
-            CreateBinder<MyClass1>().Bind(null).Should().BeNull();
-        }
-
-        [Test]
-        public void Should_bind_null_value_node_to_default_value()
-        {
-            CreateBinder<MyClass1>().Bind(Value(null)).Should().BeNull();
         }
 
         [Test]
@@ -145,43 +133,48 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_throw_if_inner_binder_throws()
+        public void Should_report_errors_from_inner_binder()
         {
             var settings = Object(("Field1", "xxx"));
 
-            new Action(() => CreateBinder<MyClass1>().Bind(settings)).Should().Throw<SettingsBindingException>();
+            new Action(() => CreateBinder<MyClass1>().Bind(settings).UnwrapIfNoErrors())
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
 
         [Test]
-        public void Should_throw_if_required_field_is_not_set()
-        {
-            var settings = Object(("Field1", "true"));
-
-            new Action(() => CreateBinder<MyClass2>().Bind(settings)).Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
-        }
-
-        [Test]
-        public void Should_throw_if_required_property_is_not_set()
+        public void Should_report_error_if_required_field_is_not_set()
         {
             var settings = Object(("Property1", "true"));
 
-            new Action(() => CreateBinder<MyClass2>().Bind(settings)).Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
+            new Action(() => CreateBinder<MyClass2>().Bind(settings).UnwrapIfNoErrors())
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
 
         [Test]
-        public void Should_throw_if_required_by_default_field_is_not_set()
+        public void Should_report_error_if_required_property_is_not_set()
         {
             var settings = Object(("Field1", "true"));
-
-            new Action(() => CreateBinder<MyClass3>().Bind(settings)).Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
+            
+            new Action(() => CreateBinder<MyClass2>().Bind(settings).UnwrapIfNoErrors())
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
 
         [Test]
-        public void Should_throw_if_required_by_default_property_is_not_set()
+        public void Should_report_error_if_required_by_default_field_is_not_set()
         {
             var settings = Object(("Property1", "true"));
 
-            new Action(() => CreateBinder<MyClass3>().Bind(settings)).Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
+            new Action(() => CreateBinder<MyClass3>().Bind(settings).UnwrapIfNoErrors())
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
+        }
+
+        [Test]
+        public void Should_report_error_if_required_by_default_property_is_not_set()
+        {
+            var settings = Object(("Field1", "true"));
+            
+            new Action(() => CreateBinder<MyClass3>().Bind(settings).UnwrapIfNoErrors())
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
 
         [Test]
@@ -245,22 +238,6 @@ namespace Vostok.Configuration.Tests.Binders
 
             myStruct.Property1.Should().BeTrue();
             myStruct.Property2.Should().BeTrue();
-        }
-
-        [Test]
-        public void Should_set_members_to_default_values_if_node_is_null_and_all_members_are_optional()
-        {
-            var myClass = CreateBinder<MyClass6>().Bind(null).UnwrapIfNoErrors();
-
-            myClass.Property1.Should().BeTrue();
-            myClass.Field1.Should().BeTrue();
-            myClass.Field2.Should().NotBeNull().And.BeOfType<MyClass6.Inner>();
-        }
-        
-        [Test]
-        public void Should_throw_if_node_is_null_and_some_of_members_are_required()
-        {
-            new Action(() => CreateBinder<MyClass7>().Bind(null)).Should().Throw<SettingsBindingException>();
         }
 
         private class MyClass1

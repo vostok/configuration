@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
+using Vostok.Commons.Testing;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
@@ -21,7 +22,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
             var boolBinder = Substitute.For<ISettingsBinder<bool>>();
             boolBinder.Bind(Arg.Any<ISettingsNode>())
                 .Returns(callInfo => (callInfo.Arg<ISettingsNode>() as ValueNode)?.Value == "true" ? 
-                    SettingsBindingResult.Success(true) : throw new SettingsBindingException(""));
+                    SettingsBindingResult.Success(true) : SettingsBindingResult.Error<bool>(":("));
 
             binder = new ListBinder<bool>(boolBinder);
         }
@@ -43,23 +44,12 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         }
 
         [Test]
-        public void Should_bind_missing_node_to_default_value()
-        {
-            binder.Bind(null).Should().BeNull();
-        }
-
-        [Test]
-        public void Should_bind_null_value_node_to_default_value()
-        {
-            binder.Bind(Value(null)).Should().BeNull();
-        }
-
-        [Test]
-        public void Should_throw_if_inner_binder_throws()
+        public void Should_report_errors_from_inner_binder()
         {
             var settings = Array(null, "xxx");
 
-            new Action(() => binder.Bind(settings)).Should().Throw<SettingsBindingException>();
+            new Action(() => binder.Bind(settings).UnwrapIfNoErrors())
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
 
         [Test]

@@ -3,6 +3,7 @@ using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
+using Vostok.Commons.Testing;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
@@ -21,7 +22,10 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         {
             stringBinder = Substitute.For<ISettingsBinder<string>>();
             stringBinder.Bind(Arg.Any<ISettingsNode>())
-                .Returns(callInfo => SettingsBindingResult.Success(callInfo.Arg<ISettingsNode>()?.Value));
+                .Returns(callInfo => 
+                    callInfo.Arg<ISettingsNode>()?.Value != "BAD" ? 
+                        SettingsBindingResult.Success(callInfo.Arg<ISettingsNode>()?.Value) :
+                        SettingsBindingResult.Error<string>(":("));
 
             binder = new SetBinder<string>(stringBinder);
         }
@@ -31,7 +35,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         {
             var settings = Array(null, "a", "b", "c", "a");
 
-            binder.Bind(settings).Should().BeEquivalentTo("a", "b", "c");
+            binder.Bind(settings).UnwrapIfNoErrors().Should().BeEquivalentTo("a", "b", "c");
         }
 
         [Test]
@@ -43,24 +47,12 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         }
 
         [Test]
-        public void Should_bind_missing_node_to_default_value()
+        public void Should_report_errors_from_inner_binder()
         {
-            binder.Bind(null).Should().BeNull();
-        }
+            var settings = Array(null, "xxx", "BAD");
 
-        [Test]
-        public void Should_bind_null_value_node_to_default_value()
-        {
-            binder.Bind(Value(null)).Should().BeNull();
-        }
-
-        [Test]
-        public void Should_throw_if_inner_binder_throws()
-        {
-            stringBinder.Bind(Arg.Any<ISettingsNode>()).Throws<Exception>();
-            var settings = Array(null, "xxx");
-
-            new Action(() => binder.Bind(settings)).Should().Throw<Exception>();
+            new Action(() => binder.Bind(settings).UnwrapIfNoErrors())
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
     }
 }

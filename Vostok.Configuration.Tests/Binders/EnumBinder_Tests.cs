@@ -19,55 +19,38 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_support_single_enum_values()
         {
-            binder.Bind(Value("FirstOption")).Should().Be(MyEnum.FirstOption);
+            binder.Bind(Value("FirstOption")).UnwrapIfNoErrors().Should().Be(MyEnum.FirstOption);
         }
 
         [Test]
         public void Should_support_combined_enum_values()
         {
-            binder.Bind(Value("FirstOption,SecondOption")).Should().Be(MyEnum.BothOptions);
+            binder.Bind(Value("FirstOption,SecondOption")).UnwrapIfNoErrors().Should().Be(MyEnum.BothOptions);
         }
 
         [Test]
         public void Should_support_numeric_values()
         {
-            binder.Bind(Value("1")).Should().Be(MyEnum.FirstOption);
+            binder.Bind(Value("1")).UnwrapIfNoErrors().Should().Be(MyEnum.FirstOption);
         }
 
         [Test]
         public void Should_support_undefined_values()
         {
-            binder.Bind(Value("4")).Should().Be((MyEnum)4);
-        }
-
-        [Test]
-        public void Should_support_null_settings_node()
-        {
-            binder.Bind(null).Should().Be(default(MyEnum));
-        }
-        
-        [Test]
-        public void Should_bind_missing_node_to_default_value()
-        {
-            binder.Bind(null).Should().Be(default(MyEnum));
-        }
-
-        [Test]
-        public void Should_bind_null_value_node_to_default_value()
-        {
-            binder.Bind(Value(null)).Should().Be(default(MyEnum));
+            binder.Bind(Value("4")).UnwrapIfNoErrors().Should().Be((MyEnum)4);
         }
 
         [Test]
         public void Should_be_case_insensitive()
         {
-            binder.Bind(Value("firstoption")).Should().Be(MyEnum.FirstOption);
+            binder.Bind(Value("firstoption")).UnwrapIfNoErrors().Should().Be(MyEnum.FirstOption);
         }
 
         [Test]
-        public void Should_throw_for_invalid_values()
+        public void Should_report_error_for_invalid_values()
         {
-            new Action(() => binder.Bind(Value("xxx"))).Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
+            new Action(() => binder.Bind(Value("xxx")).UnwrapIfNoErrors())
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
 
         [Flags]

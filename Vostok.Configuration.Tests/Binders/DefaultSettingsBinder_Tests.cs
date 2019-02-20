@@ -4,6 +4,7 @@ using NUnit.Framework;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
+using Vostok.Configuration.Binders.Results;
 using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Tests.Binders
@@ -17,7 +18,10 @@ namespace Vostok.Configuration.Tests.Binders
         [SetUp]
         public void TestSetup()
         {
+            var dummyBinder = Substitute.For<ISettingsBinder<MyClass>>();
+            dummyBinder.Bind(Arg.Any<ISettingsNode>()).Returns(SettingsBindingResult.Success<MyClass>(default));
             provider = Substitute.For<ISettingsBinderProvider>();
+            provider.CreateFor<MyClass>().Returns(dummyBinder);
 
             binder = new DefaultSettingsBinder(provider);
         }
