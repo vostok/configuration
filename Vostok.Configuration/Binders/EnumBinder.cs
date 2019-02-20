@@ -1,6 +1,7 @@
 ﻿using System;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Binders
 {
@@ -9,9 +10,6 @@ namespace Vostok.Configuration.Binders
     {
         public T Bind(ISettingsNode settings)
         {
-            if (settings == null)
-                return default;
-            
             if (Enum.TryParse<T>(settings.Value, true, out var result))
                 return result;
 

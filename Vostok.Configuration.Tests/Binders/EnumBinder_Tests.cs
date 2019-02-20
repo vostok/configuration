@@ -35,7 +35,7 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_support_undefined_values() // TODO(krait): Should it?
+        public void Should_support_undefined_values()
         {
             binder.Bind(Value("4")).Should().Be((MyEnum)4);
         }
@@ -44,6 +44,18 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_support_null_settings_node()
         {
             binder.Bind(null).Should().Be(default(MyEnum));
+        }
+        
+        [Test]
+        public void Should_bind_missing_node_to_default_value()
+        {
+            binder.Bind(null).Should().Be(default(MyEnum));
+        }
+
+        [Test]
+        public void Should_bind_null_value_node_to_default_value()
+        {
+            binder.Bind(Value(null)).Should().Be(default(MyEnum));
         }
 
         [Test]

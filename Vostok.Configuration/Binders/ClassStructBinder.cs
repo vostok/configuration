@@ -18,9 +18,6 @@ namespace Vostok.Configuration.Binders
 
         public T Bind(ISettingsNode settings)
         {
-            if (settings.IsNullValue())
-                return default;
-            
             if (settings != null && !(settings is ObjectNode))
                 throw new SettingsBindingException($"A settings node of type '{settings.GetType()}' cannot be bound by {nameof(ClassStructBinder<T>)}.");
             

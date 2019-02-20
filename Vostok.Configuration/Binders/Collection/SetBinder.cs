@@ -2,6 +2,7 @@
 using System.Linq;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Binders.Collection
 {
@@ -14,7 +15,7 @@ namespace Vostok.Configuration.Binders.Collection
         public SetBinder(ISettingsBinder<T> elementBinder) =>
             this.elementBinder = elementBinder;
 
-        public HashSet<T> Bind(ISettingsNode settings) => settings != null ? new HashSet<T>(settings.Children.Select(n => elementBinder.Bind(n))) : null;
+        public HashSet<T> Bind(ISettingsNode settings) =>  new HashSet<T>(settings.Children.Select(n => elementBinder.Bind(n)));
 
         ISet<T> ISettingsBinder<ISet<T>>.Bind(ISettingsNode settings) => Bind(settings);
     }

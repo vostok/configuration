@@ -47,11 +47,17 @@ namespace Vostok.Configuration.Tests.Binders.Collection
 
             binder.Bind(settings).Should().BeEmpty();
         }
-
+        
         [Test]
-        public void Should_bind_null_node_to_null()
+        public void Should_bind_missing_node_to_default_value()
         {
             binder.Bind(null).Should().BeNull();
+        }
+
+        [Test]
+        public void Should_bind_null_value_node_to_default_value()
+        {
+            binder.Bind(Value(null)).Should().BeNull();
         }
 
         [Test]

@@ -38,9 +38,15 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_bind_null_node_to_default_value()
+        public void Should_bind_missing_node_to_default_value()
         {
             binder.Bind(null).Should().Be(0);
+        }
+
+        [Test]
+        public void Should_bind_null_value_node_to_default_value()
+        {
+            binder.Bind(Value(null)).Should().Be(0);
         }
 
         [Test]

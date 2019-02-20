@@ -30,16 +30,16 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_return_null_if_value_is_null()
+        public void Should_bind_missing_node_to_default_value()
         {
-            binder.Bind(Value(null)).Should().BeNull();
+            binder.Bind(null).Should().BeNull();
             innerBinder.DidNotReceive().Bind(Arg.Any<ISettingsNode>());
         }
 
         [Test]
-        public void Should_return_null_if_node_is_null()
+        public void Should_bind_null_value_node_to_default_value()
         {
-            binder.Bind(null).Should().BeNull();
+            binder.Bind(Value(null)).Should().BeNull();
             innerBinder.DidNotReceive().Bind(Arg.Any<ISettingsNode>());
         }
 

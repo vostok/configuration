@@ -16,7 +16,7 @@ namespace Vostok.Configuration.Binders.Collection
         public ReadOnlyListBinder(ISettingsBinder<T> elementBinder) =>
             this.elementBinder = elementBinder;
 
-        public T[] Bind(ISettingsNode settings) => settings?.Children.Select(n => elementBinder.Bind(n)).ToArray();
+        public T[] Bind(ISettingsNode settings) => settings.Children.Select(n => elementBinder.Bind(n)).ToArray();
 
         IReadOnlyCollection<T> ISettingsBinder<IReadOnlyCollection<T>>.Bind(ISettingsNode settings) => Bind(settings);
 

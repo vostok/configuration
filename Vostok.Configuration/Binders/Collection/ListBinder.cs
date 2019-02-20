@@ -15,7 +15,7 @@ namespace Vostok.Configuration.Binders.Collection
         public ListBinder(ISettingsBinder<T> elementBinder) =>
             this.elementBinder = elementBinder;
 
-        public List<T> Bind(ISettingsNode settings) => settings?.Children.Select(n => elementBinder.Bind(n)).ToList();
+        public List<T> Bind(ISettingsNode settings) => settings.Children.Select(n => elementBinder.Bind(n)).ToList();
 
         IList<T> ISettingsBinder<IList<T>>.Bind(ISettingsNode settings) => Bind(settings);
 

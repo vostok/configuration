@@ -1,6 +1,7 @@
 ﻿using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Helpers;
 using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Binders
@@ -29,7 +30,7 @@ namespace Vostok.Configuration.Binders
         public TSettings Bind<TSettings>(ISettingsNode settings)
         {
             var binder = binderProvider.CreateFor<TSettings>();
-            return binder.Bind(settings);
+            return settings.IsNullOrMissing(binder) ? default : binder.Bind(settings);
         }
 
         /// <summary>

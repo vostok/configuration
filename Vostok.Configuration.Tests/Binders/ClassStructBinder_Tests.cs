@@ -26,6 +26,18 @@ namespace Vostok.Configuration.Tests.Binders
             provider = Substitute.For<ISettingsBinderProvider>();
             provider.CreateFor(typeof(bool)).Returns(boolBinder);
         }
+        
+        [Test]
+        public void Should_bind_missing_node_to_default_value()
+        {
+            CreateBinder<MyClass1>().Bind(null).Should().BeNull();
+        }
+
+        [Test]
+        public void Should_bind_null_value_node_to_default_value()
+        {
+            CreateBinder<MyClass1>().Bind(Value(null)).Should().BeNull();
+        }
 
         [Test]
         public void Should_set_public_fields()
@@ -109,7 +121,7 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_ignore_static_fieds()
+        public void Should_ignore_static_fields()
         {
             var settings = Object(("StaticField", "true"));
 
@@ -171,7 +183,7 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_keep_default_value_of_field()
+        public void Should_keep_default_value_of_missing_field()
         {
             var settings = new ObjectNode(null as string);
 
@@ -182,7 +194,7 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_keep_default_value_of_property()
+        public void Should_keep_default_value_of_missing_property()
         {
             var settings = new ObjectNode(null as string);
 
@@ -190,6 +202,28 @@ namespace Vostok.Configuration.Tests.Binders
 
             myClass.Should().NotBeNull();
             myClass.Property1.Should().BeTrue();
+        }
+
+        [Test]
+        public void Should_set_null_value_field_to_default()
+        {
+            var settings = Object(("Field1", null));
+
+            var myClass = CreateBinder<MyClass4>().Bind(settings);
+
+            myClass.Should().NotBeNull();
+            myClass.Field1.Should().BeFalse();
+        }
+
+        [Test]
+        public void Should_set_null_value_property_to_default()
+        {
+            var settings = Object(("Property1", null));
+
+            var myClass = CreateBinder<MyClass4>().Bind(settings);
+
+            myClass.Should().NotBeNull();
+            myClass.Property1.Should().BeFalse();
         }
 
         [Test]
