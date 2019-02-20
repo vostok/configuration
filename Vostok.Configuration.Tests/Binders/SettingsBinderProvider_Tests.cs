@@ -4,6 +4,7 @@ using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Binders.Collection;
@@ -236,6 +237,12 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
+        public void Should_select_binder_specified_in_BindBy_attribute()
+        {
+            provider.CreateFor<ClassWithCustomBinder>().Should().BeOfType<CustomBinder>();
+        }
+
+        [Test]
         public void Should_throw_when_SetupParserFor_called_for_type_after_CreateFor()
         {
             provider.CreateFor<MyClass>();
@@ -301,6 +308,17 @@ namespace Vostok.Configuration.Tests.Binders
         {
             public SettingsBindingResult<MyStruct2<T>>Bind(ISettingsNode rawSettings) =>
                 throw new NotImplementedException();
+        }
+
+        [BindBy(typeof(CustomBinder))]
+        public class ClassWithCustomBinder
+        {
+            
+        }
+        
+        public class CustomBinder : ISettingsBinder<ClassWithCustomBinder>
+        {
+            public SettingsBindingResult<ClassWithCustomBinder> Bind(ISettingsNode rawSettings) => throw new NotImplementedException();
         }
     }
 }

@@ -8,6 +8,7 @@ using Vostok.Commons.Testing;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
+using Vostok.Configuration.Binders.Results;
 
 namespace Vostok.Configuration.Tests.Integration
 {
@@ -88,7 +89,9 @@ namespace Vostok.Configuration.Tests.Integration
                 Object(
                     Object("innerObject", Array("anotherArray", "167")),
                     Array("innerArray", "Yellow", "Red", "Black"),
-                    Value("innerRegex", @"\d+")
+                    Value("innerRegex", @"\d+"),
+                    Value("nullableInt", "null"),
+                    Value("customBinderObject", "xx")
                 ),
                 Value(null)
             );
@@ -102,6 +105,8 @@ namespace Vostok.Configuration.Tests.Integration
             result.First().InnerRegex.ToString().Should().Be(@"\d+");
             result.First().InnerArray.Should().Equal(ConsoleColor.Yellow, ConsoleColor.Red, ConsoleColor.Black);
             result.First().InnerObject.AnotherArray.Should().Equal(167);
+            result.First().NullableInt.Should().BeNull();
+            result.First().CustomBinderObject.Value.Should().Be("XX");
         }
 
         [Test]
@@ -165,9 +170,26 @@ namespace Vostok.Configuration.Tests.Integration
 
             public InnerConfig InnerObject;
 
+            public int? NullableInt;
+            
+            public CustomBinderConfig CustomBinderObject;
+            
+
             public class InnerConfig
             {
                 public int[] AnotherArray { get; set; }
+            }
+        
+            [BindBy(typeof(CustomConfigBinder))]
+            public class CustomBinderConfig
+            {
+                public string Value;
+            }
+            
+            private class CustomConfigBinder : ISettingsBinder<CustomBinderConfig>
+            {
+                public SettingsBindingResult<CustomBinderConfig> Bind(ISettingsNode rawSettings) => 
+                    SettingsBindingResult.Success(new CustomBinderConfig { Value = rawSettings.Value?.ToUpper() });
             }
         }
 
