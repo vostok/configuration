@@ -5,7 +5,8 @@ using System.Linq;
 
 namespace Vostok.Configuration.Cache
 {
-    internal class WindowedCache<TKey, TValue> where TValue : class
+    internal class WindowedCache<TKey, TValue>
+        where TValue : class
     {
         private readonly int capacity;
         private readonly Action<TKey, TValue> onAutoRemove;

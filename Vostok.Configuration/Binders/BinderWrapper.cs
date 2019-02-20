@@ -10,7 +10,7 @@ namespace Vostok.Configuration.Binders
 
         public BinderWrapper(ISettingsBinder<T> binder) => this.binder = binder;
 
-        public SettingsBindingResult<object> Bind(ISettingsNode rawSettings) => 
+        public SettingsBindingResult<object> Bind(ISettingsNode rawSettings) =>
             binder.Bind(rawSettings).Convert<T, object>();
 
         public bool IsNullValue(ISettingsNode node) => node.IsNullValue(binder);

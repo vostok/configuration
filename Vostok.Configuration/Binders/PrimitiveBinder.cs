@@ -25,7 +25,7 @@ namespace Vostok.Configuration.Binders
             if (!parser.TryParse(valueNode.Value, out var result))
                 return SettingsBindingResult.ParsingError<T>(valueNode.Value);
 
-            return SettingsBindingResult.Success<T>((T)result);
+            return SettingsBindingResult.Success((T)result);
         }
 
         public bool IsNullValue(ISettingsNode node)

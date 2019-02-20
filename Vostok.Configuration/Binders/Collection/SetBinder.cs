@@ -27,7 +27,7 @@ namespace Vostok.Configuration.Binders.Collection
             return SettingsBindingResult.Create(value, errors);
         }
 
-        SettingsBindingResult<ISet<T>> ISettingsBinder<ISet<T>>.Bind(ISettingsNode settings) => 
+        SettingsBindingResult<ISet<T>> ISettingsBinder<ISet<T>>.Bind(ISettingsNode settings) =>
             Bind(settings).Convert<HashSet<T>, ISet<T>>();
     }
 }

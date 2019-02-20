@@ -10,16 +10,16 @@ namespace Vostok.Configuration.ObservableBinding
 {
     internal class ObservableBinder : IObservableBinder
     {
-        public ICachingBinder Binder { private get; set; }
-
         public ObservableBinder()
         {
         }
-        
+
         public ObservableBinder(ICachingBinder binder)
         {
             Binder = binder;
         }
+
+        public ICachingBinder Binder { private get; set; }
 
         public IObservable<(TSettings settings, Exception error)> SelectBound<TSettings>(IObservable<(ISettingsNode settings, Exception error)> sourceObservable, Func<SourceCacheItem<TSettings>> cacheItemProvider)
         {

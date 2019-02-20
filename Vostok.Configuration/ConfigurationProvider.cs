@@ -28,16 +28,6 @@ namespace Vostok.Configuration
         private readonly ICurrentValueProviderFactory currentValueProviderFactory;
         private readonly TimeSpan sourceRetryCooldown;
         private ISettingsBinder settingsBinder;
-        
-        /// <summary>
-        /// <para>Use this to specify a custom implementation of <see cref="ISettingsBinder"/>.</para>
-        /// <para><see cref="DefaultSettingsBinder"/> will be used by default.</para>
-        /// </summary>
-        public ISettingsBinder Binder
-        {
-            get => settingsBinder;
-            set => observableBinder.Binder = new CachingBinder(new ValidatingBinder(settingsBinder = value));
-        }
 
         /// <summary>
         /// Create a new <see cref="ConfigurationProvider"/> instance.
@@ -60,7 +50,7 @@ namespace Vostok.Configuration
         }
 
         internal ConfigurationProvider(
-            Action<Exception> errorCallback, 
+            Action<Exception> errorCallback,
             IObservableBinder observableBinder,
             ISettingsBinder settingsBinder,
             ISourceDataCache sourceDataCache,
@@ -73,6 +63,16 @@ namespace Vostok.Configuration
             this.sourceDataCache = sourceDataCache;
             this.currentValueProviderFactory = currentValueProviderFactory;
             this.sourceRetryCooldown = sourceRetryCooldown;
+        }
+
+        /// <summary>
+        /// <para>Use this to specify a custom implementation of <see cref="ISettingsBinder"/>.</para>
+        /// <para><see cref="DefaultSettingsBinder"/> will be used by default.</para>
+        /// </summary>
+        public ISettingsBinder Binder
+        {
+            get => settingsBinder;
+            set => observableBinder.Binder = new CachingBinder(new ValidatingBinder(settingsBinder = value));
         }
 
         /// <inheritdoc />

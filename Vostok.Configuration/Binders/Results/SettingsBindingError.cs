@@ -2,17 +2,17 @@ namespace Vostok.Configuration.Binders.Results
 {
     public abstract class SettingsBindingError
     {
-        public static SettingsBindingError Message(string message) => 
+        public static SettingsBindingError Message(string message) =>
             new ErrorMessage(message);
-        
-        public static SettingsBindingError Property(string name, SettingsBindingError inner) => 
+
+        public static SettingsBindingError Property(string name, SettingsBindingError inner) =>
             new ErrorProperty(name, inner);
-        
-        public static SettingsBindingError Index(string key, SettingsBindingError inner) => 
+
+        public static SettingsBindingError Index(string key, SettingsBindingError inner) =>
             new ErrorIndex(key, inner);
-        
+
         protected abstract string Prefix { get; }
-        
+
         private class ErrorMessage : SettingsBindingError
         {
             private readonly string message;
@@ -23,7 +23,7 @@ namespace Vostok.Configuration.Binders.Results
 
             protected override string Prefix => ": ";
         }
-        
+
         private class ErrorProperty : SettingsBindingError
         {
             private readonly string name;
@@ -36,10 +36,10 @@ namespace Vostok.Configuration.Binders.Results
             }
 
             public override string ToString() => $"{name}{inner.Prefix}{inner}";
-            
+
             protected override string Prefix => ".";
         }
-        
+
         private class ErrorIndex : SettingsBindingError
         {
             private readonly string key;
@@ -52,7 +52,7 @@ namespace Vostok.Configuration.Binders.Results
             }
 
             public override string ToString() => $"[{key}]{inner.Prefix}{inner}";
-            
+
             protected override string Prefix => "";
         }
     }

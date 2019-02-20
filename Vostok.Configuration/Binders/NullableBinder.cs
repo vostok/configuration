@@ -12,7 +12,7 @@ namespace Vostok.Configuration.Binders
         public NullableBinder(ISettingsBinder<T> valueBinder) =>
             this.valueBinder = valueBinder;
 
-        public SettingsBindingResult<T?> Bind(ISettingsNode settings) => 
+        public SettingsBindingResult<T?> Bind(ISettingsNode settings) =>
             valueBinder.BindOrDefault(settings).ConvertToNullable();
 
         public bool IsNullValue(ISettingsNode node)

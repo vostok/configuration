@@ -6,7 +6,6 @@ namespace Vostok.Configuration.Cache
 {
     internal class BindingCacheValue<TSettings>
     {
-
         public BindingCacheValue(ISettingsBinder usedBinder, ISettingsNode lastBoundNode, TSettings settings)
         {
             UsedBinder = usedBinder;

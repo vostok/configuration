@@ -20,7 +20,7 @@ namespace Vostok.Configuration.Binders
         {
             if (!(settings is ObjectNode))
                 return SettingsBindingResult.NodeTypeMismatch<T>(settings);
-            
+
             var type = typeof(T);
             var instance = Activator.CreateInstance(type);
 

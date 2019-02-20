@@ -27,7 +27,7 @@ namespace Vostok.Configuration.Cache
             }
             catch (Exception e)
             {
-                cacheItem.BindingCacheValue = new BindingCacheValue<TSettings>(binder,  rawSettings, e);
+                cacheItem.BindingCacheValue = new BindingCacheValue<TSettings>(binder, rawSettings, e);
             }
 
             return GetSettingsOrRethrow(cacheItem.BindingCacheValue);

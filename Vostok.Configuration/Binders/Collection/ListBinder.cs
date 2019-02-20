@@ -31,7 +31,7 @@ namespace Vostok.Configuration.Binders.Collection
         SettingsBindingResult<IList<T>> ISettingsBinder<IList<T>>.Bind(ISettingsNode settings) =>
             Bind(settings).Convert<List<T>, IList<T>>();
 
-        SettingsBindingResult<ICollection<T>> ISettingsBinder<ICollection<T>>.Bind(ISettingsNode settings) => 
+        SettingsBindingResult<ICollection<T>> ISettingsBinder<ICollection<T>>.Bind(ISettingsNode settings) =>
             Bind(settings).Convert<List<T>, ICollection<T>>();
     }
 }

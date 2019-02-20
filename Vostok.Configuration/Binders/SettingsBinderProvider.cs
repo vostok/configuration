@@ -15,7 +15,7 @@ namespace Vostok.Configuration.Binders
     internal class SettingsBinderProvider : ISettingsBinderProvider
     {
         private readonly Lazy<Container> containerWrapper;
-        private readonly ConcurrentQueue<Action<Container>> customBinderRegistrations = 
+        private readonly ConcurrentQueue<Action<Container>> customBinderRegistrations =
             new ConcurrentQueue<Action<Container>>();
 
         public SettingsBinderProvider()
@@ -27,7 +27,7 @@ namespace Vostok.Configuration.Binders
 
                     foreach (var registration in customBinderRegistrations)
                         registration(container);
-                    
+
                     container.RegisterConditional(
                         typeof(ISettingsBinder<>),
                         typeof(NullableBinder<>),
@@ -49,14 +49,15 @@ namespace Vostok.Configuration.Binders
                     container.Verify();
 
                     return container;
-                }, LazyThreadSafetyMode.ExecutionAndPublication);
+                },
+                LazyThreadSafetyMode.ExecutionAndPublication);
         }
 
         public ISettingsBinder<T> CreateFor<T>()
         {
             if (TryObtainBindByBinder<T>(typeof(T), false, out var binder))
                 return binder;
-            
+
             return containerWrapper.Value.GetInstance<ISettingsBinder<T>>();
         }
 
@@ -64,40 +65,35 @@ namespace Vostok.Configuration.Binders
         {
             if (TryObtainBindByBinder<object>(type, true, out var binder))
                 return binder;
-            
+
             return (ISettingsBinder<object>)containerWrapper.Value.GetInstance(typeof(BinderWrapper<>).MakeGenericType(type));
         }
-        
+
         public void SetupCustomBinder<TValue>(ISettingsBinder<TValue> binder)
         {
             EnsureCanRegisterBinders();
-            
+
             customBinderRegistrations.Enqueue(container => container.RegisterInstance(typeof(ISettingsBinder<TValue>), binder));
         }
-        
+
         public void SetupCustomBinder(Type binderType, Predicate<Type> condition)
         {
             EnsureCanRegisterBinders();
 
-            customBinderRegistrations.Enqueue(container => 
-                container.RegisterConditional(typeof(ISettingsBinder<>), binderType, c => condition(c.ServiceType.GetGenericArguments()[0])));
-        }
-
-        private void EnsureCanRegisterBinders()
-        {
-            if (containerWrapper.IsValueCreated)
-                throw new InvalidOperationException($"Cannot register custom binders after the container was used.");
+            customBinderRegistrations.Enqueue(
+                container =>
+                    container.RegisterConditional(typeof(ISettingsBinder<>), binderType, c => condition(c.ServiceType.GetGenericArguments()[0])));
         }
 
         public void SetupParserFor<T>(ITypeParser parser)
         {
             SetupCustomBinder(new PrimitiveBinder<T>(parser));
         }
-        
+
         private static bool TryObtainBindByBinder<T>(Type type, bool wrap, out ISettingsBinder<T> settingsBinder)
         {
             settingsBinder = null;
-            
+
             if (!(type.GetCustomAttributes(typeof(BindByAttribute), false).FirstOrDefault() is BindByAttribute bindByAttribute))
                 return false;
 
@@ -110,6 +106,12 @@ namespace Vostok.Configuration.Binders
 
             settingsBinder = (ISettingsBinder<T>)binder;
             return true;
+        }
+
+        private void EnsureCanRegisterBinders()
+        {
+            if (containerWrapper.IsValueCreated)
+                throw new InvalidOperationException("Cannot register custom binders after the container was used.");
         }
     }
 }

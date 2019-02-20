@@ -12,7 +12,7 @@ namespace Vostok.Configuration.Binders
         void SetupCustomBinder<TValue>(ISettingsBinder<TValue> binder);
 
         void SetupCustomBinder(Type binderType, Predicate<Type> condition);
-        
+
         void SetupParserFor<T>(ITypeParser parser);
     }
 }

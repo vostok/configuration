@@ -21,7 +21,7 @@ namespace Vostok.Configuration.Binders.Collection
         {
             if (!(settings is ArrayNode) && !(settings is ObjectNode))
                 return SettingsBindingResult.NodeTypeMismatch<T[]>(settings);
-            
+
             var results = settings.Children.Select((n, i) => (index: i, value: elementBinder.BindOrDefault(n))).ToList();
 
             var value = results.Select(r => r.value.Value).ToArray();
@@ -29,13 +29,13 @@ namespace Vostok.Configuration.Binders.Collection
             return SettingsBindingResult.Create(value, errors);
         }
 
-        SettingsBindingResult<IReadOnlyCollection<T>> ISettingsBinder<IReadOnlyCollection<T>>.Bind(ISettingsNode settings) => 
+        SettingsBindingResult<IReadOnlyCollection<T>> ISettingsBinder<IReadOnlyCollection<T>>.Bind(ISettingsNode settings) =>
             Bind(settings).Convert<T[], IReadOnlyCollection<T>>();
 
-        SettingsBindingResult<IReadOnlyList<T>> ISettingsBinder<IReadOnlyList<T>>.Bind(ISettingsNode settings) => 
+        SettingsBindingResult<IReadOnlyList<T>> ISettingsBinder<IReadOnlyList<T>>.Bind(ISettingsNode settings) =>
             Bind(settings).Convert<T[], IReadOnlyList<T>>();
 
-        SettingsBindingResult<IEnumerable<T>> ISettingsBinder<IEnumerable<T>>.Bind(ISettingsNode settings) => 
+        SettingsBindingResult<IEnumerable<T>> ISettingsBinder<IEnumerable<T>>.Bind(ISettingsNode settings) =>
             Bind(settings).Convert<T[], IEnumerable<T>>();
     }
 }
