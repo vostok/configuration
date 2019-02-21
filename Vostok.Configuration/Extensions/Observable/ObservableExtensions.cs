@@ -34,5 +34,23 @@ namespace Vostok.Configuration.Extensions.Observable
         {
             return System.Reactive.Linq.Observable.DistinctUntilChanged(source);
         }
+
+        /// <summary>
+        /// Returns an observable sequence that contains only distinct contiguous elements.
+        /// </summary>
+        public static IObservable<TSource> DistinctUntilChanged<TSource, TKey>(this IObservable<TSource> source, Func<TSource, TKey> keySelector)
+            => System.Reactive.Linq.Observable.DistinctUntilChanged(source, keySelector);
+
+        /// <summary>
+        /// Invokes an action for each element in the observable sequence.
+        /// </summary>
+        public static IObservable<TSource> Do<TSource>(this IObservable<TSource> source, Action<TSource> action)
+            => System.Reactive.Linq.Observable.Do(source, action);
+
+        /// <summary>
+        /// Invokes an action for each element or error in the observable sequence.
+        /// </summary>
+        public static IObservable<TSource> Do<TSource>(this IObservable<TSource> source, Action<TSource> action, Action<Exception> onError)
+            => System.Reactive.Linq.Observable.Do(source, action, onError);
     }
 }
