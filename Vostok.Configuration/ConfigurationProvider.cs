@@ -27,7 +27,7 @@ namespace Vostok.Configuration
         private readonly ISourceDataCache sourceDataCache;
         private readonly ICurrentValueProviderFactory currentValueProviderFactory;
         private readonly TimeSpan sourceRetryCooldown;
-        private ISettingsBinder settingsBinder;
+        private volatile ISettingsBinder settingsBinder;
 
         /// <summary>
         /// Create a new <see cref="ConfigurationProvider"/> instance.
@@ -59,10 +59,11 @@ namespace Vostok.Configuration
         {
             this.errorCallback = errorCallback ?? (_ => {});
             this.observableBinder = observableBinder;
-            Binder = settingsBinder;
             this.sourceDataCache = sourceDataCache;
             this.currentValueProviderFactory = currentValueProviderFactory;
             this.sourceRetryCooldown = sourceRetryCooldown;
+
+            Binder = settingsBinder;
         }
 
         /// <summary>
@@ -125,7 +126,9 @@ namespace Vostok.Configuration
             EnsureSourceExists<TSettings>(out var source);
             DisableSetupSourceFor<TSettings>();
 
-            return observableBinder.SelectBound(SubscribeToSource(source), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source)).ObserveOn(scheduler);
+            return observableBinder
+                .SelectBound(SubscribeToSource(source), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source))
+                .ObserveOn(scheduler);
         }
 
         /// <inheritdoc />
@@ -134,7 +137,9 @@ namespace Vostok.Configuration
             if (IsConfiguredFor<TSettings>(source))
                 return ObserveWithErrors<TSettings>();
 
-            return observableBinder.SelectBound(SubscribeToSource(source), () => sourceDataCache.GetLimitedCacheItem<TSettings>(source)).ObserveOn(scheduler);
+            return observableBinder
+                .SelectBound(SubscribeToSource(source), () => sourceDataCache.GetLimitedCacheItem<TSettings>(source))
+                .ObserveOn(scheduler);
         }
 
         /// <inheritdoc />
@@ -155,14 +160,10 @@ namespace Vostok.Configuration
         }
 
         private void DisableSetupSourceFor<TSettings>()
-        {
-            setupDisabled[typeof(TSettings)] = true;
-        }
+            => setupDisabled[typeof(TSettings)] = true;
 
         private void EnsureSourceExists<TSettings>(out IConfigurationSource source)
-        {
-            EnsureSourceExists(typeof(TSettings), out source);
-        }
+            => EnsureSourceExists(typeof(TSettings), out source);
 
         private void EnsureSourceExists(Type type, out IConfigurationSource source)
         {
@@ -171,13 +172,9 @@ namespace Vostok.Configuration
         }
 
         private bool IsConfiguredFor<TSettings>(IConfigurationSource source)
-        {
-            return typeSources.TryGetValue(typeof(TSettings), out var preconfiguredSource) && ReferenceEquals(source, preconfiguredSource);
-        }
+            => typeSources.TryGetValue(typeof(TSettings), out var preconfiguredSource) && ReferenceEquals(source, preconfiguredSource);
 
         private IObservable<(ISettingsNode, Exception)> SubscribeToSource(IConfigurationSource source)
-        {
-            return HealingObservable.PushErrors(source.Observe, sourceRetryCooldown);
-        }
+            => HealingObservable.PushErrors(source.Observe, sourceRetryCooldown);
     }
 }
