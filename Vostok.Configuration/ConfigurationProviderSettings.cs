@@ -15,6 +15,7 @@ namespace Vostok.Configuration
         /// In case OnError() notification is received from a <see cref="IConfigurationSource"/>, the <see cref="ConfigurationProvider"/> will wait for <see cref="SourceRetryCooldown"/> and then restart observing that source.
         /// </summary>
         public TimeSpan SourceRetryCooldown = TimeSpan.FromSeconds(10);
+
         /// <summary>
         /// <para>Use this to specify a custom implementation of <see cref="ISettingsBinder"/>.</para>
         /// <para><see cref="DefaultSettingsBinder"/> will be used by default.</para>
