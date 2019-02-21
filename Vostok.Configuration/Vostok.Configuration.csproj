@@ -16,7 +16,7 @@
 
   <PropertyGroup>
     <Title>Vostok.Configuration</Title>
-    <Description>Configuration library for microservice toolkit http://vostok.tools/</Description>
+    <Description>Implementation of ConfigurationProvider — the entry point to Vostok configuration subsystem.</Description>
   </PropertyGroup>
 
   <PropertyGroup>
