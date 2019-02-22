@@ -34,7 +34,11 @@ namespace Vostok.Configuration.CurrentValueProvider
             return newSource;
         }
 
-        private void OnError(Exception e) => resultSource.TrySetException(e);
+        private void OnError(Exception e)
+        {
+            if (resultSource.TrySetException(e))
+                Dispose();
+        }
 
         private void OnNextValue(T value)
         {
