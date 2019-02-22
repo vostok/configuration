@@ -95,11 +95,17 @@ namespace Vostok.Configuration
             if (IsConfiguredFor<TSettings>(source))
                 return Get<TSettings>();
 
+            // There can be a race between CurrentValueProvider.Get() and CurrentValueProvider.Dispose() which is called when
+            // CacheItem is evicted from cache.
+            // We avoid it based on the following guarantees:
+            // 1. Every CacheItem in cache has CurrentValueProvider which is successfully received at least one value.
+            // 2. RawCurrentValueProvider does not replace existing value with an error.
+            // 3. It's safe to use RawCurrentValueProvider which is received some value even after Dispose(), without leaking
+            // the subscription.
             var cacheItem = sourceDataCache.GetLimitedCacheItem<TSettings>(source);
             if (cacheItem.CurrentValueProvider != null)
                 return cacheItem.CurrentValueProvider.Get();
 
-            // TODO(krait): comment
             var currentValueProvider = currentValueProviderFactory.Create(() => Observe<TSettings>(source));
             var result = currentValueProvider.Get();
             if (!cacheItem.TrySetCurrentValueProvider(currentValueProvider))

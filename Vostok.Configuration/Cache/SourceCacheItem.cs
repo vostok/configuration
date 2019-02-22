@@ -1,7 +1,6 @@
 using System;
-using System.Threading;
-using Vostok.Commons.Threading;
 using Vostok.Configuration.CurrentValueProvider;
+using Vostok.Configuration.ObservableBinding;
 
 namespace Vostok.Configuration.Cache
 {
@@ -9,8 +8,16 @@ namespace Vostok.Configuration.Cache
     {
         private readonly object currentValueProviderSync = new object();
 
+        /// <summary>
+        /// <para>Last value which was pushed to observers by <see cref="ObservableBinder"/>.</para>
+        /// <para>Used as fallback when there is an error from source or binding error.</para>
+        /// </summary>
         public (TSettings settings, Exception error)? LastValue { get; set; }
 
+        /// <summary>
+        /// <para>A pair of settings node and the result of its binding.</para>
+        /// <para>Used for avoiding repeated binds of same node for every observer.</para>
+        /// </summary>
         public BindingCacheValue<TSettings> BindingCacheValue { get; set; }
 
         public ICurrentValueProvider<TSettings> CurrentValueProvider { get; private set; }

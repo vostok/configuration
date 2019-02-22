@@ -17,7 +17,8 @@ namespace Vostok.Configuration.CurrentValueProvider
 
         public T Get()
         {
-            // TODO(krait): comment
+            // We check for the existing value here to avoid subscription leak when Get() is called after Dispose().
+            // The following sequence of calls is safe: Get(); Dispose(); Get();
             if (innerSubscription == null && !resultSource.Task.IsCompleted)
                 Subscribe();
 
