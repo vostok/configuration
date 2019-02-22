@@ -23,7 +23,7 @@ namespace Vostok.Configuration.Tests.Helpers
             subject.OnNext((new object(), null));
             subject.OnCompleted();
 
-            HealingObservable.PushErrors(() => subject, 100.Milliseconds())
+            HealingObservable.PushAndResubscribeOnErrors(() => subject, 100.Milliseconds())
                 .Count().Wait().Should().Be(2);
         }
         
@@ -40,7 +40,7 @@ namespace Vostok.Configuration.Tests.Helpers
             };
             var index = 0;
 
-            HealingObservable.PushErrors(() => observables[index++], 100.Milliseconds())
+            HealingObservable.PushAndResubscribeOnErrors(() => observables[index++], 100.Milliseconds())
                 .ToEnumerable().Should().Equal(
                     (1, null as Exception),
                     (2, null as Exception),
@@ -64,7 +64,7 @@ namespace Vostok.Configuration.Tests.Helpers
             var index = 0;
 
             Action assertion = () => HealingObservable
-                .PushErrors(() => observables[index++], 5.Seconds())
+                .PushAndResubscribeOnErrors(() => observables[index++], 5.Seconds())
                 .WaitFirstValue(100.Milliseconds())
                 .Should()
                 .Be((0, error));
