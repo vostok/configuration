@@ -118,8 +118,7 @@ namespace Vostok.Configuration
             DisableSetupSourceFor<TSettings>();
 
             return observableBinder
-                .SelectBound(PushAndResubscribeOnErrors(source), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source))
-                .ObserveOn(scheduler);
+                .SelectBound(PushAndResubscribeOnErrors(source).ObserveOn(scheduler), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source));
         }
 
         /// <inheritdoc />
@@ -129,8 +128,7 @@ namespace Vostok.Configuration
                 return ObserveWithErrors<TSettings>();
 
             return observableBinder
-                .SelectBound(PushAndResubscribeOnErrors(source), () => sourceDataCache.GetLimitedCacheItem<TSettings>(source))
-                .ObserveOn(scheduler);
+                .SelectBound(PushAndResubscribeOnErrors(source).ObserveOn(scheduler), () => sourceDataCache.GetLimitedCacheItem<TSettings>(source));
         }
 
         /// <inheritdoc />
