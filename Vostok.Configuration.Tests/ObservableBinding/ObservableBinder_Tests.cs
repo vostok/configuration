@@ -48,19 +48,6 @@ namespace Vostok.Configuration.Tests.ObservableBinding
         }
 
         [Test]
-        public void Should_change_binder()
-        {
-            subject.OnNext((node, null));
-            var newBinder = Substitute.For<ICachingBinder>();
-            observableBinder.Binder = newBinder;
-            
-            observableBinder.SelectBound(subject, () => cacheItem).WaitFirstValue(100.Milliseconds());
-
-            binder.DidNotReceiveWithAnyArgs().Bind(node, cacheItem);
-            newBinder.Received(1).Bind(node, cacheItem);
-        }
-
-        [Test]
         public void Should_push_successfully_bound_settings()
         {
             Bind(node).Returns(settings);

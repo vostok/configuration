@@ -6,8 +6,6 @@ namespace Vostok.Configuration.ObservableBinding
 {
     internal interface IObservableBinder
     {
-        ICachingBinder Binder { set; }
-
         IObservable<(TSettings settings, Exception error)> SelectBound<TSettings>(IObservable<(ISettingsNode settings, Exception error)> sourceObservable, Func<SourceCacheItem<TSettings>> cacheItemProvider);
     }
 }

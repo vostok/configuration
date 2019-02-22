@@ -27,7 +27,6 @@ namespace Vostok.Configuration
         private readonly ISourceDataCache sourceDataCache;
         private readonly ICurrentValueProviderFactory currentValueProviderFactory;
         private readonly TimeSpan sourceRetryCooldown;
-        private volatile ISettingsBinder settingsBinder;
 
         /// <summary>
         /// Create a new <see cref="ConfigurationProvider"/> instance.
@@ -41,8 +40,7 @@ namespace Vostok.Configuration
         public ConfigurationProvider(ConfigurationProviderSettings settings)
             : this(
                 settings.ErrorCallback,
-                new ObservableBinder(),
-                settings.Binder ?? new DefaultSettingsBinder(),
+                new ObservableBinder(new CachingBinder(new ValidatingBinder(settings.Binder ?? new DefaultSettingsBinder()))),
                 new SourceDataCache(settings.MaxSourceCacheSize),
                 new RetryingCurrentValueProviderFactory(),
                 settings.SourceRetryCooldown)
@@ -52,7 +50,6 @@ namespace Vostok.Configuration
         internal ConfigurationProvider(
             Action<Exception> errorCallback,
             IObservableBinder observableBinder,
-            ISettingsBinder settingsBinder,
             ISourceDataCache sourceDataCache,
             ICurrentValueProviderFactory currentValueProviderFactory,
             TimeSpan sourceRetryCooldown = default)
@@ -62,18 +59,6 @@ namespace Vostok.Configuration
             this.sourceDataCache = sourceDataCache;
             this.currentValueProviderFactory = currentValueProviderFactory;
             this.sourceRetryCooldown = sourceRetryCooldown;
-
-            Binder = settingsBinder;
-        }
-
-        /// <summary>
-        /// <para>Use this to specify a custom implementation of <see cref="ISettingsBinder"/>.</para>
-        /// <para><see cref="DefaultSettingsBinder"/> will be used by default.</para>
-        /// </summary>
-        public ISettingsBinder Binder
-        {
-            get => settingsBinder;
-            set => observableBinder.Binder = new CachingBinder(new ValidatingBinder(settingsBinder = value));
         }
 
         /// <inheritdoc />

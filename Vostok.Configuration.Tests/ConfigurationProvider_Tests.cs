@@ -25,7 +25,6 @@ namespace Vostok.Configuration.Tests
         private object settings;
         private Action<Exception> errorCallback;
         private IObservableBinder observableBinder;
-        private ISettingsBinder settingsBinder;
         private ISourceDataCache sourceDataCache;
         private IObservable<(ISettingsNode, Exception)> sourceObservable;
         private ICurrentValueProvider<object> currentValueProvider;
@@ -36,10 +35,9 @@ namespace Vostok.Configuration.Tests
         {
             errorCallback = Substitute.For<Action<Exception>>();
             observableBinder = Substitute.For<IObservableBinder>();
-            settingsBinder = Substitute.For<ISettingsBinder>();
             sourceDataCache = Substitute.ForPartsOf<SourceDataCache>(10);
             currentValueProviderFactory = Substitute.For<ICurrentValueProviderFactory>();
-            provider = new ConfigurationProvider(errorCallback, observableBinder, settingsBinder, sourceDataCache, currentValueProviderFactory);
+            provider = new ConfigurationProvider(errorCallback, observableBinder, sourceDataCache, currentValueProviderFactory);
             
             settings = new object();
             
@@ -194,7 +192,7 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Observe_should_ignore_error_when_no_callback([Values] bool hasError, [Values] bool customSource)
         {
-            provider = new ConfigurationProvider(null, observableBinder, settingsBinder, sourceDataCache, currentValueProviderFactory);
+            provider = new ConfigurationProvider(null, observableBinder, sourceDataCache, currentValueProviderFactory);
             if (!customSource)
                 provider.SetupSourceFor<object>(source);
             
