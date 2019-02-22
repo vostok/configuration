@@ -25,7 +25,11 @@ namespace Vostok.Configuration.CurrentValueProvider
             return resultSource.Task.GetAwaiter().GetResult();
         }
 
-        public void Dispose() => Interlocked.Exchange(ref innerSubscription, null)?.Dispose();
+        public void Dispose()
+        {
+            Interlocked.Exchange(ref innerSubscription, null)?.Dispose();
+            resultSource.TrySetException(new ObjectDisposedException(nameof(RawCurrentValueProvider<T>)));
+        }
 
         private static TaskCompletionSource<T> NewCompletedSource(T value)
         {

@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
@@ -80,6 +81,20 @@ namespace Vostok.Configuration.Tests.CurrentValueProvider
             Task.WaitAny(new Task[]{getTask}, 1.Seconds());
             getTask.IsCompleted.Should().BeTrue();
             getTask.Exception.InnerException.Should().BeSameAs(error);
+        }
+
+        [Test]
+        public void Should_throw_when_disposed_before_the_first_value_received()
+        {
+            var getTask = Task.Run(() => provider.Get());
+            getTask.Wait(50.Milliseconds());
+            getTask.IsCompleted.Should().BeFalse();
+            
+            provider.Dispose();
+
+            Task.WaitAny(new Task[]{getTask}, 1.Seconds());
+            getTask.IsCompleted.Should().BeTrue();
+            getTask.Exception.InnerException.Should().BeOfType<ObjectDisposedException>();
         }
     }
 }
