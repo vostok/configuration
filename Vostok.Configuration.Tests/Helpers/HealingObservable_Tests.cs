@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -15,7 +16,7 @@ namespace Vostok.Configuration.Tests.Helpers
     internal class HealingObservable_Tests
     {
         [Test]
-        public void PushErrors_should_complete_when_source_observable_completes_without_error()
+        public void Should_complete_when_source_observable_completes_without_error()
         {
             var subject = new ReplaySubject<(object, Exception)>();
 
@@ -28,7 +29,7 @@ namespace Vostok.Configuration.Tests.Helpers
         }
         
         [Test]
-        public void PushErrors_should_push_error_and_restart_source_observable_on_error()
+        public void Should_push_error_and_restart_source_observable_on_error()
         {
             var errors = Enumerable.Range(0, 3).Select(_ => new Exception()).ToArray();
             var observables = new[]
@@ -41,7 +42,7 @@ namespace Vostok.Configuration.Tests.Helpers
             var index = 0;
 
             HealingObservable.PushAndResubscribeOnErrors(() => observables[index++], 100.Milliseconds())
-                .ToEnumerable().Should().Equal(
+                .ShouldStartWithIn(2.Seconds(),
                     (1, null as Exception),
                     (2, null as Exception),
                     (0, errors[0]),
@@ -51,9 +52,22 @@ namespace Vostok.Configuration.Tests.Helpers
                     (0, errors[2]),
                     (5, null as Exception));
         }
+
+        [Test]
+        public void Should_push_errors_when_source_observable_dont_heal()
+        {
+            var errors = Enumerable.Range(0, 3).Select(_ => new Exception()).ToArray();
+            var index = 0;
+
+            HealingObservable.PushAndResubscribeOnErrors(() => Observable.Throw<(int, Exception)>(errors[index++]), 100.Milliseconds())
+                .ShouldStartWithIn(2.Seconds(),
+                    (0, errors[0]),
+                    (0, errors[1]),
+                    (0, errors[2]));
+        }
         
         [Test]
-        public void PushErrors_should_push_error_immediately()
+        public void Should_push_error_immediately()
         {
             var error = new Exception();
             var observables = new[]
@@ -70,6 +84,42 @@ namespace Vostok.Configuration.Tests.Helpers
                 .Be((0, error));
             
             assertion.ShouldPassIn(1.Seconds());
+        }
+
+        [Test]
+        public void Should_wait_a_cooldown_before_restart()
+        {
+            var error = new Exception();
+            var observables = new[]
+            {
+                CreateObservable<(int, Exception)>(error),
+                CreateObservable(true, CreateValue(1))
+            };
+            var index = 0;
+
+            var stopWatch = new Stopwatch();
+            
+            HealingObservable
+                .PushAndResubscribeOnErrors(() =>
+                {
+                    switch (index)
+                    {
+                        case 0:
+                            stopWatch.Start();
+                            break;
+                        case 1:
+                            stopWatch.Stop();
+                            break;
+                    }
+
+                    return observables[index++];
+                }, 300.Milliseconds())
+                .Skip(1)
+                .WaitFirstValue(1.Seconds())
+                .Should()
+                .Be(CreateValue(1));
+            
+            stopWatch.Elapsed.Should().BeGreaterOrEqualTo(300.Milliseconds());
         }
 
         private static (T, Exception) CreateValue<T>(T value)
