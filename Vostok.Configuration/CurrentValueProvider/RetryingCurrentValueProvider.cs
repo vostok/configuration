@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using JetBrains.Annotations;
 
 namespace Vostok.Configuration.CurrentValueProvider
 {
@@ -21,26 +22,26 @@ namespace Vostok.Configuration.CurrentValueProvider
 
         public T Get()
         {
+            var currentProvider = currentValueProvider;
             try
             {
-                return currentValueProvider.Get();
+                return currentProvider.Get();
             }
             catch
             {
-                ReplaceProvider();
+                ReplaceProvider(currentProvider);
                 return currentValueProvider.Get();
             }
         }
 
         public void Dispose() => currentValueProvider?.Dispose();
 
-        private void ReplaceProvider()
+        private void ReplaceProvider([NotNull] ICurrentValueProvider<T> currentProvider)
         {
-            var currentProvider = currentValueProvider;
             var newProvider = currentValueProviderFactory();
             if (Interlocked.CompareExchange(ref currentValueProvider, newProvider, currentProvider) != currentProvider)
                 newProvider.Dispose();
-            currentProvider?.Dispose();
+            currentProvider.Dispose();
         }
     }
 }
