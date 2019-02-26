@@ -8,7 +8,7 @@ namespace Vostok.Configuration.Helpers
         public static bool IsMissing(this ISettingsNode node) => node == null;
 
         public static bool IsNullValue(this ISettingsNode node) =>
-            node != null && node is ValueNode valueNode && valueNode.Value == null;
+            node is ValueNode valueNode && valueNode.Value == null;
 
         public static bool IsNullValue<T>(this ISettingsNode node, ISafeSettingsBinder<T> binder) =>
             binder is INullValuePolicy policy ? policy.IsNullValue(node) : node.IsNullValue();
