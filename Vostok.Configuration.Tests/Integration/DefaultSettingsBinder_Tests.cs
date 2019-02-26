@@ -261,7 +261,7 @@ namespace Vostok.Configuration.Tests.Integration
             public SettingsBindingResult<MyList<T>> Bind(ISettingsNode rawSettings)
             {
                 return SettingsBindingResult.Success(
-                    new MyList<T>(rawSettings.Children.Select(c => innerBinder.Bind(c).UnwrapIfNoErrors())));
+                    new MyList<T>(rawSettings.Children.Select(c => innerBinder.Bind(c).Value)));
             }
         }
     }

@@ -19,37 +19,37 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_support_single_enum_values()
         {
-            binder.Bind(Value("FirstOption")).UnwrapIfNoErrors().Should().Be(MyEnum.FirstOption);
+            binder.Bind(Value("FirstOption")).Value.Should().Be(MyEnum.FirstOption);
         }
 
         [Test]
         public void Should_support_combined_enum_values()
         {
-            binder.Bind(Value("FirstOption,SecondOption")).UnwrapIfNoErrors().Should().Be(MyEnum.BothOptions);
+            binder.Bind(Value("FirstOption,SecondOption")).Value.Should().Be(MyEnum.BothOptions);
         }
 
         [Test]
         public void Should_support_numeric_values()
         {
-            binder.Bind(Value("1")).UnwrapIfNoErrors().Should().Be(MyEnum.FirstOption);
+            binder.Bind(Value("1")).Value.Should().Be(MyEnum.FirstOption);
         }
 
         [Test]
         public void Should_support_undefined_values()
         {
-            binder.Bind(Value("4")).UnwrapIfNoErrors().Should().Be((MyEnum)4);
+            binder.Bind(Value("4")).Value.Should().Be((MyEnum)4);
         }
 
         [Test]
         public void Should_be_case_insensitive()
         {
-            binder.Bind(Value("firstoption")).UnwrapIfNoErrors().Should().Be(MyEnum.FirstOption);
+            binder.Bind(Value("firstoption")).Value.Should().Be(MyEnum.FirstOption);
         }
 
         [Test]
         public void Should_report_error_for_invalid_values()
         {
-            new Action(() => binder.Bind(Value("xxx")).UnwrapIfNoErrors())
+            new Func<MyEnum>(() => binder.Bind(Value("xxx")).Value)
                 .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
 

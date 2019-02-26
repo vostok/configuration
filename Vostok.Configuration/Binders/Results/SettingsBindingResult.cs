@@ -18,11 +18,11 @@ namespace Vostok.Configuration.Binders.Results
 
         public static SettingsBindingResult<TSettings> Error<TSettings>(string error) =>
             new SettingsBindingResult<TSettings>(default, new[] {SettingsBindingError.Message(error)});
+        
+        public static SettingsBindingResult<TSettings> Errors<TSettings>(IList<SettingsBindingError> errors) =>
+            new SettingsBindingResult<TSettings>(default, errors);
 
         public static SettingsBindingResult<TSettings> Success<TSettings>(TSettings result) =>
             new SettingsBindingResult<TSettings>(result, Array.Empty<SettingsBindingError>());
-
-        public static SettingsBindingResult<TSettings> Create<TSettings>(TSettings result, IList<SettingsBindingError> errors) =>
-            new SettingsBindingResult<TSettings>(result, errors);
     }
 }
