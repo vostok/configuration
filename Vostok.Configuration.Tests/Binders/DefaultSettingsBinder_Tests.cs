@@ -60,8 +60,7 @@ namespace Vostok.Configuration.Tests.Binders
             var customBinder = Substitute.For<ISettingsBinder<int>>();
             binder.WithCustomBinder(customBinder);
 
-            // TODO(iloktionov): fix
-            // provider.Received().SetupCustomBinder(customBinder);
+            provider.Received().SetupCustomBinder(Arg.Is<SafeBinderWrapper<int>>(b => ReferenceEquals(b.Binder, customBinder)));
         }
 
         [Test]
