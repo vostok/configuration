@@ -3,7 +3,7 @@ using System.Reactive.Linq;
 
 namespace Vostok.Configuration.Helpers
 {
-    public static class HealingObservable
+    internal static class HealingObservable
     {
         public static IObservable<(T, Exception)> PushAndResubscribeOnErrors<T>(Func<IObservable<(T, Exception)>> observe, TimeSpan cooldown)
         {
