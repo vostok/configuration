@@ -5,7 +5,6 @@ using NSubstitute;
 using NSubstitute.Extensions;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
-using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
@@ -20,7 +19,7 @@ namespace Vostok.Configuration.Tests.Binders
         [SetUp]
         public void TestSetup()
         {
-            var boolBinder = Substitute.For<ISettingsBinder<object>>();
+            var boolBinder = Substitute.For<ISafeSettingsBinder<object>>();
             boolBinder.Bind(Arg.Is<ISettingsNode>(n => n is ValueNode && ((ValueNode)n).Value == "true"))
                 .Returns(SettingsBindingResult.Success<object>(true));
             boolBinder.ReturnsForAll<SettingsBindingResult<object>>(_ => SettingsBindingResult.Error<object>(":("));

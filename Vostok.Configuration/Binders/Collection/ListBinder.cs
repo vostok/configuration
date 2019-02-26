@@ -7,13 +7,13 @@ using Vostok.Configuration.Helpers;
 namespace Vostok.Configuration.Binders.Collection
 {
     internal class ListBinder<T> :
-        ISettingsBinder<List<T>>,
-        ISettingsBinder<IList<T>>,
-        ISettingsBinder<ICollection<T>>
+        ISafeSettingsBinder<List<T>>,
+        ISafeSettingsBinder<IList<T>>,
+        ISafeSettingsBinder<ICollection<T>>
     {
-        private readonly ISettingsBinder<T> elementBinder;
+        private readonly ISafeSettingsBinder<T> elementBinder;
 
-        public ListBinder(ISettingsBinder<T> elementBinder) =>
+        public ListBinder(ISafeSettingsBinder<T> elementBinder) =>
             this.elementBinder = elementBinder;
 
         public SettingsBindingResult<List<T>> Bind(ISettingsNode settings)
@@ -28,10 +28,10 @@ namespace Vostok.Configuration.Binders.Collection
             return SettingsBindingResult.Create(value, errors);
         }
 
-        SettingsBindingResult<IList<T>> ISettingsBinder<IList<T>>.Bind(ISettingsNode settings) =>
+        SettingsBindingResult<IList<T>> ISafeSettingsBinder<IList<T>>.Bind(ISettingsNode settings) =>
             Bind(settings).Convert<List<T>, IList<T>>();
 
-        SettingsBindingResult<ICollection<T>> ISettingsBinder<ICollection<T>>.Bind(ISettingsNode settings) =>
+        SettingsBindingResult<ICollection<T>> ISafeSettingsBinder<ICollection<T>>.Bind(ISettingsNode settings) =>
             Bind(settings).Convert<List<T>, ICollection<T>>();
     }
 }

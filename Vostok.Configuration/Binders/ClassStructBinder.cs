@@ -9,7 +9,7 @@ using OptionalAttribute = Vostok.Configuration.Abstractions.Attributes.OptionalA
 
 namespace Vostok.Configuration.Binders
 {
-    internal class ClassStructBinder<T> : ISettingsBinder<T>
+    internal class ClassStructBinder<T> : ISafeSettingsBinder<T>
     {
         private readonly ISettingsBinderProvider binderProvider;
 

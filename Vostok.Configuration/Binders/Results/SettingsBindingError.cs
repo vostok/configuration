@@ -1,6 +1,6 @@
 namespace Vostok.Configuration.Binders.Results
 {
-    public abstract class SettingsBindingError
+    internal abstract class SettingsBindingError
     {
         public static SettingsBindingError Message(string message) =>
             new ErrorMessage(message);

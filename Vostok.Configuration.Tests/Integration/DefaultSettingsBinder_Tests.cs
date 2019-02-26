@@ -215,7 +215,7 @@ namespace Vostok.Configuration.Tests.Integration
                 public string Value;
             }
             
-            private class CustomConfigBinder : ISettingsBinder<CustomBinderConfig>
+            private class CustomConfigBinder : ISafeSettingsBinder<CustomBinderConfig>
             {
                 public SettingsBindingResult<CustomBinderConfig> Bind(ISettingsNode rawSettings) => 
                     SettingsBindingResult.Success(new CustomBinderConfig { Value = rawSettings.Value?.ToUpper() });
@@ -252,11 +252,11 @@ namespace Vostok.Configuration.Tests.Integration
             IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)data).GetEnumerator();
         }
         
-        private class MyListBinder<T> : ISettingsBinder<MyList<T>>
+        private class MyListBinder<T> : ISafeSettingsBinder<MyList<T>>
         {
-            private readonly ISettingsBinder<T> innerBinder;
+            private readonly ISafeSettingsBinder<T> innerBinder;
 
-            public MyListBinder(ISettingsBinder<T> innerBinder) => this.innerBinder = innerBinder;
+            public MyListBinder(ISafeSettingsBinder<T> innerBinder) => this.innerBinder = innerBinder;
 
             public SettingsBindingResult<MyList<T>> Bind(ISettingsNode rawSettings)
             {

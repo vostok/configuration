@@ -3,8 +3,8 @@ using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
-using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Binders;
 using Vostok.Configuration.Cache;
 
 namespace Vostok.Configuration.Tests.Cache

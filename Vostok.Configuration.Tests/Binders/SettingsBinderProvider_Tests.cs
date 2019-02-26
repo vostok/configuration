@@ -14,7 +14,7 @@ using Vostok.Configuration.Parsers;
 namespace Vostok.Configuration.Tests.Binders
 {
     [TestFixture]
-    public class SettingsBinderProvider_Tests
+    internal class SettingsBinderProvider_Tests
     {
         private ISettingsBinderProvider provider;
 
@@ -231,7 +231,7 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_throw_when_SetupCustomBinder_called_for_type_after_CreateFor()
         {
             provider.CreateFor<MyClass>();
-            new Action(() => provider.SetupCustomBinder(Substitute.For<ISettingsBinder<MyClass>>()))
+            new Action(() => provider.SetupCustomBinder(Substitute.For<ISafeSettingsBinder<MyClass>>()))
                 .Should()
                 .Throw<InvalidOperationException>();
         }
@@ -275,25 +275,25 @@ namespace Vostok.Configuration.Tests.Binders
             
         }
         
-        public class MyClassBinder: ISettingsBinder<MyClass>
+        public class MyClassBinder: ISafeSettingsBinder<MyClass>
         {
             public SettingsBindingResult<MyClass> Bind(ISettingsNode rawSettings) =>
                 throw new NotImplementedException();
         }
         
-        public class MyClass2Binder<T>: ISettingsBinder<MyClass2<T>>
+        public class MyClass2Binder<T>: ISafeSettingsBinder<MyClass2<T>>
         {
             public SettingsBindingResult<MyClass2<T>> Bind(ISettingsNode rawSettings) =>
                 throw new NotImplementedException();
         }
         
-        public class MyStructBinder: ISettingsBinder<MyStruct>
+        public class MyStructBinder: ISafeSettingsBinder<MyStruct>
         {
             public SettingsBindingResult<MyStruct> Bind(ISettingsNode rawSettings) =>
                 throw new NotImplementedException();
         }
         
-        public class MyStruct2Binder<T>: ISettingsBinder<MyStruct2<T>>
+        public class MyStruct2Binder<T>: ISafeSettingsBinder<MyStruct2<T>>
         {
             public SettingsBindingResult<MyStruct2<T>>Bind(ISettingsNode rawSettings) =>
                 throw new NotImplementedException();
@@ -305,7 +305,7 @@ namespace Vostok.Configuration.Tests.Binders
             
         }
         
-        public class CustomBinder : ISettingsBinder<ClassWithCustomBinder>
+        public class CustomBinder : ISafeSettingsBinder<ClassWithCustomBinder>
         {
             public SettingsBindingResult<ClassWithCustomBinder> Bind(ISettingsNode rawSettings) => throw new NotImplementedException();
         }

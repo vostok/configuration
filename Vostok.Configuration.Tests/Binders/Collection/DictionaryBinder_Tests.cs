@@ -4,7 +4,6 @@ using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
-using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Binders.Collection;
@@ -15,16 +14,16 @@ namespace Vostok.Configuration.Tests.Binders.Collection
     public class DictionaryBinder_Tests : TreeConstructionSet
     {
         private DictionaryBinder<string, bool> binder;
-        private ISettingsBinder<string> stringBinder;
+        private ISafeSettingsBinder<string> stringBinder;
 
         [SetUp]
         public void TestSetup()
         {
-            stringBinder = Substitute.For<ISettingsBinder<string>>();
+            stringBinder = Substitute.For<ISafeSettingsBinder<string>>();
             stringBinder.Bind(Arg.Any<ISettingsNode>())
                 .Returns(callInfo => SettingsBindingResult.Success(callInfo.Arg<ISettingsNode>().Value));
 
-            var boolBinder = Substitute.For<ISettingsBinder<bool>>();
+            var boolBinder = Substitute.For<ISafeSettingsBinder<bool>>();
             boolBinder.Bind(Arg.Any<ISettingsNode>())
                 .Returns(callInfo => (callInfo.Arg<ISettingsNode>() as ValueNode)?.Value == "true" ? 
                     SettingsBindingResult.Success(true) : SettingsBindingResult.Error<bool>(":("));

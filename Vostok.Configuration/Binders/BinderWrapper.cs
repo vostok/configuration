@@ -4,11 +4,11 @@ using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Binders
 {
-    internal class BinderWrapper<T> : ISettingsBinder<object>, INullValuePolicy
+    internal class BinderWrapper<T> : ISafeSettingsBinder<object>, INullValuePolicy
     {
-        private readonly ISettingsBinder<T> binder;
+        private readonly ISafeSettingsBinder<T> binder;
 
-        public BinderWrapper(ISettingsBinder<T> binder) => this.binder = binder;
+        public BinderWrapper(ISafeSettingsBinder<T> binder) => this.binder = binder;
 
         public SettingsBindingResult<object> Bind(ISettingsNode rawSettings) =>
             binder.Bind(rawSettings).Convert<T, object>();

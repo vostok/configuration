@@ -7,12 +7,12 @@ using Vostok.Configuration.Helpers;
 namespace Vostok.Configuration.Binders.Collection
 {
     internal class SetBinder<T> :
-        ISettingsBinder<HashSet<T>>,
-        ISettingsBinder<ISet<T>>
+        ISafeSettingsBinder<HashSet<T>>,
+        ISafeSettingsBinder<ISet<T>>
     {
-        private readonly ISettingsBinder<T> elementBinder;
+        private readonly ISafeSettingsBinder<T> elementBinder;
 
-        public SetBinder(ISettingsBinder<T> elementBinder) =>
+        public SetBinder(ISafeSettingsBinder<T> elementBinder) =>
             this.elementBinder = elementBinder;
 
         public SettingsBindingResult<HashSet<T>> Bind(ISettingsNode settings)
@@ -27,7 +27,7 @@ namespace Vostok.Configuration.Binders.Collection
             return SettingsBindingResult.Create(value, errors);
         }
 
-        SettingsBindingResult<ISet<T>> ISettingsBinder<ISet<T>>.Bind(ISettingsNode settings) =>
+        SettingsBindingResult<ISet<T>> ISafeSettingsBinder<ISet<T>>.Bind(ISettingsNode settings) =>
             Bind(settings).Convert<HashSet<T>, ISet<T>>();
     }
 }

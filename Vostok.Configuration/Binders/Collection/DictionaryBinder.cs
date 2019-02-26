@@ -7,14 +7,14 @@ using Vostok.Configuration.Helpers;
 namespace Vostok.Configuration.Binders.Collection
 {
     internal class DictionaryBinder<T1, T2> :
-        ISettingsBinder<Dictionary<T1, T2>>,
-        ISettingsBinder<IDictionary<T1, T2>>,
-        ISettingsBinder<IReadOnlyDictionary<T1, T2>>
+        ISafeSettingsBinder<Dictionary<T1, T2>>,
+        ISafeSettingsBinder<IDictionary<T1, T2>>,
+        ISafeSettingsBinder<IReadOnlyDictionary<T1, T2>>
     {
-        private readonly ISettingsBinder<T1> keyBinder;
-        private readonly ISettingsBinder<T2> valueBinder;
+        private readonly ISafeSettingsBinder<T1> keyBinder;
+        private readonly ISafeSettingsBinder<T2> valueBinder;
 
-        public DictionaryBinder(ISettingsBinder<T1> keyBinder, ISettingsBinder<T2> valueBinder)
+        public DictionaryBinder(ISafeSettingsBinder<T1> keyBinder, ISafeSettingsBinder<T2> valueBinder)
         {
             this.keyBinder = keyBinder;
             this.valueBinder = valueBinder;
@@ -37,10 +37,10 @@ namespace Vostok.Configuration.Binders.Collection
             return SettingsBindingResult.Create(value, errors);
         }
 
-        SettingsBindingResult<IDictionary<T1, T2>> ISettingsBinder<IDictionary<T1, T2>>.Bind(ISettingsNode settings) =>
+        SettingsBindingResult<IDictionary<T1, T2>> ISafeSettingsBinder<IDictionary<T1, T2>>.Bind(ISettingsNode settings) =>
             Bind(settings).Convert<Dictionary<T1, T2>, IDictionary<T1, T2>>();
 
-        SettingsBindingResult<IReadOnlyDictionary<T1, T2>> ISettingsBinder<IReadOnlyDictionary<T1, T2>>.Bind(ISettingsNode settings) =>
+        SettingsBindingResult<IReadOnlyDictionary<T1, T2>> ISafeSettingsBinder<IReadOnlyDictionary<T1, T2>>.Bind(ISettingsNode settings) =>
             Bind(settings).Convert<Dictionary<T1, T2>, IReadOnlyDictionary<T1, T2>>();
     }
 }

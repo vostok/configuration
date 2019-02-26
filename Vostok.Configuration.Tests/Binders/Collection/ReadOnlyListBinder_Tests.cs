@@ -3,7 +3,6 @@ using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
-using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Binders.Collection;
@@ -18,7 +17,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         [SetUp]
         public void TestSetup()
         {
-            var boolBinder = Substitute.For<ISettingsBinder<bool>>();
+            var boolBinder = Substitute.For<ISafeSettingsBinder<bool>>();
             boolBinder.Bind(Arg.Any<ISettingsNode>())
                 .Returns(callInfo => (callInfo.Arg<ISettingsNode>() as ValueNode)?.Value == "true" ? 
                     SettingsBindingResult.Success(true) : SettingsBindingResult.Error<bool>(":("));

@@ -4,12 +4,12 @@ using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Binders
 {
-    internal class NullableBinder<T> : ISettingsBinder<T?>, INullValuePolicy
+    internal class NullableBinder<T> : ISafeSettingsBinder<T?>, INullValuePolicy
         where T : struct
     {
-        private readonly ISettingsBinder<T> valueBinder;
+        private readonly ISafeSettingsBinder<T> valueBinder;
 
-        public NullableBinder(ISettingsBinder<T> valueBinder) =>
+        public NullableBinder(ISafeSettingsBinder<T> valueBinder) =>
             this.valueBinder = valueBinder;
 
         public SettingsBindingResult<T?> Bind(ISettingsNode settings) =>

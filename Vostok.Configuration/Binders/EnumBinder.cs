@@ -4,7 +4,7 @@ using Vostok.Configuration.Binders.Results;
 
 namespace Vostok.Configuration.Binders
 {
-    internal class EnumBinder<T> : ISettingsBinder<T>
+    internal class EnumBinder<T> : ISafeSettingsBinder<T>
         where T : struct
     {
         public SettingsBindingResult<T> Bind(ISettingsNode settings)

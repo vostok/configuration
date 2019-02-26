@@ -6,7 +6,7 @@ using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Binders
 {
-    internal class PrimitiveBinder<T> : ISettingsBinder<T>, INullValuePolicy
+    internal class PrimitiveBinder<T> : ISafeSettingsBinder<T>, INullValuePolicy
     {
         private readonly ITypeParser parser;
 

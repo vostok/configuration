@@ -6,7 +6,7 @@ using Vostok.Configuration.Abstractions.SettingsTree;
 
 namespace Vostok.Configuration.Binders.Results
 {
-    public static class SettingsBindingResult
+    internal static class SettingsBindingResult
     {
         public static SettingsBindingResult<TSettings> NodeTypeMismatch<TSettings>(ISettingsNode node) =>
             Error<TSettings>($"A {node.GetType().Name} cannot be bound to '{typeof(TSettings)}'");
@@ -42,7 +42,7 @@ namespace Vostok.Configuration.Binders.Results
     }
 
     [PublicAPI]
-    public class SettingsBindingResult<TSettings>
+    internal class SettingsBindingResult<TSettings>
     {
         internal SettingsBindingResult(TSettings value, IEnumerable<SettingsBindingError> errors)
         {

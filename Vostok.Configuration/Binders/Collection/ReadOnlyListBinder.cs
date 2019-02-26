@@ -7,14 +7,14 @@ using Vostok.Configuration.Helpers;
 namespace Vostok.Configuration.Binders.Collection
 {
     internal class ReadOnlyListBinder<T> :
-        ISettingsBinder<T[]>,
-        ISettingsBinder<IReadOnlyCollection<T>>,
-        ISettingsBinder<IReadOnlyList<T>>,
-        ISettingsBinder<IEnumerable<T>>
+        ISafeSettingsBinder<T[]>,
+        ISafeSettingsBinder<IReadOnlyCollection<T>>,
+        ISafeSettingsBinder<IReadOnlyList<T>>,
+        ISafeSettingsBinder<IEnumerable<T>>
     {
-        private readonly ISettingsBinder<T> elementBinder;
+        private readonly ISafeSettingsBinder<T> elementBinder;
 
-        public ReadOnlyListBinder(ISettingsBinder<T> elementBinder) =>
+        public ReadOnlyListBinder(ISafeSettingsBinder<T> elementBinder) =>
             this.elementBinder = elementBinder;
 
         public SettingsBindingResult<T[]> Bind(ISettingsNode settings)
@@ -29,13 +29,13 @@ namespace Vostok.Configuration.Binders.Collection
             return SettingsBindingResult.Create(value, errors);
         }
 
-        SettingsBindingResult<IReadOnlyCollection<T>> ISettingsBinder<IReadOnlyCollection<T>>.Bind(ISettingsNode settings) =>
+        SettingsBindingResult<IReadOnlyCollection<T>> ISafeSettingsBinder<IReadOnlyCollection<T>>.Bind(ISettingsNode settings) =>
             Bind(settings).Convert<T[], IReadOnlyCollection<T>>();
 
-        SettingsBindingResult<IReadOnlyList<T>> ISettingsBinder<IReadOnlyList<T>>.Bind(ISettingsNode settings) =>
+        SettingsBindingResult<IReadOnlyList<T>> ISafeSettingsBinder<IReadOnlyList<T>>.Bind(ISettingsNode settings) =>
             Bind(settings).Convert<T[], IReadOnlyList<T>>();
 
-        SettingsBindingResult<IEnumerable<T>> ISettingsBinder<IEnumerable<T>>.Bind(ISettingsNode settings) =>
+        SettingsBindingResult<IEnumerable<T>> ISafeSettingsBinder<IEnumerable<T>>.Bind(ISettingsNode settings) =>
             Bind(settings).Convert<T[], IEnumerable<T>>();
     }
 }

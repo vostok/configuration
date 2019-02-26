@@ -1,10 +1,8 @@
 ﻿using System;
 using FluentAssertions;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
-using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Binders.Results;
@@ -14,12 +12,12 @@ namespace Vostok.Configuration.Tests.Binders
     public class NullableBinder_Tests : TreeConstructionSet
     {
         private NullableBinder<int> binder;
-        private ISettingsBinder<int> innerBinder;
+        private ISafeSettingsBinder<int> innerBinder;
 
         [SetUp]
         public void TestSetup()
         {
-            innerBinder = Substitute.For<ISettingsBinder<int>>();
+            innerBinder = Substitute.For<ISafeSettingsBinder<int>>();
             innerBinder.Bind(Arg.Any<ISettingsNode>()).Returns(
                 callInfo => callInfo.Arg<ISettingsNode>()?.Value == "42" ?
                     SettingsBindingResult.Success(42) :

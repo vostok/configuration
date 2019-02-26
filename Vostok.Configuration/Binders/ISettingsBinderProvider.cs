@@ -5,11 +5,11 @@ namespace Vostok.Configuration.Binders
 {
     internal interface ISettingsBinderProvider
     {
-        ISettingsBinder<T> CreateFor<T>();
+        ISafeSettingsBinder<T> CreateFor<T>();
 
-        ISettingsBinder<object> CreateFor(Type type);
+        ISafeSettingsBinder<object> CreateFor(Type type);
 
-        void SetupCustomBinder<TValue>(ISettingsBinder<TValue> binder);
+        void SetupCustomBinder<TValue>(ISafeSettingsBinder<TValue> binder);
 
         void SetupCustomBinder(Type binderType, Predicate<Type> condition);
 

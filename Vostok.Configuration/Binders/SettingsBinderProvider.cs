@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using SimpleInjector;
-using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders.Collection;
@@ -30,20 +28,20 @@ namespace Vostok.Configuration.Binders
                         registration(container);
 
                     container.RegisterConditional(
-                        typeof(ISettingsBinder<>),
+                        typeof(ISafeSettingsBinder<>),
                         typeof(NullableBinder<>),
                         c => c.ServiceType.GetGenericArguments()[0].IsNullable());
                     container.RegisterConditional(
-                        typeof(ISettingsBinder<>),
+                        typeof(ISafeSettingsBinder<>),
                         typeof(EnumBinder<>),
                         c => c.ServiceType.GetGenericArguments()[0].IsEnum);
-                    container.Register(typeof(ISettingsBinder<>), typeof(ListBinder<>));
-                    container.RegisterConditional(typeof(ISettingsBinder<>), typeof(ReadOnlyListBinder<>), c => !c.Handled);
-                    container.Register(typeof(ISettingsBinder<>), typeof(DictionaryBinder<,>));
-                    container.Register(typeof(ISettingsBinder<>), typeof(SetBinder<>));
-                    container.Register(typeof(ISettingsBinder<ISettingsNode>), typeof(IdentityBinder));
+                    container.Register(typeof(ISafeSettingsBinder<>), typeof(ListBinder<>));
+                    container.RegisterConditional(typeof(ISafeSettingsBinder<>), typeof(ReadOnlyListBinder<>), c => !c.Handled);
+                    container.Register(typeof(ISafeSettingsBinder<>), typeof(DictionaryBinder<,>));
+                    container.Register(typeof(ISafeSettingsBinder<>), typeof(SetBinder<>));
+                    container.Register(typeof(ISafeSettingsBinder<ISettingsNode>), typeof(IdentityBinder));
                     container.RegisterConditional(
-                        typeof(ISettingsBinder<>),
+                        typeof(ISafeSettingsBinder<>),
                         typeof(ClassStructBinder<>),
                         c => !c.Handled);
                     container.RegisterInstance(typeof(ISettingsBinderProvider), this);
@@ -55,27 +53,27 @@ namespace Vostok.Configuration.Binders
                 LazyThreadSafetyMode.ExecutionAndPublication);
         }
 
-        public ISettingsBinder<T> CreateFor<T>()
+        public ISafeSettingsBinder<T> CreateFor<T>()
         {
             if (TryObtainBindByBinder<T>(typeof(T), false, out var binder))
                 return binder;
 
-            return containerWrapper.Value.GetInstance<ISettingsBinder<T>>();
+            return containerWrapper.Value.GetInstance<ISafeSettingsBinder<T>>();
         }
 
-        public ISettingsBinder<object> CreateFor(Type type)
+        public ISafeSettingsBinder<object> CreateFor(Type type)
         {
             if (TryObtainBindByBinder<object>(type, true, out var binder))
                 return binder;
 
-            return (ISettingsBinder<object>)containerWrapper.Value.GetInstance(typeof(BinderWrapper<>).MakeGenericType(type));
+            return (ISafeSettingsBinder<object>)containerWrapper.Value.GetInstance(typeof(BinderWrapper<>).MakeGenericType(type));
         }
 
-        public void SetupCustomBinder<TValue>(ISettingsBinder<TValue> binder)
+        public void SetupCustomBinder<TValue>(ISafeSettingsBinder<TValue> binder)
         {
             EnsureCanRegisterBinders();
 
-            customBinderRegistrations.Enqueue(container => container.RegisterInstance(typeof(ISettingsBinder<TValue>), binder));
+            customBinderRegistrations.Enqueue(container => container.RegisterInstance(typeof(ISafeSettingsBinder<TValue>), binder));
         }
 
         public void SetupCustomBinder(Type binderType, Predicate<Type> condition)
@@ -84,7 +82,7 @@ namespace Vostok.Configuration.Binders
 
             customBinderRegistrations.Enqueue(
                 container =>
-                    container.RegisterConditional(typeof(ISettingsBinder<>), binderType, c => condition(c.ServiceType.GetGenericArguments()[0])));
+                    container.RegisterConditional(typeof(ISafeSettingsBinder<>), binderType, c => condition(c.ServiceType.GetGenericArguments()[0])));
         }
 
         public void SetupParserFor<T>(ITypeParser parser)
@@ -92,21 +90,21 @@ namespace Vostok.Configuration.Binders
             SetupCustomBinder(new PrimitiveBinder<T>(parser));
         }
 
-        private static bool TryObtainBindByBinder<T>(Type type, bool wrap, out ISettingsBinder<T> settingsBinder)
+        private static bool TryObtainBindByBinder<T>(Type type, bool wrap, out ISafeSettingsBinder<T> settingsBinder)
         {
             settingsBinder = null;
 
             if (!(type.GetCustomAttributes(typeof(BindByAttribute), false).FirstOrDefault() is BindByAttribute bindByAttribute))
                 return false;
 
-            if (!typeof(ISettingsBinder<>).MakeGenericType(type).IsAssignableFrom(bindByAttribute.BinderType))
+            if (!typeof(ISafeSettingsBinder<>).MakeGenericType(type).IsAssignableFrom(bindByAttribute.BinderType))
                 return false;
 
             var binder = Activator.CreateInstance(bindByAttribute.BinderType);
             if (wrap)
                 binder = Activator.CreateInstance(typeof(BinderWrapper<>).MakeGenericType(type), binder);
 
-            settingsBinder = (ISettingsBinder<T>)binder;
+            settingsBinder = (ISafeSettingsBinder<T>)binder;
             return true;
         }
 
