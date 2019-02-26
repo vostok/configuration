@@ -66,7 +66,7 @@ namespace Vostok.Configuration
         public TSettings Get<TSettings>()
         {
             EnsureSourceExists<TSettings>(out var source);
-            DisableSetupSourceFor();
+            DisableSetupSource();
 
             var cacheItem = sourceDataCache.GetPersistentCacheItem<TSettings>(source);
             if (cacheItem.CurrentValueProvider == null)
@@ -116,7 +116,7 @@ namespace Vostok.Configuration
         public IObservable<(TSettings settings, Exception error)> ObserveWithErrors<TSettings>()
         {
             EnsureSourceExists<TSettings>(out var source);
-            DisableSetupSourceFor();
+            DisableSetupSource();
 
             return observableBinder
                 .SelectBound(PushAndResubscribeOnErrors(source).ObserveOn(scheduler), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source));
@@ -135,11 +135,10 @@ namespace Vostok.Configuration
         /// <inheritdoc />
         public void SetupSourceFor<TSettings>(IConfigurationSource source)
         {
-            var type = typeof(TSettings);
             if (setupDisabled)
                 throw new InvalidOperationException($"Cannot set up source after {nameof(Get)}() or {nameof(Observe)}() was called.");
 
-            typeSources[type] = source;
+            typeSources[typeof(TSettings)] = source;
         }
 
         /// <inheritdoc />
@@ -149,11 +148,12 @@ namespace Vostok.Configuration
             sourceDataCache.Dispose();
         }
 
-        private void DisableSetupSourceFor()
+        private void DisableSetupSource()
         {
             if (setupDisabled)
                 return;
-            setupDisabled.TrySetTrue();
+
+            setupDisabled.Value = true;
         }
 
         private void EnsureSourceExists<TSettings>(out IConfigurationSource source)
