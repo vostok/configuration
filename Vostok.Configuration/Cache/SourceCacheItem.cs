@@ -1,6 +1,5 @@
 using System;
 using Vostok.Configuration.CurrentValueProvider;
-using Vostok.Configuration.ObservableBinding;
 
 namespace Vostok.Configuration.Cache
 {

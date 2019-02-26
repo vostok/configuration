@@ -9,7 +9,7 @@ namespace Vostok.Configuration.Binders
     {
         public ISettingsBinder<T> Binder { get; }
 
-        public SafeBinderWrapper(ISettingsBinder<T> binder) => this.Binder = binder;
+        public SafeBinderWrapper(ISettingsBinder<T> binder) => Binder = binder;
 
         public SettingsBindingResult<T> Bind(ISettingsNode rawSettings)
         {
