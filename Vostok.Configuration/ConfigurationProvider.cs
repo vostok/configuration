@@ -24,6 +24,7 @@ namespace Vostok.Configuration
         private readonly AtomicBoolean setupDisabled = new AtomicBoolean(false);
         private readonly EventLoopScheduler scheduler = new EventLoopScheduler();
         private readonly Action<Exception> errorCallback;
+        private readonly Action<object, IConfigurationSource> settingsCallback;
         private readonly IObservableBinder observableBinder;
         private readonly ISourceDataCache sourceDataCache;
         private readonly ICurrentValueProviderFactory currentValueProviderFactory;
@@ -41,6 +42,7 @@ namespace Vostok.Configuration
         public ConfigurationProvider(ConfigurationProviderSettings settings)
             : this(
                 settings.ErrorCallback,
+                settings.SettingsCallback,
                 new ObservableBinder(new CachingBinder(new ValidatingBinder(settings.Binder ?? new DefaultSettingsBinder()))),
                 new SourceDataCache(settings.MaxSourceCacheSize),
                 new RetryingCurrentValueProviderFactory(),
@@ -50,12 +52,14 @@ namespace Vostok.Configuration
 
         internal ConfigurationProvider(
             Action<Exception> errorCallback,
+            Action<object, IConfigurationSource> settingsCallback,
             IObservableBinder observableBinder,
             ISourceDataCache sourceDataCache,
             ICurrentValueProviderFactory currentValueProviderFactory,
             TimeSpan sourceRetryCooldown = default)
         {
             this.errorCallback = errorCallback ?? (_ => {});
+            this.settingsCallback = settingsCallback ?? ((_, __) => {});
             this.observableBinder = observableBinder;
             this.sourceDataCache = sourceDataCache;
             this.currentValueProviderFactory = currentValueProviderFactory;
@@ -119,7 +123,8 @@ namespace Vostok.Configuration
             DisableSetupSource();
 
             return observableBinder
-                .SelectBound(PushAndResubscribeOnErrors(source).ObserveOn(scheduler), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source));
+                .SelectBound(PushAndResubscribeOnErrors(source).ObserveOn(scheduler), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source))
+                .Do(newValue => OnSettingsInstance(source, newValue));
         }
 
         /// <inheritdoc />
@@ -129,7 +134,8 @@ namespace Vostok.Configuration
                 return ObserveWithErrors<TSettings>();
 
             return observableBinder
-                .SelectBound(PushAndResubscribeOnErrors(source).ObserveOn(scheduler), () => sourceDataCache.GetLimitedCacheItem<TSettings>(source));
+                .SelectBound(PushAndResubscribeOnErrors(source).ObserveOn(scheduler), () => sourceDataCache.GetLimitedCacheItem<TSettings>(source))
+                .Do(newValue => OnSettingsInstance(source, newValue));
         }
 
         /// <inheritdoc />
@@ -170,5 +176,13 @@ namespace Vostok.Configuration
 
         private IObservable<(ISettingsNode, Exception)> PushAndResubscribeOnErrors(IConfigurationSource source)
             => HealingObservable.PushAndResubscribeOnErrors(source.Observe, sourceRetryCooldown);
+
+        private void OnSettingsInstance<T>(IConfigurationSource source, (T settings, Exception error) newValue)
+        {
+            if (newValue.error != null || newValue.settings == null)
+                return;
+
+            settingsCallback(newValue.settings, source);
+        }
     }
 }

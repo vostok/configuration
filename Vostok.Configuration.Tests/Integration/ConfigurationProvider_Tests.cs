@@ -9,8 +9,8 @@ using FluentAssertions.Extensions;
 using NSubstitute;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
+using Vostok.Commons.Testing.Observable;
 using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.Abstractions.Extensions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 
 namespace Vostok.Configuration.Tests.Integration
@@ -85,6 +85,76 @@ namespace Vostok.Configuration.Tests.Integration
         public void Observe_source_should_obtain_new_observable_from_source_upon_receiving_OnError()
         {
             provider.Observe<int>(CreateFaultySource()).Wait().Should().Be(3);
+        }
+
+        [Test]
+        public void Get_with_preconfigured_source_should_invoke_settings_callback()
+        {
+            source.PushNewConfiguration(new ValueNode("value"));
+
+            var callback = Substitute.For<Action<object, IConfigurationSource>>();
+
+            provider = new ConfigurationProvider(new ConfigurationProviderSettings
+            {
+                SettingsCallback = callback
+            });
+
+            provider.SetupSourceFor<string>(source);
+            provider.Get<string>();
+
+            callback.Received(1).Invoke("value", source);
+        }
+
+        [Test]
+        public void Get_with_external_source_should_invoke_settings_callback()
+        {
+            source.PushNewConfiguration(new ValueNode("value"));
+
+            var callback = Substitute.For<Action<object, IConfigurationSource>>();
+
+            provider = new ConfigurationProvider(new ConfigurationProviderSettings
+            {
+                SettingsCallback = callback
+            });
+
+            provider.Get<string>(source);
+
+            callback.Received(1).Invoke("value", source);
+        }
+
+        [Test]
+        public void Observe_with_preconfigured_source_should_invoke_settings_callback()
+        {
+            source.PushNewConfiguration(new ValueNode("value"));
+
+            var callback = Substitute.For<Action<object, IConfigurationSource>>();
+
+            provider = new ConfigurationProvider(new ConfigurationProviderSettings
+            {
+                SettingsCallback = callback
+            });
+
+            provider.SetupSourceFor<string>(source);
+            provider.Observe<string>().WaitFirstValue(10.Seconds());
+
+            callback.Received(1).Invoke("value", source);
+        }
+
+        [Test]
+        public void Observe_with_external_source_should_invoke_settings_callback()
+        {
+            source.PushNewConfiguration(new ValueNode("value"));
+
+            var callback = Substitute.For<Action<object, IConfigurationSource>>();
+
+            provider = new ConfigurationProvider(new ConfigurationProviderSettings
+            {
+                SettingsCallback = callback
+            });
+
+            provider.Observe<string>(source).WaitFirstValue(10.Seconds());
+
+            callback.Received(1).Invoke("value", source);
         }
 
         private static IConfigurationSource CreateFaultySource()
