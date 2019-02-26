@@ -21,15 +21,13 @@ namespace Vostok.Configuration.Cache
         public SourceCacheItem<TSettings> GetLimitedCacheItem<TSettings>(IConfigurationSource source)
         {
             var key = (source, typeof(TSettings));
-            var newItem = new SourceCacheItem<TSettings>();
-            return (SourceCacheItem<TSettings>)limitedSourceCache.GetOrAdd(key, _ => newItem);
+            return (SourceCacheItem<TSettings>)limitedSourceCache.GetOrAdd(key, _ => new SourceCacheItem<TSettings>());
         }
 
         public SourceCacheItem<TSettings> GetPersistentCacheItem<TSettings>(IConfigurationSource source)
         {
             var key = (source, typeof(TSettings));
-            var newItem = new SourceCacheItem<TSettings>();
-            return (SourceCacheItem<TSettings>)persistentSourceCache.GetOrAdd(key, newItem);
+            return (SourceCacheItem<TSettings>)persistentSourceCache.GetOrAdd(key, _ => new SourceCacheItem<TSettings>());
         }
 
         public void Dispose()
