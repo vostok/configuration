@@ -29,7 +29,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_value_using_inner_binder()
         {
-            binder.Bind(Value("42")).UnwrapIfNoErrors().Should().Be(42);
+            binder.Bind(Value("42")).Value.Should().Be(42);
         }
 
         [Test]
@@ -42,7 +42,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_report_errors_from_inner_binder()
         {
-            new Action(() => binder.Bind(Value("")).UnwrapIfNoErrors())
+            new Func<int?>(() => binder.Bind(Value("")).Value)
                 .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
     }

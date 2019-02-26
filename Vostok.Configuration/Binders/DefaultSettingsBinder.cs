@@ -31,7 +31,7 @@ namespace Vostok.Configuration.Binders
         public TSettings Bind<TSettings>(ISettingsNode settings)
         {
             var binder = binderProvider.CreateFor<TSettings>();
-            return binder.BindOrDefault(settings).UnwrapIfNoErrors();
+            return binder.BindOrDefault(settings).Value;
         }
 
         /// <summary>

@@ -30,11 +30,14 @@ namespace Vostok.Configuration.Binders.Collection
                         (index: n.Name, key: keyBinder.BindOrDefault(new ValueNode(n.Name)), value: valueBinder.BindOrDefault(n)))
                 .ToList();
 
-            var value = results.ToDictionary(p => p.key.Value, p => p.value.Value);
             var errors = results.SelectMany(
-                p =>
-                    p.key.Errors.ForIndex(p.index).Concat(p.value.Errors.ForIndex(p.index)));
-            return SettingsBindingResult.Create(value, errors);
+                    p => p.key.Errors.ForIndex(p.index).Concat(p.value.Errors.ForIndex(p.index)))
+                .ToList();
+            
+            if (errors.Any())
+                return SettingsBindingResult.Errors<Dictionary<T1, T2>>(errors);
+            
+            return SettingsBindingResult.Success(results.ToDictionary(p => p.key.Value, p => p.value.Value));
         }
 
         SettingsBindingResult<IDictionary<T1, T2>> ISafeSettingsBinder<IDictionary<T1, T2>>.Bind(ISettingsNode settings) =>

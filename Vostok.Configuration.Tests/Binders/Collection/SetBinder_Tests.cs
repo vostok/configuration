@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
@@ -33,7 +34,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         {
             var settings = Array(null, "a", "b", "c", "a");
 
-            binder.Bind(settings).UnwrapIfNoErrors().Should().BeEquivalentTo("a", "b", "c");
+            binder.Bind(settings).Value.Should().BeEquivalentTo("a", "b", "c");
         }
 
         [Test]
@@ -41,7 +42,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         {
             var settings = Array(new string[] {});
 
-            binder.Bind(settings).UnwrapIfNoErrors().Should().BeEmpty();
+            binder.Bind(settings).Value.Should().BeEmpty();
         }
 
         [Test]
@@ -49,7 +50,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         {
             var settings = Array(null, "xxx", "BAD");
 
-            new Action(() => binder.Bind(settings).UnwrapIfNoErrors())
+            new Func<HashSet<string>>(() => binder.Bind(settings).Value)
                 .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
     }

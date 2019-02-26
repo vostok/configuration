@@ -36,7 +36,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         {
             var settings = Array(Value("key1", "true"), Value("key2", "true"));
 
-            binder.Bind(settings).UnwrapIfNoErrors().Should().BeEquivalentTo(
+            binder.Bind(settings).Value.Should().BeEquivalentTo(
                     new Dictionary<string, bool>
                     {
                         {"key1", true},
@@ -49,7 +49,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         {
             var settings = Array(new string[] {});
 
-            binder.Bind(settings).UnwrapIfNoErrors().Should().BeEmpty();
+            binder.Bind(settings).Value.Should().BeEmpty();
         }
 
         [Test]
@@ -57,7 +57,7 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         {
             var settings = Array(Value("key1", "true"), Value("key2", "xxx"));
 
-            new Action(() => binder.Bind(settings).UnwrapIfNoErrors())
+            new Func<Dictionary<string, bool>>(() => binder.Bind(settings).Value)
                 .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
     }

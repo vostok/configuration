@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Vostok.Configuration.Abstractions.Attributes;
@@ -26,23 +27,26 @@ namespace Vostok.Configuration.Binders
 
             var requiredByDefault = type.GetCustomAttribute<RequiredByDefaultAttribute>() != null;
 
-            var errors = Enumerable.Empty<SettingsBindingError>();
+            var errors = new List<SettingsBindingError>();
 
             foreach (var field in type.GetInstanceFields())
             {
                 var result = GetValue(field.FieldType, field.Name, IsRequired(field, requiredByDefault), settings, field.GetValue(instance));
-                errors = errors.Concat(result.Errors.ForProperty(field.Name));
+                errors.AddRange(result.Errors.ForProperty(field.Name));
                 field.SetValue(instance, result.Value);
             }
 
             foreach (var property in type.GetInstanceProperties())
             {
                 var result = GetValue(property.PropertyType, property.Name, IsRequired(property, requiredByDefault), settings, property.GetValue(instance));
-                errors = errors.Concat(result.Errors.ForProperty(property.Name));
+                errors.AddRange(result.Errors.ForProperty(property.Name));
                 property.ForceSetValue(instance, result.Value);
             }
+            
+            if (errors.Any())
+                return SettingsBindingResult.Errors<T>(errors);
 
-            return SettingsBindingResult.Create((T)instance, errors);
+            return SettingsBindingResult.Success((T)instance);
         }
 
         private static bool IsRequired(MemberInfo member, bool requiredByDefault)

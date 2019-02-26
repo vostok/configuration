@@ -23,9 +23,12 @@ namespace Vostok.Configuration.Binders.Collection
 
             var results = settings.Children.Select((n, i) => (index: i, value: elementBinder.BindOrDefault(n))).ToList();
 
-            var value = results.Select(r => r.value.Value).ToList();
-            var errors = results.SelectMany(r => r.value.Errors.ForIndex(r.index));
-            return SettingsBindingResult.Create(value, errors);
+            var errors = results.SelectMany(r => r.value.Errors.ForIndex(r.index)).ToList();
+            
+            if (errors.Any())
+                return SettingsBindingResult.Errors<List<T>>(errors);
+
+            return SettingsBindingResult.Success(results.Select(r => r.value.Value).ToList());
         }
 
         SettingsBindingResult<IList<T>> ISafeSettingsBinder<IList<T>>.Bind(ISettingsNode settings) =>

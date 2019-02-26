@@ -21,19 +21,19 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_bind_value_node()
         {
-            binder.Bind(Value("42")).UnwrapIfNoErrors().Should().Be(42);
+            binder.Bind(Value("42")).Value.Should().Be(42);
         }
 
         [Test]
         public void Should_bind_array_node_with_single_child()
         {
-            binder.Bind(Array(Value("42"))).UnwrapIfNoErrors().Should().Be(42);
+            binder.Bind(Array(Value("42"))).Value.Should().Be(42);
         }
 
         [Test]
         public void Should_bind_object_node_with_single_child()
         {
-            binder.Bind(Object(("value", "42"))).UnwrapIfNoErrors()
+            binder.Bind(Object(("value", "42"))).Value
                 .Should().Be(42);
         }
 
@@ -47,7 +47,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_throw_if_parser_returns_false()
         {
-            new Action(() => binder.Bind(Value("xx")).UnwrapIfNoErrors())
+            new Func<int>(() => binder.Bind(Value("xx")).Value)
                 .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
     }
