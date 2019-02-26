@@ -24,13 +24,13 @@ namespace Vostok.Configuration.Cache
             {
                 var result = binder.Bind<TSettings>(rawSettings);
                 cacheItem.BindingCacheValue = new BindingCacheValue<TSettings>(rawSettings, result);
+                return result;
             }
             catch (Exception e)
             {
                 cacheItem.BindingCacheValue = new BindingCacheValue<TSettings>(rawSettings, e);
+                throw;
             }
-
-            return GetSettingsOrRethrow(cacheItem.BindingCacheValue);
         }
 
         private static TSettings GetSettingsOrRethrow<TSettings>(BindingCacheValue<TSettings> cachedValue)

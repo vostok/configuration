@@ -35,8 +35,6 @@ namespace Vostok.Configuration.Cache
             return value;
         }
 
-        public bool TryRemove(TKey key, out TValue value) => cache.TryRemove(key, out value);
-
         private void RemoveOutOfWindowItems()
         {
             while (queue.Count > capacity && queue.TryDequeue(out var keyToRemove))
