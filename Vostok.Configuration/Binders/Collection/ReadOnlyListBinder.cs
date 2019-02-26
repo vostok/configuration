@@ -26,7 +26,7 @@ namespace Vostok.Configuration.Binders.Collection
 
             var value = results.Select(r => r.value.Value).ToArray();
             var errors = results.SelectMany(r => r.value.Errors.ForIndex(r.index));
-            return SettingsBindingResult.Create(value, errors);
+            return SettingsBindingResult.Create(value, errors.ToList());
         }
 
         SettingsBindingResult<IReadOnlyCollection<T>> ISafeSettingsBinder<IReadOnlyCollection<T>>.Bind(ISettingsNode settings) =>

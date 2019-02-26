@@ -42,7 +42,7 @@ namespace Vostok.Configuration.Binders
                 property.ForceSetValue(instance, result.Value);
             }
 
-            return SettingsBindingResult.Create((T)instance, errors);
+            return SettingsBindingResult.Create((T)instance, errors.ToList());
         }
 
         private static bool IsRequired(MemberInfo member, bool requiredByDefault)

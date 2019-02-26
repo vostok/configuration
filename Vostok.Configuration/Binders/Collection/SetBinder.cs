@@ -24,7 +24,7 @@ namespace Vostok.Configuration.Binders.Collection
 
             var value = new HashSet<T>(results.Select(r => r.value.Value));
             var errors = results.SelectMany(r => r.value.Errors.ForIndex(r.index));
-            return SettingsBindingResult.Create(value, errors);
+            return SettingsBindingResult.Create(value, errors.ToList());
         }
 
         SettingsBindingResult<ISet<T>> ISafeSettingsBinder<ISet<T>>.Bind(ISettingsNode settings) =>

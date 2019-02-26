@@ -34,7 +34,7 @@ namespace Vostok.Configuration.Binders.Collection
             var errors = results.SelectMany(
                 p =>
                     p.key.Errors.ForIndex(p.index).Concat(p.value.Errors.ForIndex(p.index)));
-            return SettingsBindingResult.Create(value, errors);
+            return SettingsBindingResult.Create(value, errors.ToList());
         }
 
         SettingsBindingResult<IDictionary<T1, T2>> ISafeSettingsBinder<IDictionary<T1, T2>>.Bind(ISettingsNode settings) =>
