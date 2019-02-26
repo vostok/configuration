@@ -33,6 +33,6 @@ namespace Vostok.Configuration
         /// <summary>
         /// Specifies how many <see cref="IConfigurationSource"/>s passed to <see cref="ConfigurationProvider.Get{TSettings}(IConfigurationSource)"/>, <see cref="ConfigurationProvider.Observe{TSettings}(IConfigurationSource)"/> or <see cref="ConfigurationProvider.ObserveWithErrors{TSettings}(IConfigurationSource)"/> method a <see cref="ConfigurationProvider"/> should cache.
         /// </summary>
-        public int MaxSourceCacheSize { get; set; } = 10;
+        public int MaxSourceCacheSize { get; set; } = 50;
     }
 }
