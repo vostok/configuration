@@ -33,14 +33,16 @@ namespace Vostok.Configuration.Binders
             {
                 var result = GetValue(field.FieldType, field.Name, IsRequired(field, requiredByDefault), settings, field.GetValue(instance));
                 errors.AddRange(result.Errors.ForProperty(field.Name));
-                field.SetValue(instance, result.Value);
+                if (!result.Errors.Any())
+                    field.SetValue(instance, result.Value);
             }
 
             foreach (var property in type.GetInstanceProperties())
             {
                 var result = GetValue(property.PropertyType, property.Name, IsRequired(property, requiredByDefault), settings, property.GetValue(instance));
                 errors.AddRange(result.Errors.ForProperty(property.Name));
-                property.ForceSetValue(instance, result.Value);
+                if (!result.Errors.Any())
+                    property.ForceSetValue(instance, result.Value);
             }
             
             if (errors.Any())
