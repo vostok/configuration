@@ -60,10 +60,13 @@ namespace Vostok.Configuration.Tests.ObservableBinding
 
         [TestCase(true, false, Description = "source pushes error")]
         [TestCase(false, true, Description = "binding fails")]
-        public void Should_push_settings_from_cache_when_error_occurs_and_has_cached_value(bool sourceError, bool bindingError)
+        public void Should_push_last_valid_settings_when_error_occurs_and_there_were_valid_settings_before(bool sourceError, bool bindingError)
         {
+            var validNode = Substitute.For<ISettingsNode>();
+            subject.OnNext((validNode, null));
+            Bind(validNode).Returns(settings);
+            
             var error = new Exception();
-            cacheItem.LastValue = (settings, null);
 
             if (bindingError)
                 Bind(node).Throws(error);
@@ -76,15 +79,18 @@ namespace Vostok.Configuration.Tests.ObservableBinding
                 subject.OnNext((node, null));
             
             observableBinder.SelectBound(subject, () => cacheItem)
-                .ShouldStartWithIn(100.Milliseconds(), (settings, error));
+                .ShouldStartWithIn(100.Milliseconds(), (settings, null), (settings, error));
         }
 
         [TestCase(true, false, Description = "source pushes error")]
         [TestCase(false, true, Description = "binding fails")]
         public void Should_push_actual_settings_and_no_error_when_error_disappears(bool sourceError, bool bindingError)
         {
+            var validNode = Substitute.For<ISettingsNode>();
+            subject.OnNext((validNode, null));
+            Bind(validNode).Returns(settings);
+            
             var error = new Exception();
-            cacheItem.LastValue = (settings, null);
 
             if (bindingError)
                 Bind(node).Throws(error);
@@ -102,7 +108,7 @@ namespace Vostok.Configuration.Tests.ObservableBinding
             subject.OnNext((node2, null));
             
             observableBinder.SelectBound(subject, () => cacheItem)
-                .ShouldStartWithIn(100.Milliseconds(),(settings, error), (settings2, null));
+                .ShouldStartWithIn(100.Milliseconds(),(settings, null), (settings, error), (settings2, null));
         }
 
         [Test]
@@ -138,9 +144,11 @@ namespace Vostok.Configuration.Tests.ObservableBinding
         [TestCase(false, true, Description = "binding fails")]
         public void Should_not_push_same_cached_settings_and_error_successively_when_same_errors_occur(bool sourceError, bool bindingError)
         {
+            var validNode = Substitute.For<ISettingsNode>();
+            subject.OnNext((validNode, null));
+            Bind(validNode).Returns(settings);
+
             var error = new Exception();
-            
-            cacheItem.LastValue = (settings, null);
 
             if (bindingError)
                 Bind(node).Throws(error);
@@ -154,20 +162,27 @@ namespace Vostok.Configuration.Tests.ObservableBinding
             }
 
             observableBinder.SelectBound(subject, () => cacheItem)
-                .ShouldStartWithIn(100.Milliseconds(), (settings, error));
+                .ShouldStartWithIn(100.Milliseconds(), (settings, null), (settings, error));
         }
         
         [TestCase(true, false, Description = "source pushes error")]
         [TestCase(false, true, Description = "binding fails")]
         public void Should_push_same_cached_settings_and_error_when_same_errors_occur_not_successively(bool sourceError, bool bindingError)
         {
+            var validNode = Substitute.For<ISettingsNode>();
+            subject.OnNext((validNode, null));
+            Bind(validNode).Returns(settings);
+
             var errorIndex = 0;
             var errors = new Exception[] {new IOException(), new FormatException(), new IOException()};
             
-            cacheItem.LastValue = (settings, null);
-            
             if (bindingError)
-                Bind(null).ReturnsForAnyArgs(_ => throw errors[errorIndex++]);
+                Bind(null).ReturnsForAnyArgs(callInfo =>
+                {
+                    if (ReferenceEquals(callInfo.ArgAt<ISettingsNode>(0), validNode))
+                        return settings;
+                    throw errors[errorIndex++];
+                });
             else
                 Bind(node).Returns(settings);
 
@@ -178,7 +193,7 @@ namespace Vostok.Configuration.Tests.ObservableBinding
                     subject.OnNext((Substitute.For<ISettingsNode>(), null));
 
             observableBinder.SelectBound(subject, () => cacheItem)
-                .ShouldStartWithIn(100.Milliseconds(), (settings, errors[0]), (settings, errors[1]), (settings, errors[2]));
+                .ShouldStartWithIn(100.Milliseconds(), (settings, null), (settings, errors[0]), (settings, errors[1]), (settings, errors[2]));
         }
 
         [Test]

@@ -40,15 +40,17 @@ namespace Vostok.Configuration.ObservableBinding
                             }
                         }
 
-                        var cachedValue = cacheItem.LastValue;
-
-                        return cachedValue == null
-                            ? Notification.CreateOnError<(TSettings, Exception)>(resultError)
-                            : Notification.CreateOnNext((cachedValue.Value.settings, resultError));
+                        return Notification.CreateOnError<(TSettings, Exception)>(resultError);
+                    })
+                .Scan(null as Notification<(TSettings settings, Exception error)>,
+                    (previousValue, currentValue) =>
+                    {
+                        if (currentValue.Kind == NotificationKind.OnError && previousValue != null && previousValue.HasValue)
+                            return Notification.CreateOnNext((previousValue.Value.settings, currentValue.Exception));
+                        return currentValue;
                     })
                 .Dematerialize()
-                .DistinctUntilChanged(new TupleEqualityComparer<TSettings, Exception>(EqualityComparer<TSettings>.Default, new ExceptionEqualityComparer()))
-                .Do(value => cacheItemProvider().LastValue = value);
+                .DistinctUntilChanged(new TupleEqualityComparer<TSettings, Exception>(EqualityComparer<TSettings>.Default, new ExceptionEqualityComparer()));
         }
     }
 }

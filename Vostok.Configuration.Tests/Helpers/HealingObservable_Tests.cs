@@ -119,7 +119,7 @@ namespace Vostok.Configuration.Tests.Helpers
                 .Should()
                 .Be(CreateValue(1));
             
-            stopWatch.Elapsed.Should().BeGreaterOrEqualTo(300.Milliseconds());
+            stopWatch.Elapsed.Should().BeGreaterOrEqualTo(250.Milliseconds());
         }
 
         private static (T, Exception) CreateValue<T>(T value)
