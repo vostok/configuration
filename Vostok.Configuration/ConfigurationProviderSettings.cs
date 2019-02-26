@@ -17,6 +17,11 @@ namespace Vostok.Configuration
         public TimeSpan SourceRetryCooldown = TimeSpan.FromSeconds(10);
 
         /// <summary>
+        /// In case an exception is encountered during a <see cref="ConfigurationProvider.Get{T}()"/> call, <see cref="ConfigurationProvider"/> will wait for <see cref="ValueRetryCooldown"/> between resubscription attempts to underlying observable in order to heal.
+        /// </summary>
+        public TimeSpan ValueRetryCooldown = TimeSpan.FromSeconds(3);
+
+        /// <summary>
         /// <para>Use this to specify a custom implementation of <see cref="ISettingsBinder"/>.</para>
         /// <para><see cref="DefaultSettingsBinder"/> will be used by default.</para>
         /// </summary>

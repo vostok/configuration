@@ -45,7 +45,7 @@ namespace Vostok.Configuration
                 settings.SettingsCallback,
                 new ObservableBinder(new CachingBinder(new ValidatingBinder(settings.Binder ?? new DefaultSettingsBinder()))),
                 new SourceDataCache(settings.MaxSourceCacheSize),
-                new RetryingCurrentValueProviderFactory(),
+                new RetryingCurrentValueProviderFactory(settings.ValueRetryCooldown),
                 settings.SourceRetryCooldown)
         {
         }

@@ -4,6 +4,14 @@ namespace Vostok.Configuration.CurrentValueProvider
 {
     internal class RetryingCurrentValueProviderFactory : ICurrentValueProviderFactory
     {
-        public ICurrentValueProvider<T> Create<T>(Func<IObservable<T>> observableProvider) => new RetryingCurrentValueProvider<T>(observableProvider);
+        private readonly TimeSpan retryCooldown;
+
+        public RetryingCurrentValueProviderFactory(TimeSpan retryCooldown)
+        {
+            this.retryCooldown = retryCooldown;
+        }
+
+        public ICurrentValueProvider<T> Create<T>(Func<IObservable<T>> observableProvider) 
+            => new RetryingCurrentValueProvider<T>(observableProvider, retryCooldown);
     }
 }
