@@ -21,6 +21,10 @@ namespace Vostok.Configuration.Cache
         public SourceCacheItem<TSettings> GetLimitedCacheItem<TSettings>(IConfigurationSource source)
         {
             var key = (source, typeof(TSettings));
+
+            if (limitedSourceCache.TryGetValue(key, out var value))
+                return (SourceCacheItem<TSettings>)value;
+
             return (SourceCacheItem<TSettings>)limitedSourceCache.GetOrAdd(key, _ => new SourceCacheItem<TSettings>());
         }
 
