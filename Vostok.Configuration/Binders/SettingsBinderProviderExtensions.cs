@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Net;
 using Vostok.Commons.Helpers;
-using Vostok.Commons.Primitives;
 using Vostok.Configuration.Parsers;
+using Vostok.Configuration.Primitives;
 using UriParser = Vostok.Configuration.Parsers.UriParser;
 
 namespace Vostok.Configuration.Binders

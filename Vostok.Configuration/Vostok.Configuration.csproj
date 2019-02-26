@@ -39,9 +39,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Vostok.Commons.Primitives">
-      <HintPath>..\..\vostok.commons.primitives\Vostok.Commons.Primitives\bin\Release\netstandard2.0\Vostok.Commons.Primitives.dll</HintPath>
-    </Reference>
     <Reference Include="Vostok.Configuration.Abstractions">
       <HintPath>..\..\vostok.configuration.abstractions\Vostok.Configuration.Abstractions\bin\Release\netstandard2.0\Vostok.Configuration.Abstractions.dll</HintPath>
     </Reference>
