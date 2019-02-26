@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using JetBrains.Annotations;
+using Vostok.Commons.Threading;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
@@ -20,7 +21,7 @@ namespace Vostok.Configuration
     public class ConfigurationProvider : IConfigurationProvider, IDisposable
     {
         private readonly ConcurrentDictionary<Type, IConfigurationSource> typeSources = new ConcurrentDictionary<Type, IConfigurationSource>();
-        private readonly ConcurrentDictionary<Type, bool> setupDisabled = new ConcurrentDictionary<Type, bool>();
+        private readonly AtomicBoolean setupDisabled = new AtomicBoolean(false);
         private readonly EventLoopScheduler scheduler = new EventLoopScheduler();
         private readonly Action<Exception> errorCallback;
         private readonly IObservableBinder observableBinder;
@@ -65,7 +66,7 @@ namespace Vostok.Configuration
         public TSettings Get<TSettings>()
         {
             EnsureSourceExists<TSettings>(out var source);
-            DisableSetupSourceFor<TSettings>();
+            DisableSetupSourceFor();
 
             var cacheItem = sourceDataCache.GetPersistentCacheItem<TSettings>(source);
             if (cacheItem.CurrentValueProvider == null)
@@ -115,7 +116,7 @@ namespace Vostok.Configuration
         public IObservable<(TSettings settings, Exception error)> ObserveWithErrors<TSettings>()
         {
             EnsureSourceExists<TSettings>(out var source);
-            DisableSetupSourceFor<TSettings>();
+            DisableSetupSourceFor();
 
             return observableBinder
                 .SelectBound(PushAndResubscribeOnErrors(source).ObserveOn(scheduler), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source));
@@ -135,8 +136,8 @@ namespace Vostok.Configuration
         public void SetupSourceFor<TSettings>(IConfigurationSource source)
         {
             var type = typeof(TSettings);
-            if (setupDisabled.ContainsKey(type))
-                throw new InvalidOperationException($"Cannot set up source for type '{type}' after {nameof(Get)}() or {nameof(Observe)}() was called for this type.");
+            if (setupDisabled)
+                throw new InvalidOperationException($"Cannot set up source after {nameof(Get)}() or {nameof(Observe)}() was called.");
 
             typeSources[type] = source;
         }
@@ -148,8 +149,12 @@ namespace Vostok.Configuration
             sourceDataCache.Dispose();
         }
 
-        private void DisableSetupSourceFor<TSettings>()
-            => setupDisabled[typeof(TSettings)] = true;
+        private void DisableSetupSourceFor()
+        {
+            if (setupDisabled)
+                return;
+            setupDisabled.TrySetTrue();
+        }
 
         private void EnsureSourceExists<TSettings>(out IConfigurationSource source)
             => EnsureSourceExists(typeof(TSettings), out source);
