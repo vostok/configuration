@@ -45,9 +45,7 @@ namespace Vostok.Configuration.Binders
 
         public DefaultSettingsBinder WithCustomBinder<TValue>(ISettingsBinder<TValue> binder)
         {
-            // TODO(iloktionov): wrap
-
-            // binderProvider.SetupCustomBinder(binder);
+            binderProvider.SetupCustomBinder(new SafeBinderWrapper<TValue>(binder));
             return this;
         }
 
