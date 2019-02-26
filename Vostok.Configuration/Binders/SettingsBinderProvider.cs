@@ -6,6 +6,7 @@ using System.Threading;
 using SimpleInjector;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
+using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders.Collection;
 using Vostok.Configuration.Helpers;
 using Vostok.Configuration.Parsers;
@@ -40,6 +41,7 @@ namespace Vostok.Configuration.Binders
                     container.RegisterConditional(typeof(ISettingsBinder<>), typeof(ReadOnlyListBinder<>), c => !c.Handled);
                     container.Register(typeof(ISettingsBinder<>), typeof(DictionaryBinder<,>));
                     container.Register(typeof(ISettingsBinder<>), typeof(SetBinder<>));
+                    container.Register(typeof(ISettingsBinder<ISettingsNode>), typeof(IdentityBinder));
                     container.RegisterConditional(
                         typeof(ISettingsBinder<>),
                         typeof(ClassStructBinder<>),

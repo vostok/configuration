@@ -174,6 +174,15 @@ namespace Vostok.Configuration.Tests.Integration
                         }));
         }
 
+        [Test]
+        public void Should_leave_settings_as_is_when_binding_to_ISettingsNode()
+        {
+            var tree = Object("xx", Array("yy", Value("zz")));
+
+            var result = binder.Bind<ISettingsNode>(tree);
+            result.Should().Be(tree);
+        }
+
         private static bool TryParseRegex(string s, out Regex regex)
         {
             regex = new Regex(s);
