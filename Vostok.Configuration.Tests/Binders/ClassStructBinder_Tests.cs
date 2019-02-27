@@ -9,6 +9,7 @@ using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Binders.Results;
+using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Tests.Binders
 {
@@ -269,6 +270,20 @@ namespace Vostok.Configuration.Tests.Binders
                 .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
             new Func<MyClass3>(() => CreateBinder<MyClass3>().Bind(Value(null)).Value)
                 .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
+        }
+
+        [Test]
+        public void Should_treat_null_literal_as_null_value_for_ref_types()
+        {
+            Value("null").IsNullValue(CreateBinder<MyClass1>()).Should().BeTrue();
+            Value("NULL").IsNullValue(CreateBinder<MyClass1>()).Should().BeTrue();
+        }
+
+        [Test]
+        public void Should_not_treat_null_literal_as_null_value_for_value_types()
+        {
+            Value("null").IsNullValue(CreateBinder<MyStruct>()).Should().BeFalse();
+            Value("NULL").IsNullValue(CreateBinder<MyStruct>()).Should().BeFalse();
         }
 
         private class MyClass1

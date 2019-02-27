@@ -94,7 +94,7 @@ namespace Vostok.Configuration.Tests.Integration
                     Value("nullableInt", "null"),
                     Value("customBinderObject", "xx")
                 ),
-                Value(null)
+                Value("null")
             );
 
             var result = binder.WithParserFor<Regex>(TryParseRegex).Bind<IEnumerable<ComplexConfig>>(tree);

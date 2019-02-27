@@ -10,7 +10,7 @@ using OptionalAttribute = Vostok.Configuration.Abstractions.Attributes.OptionalA
 
 namespace Vostok.Configuration.Binders
 {
-    internal class ClassStructBinder<T> : ISafeSettingsBinder<T>
+    internal class ClassStructBinder<T> : ISafeSettingsBinder<T>, INullValuePolicy
     {
         private readonly ISettingsBinderProvider binderProvider;
 
@@ -71,6 +71,17 @@ namespace Vostok.Configuration.Binders
                 return SettingsBindingResult.RequiredPropertyIsNull<object>(name);
 
             return SettingsBindingResult.Success(value.IsMissing() ? defaultValue : null);
+        }
+
+        public bool IsNullValue(ISettingsNode node)
+        {
+            if (node.IsNullValue())
+                return true;
+
+            if (typeof(T).IsValueType)
+                return false;
+            
+            return node is ValueNode valueNode && valueNode.Value?.ToLower() == "null";
         }
     }
 }
