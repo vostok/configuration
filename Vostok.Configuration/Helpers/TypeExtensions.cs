@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace Vostok.Configuration.Helpers
@@ -7,8 +9,10 @@ namespace Vostok.Configuration.Helpers
     {
         public static bool IsNullable(this Type type) => Nullable.GetUnderlyingType(type) != null;
 
-        public static PropertyInfo[] GetInstanceProperties(this Type type) => type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+        public static IEnumerable<PropertyInfo> GetInstanceProperties(this Type type) => 
+            type.GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.GetIndexParameters().Length == 0);
 
-        public static FieldInfo[] GetInstanceFields(this Type type) => type.GetFields(BindingFlags.Instance | BindingFlags.Public);
+        public static IEnumerable<FieldInfo> GetInstanceFields(this Type type) => 
+            type.GetFields(BindingFlags.Instance | BindingFlags.Public);
     }
 }

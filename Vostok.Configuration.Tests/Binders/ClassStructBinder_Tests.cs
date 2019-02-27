@@ -23,7 +23,7 @@ namespace Vostok.Configuration.Tests.Binders
             var boolBinder = Substitute.For<ISafeSettingsBinder<object>>();
             boolBinder.Bind(Arg.Is<ISettingsNode>(n => n is ValueNode && ((ValueNode)n).Value == "true"))
                 .Returns(SettingsBindingResult.Success<object>(true));
-            boolBinder.ReturnsForAll<SettingsBindingResult<object>>(_ => SettingsBindingResult.Error<object>(":("));
+            boolBinder.ReturnsForAll(_ => SettingsBindingResult.Error<object>(":("));
 
             provider = Substitute.For<ISettingsBinderProvider>();
             provider.CreateFor(typeof(bool)).Returns(boolBinder);
@@ -104,7 +104,7 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var settings = Object(("StaticProperty", "true"));
 
-            var myClass = CreateBinder<MyClass1>().Bind(settings);
+            var myClass = CreateBinder<MyClass1>().Bind(settings).Value;
 
             myClass.Should().NotBeNull();
             MyClass1.StaticProperty.Should().BeFalse();
@@ -115,7 +115,7 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var settings = Object(("StaticField", "true"));
 
-            var myClass = CreateBinder<MyClass1>().Bind(settings);
+            var myClass = CreateBinder<MyClass1>().Bind(settings).Value;
 
             myClass.Should().NotBeNull();
             MyClass1.StaticField.Should().BeFalse();
@@ -126,10 +126,20 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var settings = Object(("Const", "true"));
 
-            var myClass = CreateBinder<MyClass1>().Bind(settings);
+            var myClass = CreateBinder<MyClass1>().Bind(settings).Value;
 
             myClass.Should().NotBeNull();
             MyClass1.Const.Should().BeFalse();
+        }
+        [Test]
+        public void Should_ignore_computed_properties()
+        {
+            var settings = Object(("ComputedProperty", "true"));
+
+            var myClass = CreateBinder<MyClass1>().Bind(settings).Value;
+
+            myClass.Should().NotBeNull();
+            myClass.ComputedProperty.Should().BeFalse();
         }
 
         [Test]
@@ -304,8 +314,10 @@ namespace Vostok.Configuration.Tests.Binders
             public static bool StaticProperty { get; set; }
             public static bool StaticField;
             public const bool Const = false;
+            public string this[string index] => throw new NotSupportedException();
+            public bool ComputedProperty => false;
         }
-
+        
         private class MyClass2
         {
             [Required]
