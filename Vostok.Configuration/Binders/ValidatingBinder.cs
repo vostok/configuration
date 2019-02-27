@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
@@ -38,10 +39,11 @@ namespace Vostok.Configuration.Binders
 
         private static IEnumerable<string> Validate(Type type, object value)
         {
-            if (!(type.GetCustomAttributes(typeof(ValidateByAttribute), false).FirstOrDefault() is ValidateByAttribute validateByAttribute))
+            var attribute = type.GetCustomAttribute<ValidateByAttribute>();
+            if (attribute == null)
                 yield break;
 
-            var validator = Activator.CreateInstance(validateByAttribute.ValidatorType);
+            var validator = Activator.CreateInstance(attribute.ValidatorType);
             var validateMethod = validator.GetType().GetMethod(nameof(ISettingsValidator<object>.Validate), new[] {type});
             if (validateMethod == null)
                 throw new SettingsValidationException($"Type '{validator.GetType()}' specified as validator for settings of type '{type}' does not contain a suitable {nameof(ISettingsValidator<object>.Validate)} method.");
