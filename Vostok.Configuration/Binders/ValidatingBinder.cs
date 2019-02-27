@@ -4,6 +4,7 @@ using System.Linq;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Binders

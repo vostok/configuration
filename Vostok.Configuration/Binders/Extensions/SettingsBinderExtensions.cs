@@ -1,8 +1,9 @@
 ﻿using Vostok.Configuration.Abstractions.SettingsTree;
-using Vostok.Configuration.Binders;
 using Vostok.Configuration.Binders.Results;
+using Vostok.Configuration.Extensions;
+using Vostok.Configuration.Helpers;
 
-namespace Vostok.Configuration.Helpers
+namespace Vostok.Configuration.Binders.Extensions
 {
     internal static class SettingsBinderExtensions
     {

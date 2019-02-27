@@ -9,6 +9,7 @@ using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Cache;
 using Vostok.Configuration.CurrentValueProvider;
+using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Helpers;
 using Vostok.Configuration.ObservableBinding;
 

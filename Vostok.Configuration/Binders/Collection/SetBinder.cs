@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Binders.Extensions;
 using Vostok.Configuration.Binders.Results;
+using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Binders.Collection

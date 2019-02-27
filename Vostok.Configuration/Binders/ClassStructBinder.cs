@@ -4,7 +4,9 @@ using System.Linq;
 using System.Reflection;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Binders.Extensions;
 using Vostok.Configuration.Binders.Results;
+using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Helpers;
 using OptionalAttribute = Vostok.Configuration.Abstractions.Attributes.OptionalAttribute;
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace Vostok.Configuration.Helpers
+namespace Vostok.Configuration.Extensions
 {
     internal static class TypeExtensions
     {

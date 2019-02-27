@@ -5,7 +5,7 @@ using Vostok.Configuration.Parsers;
 using Vostok.Configuration.Primitives;
 using UriParser = Vostok.Configuration.Parsers.UriParser;
 
-namespace Vostok.Configuration.Binders
+namespace Vostok.Configuration.Binders.Extensions
 {
     internal static class SettingsBinderProviderExtensions
     {

@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace Vostok.Configuration.Helpers
+namespace Vostok.Configuration.Binders.Extensions
 {
     internal static class PropertyInfoExtensions
     {

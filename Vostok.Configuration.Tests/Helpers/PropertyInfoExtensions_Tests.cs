@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.Configuration.Binders.Extensions;
 using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Tests.Helpers

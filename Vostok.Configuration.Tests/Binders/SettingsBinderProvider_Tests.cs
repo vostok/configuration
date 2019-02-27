@@ -8,6 +8,7 @@ using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Binders.Collection;
+using Vostok.Configuration.Binders.Extensions;
 using Vostok.Configuration.Binders.Results;
 using Vostok.Configuration.Parsers;
 

@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Linq;
 using System.Threading;
 using SimpleInjector;
-using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders.Collection;
+using Vostok.Configuration.Binders.Extensions;
+using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Helpers;
 using Vostok.Configuration.Parsers;
 
@@ -55,7 +55,7 @@ namespace Vostok.Configuration.Binders
 
         public ISafeSettingsBinder<T> CreateFor<T>()
         {
-            if (TryObtainBindByBinder<T>(typeof(T), false, out var binder))
+            if (typeof(T).TryObtainBindByBinder<T>(false, out var binder))
                 return binder;
 
             return containerWrapper.Value.GetInstance<ISafeSettingsBinder<T>>();
@@ -63,7 +63,7 @@ namespace Vostok.Configuration.Binders
 
         public ISafeSettingsBinder<object> CreateFor(Type type)
         {
-            if (TryObtainBindByBinder<object>(type, true, out var binder))
+            if (type.TryObtainBindByBinder<object>(true, out var binder))
                 return binder;
 
             return (ISafeSettingsBinder<object>)containerWrapper.Value.GetInstance(typeof(BinderWrapper<>).MakeGenericType(type));
@@ -88,24 +88,6 @@ namespace Vostok.Configuration.Binders
         public void SetupParserFor<T>(ITypeParser parser)
         {
             SetupCustomBinder(new PrimitiveBinder<T>(parser));
-        }
-
-        private static bool TryObtainBindByBinder<T>(Type type, bool wrap, out ISafeSettingsBinder<T> settingsBinder)
-        {
-            settingsBinder = null;
-
-            if (!(type.GetCustomAttributes(typeof(BindByAttribute), false).FirstOrDefault() is BindByAttribute bindByAttribute))
-                return false;
-
-            if (!typeof(ISafeSettingsBinder<>).MakeGenericType(type).IsAssignableFrom(bindByAttribute.BinderType))
-                return false;
-
-            var binder = Activator.CreateInstance(bindByAttribute.BinderType);
-            if (wrap)
-                binder = Activator.CreateInstance(typeof(BinderWrapper<>).MakeGenericType(type), binder);
-
-            settingsBinder = (ISafeSettingsBinder<T>)binder;
-            return true;
         }
 
         private void EnsureCanRegisterBinders()

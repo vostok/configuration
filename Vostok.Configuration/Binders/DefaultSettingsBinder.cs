@@ -2,6 +2,7 @@
 using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Binders.Extensions;
 using Vostok.Configuration.Helpers;
 using Vostok.Configuration.Parsers;
 
