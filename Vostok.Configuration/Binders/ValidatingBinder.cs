@@ -30,15 +30,13 @@ namespace Vostok.Configuration.Binders
 
             var errors = Validate(type, value).ToList();
             if (errors.Any())
-            {
-                throw new SettingsValidationException(string.Join(Environment.NewLine, errors));
-            }
+                throw new SettingsValidationException(
+                    $"Validation of settings of type '{typeof(TSettings)}' failed:{Environment.NewLine}" +
+                    string.Join(Environment.NewLine, errors.Select(e => "\t- " + e)));
         }
 
         private static IEnumerable<string> Validate(Type type, object value)
         {
-            if (value == null)
-                yield break;
             if (!(type.GetCustomAttributes(typeof(ValidateByAttribute), false).FirstOrDefault() is ValidateByAttribute validateByAttribute))
                 yield break;
 
@@ -48,6 +46,9 @@ namespace Vostok.Configuration.Binders
                 throw new SettingsValidationException($"Type '{validator.GetType()}' specified as validator for settings of type '{type}' does not contain a suitable {nameof(ISettingsValidator<object>.Validate)} method.");
             foreach (var error in (IEnumerable<string>)validateMethod.Invoke(validator, new[] {value}))
                 yield return error;
+
+            if (value == null)
+                yield break;
 
             foreach (var field in type.GetInstanceFields())
             {

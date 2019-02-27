@@ -23,9 +23,10 @@ namespace Vostok.Configuration.Tests.Binders
         {
             new Action(() => Validate(new Settings()))
                 .Should().Throw<SettingsValidationException>()
-                .WithMessage(@"Value must not be null!
-Inner.Value must not be null!
-Inner.Inner.Value must not be null!")
+                .WithMessage($@"Validation of settings of type '{typeof(Settings)}' failed:
+	- Value must not be null!
+	- Inner.Value must not be null!
+	- Inner.Inner.Value must not be null!")
                 .Which.ShouldBePrinted();
         }
 
@@ -45,6 +46,14 @@ Inner.Inner.Value must not be null!")
         public void Should_throw_if_validator_class_does_not_have_suitable_interface()
         {
             new Action(() => Validate(new SettingsWithBadValidator()))
+                .Should().Throw<SettingsValidationException>()
+                .Which.ShouldBePrinted();
+        }
+
+        [Test]
+        public void Should_validate_null_values()
+        {
+            new Action(() => Validate<Settings>(null))
                 .Should().Throw<SettingsValidationException>()
                 .Which.ShouldBePrinted();
         }
@@ -91,6 +100,12 @@ Inner.Inner.Value must not be null!")
         {
             public IEnumerable<string> Validate(Settings settings)
             {
+                if (settings == null)
+                {
+                    yield return "Settings must not be null!";
+                    yield break;
+                }
+                
                 if (settings.Value == null)
                     yield return $"{nameof(settings.Value)} must not be null!";
             }
