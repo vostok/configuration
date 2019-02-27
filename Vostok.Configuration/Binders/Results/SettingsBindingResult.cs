@@ -14,6 +14,9 @@ namespace Vostok.Configuration.Binders.Results
 
         public static SettingsBindingResult<TSettings> RequiredPropertyIsNull<TSettings>(string name) =>
             Error<TSettings>($"Required field or property '{name}' must have a non-null value.");
+        
+        public static SettingsBindingResult<TSettings> DictionaryKeyIsNull<TSettings>(string name) =>
+            Error<TSettings>($"Dictionary key cannot be null.");
 
         public static SettingsBindingResult<TSettings> Error<TSettings>(string error) =>
             new SettingsBindingResult<TSettings>(default, new[] {SettingsBindingError.Message(error)});

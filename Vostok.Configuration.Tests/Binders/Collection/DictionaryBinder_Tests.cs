@@ -72,5 +72,26 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         {
             binder.Bind(Value(null)).Value.Should().BeEmpty();
         }
+
+        [Test]
+        public void Should_return_error_if_any_keys_are_null_value()
+        {
+            var settings = Array(Value(null, "true"), Value("key2", "true"));
+
+            new Func<Dictionary<string, bool>>(() => binder.Bind(settings).Value)
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
+        }
+
+        [Test]
+        public void Should_correctly_handle_null_value_values()
+        {
+            var valueBinder = Substitute.For<ISafeSettingsBinder<string>>();
+            valueBinder.Bind(Arg.Any<ISettingsNode>()).Returns(SettingsBindingResult.Success("default"));
+            
+            var settings = Object(Value("xx", null));
+            
+            new DictionaryBinder<string, string>(stringBinder, valueBinder)
+                .Bind(settings).Value["xx"].Should().BeNull();
+        }
     }
 }

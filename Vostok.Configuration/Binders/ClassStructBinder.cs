@@ -64,8 +64,8 @@ namespace Vostok.Configuration.Binders
             var binder = binderProvider.CreateFor(type);
 
             var value = settings?[name];
-            if (value != null && !value.IsNullValue(binder))
-                return binder.BindOrDefault(value);
+            if (!value.IsNullOrMissing(binder))
+                return binder.Bind(value);
 
             if (isRequired)
                 return SettingsBindingResult.RequiredPropertyIsNull<object>(name);

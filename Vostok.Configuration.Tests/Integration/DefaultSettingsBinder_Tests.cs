@@ -120,7 +120,7 @@ namespace Vostok.Configuration.Tests.Integration
                     Object(
                         Object("innerObject", Value("anotherArray", "xxx"))
                     )),
-                Object("JustAProperty", Value("zz")),
+                Object("JustAProperty", Value("zz", "zz")),
                 Array("NestedDictionaries",
                     Array("zz40", Value("key1", "300")),
                     Array("50", Value("key2", "100"), Value("key3", "yy"))

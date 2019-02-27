@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
@@ -60,6 +61,18 @@ namespace Vostok.Configuration.Tests.Binders.Collection
         public void Should_return_empty_array_for_null_value_nodes()
         {
             binder.Bind(Value(null)).Value.Should().BeEmpty();
+        }
+
+        [Test]
+        public void Should_correctly_handle_null_value_values()
+        {
+            var valueBinder = Substitute.For<ISafeSettingsBinder<string>>();
+            valueBinder.Bind(Arg.Any<ISettingsNode>()).Returns(SettingsBindingResult.Success("default"));
+            
+            var settings = Array(Value(null));
+            
+            new ListBinder<string>(valueBinder)
+                .Bind(settings).Value.Single().Should().BeNull();
         }
     }
 }

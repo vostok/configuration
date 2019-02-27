@@ -9,7 +9,7 @@ namespace Vostok.Configuration.Binders.Results
             errors.Select(e => SettingsBindingError.Property(property, e));
 
         public static IEnumerable<SettingsBindingError> ForIndex<T>(this IEnumerable<SettingsBindingError> errors, T index) =>
-            errors.Select(e => SettingsBindingError.Index(index.ToString(), e));
+            errors.Select(e => SettingsBindingError.Index(index?.ToString() ?? "<null>", e));
 
         public static SettingsBindingResult<TTarget> Convert<TSource, TTarget>(this SettingsBindingResult<TSource> result)
             where TSource : TTarget =>
