@@ -43,12 +43,20 @@ namespace Vostok.Configuration.Binders
             return this;
         }
 
+        /// <summary>
+        /// Adds a new binder for type <typeparamref name="TValue"/>. For generic binders use the <see cref="WithCustomBinder(Type,Predicate{Type})"/> overload.
+        /// </summary>
         public DefaultSettingsBinder WithCustomBinder<TValue>(ISettingsBinder<TValue> binder)
         {
             binderProvider.SetupCustomBinder(new SafeBinderWrapper<TValue>(binder));
             return this;
         }
 
+        /// <summary>
+        /// <para>Adds a new binder of generic type.</para>
+        /// <para>The provided <paramref name="binderType"/> should be an open generic type, i.e. <c>typeof(MyBinder&lt;&gt;)</c>.</para>
+        /// <para>The <paramref name="condition"/> predicate is used to select which service types should be handled with this binder.</para> 
+        /// </summary>
         public DefaultSettingsBinder WithCustomBinder(Type binderType, Predicate<Type> condition)
         {
             binderProvider.SetupCustomBinder(binderType, condition);
