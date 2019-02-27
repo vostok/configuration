@@ -29,9 +29,13 @@ namespace Vostok.Configuration.Binders.Collection
             if (!(settings is ArrayNode) && !(settings is ObjectNode))
                 return SettingsBindingResult.NodeTypeMismatch<Dictionary<TKey, TValue>>(settings);
 
+            return SettingsBindingResult.Catch(() => BindInternal(settings));
+        }
+
+        private SettingsBindingResult<Dictionary<TKey, TValue>> BindInternal(ISettingsNode settings)
+        {
             var results = settings.Children.Select(
-                    n =>
-                        (index: n.Name, key: BindKey(n.Name), value: valueBinder.BindOrDefault(n)))
+                    n => (index: n.Name, key: BindKey(n.Name), value: valueBinder.BindOrDefault(n)))
                 .ToList();
 
             var errors = results.SelectMany(

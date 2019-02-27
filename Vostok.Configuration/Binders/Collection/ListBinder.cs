@@ -24,6 +24,11 @@ namespace Vostok.Configuration.Binders.Collection
             if (!(settings is ArrayNode) && !(settings is ObjectNode))
                 return SettingsBindingResult.NodeTypeMismatch<List<T>>(settings);
 
+            return SettingsBindingResult.Catch(() => BindInternal(settings));
+        }
+
+        private SettingsBindingResult<List<T>> BindInternal(ISettingsNode settings)
+        {
             var results = settings.Children.Select((n, i) => (index: i, value: elementBinder.BindOrDefault(n))).ToList();
 
             var errors = results.SelectMany(r => r.value.Errors.ForIndex(r.index)).ToList();

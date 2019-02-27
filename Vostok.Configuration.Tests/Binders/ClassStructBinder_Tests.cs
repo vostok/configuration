@@ -226,7 +226,8 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var settings = Object(("Field1", "true"));
 
-            new Action(() => CreateBinder<MyClass5>().Bind(settings)).Should().Throw<MissingMethodException>();
+            new Func<MyClass5>(() => CreateBinder<MyClass5>().Bind(settings).Value)
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
 
         [Test]

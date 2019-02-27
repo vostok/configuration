@@ -11,16 +11,7 @@ namespace Vostok.Configuration.Binders
 
         public SafeBinderWrapper(ISettingsBinder<T> binder) => Binder = binder;
 
-        public SettingsBindingResult<T> Bind(ISettingsNode rawSettings)
-        {
-            try
-            {
-                return SettingsBindingResult.Success(Binder.Bind(rawSettings));
-            }
-            catch (Exception error)
-            {
-                return SettingsBindingResult.Error<T>(error.ToString());
-            }
-        }
+        public SettingsBindingResult<T> Bind(ISettingsNode rawSettings) => 
+            SettingsBindingResult.Catch(() => SettingsBindingResult.Success(Binder.Bind(rawSettings)));
     }
 }

@@ -25,10 +25,13 @@ namespace Vostok.Configuration.Binders
             if (valueNode == null)
                 return SettingsBindingResult.NodeTypeMismatch<T>(settings);
 
-            if (!parser.TryParse(valueNode.Value, out var result))
-                return SettingsBindingResult.ParsingError<T>(valueNode.Value);
+            return SettingsBindingResult.Catch(() =>
+                {
+                    if (!parser.TryParse(valueNode.Value, out var result))
+                        return SettingsBindingResult.ParsingError<T>(valueNode.Value);
 
-            return SettingsBindingResult.Success((T)result);
+                    return SettingsBindingResult.Success((T)result);
+                });
         }
 
         public bool IsNullValue(ISettingsNode node)

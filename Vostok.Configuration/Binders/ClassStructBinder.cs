@@ -22,6 +22,11 @@ namespace Vostok.Configuration.Binders
             if (!settings.IsNullOrMissing() && !(settings is ObjectNode))
                 return SettingsBindingResult.NodeTypeMismatch<T>(settings);
 
+            return SettingsBindingResult.Catch(() => BindInternal(settings));
+        }
+
+        private SettingsBindingResult<T> BindInternal(ISettingsNode settings)
+        {
             var type = typeof(T);
             var instance = Activator.CreateInstance(type);
 

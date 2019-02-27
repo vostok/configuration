@@ -26,5 +26,17 @@ namespace Vostok.Configuration.Binders.Results
 
         public static SettingsBindingResult<TSettings> Success<TSettings>(TSettings result) =>
             new SettingsBindingResult<TSettings>(result, Array.Empty<SettingsBindingError>());
+
+        public static SettingsBindingResult<TSettings> Catch<TSettings>(Func<SettingsBindingResult<TSettings>> action)
+        {
+            try
+            {
+                return action();
+            }
+            catch (Exception error)
+            {
+                return Error<TSettings>(error.ToString());
+            }
+        }
     }
 }
