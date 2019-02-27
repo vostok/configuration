@@ -55,7 +55,7 @@ namespace Vostok.Configuration.Binders.Collection
             var node = new ValueNode(key);
 
             if (node.IsNullValue(keyBinder))
-                return SettingsBindingResult.DictionaryKeyIsNull<TKey>(key);
+                return SettingsBindingResult.DictionaryKeyIsNull<TKey>();
 
             return keyBinder.Bind(node);
         }

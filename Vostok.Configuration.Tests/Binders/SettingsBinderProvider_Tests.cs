@@ -240,7 +240,8 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_select_binder_specified_in_BindBy_attribute()
         {
-            provider.CreateFor<ClassWithCustomBinder>().Should().BeOfType<CustomBinder>();
+            var wrapper = provider.CreateFor<ClassWithCustomBinder>();
+            ((SafeBinderWrapper<ClassWithCustomBinder>)wrapper).Binder.Should().BeOfType<CustomBinder>();
         }
 
         [Test]
@@ -306,9 +307,9 @@ namespace Vostok.Configuration.Tests.Binders
             
         }
         
-        public class CustomBinder : ISafeSettingsBinder<ClassWithCustomBinder>
+        public class CustomBinder : ISettingsBinder<ClassWithCustomBinder>
         {
-            public SettingsBindingResult<ClassWithCustomBinder> Bind(ISettingsNode rawSettings) => throw new NotImplementedException();
+            public ClassWithCustomBinder Bind(ISettingsNode rawSettings) => throw new NotImplementedException();
         }
     }
 }

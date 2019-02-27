@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
+using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
@@ -215,10 +216,10 @@ namespace Vostok.Configuration.Tests.Integration
                 public string Value;
             }
             
-            private class CustomConfigBinder : ISafeSettingsBinder<CustomBinderConfig>
+            private class CustomConfigBinder : ISettingsBinder<CustomBinderConfig>
             {
-                public SettingsBindingResult<CustomBinderConfig> Bind(ISettingsNode rawSettings) => 
-                    SettingsBindingResult.Success(new CustomBinderConfig { Value = rawSettings.Value?.ToUpper() });
+                public CustomBinderConfig Bind(ISettingsNode rawSettings) => 
+                    new CustomBinderConfig { Value = rawSettings?.Value?.ToUpper() };
             }
         }
 

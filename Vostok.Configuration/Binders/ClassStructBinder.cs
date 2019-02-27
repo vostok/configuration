@@ -38,7 +38,7 @@ namespace Vostok.Configuration.Binders
 
             foreach (var field in type.GetInstanceFields())
             {
-                var result = GetValue(field.FieldType, field.Name, IsRequired(field, requiredByDefault), settings, field.GetValue(instance));
+                var result = GetValue(field.FieldType, field, IsRequired(field, requiredByDefault), settings, field.GetValue(instance));
                 errors.AddRange(result.Errors.ForProperty(field.Name));
                 if (!result.Errors.Any())
                     field.SetValue(instance, result.Value);
@@ -46,7 +46,7 @@ namespace Vostok.Configuration.Binders
 
             foreach (var property in type.GetInstanceProperties())
             {
-                var result = GetValue(property.PropertyType, property.Name, IsRequired(property, requiredByDefault), settings, property.GetValue(instance));
+                var result = GetValue(property.PropertyType, property, IsRequired(property, requiredByDefault), settings, property.GetValue(instance));
                 errors.AddRange(result.Errors.ForProperty(property.Name));
                 if (!result.Errors.Any())
                     property.ForceSetValue(instance, result.Value);
@@ -66,16 +66,20 @@ namespace Vostok.Configuration.Binders
             return member.GetCustomAttribute<RequiredAttribute>() != null;
         }
 
-        private SettingsBindingResult<object> GetValue(Type type, string name, bool isRequired, ISettingsNode settings, object defaultValue)
+        private SettingsBindingResult<object> GetValue(Type type, MemberInfo member, bool isRequired, ISettingsNode settings, object defaultValue)
         {
-            var binder = binderProvider.CreateFor(type);
+            if (!member.TryObtainBindByBinder<object>(true, out var binder))
+                binder = binderProvider.CreateFor(type);
+            
+            if (binder == null)
+                return SettingsBindingResult.BinderNotFound<object>(type);
 
-            var value = settings?[name];
+            var value = settings?[member.Name];
             if (!value.IsNullOrMissing(binder))
                 return binder.Bind(value);
 
             if (isRequired)
-                return SettingsBindingResult.RequiredPropertyIsNull<object>(name);
+                return SettingsBindingResult.RequiredPropertyIsNull<object>(member.Name);
 
             return SettingsBindingResult.Success(value.IsMissing() ? defaultValue : null);
         }

@@ -5,6 +5,7 @@ using NSubstitute;
 using NSubstitute.Extensions;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
+using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
@@ -298,6 +299,22 @@ namespace Vostok.Configuration.Tests.Binders
             Value("NULL").IsNullValue(CreateBinder<MyStruct>()).Should().BeFalse();
         }
 
+        [Test]
+        public void Should_support_BindBy_attribute_on_fields()
+        {
+            var settings = Object(Value("FieldWithBinder", "String"));
+
+            CreateBinder<MyClass8>().Bind(settings).Value.FieldWithBinder.Should().Be("MyString");
+        }
+
+        [Test]
+        public void Should_support_BindBy_attribute_on_properties()
+        {
+            var settings = Object(Value("PropertyWithBinder", "String"));
+
+            CreateBinder<MyClass8>().Bind(settings).Value.PropertyWithBinder.Should().Be("MyString");
+        }
+
         private class MyClass1
         {
             public bool Field1;
@@ -368,10 +385,24 @@ namespace Vostok.Configuration.Tests.Binders
             public bool Property2 { get; set; }
         }
 
+        private class MyClass8
+        {
+            [BindBy(typeof(MyStringBinder))]
+            public string FieldWithBinder;
+            
+            [BindBy(typeof(MyStringBinder))]
+            public string PropertyWithBinder { get; }
+        }
+
         private struct MyStruct
         {
             public bool Property1 { get; set; }
             public bool Property2 { get; set; }
+        }
+        
+        public class MyStringBinder : ISettingsBinder<string>
+        {
+            public string Bind(ISettingsNode rawSettings) => "My" + rawSettings.Value;
         }
 
         private static bool? GetValue(object obj, string fieldName)
