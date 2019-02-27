@@ -21,6 +21,8 @@ namespace Vostok.Configuration.Binders.Collection
         {
             if (settings.IsNullOrMissing())
                 return SettingsBindingResult.Success(new HashSet<T>());
+
+            settings = settings.WrapIfNeeded();
             
             if (!(settings is ArrayNode) && !(settings is ObjectNode))
                 return SettingsBindingResult.NodeTypeMismatch<HashSet<T>>(settings);

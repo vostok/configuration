@@ -18,5 +18,8 @@ namespace Vostok.Configuration.Extensions
         
         public static bool IsNullOrMissing<T>(this ISettingsNode node, ISafeSettingsBinder<T> binder) =>
             node.IsMissing() || node.IsNullValue(binder);
+
+        public static ISettingsNode WrapIfNeeded(this ISettingsNode node) =>
+            node is ValueNode ? new ArrayNode(new[] {node}) : node;
     }
 }

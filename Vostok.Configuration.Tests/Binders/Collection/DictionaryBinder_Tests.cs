@@ -93,5 +93,11 @@ namespace Vostok.Configuration.Tests.Binders.Collection
             new DictionaryBinder<string, string>(stringBinder, valueBinder)
                 .Bind(settings).Value["xx"].Should().BeNull();
         }
+
+        [Test]
+        public void Should_support_binding_from_value_node()
+        {
+            binder.Bind(Value("xx", "true")).Value["xx"].Should().BeTrue();
+        }
     }
 }

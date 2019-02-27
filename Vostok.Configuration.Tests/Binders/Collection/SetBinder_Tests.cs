@@ -78,5 +78,11 @@ namespace Vostok.Configuration.Tests.Binders.Collection
             new ListBinder<string>(valueBinder)
                 .Bind(settings).Value.Single().Should().BeNull();
         }
+
+        [Test]
+        public void Should_support_binding_from_value_node()
+        {
+            binder.Bind(Value("xx")).Value.Single().Should().Be("xx");
+        }
     }
 }

@@ -23,6 +23,8 @@ namespace Vostok.Configuration.Binders.Collection
             if (settings.IsNullOrMissing())
                 return SettingsBindingResult.Success(new List<T>());
             
+            settings = settings.WrapIfNeeded();
+            
             if (!(settings is ArrayNode) && !(settings is ObjectNode))
                 return SettingsBindingResult.NodeTypeMismatch<List<T>>(settings);
 
