@@ -53,6 +53,18 @@ namespace Vostok.Configuration.Tests.Binders
                 .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
 
+        [Test]
+        public void Should_return_default_value_for_missing_nodes()
+        {
+            binder.Bind(null).Value.Should().Be(default(MyEnum));
+        }
+
+        [Test]
+        public void Should_return_default_value_for_null_value_nodes()
+        {
+            binder.Bind(Value(null)).Value.Should().Be(default(MyEnum));
+        }
+
         [Flags]
         private enum MyEnum
         {

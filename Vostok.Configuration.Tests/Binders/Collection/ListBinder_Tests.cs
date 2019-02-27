@@ -62,5 +62,17 @@ namespace Vostok.Configuration.Tests.Binders.Collection
             collection.Add(true);
             collection.Should().Equal(true, true, true);
         }
+
+        [Test]
+        public void Should_return_empty_list_for_missing_nodes()
+        {
+            binder.Bind(null).Value.Should().BeEmpty();
+        }
+
+        [Test]
+        public void Should_return_empty_list_for_null_value_nodes()
+        {
+            binder.Bind(Value(null)).Value.Should().BeEmpty();
+        }
     }
 }

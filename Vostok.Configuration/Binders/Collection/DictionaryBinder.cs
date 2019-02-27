@@ -22,6 +22,9 @@ namespace Vostok.Configuration.Binders.Collection
 
         public SettingsBindingResult<Dictionary<T1, T2>> Bind(ISettingsNode settings)
         {
+            if (settings.IsNullOrMissing())
+                return SettingsBindingResult.Success(new Dictionary<T1, T2>());
+            
             if (!(settings is ArrayNode) && !(settings is ObjectNode))
                 return SettingsBindingResult.NodeTypeMismatch<Dictionary<T1, T2>>(settings);
 

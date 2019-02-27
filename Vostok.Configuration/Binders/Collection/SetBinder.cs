@@ -17,6 +17,9 @@ namespace Vostok.Configuration.Binders.Collection
 
         public SettingsBindingResult<HashSet<T>> Bind(ISettingsNode settings)
         {
+            if (settings.IsNullOrMissing())
+                return SettingsBindingResult.Success(new HashSet<T>());
+            
             if (!(settings is ArrayNode) && !(settings is ObjectNode))
                 return SettingsBindingResult.NodeTypeMismatch<HashSet<T>>(settings);
 

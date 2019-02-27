@@ -15,6 +15,9 @@ namespace Vostok.Configuration.Binders
 
         public SettingsBindingResult<T> Bind(ISettingsNode settings)
         {
+            if (settings.IsNullOrMissing(this))
+                return SettingsBindingResult.Success(default(T));
+                
             var valueNode = settings as ValueNode;
             if (valueNode == null && settings.Children.Count() == 1)
                 valueNode = settings.Children.Single() as ValueNode;

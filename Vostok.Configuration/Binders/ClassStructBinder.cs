@@ -19,7 +19,7 @@ namespace Vostok.Configuration.Binders
 
         public SettingsBindingResult<T> Bind(ISettingsNode settings)
         {
-            if (!(settings is ObjectNode))
+            if (!settings.IsNullOrMissing() && !(settings is ObjectNode))
                 return SettingsBindingResult.NodeTypeMismatch<T>(settings);
 
             var type = typeof(T);

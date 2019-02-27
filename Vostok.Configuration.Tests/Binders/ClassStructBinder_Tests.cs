@@ -239,6 +239,38 @@ namespace Vostok.Configuration.Tests.Binders
             myStruct.Property2.Should().BeTrue();
         }
 
+        [Test]
+        public void Should_return_object_with_default_values_for_missing_nodes()
+        {
+            CreateBinder<MyClass4>().Bind(null).Value.Field1.Should().BeTrue();
+            CreateBinder<MyClass4>().Bind(null).Value.Property1.Should().BeTrue();
+        }
+
+        [Test]
+        public void Should_return_object_with_default_values_for_null_value_nodes()
+        {
+            CreateBinder<MyClass4>().Bind(Value(null)).Value.Field1.Should().BeTrue();
+            CreateBinder<MyClass4>().Bind(Value(null)).Value.Property1.Should().BeTrue();
+        }
+        
+        [Test]
+        public void Should_return_error_if_node_is_missing_and_some_fields_are_required()
+        {
+            new Func<MyClass2>(() => CreateBinder<MyClass2>().Bind(null).Value)
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
+            new Func<MyClass3>(() => CreateBinder<MyClass3>().Bind(null).Value)
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
+        }
+
+        [Test]
+        public void Should_return_error_if_node_is_null_value_and_some_fields_are_required()
+        {
+            new Func<MyClass2>(() => CreateBinder<MyClass2>().Bind(Value(null)).Value)
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
+            new Func<MyClass3>(() => CreateBinder<MyClass3>().Bind(Value(null)).Value)
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
+        }
+
         private class MyClass1
         {
             public bool Field1;

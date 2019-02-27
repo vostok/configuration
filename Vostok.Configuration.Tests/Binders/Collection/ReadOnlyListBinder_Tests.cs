@@ -49,5 +49,17 @@ namespace Vostok.Configuration.Tests.Binders.Collection
             new Func<bool[]>(() => binder.Bind(settings).Value)
                 .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
+
+        [Test]
+        public void Should_return_empty_array_for_missing_nodes()
+        {
+            binder.Bind(null).Value.Should().BeEmpty();
+        }
+
+        [Test]
+        public void Should_return_empty_array_for_null_value_nodes()
+        {
+            binder.Bind(Value(null)).Value.Should().BeEmpty();
+        }
     }
 }

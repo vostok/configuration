@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders.Results;
@@ -19,6 +20,9 @@ namespace Vostok.Configuration.Binders.Collection
 
         public SettingsBindingResult<T[]> Bind(ISettingsNode settings)
         {
+            if (settings.IsNullOrMissing())
+                return SettingsBindingResult.Success(Array.Empty<T>());
+            
             if (!(settings is ArrayNode) && !(settings is ObjectNode))
                 return SettingsBindingResult.NodeTypeMismatch<T[]>(settings);
 

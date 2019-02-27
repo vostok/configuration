@@ -50,5 +50,18 @@ namespace Vostok.Configuration.Tests.Binders
             new Func<int>(() => binder.Bind(Value("xx")).Value)
                 .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
+        
+        [Test]
+        public void Should_return_default_value_for_missing_nodes()
+        {
+            binder.Bind(null).Value.Should().Be(0);
+        }
+
+        [Test]
+        public void Should_return_default_value_for_null_value_nodes()
+        {
+            binder.Bind(Value(null)).Value.Should().Be(0);
+            binder.Bind(Array("xx", Value(null))).Value.Should().Be(0);
+        }
     }
 }
