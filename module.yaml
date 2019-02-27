@@ -14,6 +14,8 @@ notests *default:
     - vostok.configuration.abstractions
     - vostok.commons.helpers/src
     - vostok.commons.threading/src
+    - vostok.commons.formatting/src
+    - vostok.commons.collections/src
 
 full-build > notests:
   deps:
