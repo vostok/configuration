@@ -6,13 +6,17 @@ namespace Vostok.Configuration.CurrentValueProvider
 {
     internal class RawCurrentValueProvider<T> : ICurrentValueProvider<T>
     {
-        private readonly Lazy<IObservable<T>> observable;
-        private volatile TaskCompletionSource<T> resultSource = new TaskCompletionSource<T>();
-        private IDisposable innerSubscription;
+        private readonly Lazy<IObservable<(T, Exception)>> observable;
+        private readonly Action<Exception> errorCallback;
 
-        public RawCurrentValueProvider(Func<IObservable<T>> observableProvider)
+        private volatile TaskCompletionSource<T> resultSource = new TaskCompletionSource<T>();
+        private volatile IDisposable innerSubscription;
+
+        public RawCurrentValueProvider(Func<IObservable<(T, Exception)>> observableProvider, Action<Exception> errorCallback)
         {
-            observable = new Lazy<IObservable<T>>(observableProvider, LazyThreadSafetyMode.ExecutionAndPublication);
+            this.errorCallback = errorCallback;
+
+            observable = new Lazy<IObservable<(T, Exception)>>(observableProvider, LazyThreadSafetyMode.ExecutionAndPublication);
         }
 
         public T Get()
@@ -31,23 +35,33 @@ namespace Vostok.Configuration.CurrentValueProvider
             resultSource.TrySetException(new ObjectDisposedException(nameof(RawCurrentValueProvider<T>)));
         }
 
+        private void OnError(Exception error)
+        {
+            if (resultSource.TrySetException(error))
+            {
+                Dispose();
+            }
+            else errorCallback(error);
+        }
+
+        private void OnNextValue((T settings, Exception error) value)
+        {
+            if (value.error != null)
+            {
+                OnError(value.error);
+            }
+            else
+            {
+                if (!resultSource.TrySetResult(value.settings))
+                    resultSource = NewCompletedSource(value.settings);
+            }
+        }
+
         private static TaskCompletionSource<T> NewCompletedSource(T value)
         {
             var newSource = new TaskCompletionSource<T>();
             newSource.TrySetResult(value);
             return newSource;
-        }
-
-        private void OnError(Exception e)
-        {
-            if (resultSource.TrySetException(e))
-                Dispose();
-        }
-
-        private void OnNextValue(T value)
-        {
-            if (!resultSource.TrySetResult(value))
-                resultSource = NewCompletedSource(value);
         }
 
         private void Subscribe()

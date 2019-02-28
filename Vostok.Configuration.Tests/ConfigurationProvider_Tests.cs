@@ -50,7 +50,7 @@ namespace Vostok.Configuration.Tests
             currentValueProvider.Get().Returns(settings);
             currentValueProviderFactory.Create<object>(default).ReturnsForAnyArgs(currentValueProvider);
             currentValueProviderFactory.WhenForAnyArgs(f => f.Create<object>(default))
-                .Do(callInfo => callInfo.ArgAt<Func<IObservable<object>>>(0).Invoke());
+                .Do(callInfo => callInfo.ArgAt<Func<IObservable<(object, Exception)>>>(0).Invoke());
             
         }
 

@@ -4,6 +4,7 @@ using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using FluentAssertions;
 using FluentAssertions.Extensions;
+using NSubstitute;
 using NUnit.Framework;
 using Vostok.Configuration.CurrentValueProvider;
 
@@ -13,14 +14,16 @@ namespace Vostok.Configuration.Tests.CurrentValueProvider
     internal class RawCurrentValueProvider_Tests
     {
         private RawCurrentValueProvider<object> provider;
-        private ReplaySubject<object> subject;
+        private ReplaySubject<(object, Exception)> subject;
+        private Action<Exception> errorCallback;
         private object value;
 
         [SetUp]
         public void SetUp()
         {
-            provider = new RawCurrentValueProvider<object>(() => subject);
-            subject = new ReplaySubject<object>(1);
+            errorCallback = Substitute.For<Action<Exception>>();
+            provider = new RawCurrentValueProvider<object>(() => subject, errorCallback);
+            subject = new ReplaySubject<(object, Exception)>(1);
             value = new object();
         }
 
@@ -31,7 +34,7 @@ namespace Vostok.Configuration.Tests.CurrentValueProvider
             getTask.Wait(50.Milliseconds());
             getTask.IsCompleted.Should().BeFalse();
             
-            subject.OnNext(value);
+            subject.OnNext((value, null));
 
             getTask.Wait(1.Seconds());
             getTask.IsCompleted.Should().BeTrue();
@@ -45,7 +48,7 @@ namespace Vostok.Configuration.Tests.CurrentValueProvider
             getTask.Wait(50.Milliseconds());
             getTask.IsCompleted.Should().BeFalse();
             
-            subject.OnNext(value);
+            subject.OnNext((value, null));
 
             getTask.Wait(1.Seconds());
             getTask.IsCompleted.Should().BeTrue();
@@ -57,12 +60,12 @@ namespace Vostok.Configuration.Tests.CurrentValueProvider
         [Test]
         public void Should_update_value_when_observable_pushes_new_value()
         {
-            subject.OnNext(value);
+            subject.OnNext((value, null));
             provider.Get();
             
             var newValue = new object();
             
-            subject.OnNext(newValue);
+            subject.OnNext((newValue, null));
 
             provider.Get().Should().Be(newValue);
         }
@@ -81,6 +84,8 @@ namespace Vostok.Configuration.Tests.CurrentValueProvider
             Task.WaitAny(new Task[]{getTask}, 1.Seconds());
             getTask.IsCompleted.Should().BeTrue();
             getTask.Exception.InnerException.Should().BeSameAs(error);
+
+            errorCallback.ReceivedCalls().Should().BeEmpty();
         }
 
         [Test]
@@ -95,6 +100,45 @@ namespace Vostok.Configuration.Tests.CurrentValueProvider
             Task.WaitAny(new Task[]{getTask}, 1.Seconds());
             getTask.IsCompleted.Should().BeTrue();
             getTask.Exception.InnerException.Should().BeOfType<ObjectDisposedException>();
+
+            errorCallback.ReceivedCalls().Should().BeEmpty();
+        }
+
+        [Test]
+        public void Should_throw_when_observable_returns_a_pair_with_error()
+        {
+            var error = new IOException();
+
+            var getTask = Task.Run(() => provider.Get());
+            getTask.Wait(50.Milliseconds());
+            getTask.IsCompleted.Should().BeFalse();
+
+            subject.OnNext((value, error));
+
+            Task.WaitAny(new Task[] { getTask }, 1.Seconds());
+            getTask.IsCompleted.Should().BeTrue();
+            getTask.Exception.InnerException.Should().BeSameAs(error);
+
+            errorCallback.ReceivedCalls().Should().BeEmpty();
+        }
+
+        [Test]
+        public void Should_ignore_errors_after_receiving_first_valid_value_and_pass_them_to_error_callback()
+        {
+            subject.OnNext((value, null));
+
+            provider.Get();
+
+            var error1 = new Exception("1");
+            var error2 = new Exception("2");
+
+            subject.OnNext((null, error2));
+            subject.OnError(error1);
+
+            provider.Get().Should().BeSameAs(value);
+
+            errorCallback.Received(1).Invoke(error1);
+            errorCallback.Received(1).Invoke(error2);
         }
     }
 }

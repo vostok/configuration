@@ -13,8 +13,8 @@ namespace Vostok.Configuration.CurrentValueProvider
         private ICurrentValueProvider<T> currentValueProvider;
         private object cooldownToken;
 
-        public RetryingCurrentValueProvider(Func<IObservable<T>> observableProvider, TimeSpan retryCooldown)
-            : this(() => new RawCurrentValueProvider<T>(observableProvider), retryCooldown)
+        public RetryingCurrentValueProvider(Func<IObservable<(T, Exception)>> observableProvider, TimeSpan retryCooldown, Action<Exception> errorCallback)
+            : this(() => new RawCurrentValueProvider<T>(observableProvider, errorCallback), retryCooldown)
         {
         }
 

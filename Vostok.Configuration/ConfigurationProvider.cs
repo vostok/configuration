@@ -48,7 +48,7 @@ namespace Vostok.Configuration
                 settings.SettingsCallback,
                 new ObservableBinder(new CachingBinder(new ValidatingBinder(settings.Binder ?? new DefaultSettingsBinder()))),
                 new SourceDataCache(settings.MaxSourceCacheSize),
-                new RetryingCurrentValueProviderFactory(settings.ValueRetryCooldown),
+                new RetryingCurrentValueProviderFactory(settings.ValueRetryCooldown, DecorateErrorCallback(settings.ErrorCallback)),
                 settings.SourceRetryCooldown)
         {
         }
@@ -86,7 +86,7 @@ namespace Vostok.Configuration
 
             var cacheItem = sourceDataCache.GetPersistentCacheItem<TSettings>(source);
             if (cacheItem.CurrentValueProvider == null)
-                cacheItem.TrySetCurrentValueProvider(currentValueProviderFactory.Create(Observe<TSettings>));
+                cacheItem.TrySetCurrentValueProvider(currentValueProviderFactory.Create(ObserveWithErrors<TSettings>));
 
             return cacheItem.CurrentValueProvider.Get();
         }
@@ -108,7 +108,7 @@ namespace Vostok.Configuration
             if (cacheItem.CurrentValueProvider != null)
                 return cacheItem.CurrentValueProvider.Get();
 
-            var currentValueProvider = currentValueProviderFactory.Create(() => Observe<TSettings>(source));
+            var currentValueProvider = currentValueProviderFactory.Create(() => ObserveWithErrors<TSettings>(source));
             var result = currentValueProvider.Get();
             if (!cacheItem.TrySetCurrentValueProvider(currentValueProvider))
                 currentValueProvider.Dispose();
