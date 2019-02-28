@@ -3,7 +3,6 @@ using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 using Vostok.Commons.Testing.Observable;
-using Vostok.Configuration.Helpers;
 using System.Reactive.Subjects;
 using Vostok.Configuration.Extensions;
 
@@ -26,12 +25,17 @@ namespace Vostok.Configuration.Tests.Helpers
                 
                 subject.OnNext((settings, error));
 
-                testObserver.Values.Should().Equal(settings);
 
                 if (hasError)
+                {
                     errorCallback.Received(1).Invoke(error);
+                    testObserver.Values.Should().BeEmpty();
+                }
                 else
+                {
                     errorCallback.DidNotReceiveWithAnyArgs().Invoke(null);
+                    testObserver.Values.Should().Equal(settings);
+                }
             }
         }
     }

@@ -68,7 +68,6 @@ namespace Vostok.Configuration
             this.currentValueProviderFactory = currentValueProviderFactory;
             this.sourceRetryCooldown = sourceRetryCooldown;
 
-
             baseScheduler = new EventLoopScheduler();
             scheduler = baseScheduler.Catch<Exception>(
                 exception =>

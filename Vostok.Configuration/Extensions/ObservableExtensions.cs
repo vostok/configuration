@@ -14,6 +14,7 @@ namespace Vostok.Configuration.Extensions
                         if (pair.error != null)
                             callback(pair.error);
                     })
+                .Where(pair => pair.error == null)
                 .Select(pair => pair.settings);
         }
     }
