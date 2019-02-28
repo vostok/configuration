@@ -18,15 +18,15 @@ namespace Vostok.Configuration.Tests.Integration
     [TestFixture]
     internal class ConfigurationProvider_Tests : TreeConstructionSet
     {
-        private IConfigurationProvider provider;
+        private ConfigurationProvider provider;
         private TestConfigurationSource source;
 
         [SetUp]
         public void TestSetup()
         {
             source = new TestConfigurationSource();
-            provider = new ConfigurationProvider(new ConfigurationProviderSettings {SourceRetryCooldown = TimeSpan.Zero})
-                .WithSourceFor<string>(source);
+            provider = new ConfigurationProvider(new ConfigurationProviderSettings {SourceRetryCooldown = TimeSpan.Zero});
+            provider.SetupSourceFor<string>(source);
         }
 
         [Test]
