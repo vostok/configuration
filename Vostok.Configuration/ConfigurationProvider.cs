@@ -59,7 +59,7 @@ namespace Vostok.Configuration
             ICurrentValueProviderFactory currentValueProviderFactory,
             TimeSpan sourceRetryCooldown = default)
         {
-            this.errorCallback = errorCallback ?? (_ => {});
+            this.errorCallback = DecorateErrorCallback(errorCallback);
             this.settingsCallback = settingsCallback ?? ((_, __) => {});
             this.observableBinder = observableBinder;
             this.sourceDataCache = sourceDataCache;
@@ -182,6 +182,22 @@ namespace Vostok.Configuration
                 return;
 
             settingsCallback(newValue.settings, source);
+        }
+
+        [NotNull]
+        private static Action<Exception> DecorateErrorCallback([CanBeNull] Action<Exception> userCallback)
+        {
+            return exception =>
+            {
+                try
+                {
+                    userCallback?.Invoke(exception);
+                }
+                catch
+                {
+                    // ignored
+                }
+            };
         }
     }
 }
