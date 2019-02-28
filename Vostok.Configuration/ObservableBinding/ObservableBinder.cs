@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reactive;
 using System.Reactive.Linq;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Cache;
@@ -32,7 +31,8 @@ namespace Vostok.Configuration.ObservableBinding
                             try
                             {
                                 var boundSettings = binder.Bind(sourceValue.settings, cacheItem);
-                                return Notification.CreateOnNext((boundSettings, null as Exception));
+
+                                return (hasValidSettings: true, settings: boundSettings, error: null as Exception);
                             }
                             catch (Exception error)
                             {
@@ -40,16 +40,17 @@ namespace Vostok.Configuration.ObservableBinding
                             }
                         }
 
-                        return Notification.CreateOnError<(TSettings, Exception)>(resultError);
+                        return (hasValidSettings: false, settings: default, error: resultError);
                     })
-                .Scan(null as Notification<(TSettings settings, Exception error)>,
+                .Scan((hasValidSettings: false, settings: default(TSettings), error: null as Exception),
                     (previousValue, currentValue) =>
                     {
-                        if (currentValue.Kind == NotificationKind.OnError && previousValue != null && previousValue.HasValue)
-                            return Notification.CreateOnNext((previousValue.Value.settings, currentValue.Exception));
+                        if (currentValue.error != null && previousValue.hasValidSettings)
+                            return (true, previousValue.settings, currentValue.error);
+
                         return currentValue;
                     })
-                .Dematerialize()
+                .Select(value => (value.settings, value.error))
                 .DistinctUntilChanged(new TupleEqualityComparer<TSettings, Exception>(EqualityComparer<TSettings>.Default, new ExceptionEqualityComparer()));
         }
     }

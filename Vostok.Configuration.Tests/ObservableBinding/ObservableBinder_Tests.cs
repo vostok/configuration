@@ -208,23 +208,23 @@ namespace Vostok.Configuration.Tests.ObservableBinding
         }
 
         [Test]
-        public void Should_call_onError_when_failed_to_bind_settings_and_no_value_in_cache()
+        public void Should_push_error_without_settings_when_failed_to_bind_settings_and_no_value_in_cache()
         {
             var bindError = new SettingsBindingException("");
             Bind(node).Throws(bindError);
             
             subject.OnNext((node, null));
 
-            observableBinder.SelectBound(subject, () => cacheItem).ShouldCompleteWithError(bindError);
+            observableBinder.SelectBound(subject, () => cacheItem).ShouldStartWithIn(1.Seconds(), (null, bindError));
         }
         
         [Test]
-        public void Should_call_onError_when_source_pushes_error_and_no_value_in_cache()
+        public void Should_push_error_without_settings_when_source_pushes_error_and_no_value_in_cache()
         {
             var error = new IOException();
             subject.OnNext((null, error));
             
-            observableBinder.SelectBound(subject, () => cacheItem).ShouldCompleteWithError(error);
+            observableBinder.SelectBound(subject, () => cacheItem).ShouldStartWithIn(1.Seconds(), (null, error));
         }
 
         [Test]
