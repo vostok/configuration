@@ -23,13 +23,15 @@ namespace Vostok.Configuration
     {
         private readonly ConcurrentDictionary<Type, IConfigurationSource> typeSources = new ConcurrentDictionary<Type, IConfigurationSource>();
         private readonly AtomicBoolean setupDisabled = new AtomicBoolean(false);
-        private readonly EventLoopScheduler scheduler = new EventLoopScheduler();
         private readonly Action<Exception> errorCallback;
         private readonly Action<object, IConfigurationSource> settingsCallback;
         private readonly IObservableBinder observableBinder;
         private readonly ISourceDataCache sourceDataCache;
         private readonly ICurrentValueProviderFactory currentValueProviderFactory;
         private readonly TimeSpan sourceRetryCooldown;
+
+        private readonly EventLoopScheduler baseScheduler;
+        private readonly IScheduler scheduler;
 
         /// <summary>
         /// Create a new <see cref="ConfigurationProvider"/> instance.
@@ -65,6 +67,15 @@ namespace Vostok.Configuration
             this.sourceDataCache = sourceDataCache;
             this.currentValueProviderFactory = currentValueProviderFactory;
             this.sourceRetryCooldown = sourceRetryCooldown;
+
+
+            baseScheduler = new EventLoopScheduler();
+            scheduler = baseScheduler.Catch<Exception>(
+                exception =>
+                {
+                    this.errorCallback(exception);
+                    return true;
+                });
         }
 
         /// <inheritdoc />
@@ -129,7 +140,7 @@ namespace Vostok.Configuration
         /// <inheritdoc />
         public void Dispose()
         {
-            scheduler.Dispose();
+            baseScheduler.Dispose();
             sourceDataCache.Dispose();
         }
 
