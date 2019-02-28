@@ -1,4 +1,5 @@
 using System;
+using System.Reactive;
 using System.Reactive.Subjects;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -178,6 +179,7 @@ namespace Vostok.Configuration.Tests
                 var settings = new object();
                 var error = hasError ? new Exception() : null;
                 
+                subject.OnNext((settings, null));
                 subject.OnNext((settings, error));
 
                 new Action(() => testObserver.Values.Should().Equal(settings))
@@ -187,6 +189,8 @@ namespace Vostok.Configuration.Tests
                     errorCallback.Received(1).Invoke(error);
                 else
                     errorCallback.DidNotReceiveWithAnyArgs().Invoke(null);
+
+                testObserver.Messages.Should().NotContain(n => n.Kind == NotificationKind.OnError);
             }
         }
         
@@ -206,9 +210,39 @@ namespace Vostok.Configuration.Tests
                 var settings = new object();
                 var error = hasError ? new Exception() : null;
                 
+                subject.OnNext((settings, null));
                 subject.OnNext((settings, error));
 
                 new Action(() => testObserver.Values.Should().Equal(settings))
+                    .ShouldPassIn(5.Seconds());
+
+                testObserver.Messages.Should().NotContain(n => n.Kind == NotificationKind.OnError);
+            }
+        }
+
+        [Test]
+        public void Observe_should_not_return_duplicate_settings([Values] bool customSource)
+        {
+            provider = new ConfigurationProvider(null, null, observableBinder, sourceDataCache, currentValueProviderFactory);
+            if (!customSource)
+                provider.SetupSourceFor<object>(source);
+
+            var subject = new Subject<(object, Exception)>();
+            observableBinder.SelectBound<object>(default, default).ReturnsForAnyArgs(subject);
+
+            var testObserver = new TestObserver<object>();
+            using (Observe<object>(customSource).Subscribe(testObserver))
+            {
+                var settings1 = new object();
+                var settings2 = new object();
+
+                subject.OnNext((settings1, null));
+                subject.OnNext((settings1, new Exception("1")));
+                subject.OnNext((settings1, new Exception("2")));
+                subject.OnNext((settings1, null));
+                subject.OnNext((settings2, null));
+
+                new Action(() => testObserver.Values.Should().Equal(settings1, settings2))
                     .ShouldPassIn(5.Seconds());
             }
         }

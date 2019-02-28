@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reactive.Linq;
 
 namespace Vostok.Configuration.Extensions
@@ -15,7 +16,8 @@ namespace Vostok.Configuration.Extensions
                             callback(pair.error);
                     })
                 .Where(pair => pair.error == null)
-                .Select(pair => pair.settings);
+                .Select(pair => pair.settings)
+                .DistinctUntilChanged(EqualityComparer<TSettings>.Default);
         }
     }
 }
