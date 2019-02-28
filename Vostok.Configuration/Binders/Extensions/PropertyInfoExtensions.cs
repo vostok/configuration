@@ -16,5 +16,12 @@ namespace Vostok.Configuration.Binders.Extensions
             if (backingField != null)
                 backingField.SetValue(obj, value);
         }
+
+        public static bool IsAbstract(this PropertyInfo propertyInfo)
+        {
+            var isGetterAbs = propertyInfo.GetMethod?.IsAbstract;
+            var isSetterAbs = propertyInfo.SetMethod?.IsAbstract;
+            return isGetterAbs.HasValue && isGetterAbs.Value || isSetterAbs.HasValue && isSetterAbs.Value;
+        }
     }
 }
