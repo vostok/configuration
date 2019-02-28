@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using Vostok.Configuration.Helpers;
+using Vostok.Configuration.Binders.Extensions;
 
 namespace Vostok.Configuration.Extensions.ConfigurationProvider
 {

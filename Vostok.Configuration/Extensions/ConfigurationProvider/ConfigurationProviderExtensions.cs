@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Binders.Extensions;
 using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Extensions.ConfigurationProvider
