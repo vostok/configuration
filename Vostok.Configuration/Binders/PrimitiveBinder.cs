@@ -18,7 +18,7 @@ namespace Vostok.Configuration.Binders
         {
             if (settings.IsNullOrMissing(this))
                 return SettingsBindingResult.Success(default(T));
-                
+
             var valueNode = settings as ValueNode;
             if (valueNode == null && settings.Children.Count() == 1)
                 valueNode = settings.Children.Single() as ValueNode;
@@ -26,7 +26,8 @@ namespace Vostok.Configuration.Binders
             if (valueNode == null)
                 return SettingsBindingResult.NodeTypeMismatch<T>(settings);
 
-            return SettingsBindingResult.Catch(() =>
+            return SettingsBindingResult.Catch(
+                () =>
                 {
                     if (!parser.TryParse(valueNode.Value, out var result))
                         return SettingsBindingResult.ParsingError<T>(valueNode.Value);

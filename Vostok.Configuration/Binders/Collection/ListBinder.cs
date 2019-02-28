@@ -22,9 +22,9 @@ namespace Vostok.Configuration.Binders.Collection
         {
             if (settings.IsNullOrMissing())
                 return SettingsBindingResult.Success(new List<T>());
-            
+
             settings = settings.WrapIfNeeded();
-            
+
             if (!(settings is ArrayNode) && !(settings is ObjectNode))
                 return SettingsBindingResult.NodeTypeMismatch<List<T>>(settings);
 
@@ -36,7 +36,7 @@ namespace Vostok.Configuration.Binders.Collection
             var results = settings.Children.Select((n, i) => (index: i, value: elementBinder.BindOrDefault(n))).ToList();
 
             var errors = results.SelectMany(r => r.value.Errors.ForIndex(r.index)).ToList();
-            
+
             if (errors.Any())
                 return SettingsBindingResult.Errors<List<T>>(errors);
 

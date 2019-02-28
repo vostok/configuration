@@ -13,7 +13,7 @@ namespace Vostok.Configuration.Binders
         {
             if (settings.IsNullOrMissing())
                 return SettingsBindingResult.Success(default(T));
-            
+
             if (Enum.TryParse<T>(settings.Value, true, out var result))
                 return SettingsBindingResult.Success(result);
 

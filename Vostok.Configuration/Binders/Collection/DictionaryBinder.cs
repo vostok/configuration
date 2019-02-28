@@ -29,7 +29,7 @@ namespace Vostok.Configuration.Binders.Collection
                 return SettingsBindingResult.Success(new Dictionary<TKey, TValue>());
 
             settings = settings.WrapIfNeeded();
-            
+
             if (!(settings is ArrayNode) && !(settings is ObjectNode))
                 return SettingsBindingResult.NodeTypeMismatch<Dictionary<TKey, TValue>>(settings);
 
@@ -45,10 +45,10 @@ namespace Vostok.Configuration.Binders.Collection
             var errors = results.SelectMany(
                     p => p.key.Errors.ForIndex(p.index).Concat(p.value.Errors.ForIndex(p.index)))
                 .ToList();
-            
+
             if (errors.Any())
                 return SettingsBindingResult.Errors<Dictionary<TKey, TValue>>(errors);
-            
+
             return SettingsBindingResult.Success(results.ToDictionary(p => p.key.Value, p => p.value.Value));
         }
 

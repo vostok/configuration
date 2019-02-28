@@ -23,7 +23,7 @@ namespace Vostok.Configuration.Binders.Collection
                 return SettingsBindingResult.Success(new HashSet<T>());
 
             settings = settings.WrapIfNeeded();
-            
+
             if (!(settings is ArrayNode) && !(settings is ObjectNode))
                 return SettingsBindingResult.NodeTypeMismatch<HashSet<T>>(settings);
 
@@ -35,10 +35,10 @@ namespace Vostok.Configuration.Binders.Collection
             var results = settings.Children.Select((n, i) => (index: i, value: elementBinder.BindOrDefault(n))).ToList();
 
             var errors = results.SelectMany(r => r.value.Errors.ForIndex(r.index)).ToList();
-            
+
             if (errors.Any())
                 return SettingsBindingResult.Errors<HashSet<T>>(errors);
-            
+
             return SettingsBindingResult.Success(new HashSet<T>(results.Select(r => r.value.Value)));
         }
 

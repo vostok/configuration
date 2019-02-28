@@ -42,7 +42,8 @@ namespace Vostok.Configuration.ObservableBinding
 
                         return (hasValidSettings: false, settings: default, error: resultError);
                     })
-                .Scan((hasValidSettings: false, settings: default(TSettings), error: null as Exception),
+                .Scan(
+                    (hasValidSettings: false, settings: default(TSettings), error: null as Exception),
                     (previousValue, currentValue) =>
                     {
                         if (currentValue.error != null && previousValue.hasValidSettings)

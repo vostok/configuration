@@ -17,7 +17,7 @@ namespace Vostok.Configuration.Binders
         {
             if (settings.IsNullOrMissing(this))
                 return SettingsBindingResult.Success(null as T?);
-            
+
             return valueBinder.Bind(settings).ConvertToNullable();
         }
 

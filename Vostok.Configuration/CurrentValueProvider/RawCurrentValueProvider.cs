@@ -35,6 +35,13 @@ namespace Vostok.Configuration.CurrentValueProvider
             resultSource.TrySetException(new ObjectDisposedException(nameof(RawCurrentValueProvider<T>)));
         }
 
+        private static TaskCompletionSource<T> NewCompletedSource(T value)
+        {
+            var newSource = new TaskCompletionSource<T>();
+            newSource.TrySetResult(value);
+            return newSource;
+        }
+
         private void OnError(Exception error)
         {
             if (resultSource.TrySetException(error))
@@ -55,13 +62,6 @@ namespace Vostok.Configuration.CurrentValueProvider
                 if (!resultSource.TrySetResult(value.settings))
                     resultSource = NewCompletedSource(value.settings);
             }
-        }
-
-        private static TaskCompletionSource<T> NewCompletedSource(T value)
-        {
-            var newSource = new TaskCompletionSource<T>();
-            newSource.TrySetResult(value);
-            return newSource;
         }
 
         private void Subscribe()

@@ -16,7 +16,7 @@ namespace Vostok.Configuration.Binders.Extensions
             var attribute = member.GetCustomAttribute<BindByAttribute>();
             if (attribute == null)
                 return false;
-            
+
             var memberType = GetMemberType(member);
 
             var desiredBinderType = typeof(ISettingsBinder<>).MakeGenericType(memberType);
@@ -25,7 +25,7 @@ namespace Vostok.Configuration.Binders.Extensions
 
             var binder = Activator.CreateInstance(attribute.BinderType);
             binder = Activator.CreateInstance(typeof(SafeBinderWrapper<>).MakeGenericType(memberType), binder);
-            
+
             if (wrap)
                 binder = Activator.CreateInstance(typeof(BinderWrapper<>).MakeGenericType(memberType), binder);
 

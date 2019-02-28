@@ -7,11 +7,10 @@ namespace Vostok.Configuration.Binders
 {
     internal class SafeBinderWrapper<T> : ISafeSettingsBinder<T>
     {
+        public SafeBinderWrapper(ISettingsBinder<T> binder) => Binder = binder;
         public ISettingsBinder<T> Binder { get; }
 
-        public SafeBinderWrapper(ISettingsBinder<T> binder) => Binder = binder;
-
-        public SettingsBindingResult<T> Bind(ISettingsNode rawSettings) => 
+        public SettingsBindingResult<T> Bind(ISettingsNode rawSettings) =>
             SettingsBindingResult.Catch(() => SettingsBindingResult.Success(Binder.Bind(rawSettings)));
     }
 }

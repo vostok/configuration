@@ -11,7 +11,7 @@ namespace Vostok.Configuration.CurrentValueProvider
             this.retryCooldown = retryCooldown;
         }
 
-        public ICurrentValueProvider<T> Create<T>(Func<IObservable<(T, Exception)>> observableProvider, Action<Exception> errorCallback) 
+        public ICurrentValueProvider<T> Create<T>(Func<IObservable<(T, Exception)>> observableProvider, Action<Exception> errorCallback)
             => new RetryingCurrentValueProvider<T>(observableProvider, retryCooldown, errorCallback);
     }
 }

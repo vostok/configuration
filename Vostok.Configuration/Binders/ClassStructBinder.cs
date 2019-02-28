@@ -28,6 +28,33 @@ namespace Vostok.Configuration.Binders
             return SettingsBindingResult.Catch(() => BindInternal(settings));
         }
 
+        public bool IsNullValue(ISettingsNode node)
+        {
+            if (node.IsNullValue())
+                return true;
+
+            if (typeof(T).IsValueType)
+                return false;
+
+            return node is ValueNode valueNode && valueNode.Value?.ToLower() == "null";
+        }
+
+        private static bool IsRequired(MemberInfo member, bool requiredByDefault)
+        {
+            if (requiredByDefault)
+                return member.GetCustomAttribute<OptionalAttribute>() == null;
+
+            return member.GetCustomAttribute<RequiredAttribute>() != null;
+        }
+
+        private static bool ShouldSkipMemberOfAbstractType(ISafeSettingsBinder<object> binder, Type type)
+        {
+            if (!type.IsAbstract && !type.IsInterface)
+                return false;
+
+            return binder is IBinderWrapper wrapper && wrapper.BinderType.IsClosedTypeOf(typeof(ClassStructBinder<>));
+        }
+
         private SettingsBindingResult<T> BindInternal(ISettingsNode settings)
         {
             var type = typeof(T);
@@ -52,29 +79,21 @@ namespace Vostok.Configuration.Binders
                 if (!result.Errors.Any())
                     property.ForceSetValue(instance, result.Value);
             }
-            
+
             if (errors.Any())
                 return SettingsBindingResult.Errors<T>(errors);
 
             return SettingsBindingResult.Success((T)instance);
         }
 
-        private static bool IsRequired(MemberInfo member, bool requiredByDefault)
-        {
-            if (requiredByDefault)
-                return member.GetCustomAttribute<OptionalAttribute>() == null;
-
-            return member.GetCustomAttribute<RequiredAttribute>() != null;
-        }
-
         private SettingsBindingResult<object> GetValue(Type type, MemberInfo member, bool isRequired, ISettingsNode settings, object defaultValue)
         {
             if (!member.TryObtainBindByBinder<object>(true, out var binder))
                 binder = binderProvider.CreateFor(type);
-            
+
             if (binder == null)
                 return SettingsBindingResult.BinderNotFound<object>(type);
-            
+
             if (ShouldSkipMemberOfAbstractType(binder, type))
                 return SettingsBindingResult.Success(defaultValue);
 
@@ -86,25 +105,6 @@ namespace Vostok.Configuration.Binders
                 return SettingsBindingResult.RequiredPropertyIsNull<object>(member.Name);
 
             return SettingsBindingResult.Success(value.IsMissing() ? defaultValue : null);
-        }
-
-        private bool ShouldSkipMemberOfAbstractType(ISafeSettingsBinder<object> binder, Type type)
-        {
-            if (!type.IsAbstract && !type.IsInterface)
-                return false;
-
-            return binder is IBinderWrapper wrapper && wrapper.BinderType.IsClosedTypeOf(typeof(ClassStructBinder<>));
-        }
-
-        public bool IsNullValue(ISettingsNode node)
-        {
-            if (node.IsNullValue())
-                return true;
-
-            if (typeof(T).IsValueType)
-                return false;
-            
-            return node is ValueNode valueNode && valueNode.Value?.ToLower() == "null";
         }
     }
 }

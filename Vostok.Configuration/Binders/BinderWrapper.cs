@@ -12,11 +12,11 @@ namespace Vostok.Configuration.Binders
 
         public BinderWrapper(ISafeSettingsBinder<T> binder) => this.binder = binder;
 
+        public Type BinderType => binder.GetType();
+
         public SettingsBindingResult<object> Bind(ISettingsNode rawSettings) =>
             binder.Bind(rawSettings).Convert<T, object>();
 
         public bool IsNullValue(ISettingsNode node) => node.IsNullValue(binder);
-        
-        public Type BinderType => binder.GetType();
     }
 }

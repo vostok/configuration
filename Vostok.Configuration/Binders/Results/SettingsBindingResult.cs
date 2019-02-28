@@ -14,16 +14,16 @@ namespace Vostok.Configuration.Binders.Results
 
         public static SettingsBindingResult<TSettings> RequiredPropertyIsNull<TSettings>(string name) =>
             Error<TSettings>($"Required field or property '{name}' must have a non-null value.");
-        
+
         public static SettingsBindingResult<TSettings> DictionaryKeyIsNull<TSettings>() =>
-            Error<TSettings>($"Dictionary key cannot be null.");
-        
+            Error<TSettings>("Dictionary key cannot be null.");
+
         public static SettingsBindingResult<TSettings> BinderNotFound<TSettings>(Type type) =>
             Error<TSettings>($"Could not find suitable binder for type '{type}'.");
 
         public static SettingsBindingResult<TSettings> Error<TSettings>(string error) =>
             new SettingsBindingResult<TSettings>(default, new[] {SettingsBindingError.Message(error)});
-        
+
         public static SettingsBindingResult<TSettings> Errors<TSettings>(IList<SettingsBindingError> errors) =>
             new SettingsBindingResult<TSettings>(default, errors);
 

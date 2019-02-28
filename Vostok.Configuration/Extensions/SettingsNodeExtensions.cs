@@ -15,7 +15,7 @@ namespace Vostok.Configuration.Extensions
 
         public static bool IsNullOrMissing(this ISettingsNode node) =>
             node.IsMissing() || node.IsNullValue();
-        
+
         public static bool IsNullOrMissing<T>(this ISettingsNode node, ISafeSettingsBinder<T> binder) =>
             node.IsMissing() || node.IsNullValue(binder);
 

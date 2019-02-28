@@ -10,7 +10,7 @@ namespace Vostok.Configuration.Printing
         private readonly StringBuilder builder = new StringBuilder();
         private int depth;
 
-        public string Content 
+        public string Content
             => builder.ToString();
 
         public void Indent()
@@ -25,7 +25,7 @@ namespace Vostok.Configuration.Printing
         public void WriteLine()
             => builder.AppendLine();
 
-        public IDisposable IncreaseDepth() 
+        public IDisposable IncreaseDepth()
             => new IncreaseDepthToken(this);
 
         private class IncreaseDepthToken : IDisposable
