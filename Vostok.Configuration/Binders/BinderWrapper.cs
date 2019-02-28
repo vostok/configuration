@@ -1,11 +1,12 @@
-﻿using Vostok.Configuration.Abstractions.SettingsTree;
+﻿using System;
+using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders.Results;
 using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Binders
 {
-    internal class BinderWrapper<T> : ISafeSettingsBinder<object>, INullValuePolicy
+    internal class BinderWrapper<T> : ISafeSettingsBinder<object>, INullValuePolicy, IBinderWrapper
     {
         private readonly ISafeSettingsBinder<T> binder;
 
@@ -15,5 +16,7 @@ namespace Vostok.Configuration.Binders
             binder.Bind(rawSettings).Convert<T, object>();
 
         public bool IsNullValue(ISettingsNode node) => node.IsNullValue(binder);
+        
+        public Type BinderType => binder.GetType();
     }
 }

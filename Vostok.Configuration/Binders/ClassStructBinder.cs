@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using SimpleInjector;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders.Extensions;
@@ -73,6 +74,9 @@ namespace Vostok.Configuration.Binders
             
             if (binder == null)
                 return SettingsBindingResult.BinderNotFound<object>(type);
+            
+            if (ShouldSkipMemberOfAbstractType(binder, type))
+                return SettingsBindingResult.Success(defaultValue);
 
             var value = settings?[member.Name];
             if (!value.IsNullOrMissing(binder))
@@ -82,6 +86,14 @@ namespace Vostok.Configuration.Binders
                 return SettingsBindingResult.RequiredPropertyIsNull<object>(member.Name);
 
             return SettingsBindingResult.Success(value.IsMissing() ? defaultValue : null);
+        }
+
+        private bool ShouldSkipMemberOfAbstractType(ISafeSettingsBinder<object> binder, Type type)
+        {
+            if (!type.IsAbstract && !type.IsInterface)
+                return false;
+
+            return binder is IBinderWrapper wrapper && wrapper.BinderType.IsClosedTypeOf(typeof(ClassStructBinder<>));
         }
 
         public bool IsNullValue(ISettingsNode node)

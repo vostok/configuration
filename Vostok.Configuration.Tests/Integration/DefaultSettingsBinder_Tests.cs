@@ -184,6 +184,49 @@ namespace Vostok.Configuration.Tests.Integration
             result.Should().Be(tree);
         }
 
+        [Test]
+        public void Should_skip_fields_of_abstract_type_if_there_is_no_corresponding_binder()
+        {
+            var settings = Object(Object("AbstractField", ("xx", "yy")));
+
+            binder.Bind<MyClass9>(settings).AbstractField.Should().BeNull();
+        }
+
+        [Test]
+        public void Should_skip_properties_of_abstract_type_if_there_is_no_corresponding_binder()
+        {
+            var settings = Object(Object("AbstractProperty", ("xx", "yy")));
+
+            binder.Bind<MyClass9>(settings).AbstractProperty.Should().BeNull();
+        }
+
+        [Test]
+        public void Should_skip_fields_of_interface_type_if_there_is_no_corresponding_binder()
+        {
+            var settings = Object(Object("InterfaceField", ("xx", "yy")));
+
+            binder.Bind<MyClass9>(settings).InterfaceField.Should().BeNull();
+        }
+
+        [Test]
+        public void Should_skip_properties_of_interface_type_if_there_is_no_corresponding_binder()
+        {
+            var settings = Object(Object("InterfaceProperty", ("xx", "yy")));
+
+            binder.Bind<MyClass9>(settings).InterfaceProperty.Should().BeNull();
+        }
+
+        private class MyClass9
+        {
+            public Abstract AbstractField;
+            public Abstract AbstractProperty { get; set; }
+            public IInterface InterfaceField;
+            public IInterface InterfaceProperty { get; set; }
+        }
+        
+        private abstract class Abstract {}
+        private interface IInterface {}
+
         private static bool TryParseRegex(string s, out Regex regex)
         {
             regex = new Regex(s);
