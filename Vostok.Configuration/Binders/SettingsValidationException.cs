@@ -1,7 +1,7 @@
 using System;
 using JetBrains.Annotations;
 
-namespace Vostok.Configuration
+namespace Vostok.Configuration.Binders
 {
     [PublicAPI]
     public class SettingsValidationException : Exception
