@@ -1,5 +1,6 @@
 ﻿using System;
 using JetBrains.Annotations;
+using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Extensions.Observable
 {
@@ -9,6 +10,11 @@ namespace Vostok.Configuration.Extensions.Observable
     [PublicAPI]
     public static class ObservableExtensions
     {
+        static ObservableExtensions()
+        {
+            RxHacker.Hack();
+        }
+
         /// <summary>
         /// Projects each element of an observable sequence into a new form.
         /// </summary>

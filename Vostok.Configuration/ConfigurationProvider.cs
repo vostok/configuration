@@ -33,6 +33,11 @@ namespace Vostok.Configuration
         private readonly EventLoopScheduler baseScheduler;
         private readonly IScheduler scheduler;
 
+        static ConfigurationProvider()
+        {
+            RxHacker.Hack();
+        }
+
         /// <summary>
         /// Create a new <see cref="ConfigurationProvider"/> instance.
         /// </summary>
