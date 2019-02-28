@@ -43,7 +43,7 @@ namespace Vostok.Configuration.Printing
                 if (DictionaryInspector.IsSimpleDictionary(itemType))
                 {
                     var pairs = DictionaryInspector.EnumerateSimpleDictionary(item);
-                    var tokens = pairs.Select(pair => new PropertyToken(pair.Item1, CreateInternal(pair.Item2, path))).ToArray();
+                    var tokens = pairs.Select(pair => new PropertyToken(pair.Item1, CreateInternal(pair.Item2, path)));
 
                     return new ObjectToken(tokens);
                 }

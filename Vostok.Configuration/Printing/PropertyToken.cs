@@ -2,18 +2,20 @@
 {
     internal class PropertyToken : IPrintToken
     {
-        private readonly string name;
         private readonly IPrintToken value;
 
         public PropertyToken(string name, IPrintToken value)
         {
-            this.name = name;
+            Name = name;
+
             this.value = value;
         }
 
+        public string Name { get; }
+
         public void Print(IPrintContext context)
         {
-            context.Write(name);
+            context.Write(Name);
             context.Write(": ");
 
             if (value is ObjectToken || value is SequenceToken)

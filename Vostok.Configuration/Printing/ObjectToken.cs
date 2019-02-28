@@ -1,25 +1,27 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Vostok.Configuration.Printing
 {
     internal class ObjectToken : IPrintToken
     {
-        private readonly IReadOnlyList<PropertyToken> properties;
+        private readonly PropertyToken[] properties;
 
-        public ObjectToken(IReadOnlyList<PropertyToken> properties)
+        public ObjectToken(IEnumerable<PropertyToken> properties)
         {
-            this.properties = properties;
+            this.properties = properties.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase).ToArray();
         }
 
         public void Print(IPrintContext context)
         {
-            for (var index = 0; index < properties.Count; index++)
+            for (var index = 0; index < properties.Length; index++)
             {
                 context.Indent();
 
                 properties[index].Print(context);
 
-                if (index < properties.Count - 1)
+                if (index < properties.Length - 1)
                     context.WriteLine();
             }
         }
