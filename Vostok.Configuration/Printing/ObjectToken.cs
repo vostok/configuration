@@ -15,13 +15,6 @@ namespace Vostok.Configuration.Printing
 
         public void Print(IPrintContext context)
         {
-            if (properties.Length == 0)
-            {
-                context.Indent();
-                context.Write("<empty>");
-                return;
-            }
-
             for (var index = 0; index < properties.Length; index++)
             {
                 context.Indent();

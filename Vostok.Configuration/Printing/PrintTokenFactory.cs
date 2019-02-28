@@ -16,9 +16,10 @@ namespace Vostok.Configuration.Printing
     {
         private const string NullValue = "<null>";
         private const string ErrorValue = "<error>";
-        private const string EmptyValue = "<empty>";
         private const string SecretValue = "<secret>";
         private const string CyclicValue = "<cyclic>";
+        private const string EmptySequenceValue = "[]";
+        private const string EmptyDictionaryValue = "{}";
 
         [NotNull]
         public static IPrintToken Create([CanBeNull] object item)
@@ -43,7 +44,9 @@ namespace Vostok.Configuration.Printing
                 if (DictionaryInspector.IsSimpleDictionary(itemType))
                 {
                     var pairs = DictionaryInspector.EnumerateSimpleDictionary(item);
-                    var tokens = pairs.Select(pair => new PropertyToken(pair.Item1, CreateInternal(pair.Item2, path)));
+                    var tokens = pairs.Select(pair => new PropertyToken(pair.Item1, CreateInternal(pair.Item2, path))).ToArray();
+                    if (tokens.Length == 0)
+                        return new ValueToken(EmptyDictionaryValue);
 
                     return new ObjectToken(tokens);
                 }
@@ -51,7 +54,7 @@ namespace Vostok.Configuration.Printing
                 if (item is IEnumerable sequence)
                 {
                     if (!sequence.GetEnumerator().MoveNext())
-                        return new ValueToken(EmptyValue);
+                        return new ValueToken(EmptySequenceValue);
 
                     var tokens = new List<IPrintToken>();
 
