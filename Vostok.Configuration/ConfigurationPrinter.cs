@@ -1,7 +1,8 @@
 ﻿using System;
 using JetBrains.Annotations;
+using Vostok.Configuration.Printing;
 
-namespace Vostok.Configuration.Printing
+namespace Vostok.Configuration
 {
     [PublicAPI]
     public static class ConfigurationPrinter

@@ -48,7 +48,7 @@ namespace Vostok.Configuration
                 settings.SettingsCallback,
                 new ObservableBinder(new CachingBinder(new ValidatingBinder(settings.Binder ?? new DefaultSettingsBinder()))),
                 new SourceDataCache(settings.MaxSourceCacheSize),
-                new RetryingCurrentValueProviderFactory(settings.ValueRetryCooldown, DecorateErrorCallback(settings.ErrorCallback)),
+                new RetryingCurrentValueProviderFactory(settings.ValueRetryCooldown),
                 settings.SourceRetryCooldown)
         {
         }
@@ -61,8 +61,8 @@ namespace Vostok.Configuration
             ICurrentValueProviderFactory currentValueProviderFactory,
             TimeSpan sourceRetryCooldown = default)
         {
-            this.errorCallback = DecorateErrorCallback(errorCallback);
-            this.settingsCallback = settingsCallback ?? ((_, __) => {});
+            this.errorCallback = new ErrorCallbackDecorator(errorCallback).Invoke;
+            this.settingsCallback = new SettingsCallbackDecorator(settingsCallback, this.errorCallback).Invoke;
             this.observableBinder = observableBinder;
             this.sourceDataCache = sourceDataCache;
             this.currentValueProviderFactory = currentValueProviderFactory;
@@ -85,7 +85,7 @@ namespace Vostok.Configuration
 
             var cacheItem = sourceDataCache.GetPersistentCacheItem<TSettings>(source);
             if (cacheItem.CurrentValueProvider == null)
-                cacheItem.TrySetCurrentValueProvider(currentValueProviderFactory.Create(ObserveWithErrors<TSettings>));
+                cacheItem.TrySetCurrentValueProvider(currentValueProviderFactory.Create(ObserveWithErrors<TSettings>, errorCallback));
 
             return cacheItem.CurrentValueProvider.Get();
         }
@@ -107,7 +107,7 @@ namespace Vostok.Configuration
             if (cacheItem.CurrentValueProvider != null)
                 return cacheItem.CurrentValueProvider.Get();
 
-            var currentValueProvider = currentValueProviderFactory.Create(() => ObserveWithErrors<TSettings>(source));
+            var currentValueProvider = currentValueProviderFactory.Create(() => ObserveWithErrors<TSettings>(source), errorCallback);
             var result = currentValueProvider.Get();
             if (!cacheItem.TrySetCurrentValueProvider(currentValueProvider))
                 currentValueProvider.Dispose();
@@ -192,22 +192,6 @@ namespace Vostok.Configuration
                 return;
 
             settingsCallback(newValue.settings, source);
-        }
-
-        [NotNull]
-        private static Action<Exception> DecorateErrorCallback([CanBeNull] Action<Exception> userCallback)
-        {
-            return exception =>
-            {
-                try
-                {
-                    userCallback?.Invoke(exception);
-                }
-                catch
-                {
-                    // ignored
-                }
-            };
         }
     }
 }

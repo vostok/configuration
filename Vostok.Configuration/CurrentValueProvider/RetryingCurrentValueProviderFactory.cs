@@ -5,15 +5,13 @@ namespace Vostok.Configuration.CurrentValueProvider
     internal class RetryingCurrentValueProviderFactory : ICurrentValueProviderFactory
     {
         private readonly TimeSpan retryCooldown;
-        private readonly Action<Exception> errorCallback;
 
-        public RetryingCurrentValueProviderFactory(TimeSpan retryCooldown, Action<Exception> errorCallback)
+        public RetryingCurrentValueProviderFactory(TimeSpan retryCooldown)
         {
             this.retryCooldown = retryCooldown;
-            this.errorCallback = errorCallback;
         }
 
-        public ICurrentValueProvider<T> Create<T>(Func<IObservable<(T, Exception)>> observableProvider) 
+        public ICurrentValueProvider<T> Create<T>(Func<IObservable<(T, Exception)>> observableProvider, Action<Exception> errorCallback) 
             => new RetryingCurrentValueProvider<T>(observableProvider, retryCooldown, errorCallback);
     }
 }
