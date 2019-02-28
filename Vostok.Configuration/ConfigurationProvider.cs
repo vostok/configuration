@@ -118,28 +118,6 @@ namespace Vostok.Configuration
         }
 
         /// <inheritdoc />
-        public IObservable<(TSettings settings, Exception error)> ObserveWithErrors<TSettings>()
-        {
-            EnsureSourceExists<TSettings>(out var source);
-            DisableSetupSource();
-
-            return observableBinder
-                .SelectBound(PushAndResubscribeOnErrors(source).ObserveOn(scheduler), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source))
-                .Do(newValue => OnSettingsInstance(source, newValue));
-        }
-
-        /// <inheritdoc />
-        public IObservable<(TSettings settings, Exception error)> ObserveWithErrors<TSettings>(IConfigurationSource source)
-        {
-            if (IsConfiguredFor<TSettings>(source))
-                return ObserveWithErrors<TSettings>();
-
-            return observableBinder
-                .SelectBound(PushAndResubscribeOnErrors(source).ObserveOn(scheduler), () => sourceDataCache.GetLimitedCacheItem<TSettings>(source))
-                .Do(newValue => OnSettingsInstance(source, newValue));
-        }
-
-        /// <inheritdoc />
         public void SetupSourceFor<TSettings>(IConfigurationSource source)
         {
             if (setupDisabled)
@@ -153,6 +131,26 @@ namespace Vostok.Configuration
         {
             scheduler.Dispose();
             sourceDataCache.Dispose();
+        }
+
+        internal IObservable<(TSettings settings, Exception error)> ObserveWithErrors<TSettings>()
+        {
+            EnsureSourceExists<TSettings>(out var source);
+            DisableSetupSource();
+
+            return observableBinder
+                .SelectBound(PushAndResubscribeOnErrors(source).ObserveOn(scheduler), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source))
+                .Do(newValue => OnSettingsInstance(source, newValue));
+        }
+
+        internal IObservable<(TSettings settings, Exception error)> ObserveWithErrors<TSettings>(IConfigurationSource source)
+        {
+            if (IsConfiguredFor<TSettings>(source))
+                return ObserveWithErrors<TSettings>();
+
+            return observableBinder
+                .SelectBound(PushAndResubscribeOnErrors(source).ObserveOn(scheduler), () => sourceDataCache.GetLimitedCacheItem<TSettings>(source))
+                .Do(newValue => OnSettingsInstance(source, newValue));
         }
 
         private void DisableSetupSource()
