@@ -129,7 +129,7 @@ namespace Vostok.Configuration.Tests.Integration
             );
             
             new Action(() => binder.Bind<ComplexConfig2>(tree))
-                .Should().Throw<Exception>().Which.ShouldBePrinted();
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
 
         [Test]

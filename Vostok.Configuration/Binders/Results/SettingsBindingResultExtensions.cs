@@ -13,10 +13,10 @@ namespace Vostok.Configuration.Binders.Results
 
         public static SettingsBindingResult<TTarget> Convert<TSource, TTarget>(this SettingsBindingResult<TSource> result)
             where TSource : TTarget =>
-            new SettingsBindingResult<TTarget>(result.Value, result.Errors);
+            result.Errors.Any() ? SettingsBindingResult.Errors<TTarget>(result.Errors) : SettingsBindingResult.Success<TTarget>(result.Value);
 
         public static SettingsBindingResult<TSource?> ConvertToNullable<TSource>(this SettingsBindingResult<TSource> result)
             where TSource : struct =>
-            new SettingsBindingResult<TSource?>(result.Value, result.Errors);
+            result.Errors.Any() ? SettingsBindingResult.Errors<TSource?>(result.Errors) : SettingsBindingResult.Success<TSource?>(result.Value);
     }
 }
