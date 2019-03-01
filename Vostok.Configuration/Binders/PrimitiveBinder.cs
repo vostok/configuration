@@ -2,7 +2,6 @@
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders.Results;
 using Vostok.Configuration.Extensions;
-using Vostok.Configuration.Helpers;
 using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Binders
