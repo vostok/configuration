@@ -10,7 +10,6 @@ using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
-using Vostok.Configuration.Binders.Results;
 
 namespace Vostok.Configuration.Tests.Integration
 {
@@ -296,16 +295,15 @@ namespace Vostok.Configuration.Tests.Integration
             IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)data).GetEnumerator();
         }
         
-        private class MyListBinder<T> : ISafeSettingsBinder<MyList<T>>
+        private class MyListBinder<T> : ISettingsBinder<MyList<T>>
         {
-            private readonly ISafeSettingsBinder<T> innerBinder;
+            private readonly ISettingsBinder<T> innerBinder;
 
-            public MyListBinder(ISafeSettingsBinder<T> innerBinder) => this.innerBinder = innerBinder;
+            public MyListBinder(ISettingsBinder<T> innerBinder) => this.innerBinder = innerBinder;
 
-            public SettingsBindingResult<MyList<T>> Bind(ISettingsNode rawSettings)
+            public MyList<T> Bind(ISettingsNode rawSettings)
             {
-                return SettingsBindingResult.Success(
-                    new MyList<T>(rawSettings.Children.Select(c => innerBinder.Bind(c).Value)));
+                return new MyList<T>(rawSettings.Children.Select(c => innerBinder.Bind(c)));
             }
         }
     }
