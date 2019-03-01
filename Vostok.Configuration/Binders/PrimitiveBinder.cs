@@ -37,13 +37,24 @@ namespace Vostok.Configuration.Binders
 
         public bool IsNullValue(ISettingsNode node)
         {
-            if (node.IsNullValue())
+            if (IsNullValueNode(node))
                 return true;
 
             if (node?.Children.Count() != 1)
                 return false;
 
-            return node.Children.Single().IsNullValue();
+            return IsNullValueNode(node.Children.Single());
+        }
+
+        private static bool IsNullValueNode(ISettingsNode node)
+        {
+            if (node.IsNullValue())
+                return true;
+
+            if (typeof(T).IsValueType || typeof(T) == typeof(string))
+                return false;
+            
+            return node is ValueNode valueNode && valueNode.Value?.ToLower() == "null";
         }
     }
 }
