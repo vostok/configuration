@@ -46,7 +46,13 @@ namespace Vostok.Configuration.Printing
 
                 if (ToStringDetector.HasCustomToString(itemType))
                     return new ValueToken(item.ToString());
-             
+
+                foreach (var pair in CustomFormatters)
+                {
+                    if (pair.Key.IsAssignableFrom(itemType))
+                        return new ValueToken(pair.Value(item));
+                }
+
                 if (DictionaryInspector.IsSimpleDictionary(itemType))
                 {
                     var pairs = DictionaryInspector.EnumerateSimpleDictionary(item);
@@ -68,12 +74,6 @@ namespace Vostok.Configuration.Printing
                         tokens.Add(CreateInternal(element, path));
 
                     return new SequenceToken(tokens);
-                }
-
-                foreach (var pair in CustomFormatters)
-                {
-                    if (pair.Key.IsAssignableFrom(itemType))
-                        return new ValueToken(pair.Value(item));
                 }
 
                 var fieldsAndProperties = new List<PropertyToken>();

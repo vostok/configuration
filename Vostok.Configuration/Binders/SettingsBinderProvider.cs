@@ -37,6 +37,10 @@ namespace Vostok.Configuration.Binders
                         typeof(ISafeSettingsBinder<>),
                         typeof(EnumBinder<>),
                         c => c.ServiceType.GetGenericArguments()[0].IsEnum);
+                    container.RegisterConditional(
+                        typeof(ISafeSettingsBinder<>),
+                        typeof(ParseMethodBinder<>),
+                        c => !c.Handled && ParseMethodFinder.HasAnyKindOfParseMethod(c.ServiceType.GetGenericArguments()[0]));
                     container.Register(typeof(ISafeSettingsBinder<>), typeof(ListBinder<>));
                     container.RegisterConditional(
                         typeof(ISafeSettingsBinder<>),

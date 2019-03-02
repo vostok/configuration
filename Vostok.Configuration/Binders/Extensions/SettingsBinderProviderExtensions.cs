@@ -28,7 +28,7 @@ namespace Vostok.Configuration.Binders.Extensions
                 .WithParserFor<uint>(uint.TryParse)
                 .WithParserFor<ulong>(ulong.TryParse)
                 .WithParserFor<DateTime>(DateTimeParser.TryParse)
-                .WithParserFor<DateTimeOffset>(DateTimeOffset.TryParse)
+                .WithParserFor<DateTimeOffset>(DateTimeOffsetParser.TryParse)
                 .WithParserFor<TimeSpan>(TimeSpanParser.TryParse)
                 .WithParserFor<IPAddress>(IPAddress.TryParse)
                 .WithParserFor<IPEndPoint>(IPEndPointParser.TryParse)
