@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using JetBrains.Annotations;
 using Vostok.Commons.Collections;
 using Vostok.Commons.Formatting;
@@ -19,6 +20,12 @@ namespace Vostok.Configuration.Printing
         private const string CyclicValue = "<cyclic>";
         private const string EmptySequenceValue = "[]";
         private const string EmptyDictionaryValue = "{}";
+
+        private static readonly Dictionary<Type, Func<object, string>> CustomFormatters
+            = new Dictionary<Type, Func<object, string>>
+            {
+                [typeof(Encoding)] = value => ((Encoding)value).WebName
+            };
 
         [NotNull]
         public static IPrintToken Create([CanBeNull] object item)
@@ -39,7 +46,7 @@ namespace Vostok.Configuration.Printing
 
                 if (ToStringDetector.HasCustomToString(itemType))
                     return new ValueToken(item.ToString());
-
+             
                 if (DictionaryInspector.IsSimpleDictionary(itemType))
                 {
                     var pairs = DictionaryInspector.EnumerateSimpleDictionary(item);
@@ -61,6 +68,12 @@ namespace Vostok.Configuration.Printing
                         tokens.Add(CreateInternal(element, path));
 
                     return new SequenceToken(tokens);
+                }
+
+                foreach (var pair in CustomFormatters)
+                {
+                    if (pair.Key.IsAssignableFrom(itemType))
+                        return new ValueToken(pair.Value(item));
                 }
 
                 var fieldsAndProperties = new List<PropertyToken>();
