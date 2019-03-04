@@ -106,7 +106,10 @@ namespace Vostok.Configuration.Binders
                 container => container.RegisterConditional(
                     typeof(ISafeSettingsBinder<>),
                     typeof(SafeBinderWrapper<>),
-                    c => !c.Handled && condition(c.ServiceType.GetGenericArguments()[0])));
+                    c => 
+                        !c.Handled && 
+                        !(c.Consumer?.ImplementationType?.IsClosedTypeOf(typeof(UnsafeBinderWrapper<>)) ?? false) && 
+                        condition(c.ServiceType.GetGenericArguments()[0])));
         }
 
         public void SetupParserFor<T>(ITypeParser parser)
