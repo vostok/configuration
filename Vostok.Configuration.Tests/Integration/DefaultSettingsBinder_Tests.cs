@@ -175,6 +175,20 @@ namespace Vostok.Configuration.Tests.Integration
         }
 
         [Test]
+        public void Should_support_custom_collections_inside_custom_types()
+        {
+            binder.WithCustomBinder(typeof(MyListBinder<>), _ => true);
+
+            var tree = Object(Array("MyList", "1", "2", "3"));
+
+            var result = binder.Bind<MyConfig>(tree);
+
+            result.MyList.Should()
+                .BeEquivalentTo(
+                    new MyList<int>(new[] {1, 2, 3}));
+        }
+
+        [Test]
         public void Should_leave_settings_as_is_when_binding_to_ISettingsNode()
         {
             var tree = Object("xx", Array("yy", Value("zz")));
@@ -305,6 +319,11 @@ namespace Vostok.Configuration.Tests.Integration
             {
                 return new MyList<T>(rawSettings.Children.Select(c => innerBinder.Bind(c)));
             }
+        }
+
+        private class MyConfig
+        {
+            public MyList<int> MyList;
         }
     }
 }
