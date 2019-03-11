@@ -16,7 +16,7 @@ namespace Vostok.Configuration.Extensions
                 Binder = new IdentityBinder()
             };
 
-            using (var provider = new Configuration.ConfigurationProvider(providerSettings))
+            using (var provider = new ConfigurationProvider(providerSettings))
                 return provider.Get<ISettingsNode>(source);
         }
     }

@@ -4,7 +4,7 @@ using FluentAssertions;
 using FluentAssertions.Extensions;
 using NUnit.Framework;
 using Vostok.Configuration.Abstractions.SettingsTree;
-using Vostok.Configuration.Extensions.ConfigurationProvider;
+using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Tests.Integration;
 
 namespace Vostok.Configuration.Tests.Helpers
@@ -66,85 +66,26 @@ namespace Vostok.Configuration.Tests.Helpers
         [Test]
         public void Get_hot_should_work_with_interface()
         {
-            var config = provider.GetHot<ICustomConfig>(source);
+            var (config, _) = provider.GetHot<ICustomConfig>(source);
 
             config.Should().BeEquivalentTo(initialConfig);
-        }
-
-        [Test]
-        public void Get_hot_should_work_with_normal_class()
-        {
-            var config = provider.GetHot<CustomConfig>(source);
-
-            config.Should().BeEquivalentTo(initialConfig);
-        }
-
-        [Test]
-        public void Get_hot_should_work_with_normal_class_with_fields()
-        {
-            var config = provider.GetHot<CustomConfigWithFields>(source);
-
-            config.Should().BeEquivalentTo(initialConfig);
-        }
-
-        [Test]
-        public void Get_hot_should_not_work_with_abstract_class()
-        {
-            var action = (Action)(() => provider.GetHot<CustomConfigBase>(source));
-
-            action.Should().Throw<Exception>();
-        }
-
-        [Test]
-        public void Get_hot_should_not_work_with_value_types()
-        {
-            var action = (Action)(() => provider.GetHot<bool>(source));
-
-            action.Should().Throw<Exception>();
-        }
-
-        [Test]
-        public void Get_hot_should_ignore_methods_in_interface()
-        {
-            var config = provider.GetHot<ICustomConfig>(source);
-
-            ((Action)config.DoSmthng).Should().Throw<NotImplementedException>();
         }
 
         [Test]
         public void Get_hot_should_return_hot_config()
         {
-            var config = provider.GetHot<ICustomConfig>(source);
+            var (config, _) = provider.GetHot<ICustomConfig>(source);
             UpdateConfig(updatedConfig);
 
             config.Should().BeEquivalentTo(updatedConfig);
         }
 
         [Test]
-        public void Get_hot_should_return_equal_configs()
+        public void Get_hot_should_ignore_methods_in_interface()
         {
-            var configA = provider.GetHot<ICustomConfig>(source);
-            var configB = provider.GetHot<ICustomConfig>(source);
+            var (config, _) = provider.GetHot<ICustomConfig>(source);
 
-            ReferenceEquals(configA, configB).Should().BeTrue();
-        }
-
-        [Test]
-        public void Propertiy_with_interface_type_should_be_hot()
-        {
-            var timeouts = provider.GetHot<ICustomConfig>(source).Timeouts;
-            UpdateConfig(updatedConfig);
-
-            timeouts.Should().BeEquivalentTo(updatedConfig.Timeouts);
-        }
-
-        [Test]
-        public void Field_with_interface_type_should_be_hot()
-        {
-            var timeouts = provider.GetHot<CustomConfigWithFields>(source).Timeouts;
-            UpdateConfig(updatedConfig);
-
-            timeouts.Should().BeEquivalentTo(updatedConfig.Timeouts);
+            ((Action)config.DoSmthng).Should().Throw<NotImplementedException>();
         }
     }
 
@@ -157,35 +98,19 @@ namespace Vostok.Configuration.Tests.Helpers
         void DoSmthng();
     }
 
+    public interface ITimeoutsConfig
+    {
+        TimeSpan Get { get; }
+        TimeSpan Post { get; }
+        TimeSpan Delete { get; }
+    }
+
     public class CustomConfig
     {
         public string SomeText { get; set; }
         public bool EnableThis { get; set; }
         public int MaxCount { get; set; }
         public TimeoutsConfig Timeouts { get; set; }
-    }
-
-    public class CustomConfigWithFields
-    {
-        public string SomeText;
-        public bool EnableThis;
-        public int MaxCount;
-        public ITimeoutsConfig Timeouts;
-    }
-
-    public abstract class CustomConfigBase
-    {
-        public abstract string SomeText { get; set; }
-        public abstract bool EnableThis { get; set; }
-        public abstract int MaxCount { get; set; }
-        public abstract TimeoutsConfig Timeouts { get; set; }
-    }
-
-    public interface ITimeoutsConfig
-    {
-        TimeSpan Get { get; }
-        TimeSpan Post { get; }
-        TimeSpan Delete { get; }
     }
 
     public class TimeoutsConfig

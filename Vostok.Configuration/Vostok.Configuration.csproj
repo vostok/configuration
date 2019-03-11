@@ -40,7 +40,7 @@
     <PackageReference Include="System.Reactive.Core" Version="4.1.2" PrivateAssets="all" />
     <PackageReference Include="System.Reactive.Linq" Version="4.1.2" PrivateAssets="all" />
     <PackageReference Include="SimpleInjector" Version="4.4.3" PrivateAssets="all" />
-    <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
+    <PackageReference Include="System.Reflection.Emit" Version="4.3.0" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
@@ -63,10 +63,12 @@
       <PackageReference Remove="System.Reactive.Core" />
       <PackageReference Remove="System.Reactive.Linq" />
       <PackageReference Remove="SimpleInjector" />
+      <PackageReference Remove="System.Reflection.Emit" />
       <PackageReference Include="System.Reactive" Version="4.1.2" />
       <PackageReference Include="System.Reactive.Core" Version="4.1.2" />
       <PackageReference Include="System.Reactive.Linq" Version="4.1.2" />
       <PackageReference Include="SimpleInjector" Version="4.4.3" />
+      <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
     </ItemGroup>
   </Target>
 
