@@ -11,9 +11,10 @@ namespace Vostok.Configuration.Extensions
 
         public static IEnumerable<PropertyInfo> GetInstanceProperties(this Type type) =>
             type.GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                .Where(p => !p.PropertyType.IsAbstract && p.GetIndexParameters().Length == 0);
+                .Where(p => (p.PropertyType.IsInterface || !p.PropertyType.IsAbstract) && p.GetIndexParameters().Length == 0);
 
         public static IEnumerable<FieldInfo> GetInstanceFields(this Type type) =>
-            type.GetFields(BindingFlags.Instance | BindingFlags.Public).Where(pi => !pi.FieldType.IsAbstract);
+            type.GetFields(BindingFlags.Instance | BindingFlags.Public)
+                .Where(pi => pi.FieldType.IsInterface || !pi.FieldType.IsAbstract);
     }
 }

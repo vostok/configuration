@@ -42,6 +42,10 @@ namespace Vostok.Configuration.Binders
                     container.Register(typeof(ISafeSettingsBinder<ISettingsNode>), typeof(IdentityBinder));
                     container.RegisterConditional(
                         typeof(ISafeSettingsBinder<>),
+                        typeof(InterfaceBinder<>),
+                        c => !c.Handled && c.ServiceType.GetGenericArguments()[0].IsInterface);
+                    container.RegisterConditional(
+                        typeof(ISafeSettingsBinder<>),
                         typeof(ClassStructBinder<>),
                         c => !c.Handled);
                     container.RegisterInstance(typeof(ISettingsBinderProvider), this);

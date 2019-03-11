@@ -127,7 +127,7 @@ namespace Vostok.Configuration.Tests.Integration
                     Array("50", Value("key2", "100"), Value("key3", "yy"))
                 )
             );
-            
+
             new Action(() => binder.Bind<ComplexConfig2>(tree))
                 .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
@@ -201,19 +201,19 @@ namespace Vostok.Configuration.Tests.Integration
         }
 
         [Test]
-        public void Should_skip_fields_of_interface_type_if_there_is_no_corresponding_binder()
+        public void Should_bind_fields_of_interface_type()
         {
             var settings = Object(Object("InterfaceField", ("xx", "yy")));
 
-            binder.Bind<MyClass9>(settings).InterfaceField.Should().BeNull();
+            binder.Bind<MyClass9>(settings).InterfaceField.Should().NotBeNull();
         }
 
         [Test]
-        public void Should_skip_properties_of_interface_type_if_there_is_no_corresponding_binder()
+        public void Should_bind_properties_of_interface_type()
         {
             var settings = Object(Object("InterfaceProperty", ("xx", "yy")));
 
-            binder.Bind<MyClass9>(settings).InterfaceProperty.Should().BeNull();
+            binder.Bind<MyClass9>(settings).InterfaceProperty.Should().NotBeNull();
         }
 
         private class MyClass9
@@ -223,9 +223,9 @@ namespace Vostok.Configuration.Tests.Integration
             public IInterface InterfaceField;
             public IInterface InterfaceProperty { get; set; }
         }
-        
+
         private abstract class Abstract {}
-        private interface IInterface {}
+        public interface IInterface {}
 
         private static bool TryParseRegex(string s, out Regex regex)
         {
@@ -244,24 +244,24 @@ namespace Vostok.Configuration.Tests.Integration
             public InnerConfig InnerObject;
 
             public int? NullableInt;
-            
+
             public CustomBinderConfig CustomBinderObject;
-            
+
 
             public class InnerConfig
             {
                 public int[] AnotherArray { get; set; }
             }
-        
+
             [BindBy(typeof(CustomConfigBinder))]
             public class CustomBinderConfig
             {
                 public string Value;
             }
-            
+
             private class CustomConfigBinder : ISettingsBinder<CustomBinderConfig>
             {
-                public CustomBinderConfig Bind(ISettingsNode rawSettings) => 
+                public CustomBinderConfig Bind(ISettingsNode rawSettings) =>
                     new CustomBinderConfig { Value = rawSettings?.Value?.ToUpper() };
             }
         }
@@ -271,9 +271,9 @@ namespace Vostok.Configuration.Tests.Integration
             public List<List<int>> NestedLists { get; }
 
             public List<ComplexConfig> ListOfObjects;
-            
+
             public Dictionary<int, Dictionary<string, int>> NestedDictionaries { get; set; }
-            
+
             public int JustAProperty { get; private set; }
 
             public HashSet<int> SetOfInts;
@@ -295,7 +295,7 @@ namespace Vostok.Configuration.Tests.Integration
 
             IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)data).GetEnumerator();
         }
-        
+
         private class MyListBinder<T> : ISafeSettingsBinder<MyList<T>>
         {
             private readonly ISafeSettingsBinder<T> innerBinder;
