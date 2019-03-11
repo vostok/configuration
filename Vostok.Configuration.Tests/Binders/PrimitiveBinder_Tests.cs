@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
@@ -62,6 +61,27 @@ namespace Vostok.Configuration.Tests.Binders
         {
             binder.Bind(Value(null)).Value.Should().Be(0);
             binder.Bind(Array("xx", Value(null))).Value.Should().Be(0);
+        }
+
+        [Test]
+        public void Should_treat_null_literal_as_null_for_ref_types()
+        {
+            new PrimitiveBinder<object>(null).IsNullValue(Value("null")).Should().BeTrue();
+            new PrimitiveBinder<object>(null).IsNullValue(Value("NULL")).Should().BeTrue();
+        }
+
+        [Test]
+        public void Should_not_treat_null_literal_as_null_for_value_types()
+        {
+            new PrimitiveBinder<int>(null).IsNullValue(Value("null")).Should().BeFalse();
+            new PrimitiveBinder<int>(null).IsNullValue(Value("NULL")).Should().BeFalse();
+        }
+
+        [Test]
+        public void Should_not_treat_null_literal_as_null_for_string()
+        {
+            new PrimitiveBinder<string>(null).IsNullValue(Value("null")).Should().BeFalse();
+            new PrimitiveBinder<string>(null).IsNullValue(Value("NULL")).Should().BeFalse();
         }
     }
 }

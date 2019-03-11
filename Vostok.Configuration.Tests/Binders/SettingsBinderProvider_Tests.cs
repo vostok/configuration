@@ -205,9 +205,15 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
+        public void Should_select_ParseMethodBinder_for_classes_with_parse_method()
+        {
+            provider.CreateFor<MyClass>().Should().BeOfType<ParseMethodBinder<MyClass>>();
+        }
+
+        [Test]
         public void Should_select_ClassStructBinder_for_unknown_classes()
         {
-            provider.CreateFor<MyClass>().Should().BeOfType<ClassStructBinder<MyClass>>();
+            provider.CreateFor<UnknownClass>().Should().BeOfType<ClassStructBinder<UnknownClass>>();
         }
 
         [Test]
@@ -260,6 +266,10 @@ namespace Vostok.Configuration.Tests.Binders
                 v = new MyClass();
                 return true;
             }
+        }
+
+        public class UnknownClass
+        {
         }
 
         public class MyClass2<T>

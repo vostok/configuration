@@ -3,12 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using JetBrains.Annotations;
 using Vostok.Commons.Collections;
 using Vostok.Commons.Formatting;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Extensions;
-using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Printing
 {
@@ -20,6 +20,12 @@ namespace Vostok.Configuration.Printing
         private const string CyclicValue = "<cyclic>";
         private const string EmptySequenceValue = "[]";
         private const string EmptyDictionaryValue = "{}";
+
+        private static readonly Dictionary<Type, Func<object, string>> CustomFormatters
+            = new Dictionary<Type, Func<object, string>>
+            {
+                [typeof(Encoding)] = value => ((Encoding)value).WebName
+            };
 
         [NotNull]
         public static IPrintToken Create([CanBeNull] object item)
@@ -40,6 +46,12 @@ namespace Vostok.Configuration.Printing
 
                 if (ToStringDetector.HasCustomToString(itemType))
                     return new ValueToken(item.ToString());
+
+                foreach (var pair in CustomFormatters)
+                {
+                    if (pair.Key.IsAssignableFrom(itemType))
+                        return new ValueToken(pair.Value(item));
+                }
 
                 if (DictionaryInspector.IsSimpleDictionary(itemType))
                 {

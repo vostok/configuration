@@ -1,9 +1,9 @@
 using System;
+using System.Reactive.Subjects;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 using Vostok.Commons.Testing.Observable;
-using System.Reactive.Subjects;
 using Vostok.Configuration.Extensions;
 
 namespace Vostok.Configuration.Tests.Helpers

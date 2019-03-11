@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Text;
 using Vostok.Commons.Helpers;
 using Vostok.Configuration.Parsers;
 using Vostok.Configuration.Primitives;
@@ -27,12 +28,13 @@ namespace Vostok.Configuration.Binders.Extensions
                 .WithParserFor<uint>(uint.TryParse)
                 .WithParserFor<ulong>(ulong.TryParse)
                 .WithParserFor<DateTime>(DateTimeParser.TryParse)
-                .WithParserFor<DateTimeOffset>(DateTimeOffset.TryParse)
+                .WithParserFor<DateTimeOffset>(DateTimeOffsetParser.TryParse)
                 .WithParserFor<TimeSpan>(TimeSpanParser.TryParse)
                 .WithParserFor<IPAddress>(IPAddress.TryParse)
                 .WithParserFor<IPEndPoint>(IPEndPointParser.TryParse)
                 .WithParserFor<Guid>(Guid.TryParse)
                 .WithParserFor<Uri>(UriParser.TryParse)
+                .WithParserFor<Encoding>(EncodingParser.TryParse)
                 .WithParserFor<DataSize>(DataSize.TryParse)
                 .WithParserFor<DataRate>(DataRate.TryParse);
         }

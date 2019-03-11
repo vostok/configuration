@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
+using System.Reactive.Threading.Tasks;
 using FluentAssertions.Extensions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -10,8 +12,6 @@ using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
 using Vostok.Configuration.Cache;
 using Vostok.Configuration.ObservableBinding;
-using System.Reactive.Subjects;
-using System.Reactive.Threading.Tasks;
 
 namespace Vostok.Configuration.Tests.ObservableBinding
 {
