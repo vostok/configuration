@@ -73,6 +73,7 @@
       <MergeAssemblies Include="$(PubDir)System.Reactive.dll" />
       <MergeAssemblies Include="$(PubDir)System.Reactive.Core.dll" />
       <MergeAssemblies Include="$(PubDir)System.Reactive.Linq.dll" />
+      <MergeAssemblies Include="$(PubDir)System.Threading.Tasks.Extensions.dll" />
     </ItemGroup>
     <Exec WorkingDirectory="$(PubDir)" Command="$(ILRepackExecutable) /internalize /renameInternalized /log:ilrepack.log /lib:&quot;$(PubDirWithoutSlash)&quot; /out:$(ProjectDir)$(OutputPath)$(AssemblyName).dll @(MergeAssemblies->'%(RelativeDir)%(FileName)%(Extension)', ' ')" />
   </Target>
