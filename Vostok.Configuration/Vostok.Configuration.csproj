@@ -59,7 +59,7 @@
   </Target>
   <Target Name="SetupILRepackProperties" AfterTargets="Build">
     <PropertyGroup>
-      <PubDirWithoutSlash>$(ProjectDir)bin/Publish/$(TargetFramework)/publish</PubDirWithoutSlash>
+      <PubDirWithoutSlash>$(ProjectDir)bin\Publish\$(TargetFramework)\publish</PubDirWithoutSlash>
       <PubDir>$(PubDirWithoutSlash)\</PubDir>
     </PropertyGroup>
   </Target>
@@ -69,11 +69,9 @@
   <Target Name="RepackAssemblies" AfterTargets="Publishing" Condition="'$(Configuration)' != 'Publish'">
     <ItemGroup>
       <MergeAssemblies Include="$(ProjectDir)$(OutputPath)$(AssemblyName).dll" />
-      <MergeAssemblies Include="$(PubDir)SimpleInjector.dll" />
-      <MergeAssemblies Include="$(PubDir)System.Reactive.dll" />
-      <MergeAssemblies Include="$(PubDir)System.Reactive.Core.dll" />
-      <MergeAssemblies Include="$(PubDir)System.Reactive.Linq.dll" />
-      <MergeAssemblies Include="$(PubDir)System.Threading.Tasks.Extensions.dll" />
+      <MergeAssemblies Include="$(PubDir)*.dll" />
+      <MergeAssemblies Remove="$(PubDir)$(AssemblyName).dll" />
+      <MergeAssemblies Remove="$(PubDir)Vostok.Configuration.Abstractions.dll" />
     </ItemGroup>
     <Exec WorkingDirectory="$(PubDir)" Command="$(ILRepackExecutable) /internalize /renameInternalized /log:ilrepack.log /lib:&quot;$(PubDirWithoutSlash)&quot; /out:$(ProjectDir)$(OutputPath)$(AssemblyName).dll @(MergeAssemblies->'%(RelativeDir)%(FileName)%(Extension)', ' ')" />
   </Target>
