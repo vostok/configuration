@@ -1,48 +1,44 @@
 using System;
-using System.Collections.Concurrent;
-using System.Linq;
 using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.Binders.Extensions;
 using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Extensions
 {
-    /// <summary>
-    /// Contains extensions of IConfigurationProvider
-    /// </summary>
     [PublicAPI]
     public static class IConfigurationProviderExtensions
     {
         /// <summary>
-        /// <para>Creates an instance of <typeparamref name="TConfig"/> with hot properties based on <paramref name="provider"/> and <paramref name="source"/>.</para>
+        /// <para>Creates an instance of <typeparamref name="TConfig"/> interface with "hot" properties based on given <paramref name="provider"/> and <paramref name="source"/>.</para>
         /// </summary>
         /// <param name="provider">An instance of <see cref="IConfigurationProvider"/></param>
         /// <param name="source">An instance of <see cref="IConfigurationSource"/></param>
         /// <typeparam name="TConfig">An interface type</typeparam>
         /// <returns>A tuple of the instance of <typeparamref name="TConfig"/> and a disposable result of call IObservable&lt;TConfig&gt;.Subscribe()</returns>
+        /// <exception cref="ArgumentException">Provided <typeparamref name="TConfig"/> type is not an interface.</exception>
         /// <remarks>
-        /// <para>The properties may be not consistent. To avoid this you should use a nested config, for example:</para>
+        /// <para>The properties may not be consistent with each other at any given instant.</para>
+        /// <para>This means that accessing multiple properties of the returned object may yield results from different versions of configuration.</para>
+        /// <para>This incosistency may be avoided by using nested configuration classes/interfaces:</para>
         /// <code>
         /// interface IConfig
         /// {
-        ///     string SomeString { get; }
-        ///     TimeSpan Timeout { get; }
-        ///     IConsistentConfig SubConfig { get; }
+        ///     // Observing SubConfig1 and SubConfig2 may yield results from different configurations due to race condition.
+        ///     ISubConfig1 SubConfig1 { get; }
+        ///     ISubConfig2 SubConfig2 { get; }
         /// }
-        /// interface IConsistentConfig
+        /// interface ISubConfig1
         /// {
         ///     int MaxCount { get; }
         ///     bool EnableFeature { get; }
         /// }
         /// class App
         /// {
-        ///     public void DoWork(IConfigurationProvider provider, IConfigurationSource source)
+        ///     public void Run(IConfigurationProvider provider, IConfigurationSource source)
         ///     {
         ///         var config = provider.GetHot&lt;IConfig&gt;(source);
-        ///         var subConfig = config.SubConfig;
-        ///         // now subConfig.MaxCount and subConfig.EnableFeature are consistent
-        ///         // but config.SomeString and config.Timeout are not
+        ///         var subConfig1 = config.SubConfig1;
+        ///         // Consistently observe all properties of subConfig1.
         ///     }
         /// }
         /// </code>
@@ -52,7 +48,8 @@ namespace Vostok.Configuration.Extensions
 
         private static (object, IDisposable) GetHot(this IConfigurationProvider provider, Type type, IConfigurationSource source)
         {
-            if (!type.IsInterface) throw new ArgumentException($"Unsupported type {type.FullName}. Only interfaces are supported.");
+            if (!type.IsInterface)
+                throw new ArgumentException($"Unsupported type '{type.FullName}'. Only interfaces are supported.");
 
             var wrapperType = DynamicTypesHelper.ImplementWrapperType(type);
             var wrapper = Activator.CreateInstance(wrapperType);
