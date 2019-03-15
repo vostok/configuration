@@ -14,10 +14,15 @@ namespace Vostok.Configuration.Binders
         {
             var implType = DynamicTypesHelper.ImplementType(typeof(TInterface));
             var classBinderType = typeof(ClassStructBinder<>).MakeGenericType(implType);
+
             classBinder = Activator.CreateInstance(classBinderType, binderProvider);
-            var bindMethod = classBinderType.GetMethod("Bind");
-            if (bindMethod == null) throw new NullReferenceException("Can't find Bind method");
+
+            var bindMethod = classBinderType.GetMethod(nameof(ISettingsBinder.Bind));
+            if (bindMethod == null)
+                throw new NullReferenceException($"Can't find '{nameof(ISettingsBinder.Bind)}' method on '{classBinderType.FullName}' type.");
+
             var bindingResultWrapperType = typeof(SettingsBindingResultWrapper<,>).MakeGenericType(typeof(TInterface), implType);
+
             callBindMethod = node =>
             {
                 var bindingResult = bindMethod.Invoke(classBinder, new object[] {node});
