@@ -24,7 +24,7 @@ namespace Vostok.Configuration.Helpers
 
         private const string CurrentInstanceFieldName = "<instance>";
 
-        private const string DefaultBuilder = "default";
+        private const string Default = "default";
         private const string DynamicAssemblyName = "Vostok.Configuration.Dynamic";
 
         private static readonly ConcurrentDictionary<Type, Lazy<Type>> typesCache = new ConcurrentDictionary<Type, Lazy<Type>>();
@@ -84,18 +84,19 @@ namespace Vostok.Configuration.Helpers
 
         private static ModuleBuilder ObtainModuleBuilder(Type type)
         {
-            var key = type.IsPublic ? null : type.Assembly.GetName().Name;
+            var key = type.IsPublic ? Default : type.Assembly.GetName().Name;
 
             return moduleBuilderCache.GetOrAdd(
-                key ?? DefaultBuilder,
-                targetAssembly => new Lazy<ModuleBuilder>(
-                    () => CreateModuleBuilder(targetAssembly))).Value;
+                    key,
+                    targetAssembly => new Lazy<ModuleBuilder>(
+                        () => CreateModuleBuilder(targetAssembly)))
+                .Value;
         }
-        
+
         private static ModuleBuilder CreateModuleBuilder(string targetAssembly)
         {
-            var isDefault = targetAssembly == DefaultBuilder;
-            
+            var isDefault = targetAssembly == Default;
+
             var name = isDefault
                 ? DynamicAssemblyName
                 : DynamicAssemblyName + "." + targetAssembly;
@@ -105,7 +106,7 @@ namespace Vostok.Configuration.Helpers
             var moduleBuilder = assemblyBuilder.DefineDynamicModule(name);
 
             if (!isDefault)
-                SkipVisibilityChecksHelper.Setup(assemblyBuilder, moduleBuilder, new[]{targetAssembly});
+                SkipVisibilityChecksHelper.Setup(assemblyBuilder, moduleBuilder, new[] {targetAssembly});
 
             return moduleBuilder;
         }
