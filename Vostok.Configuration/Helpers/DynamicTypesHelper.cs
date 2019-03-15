@@ -24,17 +24,12 @@ namespace Vostok.Configuration.Helpers
 
         private const string CurrentInstanceFieldName = "<instance>";
 
+        private const string Default = "default";
+        private const string DynamicAssemblyName = "Vostok.Configuration.Dynamic";
+
         private static readonly ConcurrentDictionary<Type, Lazy<Type>> typesCache = new ConcurrentDictionary<Type, Lazy<Type>>();
         private static readonly ConcurrentDictionary<Type, Lazy<Type>> wrappersCache = new ConcurrentDictionary<Type, Lazy<Type>>();
-
-        private static readonly Lazy<ModuleBuilder> lazyModuleBuilder = new Lazy<ModuleBuilder>(
-            () =>
-            {
-                const string name = "Vostok.Configuration.Dynamic.dll";
-                var assemblyName = new AssemblyName(name);
-                var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndCollect);
-                return assemblyBuilder.DefineDynamicModule(name);
-            });
+        private static readonly ConcurrentDictionary<string, Lazy<ModuleBuilder>> moduleBuilderCache = new ConcurrentDictionary<string, Lazy<ModuleBuilder>>();
 
         public static Type ImplementType(Type type) =>
             type.IsInterface || type.IsAbstract
@@ -76,12 +71,45 @@ namespace Vostok.Configuration.Helpers
             return typeBuilder.CreateTypeInfo();
         }
 
-        private static TypeBuilder StartType(Type baseType, string suffix) =>
-            lazyModuleBuilder.Value.DefineType(
+        private static TypeBuilder StartType(Type baseType, string suffix)
+        {
+            var builder = ObtainModuleBuilder(baseType);
+
+            return builder.DefineType(
                 $"{baseType.Namespace}.{baseType.Name}<{suffix}>",
                 DefaultTypeAttributes,
                 baseType.IsInterface ? null : baseType,
                 baseType.IsInterface ? new[] {baseType} : Type.EmptyTypes);
+        }
+
+        private static ModuleBuilder ObtainModuleBuilder(Type type)
+        {
+            var key = type.IsPublic ? Default : type.Assembly.GetName().Name;
+
+            return moduleBuilderCache.GetOrAdd(
+                    key,
+                    targetAssembly => new Lazy<ModuleBuilder>(
+                        () => CreateModuleBuilder(targetAssembly)))
+                .Value;
+        }
+
+        private static ModuleBuilder CreateModuleBuilder(string targetAssembly)
+        {
+            var isDefault = targetAssembly == Default;
+
+            var name = isDefault
+                ? DynamicAssemblyName
+                : DynamicAssemblyName + "." + targetAssembly;
+
+            var assemblyName = new AssemblyName(name);
+            var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndCollect);
+            var moduleBuilder = assemblyBuilder.DefineDynamicModule(name);
+
+            if (!isDefault)
+                SkipVisibilityChecksHelper.Setup(assemblyBuilder, moduleBuilder, new[] {targetAssembly});
+
+            return moduleBuilder;
+        }
 
         private static void ImplementAutoProperty(TypeBuilder typeBuilder, PropertyInfo propertyInfo) =>
             ImplementProperty(

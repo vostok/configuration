@@ -81,6 +81,23 @@ namespace Vostok.Configuration.Tests.Helpers
         }
 
         [Test]
+        public void Get_hot_should_work_with_internal_interface()
+        {
+            var (config, _) = provider.GetHot<IInternalCustomConfig>(source);
+
+            config.Should().BeEquivalentTo(initialConfig);
+        }
+
+        [Test]
+        public void Get_hot_should_return_hot_config_with_internal_interface()
+        {
+            var (config, _) = provider.GetHot<IInternalCustomConfig>(source);
+            UpdateConfig(updatedConfig);
+
+            config.Should().BeEquivalentTo(updatedConfig);
+        }
+
+        [Test]
         public void Get_hot_should_ignore_methods_in_interface()
         {
             var (config, _) = provider.GetHot<ICustomConfig>(source);
@@ -99,6 +116,22 @@ namespace Vostok.Configuration.Tests.Helpers
     }
 
     public interface ITimeoutsConfig
+    {
+        TimeSpan Get { get; }
+        TimeSpan Post { get; }
+        TimeSpan Delete { get; }
+    }
+
+    internal interface IInternalCustomConfig
+    {
+        string SomeText { get; }
+        bool EnableThis { get; }
+        int MaxCount { get; }
+        IInternalTimeoutsConfig Timeouts { get; }
+        void DoSmthng();
+    }
+
+    internal interface IInternalTimeoutsConfig
     {
         TimeSpan Get { get; }
         TimeSpan Post { get; }
