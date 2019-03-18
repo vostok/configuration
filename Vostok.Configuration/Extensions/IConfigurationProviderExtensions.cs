@@ -1,5 +1,4 @@
 using System;
-using System.Reflection;
 using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Helpers;
@@ -9,12 +8,29 @@ namespace Vostok.Configuration.Extensions
     [PublicAPI]
     public static class IConfigurationProviderExtensions
     {
+        /// <inheritdoc cref="CreateHot{TConfig}(IConfigurationProvider, IConfigurationSource)"/>
+        /// <param name="subscription">A disposable result of call IObservable&lt;TConfig&gt;.Subscribe()</param>
+        public static TConfig CreateHot<TConfig>(this IConfigurationProvider provider, IConfigurationSource source, out IDisposable subscription)
+            where TConfig : class => (TConfig)provider.CreateHot(typeof(TConfig), source, out subscription);
+
+        /// <inheritdoc cref="CreateHot{TConfig}(IConfigurationProvider)"/>
+        /// <param name="subscription">A disposable result of call IObservable&lt;TConfig&gt;.Subscribe()</param>
+        public static TConfig CreateHot<TConfig>(this IConfigurationProvider provider, out IDisposable subscription)
+            where TConfig : class => provider.CreateHot<TConfig>(null, out subscription);
+
+        /// <inheritdoc cref="CreateHot{TConfig}(IConfigurationProvider)"/>
         /// <summary>
         /// <para>Creates an instance of <typeparamref name="TConfig"/> interface with "hot" properties based on given <paramref name="provider"/> and <paramref name="source"/>.</para>
         /// </summary>
-        /// <param name="provider">An instance of <see cref="IConfigurationProvider"/></param>
         /// <param name="source">An instance of <see cref="IConfigurationSource"/></param>
-        /// <param name="subscription">A disposable result of call IObservable&lt;TConfig&gt;.Subscribe()</param>
+        public static TConfig CreateHot<TConfig>(this IConfigurationProvider provider, IConfigurationSource source)
+            where TConfig : class => provider.CreateHot<TConfig>(source, out _);
+
+
+        /// <summary>
+        /// <para>Creates an instance of <typeparamref name="TConfig"/> interface with "hot" properties based on given <paramref name="provider"/> with a preconfigured source of <typeparamref name="TConfig"/>.</para>
+        /// </summary>
+        /// <param name="provider">An instance of <see cref="IConfigurationProvider"/></param>
         /// <typeparam name="TConfig">An interface type</typeparam>
         /// <returns>The instance of <typeparamref name="TConfig"/></returns>
         /// <exception cref="ArgumentException">Provided <typeparamref name="TConfig"/> type is not an interface.</exception>
@@ -36,29 +52,17 @@ namespace Vostok.Configuration.Extensions
         /// }
         /// class App
         /// {
-        ///     public void Run(IConfigurationProvider provider, IConfigurationSource source)
+        ///     public void Run(IConfigurationProvider provider)
         ///     {
-        ///         var config = provider.CreateHot&lt;IConfig&gt;(source, out var _);
+        ///         var config = provider.CreateHot&lt;IConfig&gt;();
         ///         var subConfig1 = config.SubConfig1;
         ///         // Consistently observe all properties of subConfig1.
         ///     }
         /// }
         /// </code>
         /// </remarks>
-        public static TConfig CreateHot<TConfig>(this IConfigurationProvider provider, IConfigurationSource source, out IDisposable subscription)
-            where TConfig : class => (TConfig)provider.CreateHot(typeof(TConfig), source, out subscription);
-
-        /// <inheritdoc cref="CreateHot{TConfig}(Vostok.Configuration.Abstractions.IConfigurationProvider,Vostok.Configuration.Abstractions.IConfigurationSource,out System.IDisposable)"/>
-        public static TConfig CreateHot<TConfig>(this IConfigurationProvider provider, out IDisposable subscription)
-            where TConfig : class => provider.CreateHot<TConfig>(null, out subscription);
-
-        /// <inheritdoc cref="CreateHot{TConfig}(Vostok.Configuration.Abstractions.IConfigurationProvider,Vostok.Configuration.Abstractions.IConfigurationSource,out System.IDisposable)"/>
-        public static TConfig CreateHot<TConfig>(this IConfigurationProvider provider, IConfigurationSource source)
-            where TConfig : class => provider.CreateHot<TConfig>(source, out _);
-
-        /// <inheritdoc cref="CreateHot{TConfig}(Vostok.Configuration.Abstractions.IConfigurationProvider,Vostok.Configuration.Abstractions.IConfigurationSource,out System.IDisposable)"/>
         public static TConfig CreateHot<TConfig>(this IConfigurationProvider provider)
-            where TConfig : class => provider.CreateHot<TConfig>(null);
+            where TConfig : class => provider.CreateHot<TConfig>(null, out _);
 
         private static object CreateHot(this IConfigurationProvider provider, Type type, IConfigurationSource source, out IDisposable subscription)
         {
