@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Helpers;
@@ -13,13 +14,14 @@ namespace Vostok.Configuration.Extensions
         /// </summary>
         /// <param name="provider">An instance of <see cref="IConfigurationProvider"/></param>
         /// <param name="source">An instance of <see cref="IConfigurationSource"/></param>
+        /// <param name="subscription">A disposable result of call IObservable&lt;TConfig&gt;.Subscribe()</param>
         /// <typeparam name="TConfig">An interface type</typeparam>
-        /// <returns>A tuple of the instance of <typeparamref name="TConfig"/> and a disposable result of call IObservable&lt;TConfig&gt;.Subscribe()</returns>
+        /// <returns>The instance of <typeparamref name="TConfig"/></returns>
         /// <exception cref="ArgumentException">Provided <typeparamref name="TConfig"/> type is not an interface.</exception>
         /// <remarks>
         /// <para>The properties may not be consistent with each other at any given instant.</para>
         /// <para>This means that accessing multiple properties of the returned object may yield results from different versions of configuration.</para>
-        /// <para>This incosistency may be avoided by using nested configuration classes/interfaces:</para>
+        /// <para>This inconsistency may be avoided by using nested configuration classes/interfaces:</para>
         /// <code>
         /// interface IConfig
         /// {
@@ -36,17 +38,29 @@ namespace Vostok.Configuration.Extensions
         /// {
         ///     public void Run(IConfigurationProvider provider, IConfigurationSource source)
         ///     {
-        ///         var config = provider.GetHot&lt;IConfig&gt;(source);
+        ///         var config = provider.CreateHot&lt;IConfig&gt;(source, out var _);
         ///         var subConfig1 = config.SubConfig1;
         ///         // Consistently observe all properties of subConfig1.
         ///     }
         /// }
         /// </code>
         /// </remarks>
-        public static (TConfig, IDisposable) GetHot<TConfig>(this IConfigurationProvider provider, IConfigurationSource source)
-            where TConfig : class => ((TConfig, IDisposable))provider.GetHot(typeof(TConfig), source);
+        public static TConfig CreateHot<TConfig>(this IConfigurationProvider provider, IConfigurationSource source, out IDisposable subscription)
+            where TConfig : class => (TConfig)provider.CreateHot(typeof(TConfig), source, out subscription);
 
-        private static (object, IDisposable) GetHot(this IConfigurationProvider provider, Type type, IConfigurationSource source)
+        /// <inheritdoc cref="CreateHot{TConfig}(Vostok.Configuration.Abstractions.IConfigurationProvider,Vostok.Configuration.Abstractions.IConfigurationSource,out System.IDisposable)"/>
+        public static TConfig CreateHot<TConfig>(this IConfigurationProvider provider, out IDisposable subscription)
+            where TConfig : class => provider.CreateHot<TConfig>(null, out subscription);
+
+        /// <inheritdoc cref="CreateHot{TConfig}(Vostok.Configuration.Abstractions.IConfigurationProvider,Vostok.Configuration.Abstractions.IConfigurationSource,out System.IDisposable)"/>
+        public static TConfig CreateHot<TConfig>(this IConfigurationProvider provider, IConfigurationSource source)
+            where TConfig : class => provider.CreateHot<TConfig>(source, out _);
+
+        /// <inheritdoc cref="CreateHot{TConfig}(Vostok.Configuration.Abstractions.IConfigurationProvider,Vostok.Configuration.Abstractions.IConfigurationSource,out System.IDisposable)"/>
+        public static TConfig CreateHot<TConfig>(this IConfigurationProvider provider)
+            where TConfig : class => provider.CreateHot<TConfig>(null);
+
+        private static object CreateHot(this IConfigurationProvider provider, Type type, IConfigurationSource source, out IDisposable subscription)
         {
             if (!type.IsInterface)
                 throw new ArgumentException($"Unsupported type '{type.FullName}'. Only interfaces are supported.");
@@ -58,9 +72,9 @@ namespace Vostok.Configuration.Extensions
             var observable = (IObservable<object>)GetConfigObservable(provider, type, source);
 
             DynamicTypesHelper.SetCurrentInstance(wrapper, initialConfig);
-            var subscription = observable.Subscribe(nextInstance => DynamicTypesHelper.SetCurrentInstance(wrapper, nextInstance));
+            subscription = observable.Subscribe(nextInstance => DynamicTypesHelper.SetCurrentInstance(wrapper, nextInstance));
 
-            return (wrapper, subscription);
+            return wrapper;
         }
 
         private static object GetInitialConfig(IConfigurationProvider provider, Type configTypeImpl, IConfigurationSource source) =>

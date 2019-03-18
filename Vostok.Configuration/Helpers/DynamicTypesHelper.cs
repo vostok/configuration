@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -75,11 +76,50 @@ namespace Vostok.Configuration.Helpers
         {
             var builder = ObtainModuleBuilder(baseType);
 
-            return builder.DefineType(
+            var typeBuilder = builder.DefineType(
                 $"{baseType.Namespace}.{baseType.Name}<{suffix}>",
                 DefaultTypeAttributes,
                 baseType.IsInterface ? null : baseType,
                 baseType.IsInterface ? new[] {baseType} : Type.EmptyTypes);
+
+            foreach (var attribute in baseType.CustomAttributes)
+                typeBuilder.SetCustomAttribute(CreateCustomAttributeBuilder(attribute));
+
+            return typeBuilder;
+        }
+
+        private static CustomAttributeBuilder CreateCustomAttributeBuilder(CustomAttributeData attribute)
+        {
+            var ctorArgs = attribute.ConstructorArguments.Select(a => a.Value).ToArray();
+            if (attribute.NamedArguments == null || !attribute.NamedArguments.Any())
+                return new CustomAttributeBuilder(attribute.Constructor, ctorArgs);
+
+            var propInfos = new List<PropertyInfo>();
+            var propValues = new List<object>();
+            var fieldInfos = new List<FieldInfo>();
+            var fieldValues = new List<object>();
+
+            foreach (var argument in attribute.NamedArguments)
+            {
+                if (argument.IsField)
+                {
+                    fieldInfos.Add((FieldInfo)argument.MemberInfo);
+                    fieldValues.Add(argument.TypedValue.Value);
+                }
+                else
+                {
+                    propInfos.Add((PropertyInfo)argument.MemberInfo);
+                    propValues.Add(argument.TypedValue.Value);
+                }
+            }
+
+            return new CustomAttributeBuilder(
+                attribute.Constructor,
+                ctorArgs,
+                propInfos.ToArray(),
+                propValues.ToArray(),
+                fieldInfos.ToArray(),
+                fieldValues.ToArray());
         }
 
         private static ModuleBuilder ObtainModuleBuilder(Type type)
@@ -171,10 +211,19 @@ namespace Vostok.Configuration.Helpers
             propertyBuilder.SetGetMethod(getMethodBuilder);
             propertyBuilder.SetSetMethod(setMethodBuilder);
 
-            if (propertyInfo.GetMethod != null)
-                typeBuilder.DefineMethodOverride(getMethodBuilder, propertyInfo.GetMethod);
-            if (propertyInfo.SetMethod != null)
-                typeBuilder.DefineMethodOverride(setMethodBuilder, propertyInfo.SetMethod);
+            OverrideGetterOrSetter(typeBuilder, propertyInfo.GetMethod, getMethodBuilder);
+            OverrideGetterOrSetter(typeBuilder, propertyInfo.SetMethod, setMethodBuilder);
+
+            foreach (var builder in propertyInfo.CustomAttributes.Select(CreateCustomAttributeBuilder))
+                propertyBuilder.SetCustomAttribute(builder);
+        }
+
+        private static void OverrideGetterOrSetter(TypeBuilder typeBuilder, MethodInfo getterOrSetter, MethodBuilder getterOrSetterBuilder)
+        {
+            if (getterOrSetter == null) return;
+            typeBuilder.DefineMethodOverride(getterOrSetterBuilder, getterOrSetter);
+            foreach (var builder in getterOrSetter.CustomAttributes.Select(CreateCustomAttributeBuilder))
+                getterOrSetterBuilder.SetCustomAttribute(builder);
         }
 
         private static void ImplementDummyMethods(TypeBuilder typeBuilder, Type type)
