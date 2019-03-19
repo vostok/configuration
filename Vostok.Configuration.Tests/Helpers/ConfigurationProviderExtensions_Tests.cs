@@ -114,7 +114,10 @@ namespace Vostok.Configuration.Tests.Helpers
                 var exception = Unwrap(e);
                 exception.Should().BeOfType<SettingsValidationException>();
                 exception.Message.Should().Contain("testing...");
+                return;
             }
+
+            Assert.Fail();
         }
 
         [Test]
@@ -129,7 +132,10 @@ namespace Vostok.Configuration.Tests.Helpers
                 var exception = Unwrap(e);
                 exception.Should().BeOfType<SettingsBindingException>();
                 exception.Message.Should().Contain(nameof(IConfigWithRequiredProperty.RequiredTestMessage));
+                return;
             }
+
+            Assert.Fail();
         }
 
         private static Exception Unwrap(TargetInvocationException exception)
