@@ -16,5 +16,11 @@ namespace Vostok.Configuration.Binders.Extensions
             if (backingField != null)
                 backingField.SetValue(obj, value);
         }
+
+        public static bool IsAbstract(this PropertyInfo propertyInfo) =>
+            (propertyInfo.GetMethod?.IsAbstract ?? false) || (propertyInfo.SetMethod?.IsAbstract ?? false);
+
+        public static bool IsVirtual(this PropertyInfo propertyInfo) =>
+            (propertyInfo.GetMethod?.IsVirtual ?? false) || (propertyInfo.SetMethod?.IsVirtual ?? false);
     }
 }
