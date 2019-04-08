@@ -1,45 +1,20 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using Vostok.Configuration.Abstractions.SettingsTree;
-using Vostok.Configuration.Binders.Extensions;
 using Vostok.Configuration.Binders.Results;
-using Vostok.Configuration.Extensions;
 
 namespace Vostok.Configuration.Binders.Collection
 {
-    internal class SetBinder<T> :
+    internal class SetBinder<T> : CollectionBinder<HashSet<T>, T>,
         ISafeSettingsBinder<HashSet<T>>,
         ISafeSettingsBinder<ISet<T>>
     {
-        private readonly ISafeSettingsBinder<T> elementBinder;
-
-        public SetBinder(ISafeSettingsBinder<T> elementBinder) =>
-            this.elementBinder = elementBinder;
-
-        public SettingsBindingResult<HashSet<T>> Bind(ISettingsNode settings)
+        public SetBinder(ISafeSettingsBinder<T> elementBinder)
+            : base(elementBinder)
         {
-            if (settings.IsNullOrMissing())
-                return SettingsBindingResult.Success(new HashSet<T>());
-
-            settings = settings.WrapIfNeeded();
-
-            if (!(settings is ArrayNode) && !(settings is ObjectNode))
-                return SettingsBindingResult.NodeTypeMismatch<HashSet<T>>(settings);
-
-            return SettingsBindingResult.Catch(() => BindInternal(settings));
         }
 
-        private SettingsBindingResult<HashSet<T>> BindInternal(ISettingsNode settings)
-        {
-            var results = settings.Children.Select((n, i) => (index: i, value: elementBinder.BindOrDefault(n))).ToList();
-
-            var errors = results.SelectMany(r => r.value.Errors.ForIndex(r.index)).ToList();
-
-            if (errors.Any())
-                return SettingsBindingResult.Errors<HashSet<T>>(errors);
-
-            return SettingsBindingResult.Success(new HashSet<T>(results.Select(r => r.value.Value)));
-        }
+        protected override HashSet<T> CreateCollection(IEnumerable<T> elements) =>
+            new HashSet<T>(elements);
 
         SettingsBindingResult<ISet<T>> ISafeSettingsBinder<ISet<T>>.Bind(ISettingsNode settings) =>
             Bind(settings).Convert<HashSet<T>, ISet<T>>();
