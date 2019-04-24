@@ -138,6 +138,15 @@ namespace Vostok.Configuration.Tests.Helpers
             Assert.Fail();
         }
 
+        [Test]
+        public void Create_hot_should_work_with_interface_inheritance()
+        {
+            var instance = provider.CreateHot<IDerivedConfig>(source);
+
+            Console.Out.WriteLine(instance.BaseProp);
+            Console.Out.WriteLine(instance.DerivedProp);
+        }
+
         private static Exception Unwrap(TargetInvocationException exception)
         {
             Exception e = exception;
@@ -168,6 +177,20 @@ namespace Vostok.Configuration.Tests.Helpers
         bool EnableThis { get; }
         int MaxCount { get; }
         ITimeoutsConfig Timeouts { get; }
+    }
+
+    public interface IBaseConfig
+    {
+        string BaseProp { get; }
+
+        void BaseMethod();
+    }
+
+    public interface IDerivedConfig : IBaseConfig
+    {
+        string DerivedProp { get; }
+
+        void DerivedMethod();
     }
 
     public interface ITimeoutsConfig

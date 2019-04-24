@@ -53,7 +53,12 @@ namespace Vostok.Configuration.Helpers
         {
             var typeBuilder = StartType(baseType, "Implementation");
 
-            foreach (var propertyInfo in baseType.GetProperties().Where(PropertyInfoExtensions.IsAbstract))
+            var properties = baseType
+                .GetProperties()
+                .Concat(baseType.GetInterfaces().SelectMany(iface => iface.GetProperties()))
+                .Where(PropertyInfoExtensions.IsAbstract);
+
+            foreach (var propertyInfo in properties)
                 ImplementAutoProperty(typeBuilder, propertyInfo);
 
             ImplementDummyMethods(typeBuilder, baseType);
@@ -230,7 +235,13 @@ namespace Vostok.Configuration.Helpers
         {
             if (!type.IsAbstract) return;
             var notImplExceptionCtor = typeof(NotImplementedException).GetConstructor(Type.EmptyTypes);
-            foreach (var methodInfo in type.GetMethods().Where(mi => mi.IsAbstract && !mi.IsSpecialName))
+
+            var methods = type
+                .GetMethods()
+                .Concat(type.GetInterfaces().SelectMany(iface => iface.GetMethods()))
+                .Where(mi => mi.IsAbstract && !mi.IsSpecialName);
+
+            foreach (var methodInfo in methods)
                 ImplementDummyMethod(typeBuilder, methodInfo, notImplExceptionCtor);
         }
 
