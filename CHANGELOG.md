@@ -1,3 +1,12 @@
+## 0.1.4 (27-04-2019):
+
+* Fixed https://github.com/vostok/configuration/issues/13
+* Fixed https://github.com/vostok/configuration/issues/14
+* `ConfigurationPrinter`: respect SecretAttribute applied to types.
+* `ConfigurationPrinter`: allow to print settings instance without censoring secret values.
+* `ConfigurationPrinter`: added support for JSON format.
+* Added an API to register custom attributes to function like built-in `SecretAttribute` (see `SecurityHelper`).
+
 ## 0.1.3 (24-04-2019):
 
 * Fixed https://github.com/vostok/configuration/issues/15
