@@ -25,8 +25,8 @@ namespace Vostok.Configuration.Tests.Binders
                 .Should().Throw<SettingsValidationException>()
                 .WithMessage($@"Validation of settings of type '{typeof(Settings)}' failed:
 	- Value must not be null!
-	- Inner.Value must not be null!
-	- Inner.Inner.Value must not be null!")
+	- Inner: Value must not be null!
+	- Inner: Inner: Value must not be null!")
                 .Which.ShouldBePrinted();
         }
 
@@ -58,6 +58,28 @@ namespace Vostok.Configuration.Tests.Binders
                 .Which.ShouldBePrinted();
         }
 
+        [Test]
+        public void Should_validate_nested_types_even_if_enclosing_type_has_no_validator()
+        {
+            new Action(() => Validate(new NonValidatedSettings
+                {
+                    Settings = new Settings
+                    {
+                        Value = "value",
+                        Inner = new Settings1
+                        {
+                            Value = "value2",
+                            Inner = new Settings2
+                            {
+                                Value = null
+                            }
+                        }
+                    }
+                }))
+                .Should().Throw<SettingsValidationException>()
+                .Which.ShouldBePrinted();
+        }
+
         private static void Validate<TSettings>(TSettings settings)
         {
             var binder = Substitute.For<ISettingsBinder>();
@@ -72,6 +94,11 @@ namespace Vostok.Configuration.Tests.Binders
 
         public class SettingsWithoutValidation
         {
+        }
+
+        public class NonValidatedSettings
+        {
+            public Settings Settings { get; set; }
         }
 
         [ValidateBy(typeof(Validator))]

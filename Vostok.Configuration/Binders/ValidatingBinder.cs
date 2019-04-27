@@ -39,15 +39,16 @@ namespace Vostok.Configuration.Binders
         private static IEnumerable<string> Validate(Type type, object value)
         {
             var attribute = type.GetCustomAttribute<ValidateByAttribute>();
-            if (attribute == null)
-                yield break;
+            if (attribute != null)
+            {
+                var validator = Activator.CreateInstance(attribute.ValidatorType);
+                var validateMethod = validator.GetType().GetMethod(nameof(ISettingsValidator<object>.Validate), new[] {type});
+                if (validateMethod == null)
+                    throw new SettingsValidationException($"Type '{validator.GetType()}' specified as validator for settings of type '{type}' does not contain a suitable {nameof(ISettingsValidator<object>.Validate)} method.");
 
-            var validator = Activator.CreateInstance(attribute.ValidatorType);
-            var validateMethod = validator.GetType().GetMethod(nameof(ISettingsValidator<object>.Validate), new[] {type});
-            if (validateMethod == null)
-                throw new SettingsValidationException($"Type '{validator.GetType()}' specified as validator for settings of type '{type}' does not contain a suitable {nameof(ISettingsValidator<object>.Validate)} method.");
-            foreach (var error in (IEnumerable<string>)validateMethod.Invoke(validator, new[] {value}))
-                yield return error;
+                foreach (var error in (IEnumerable<string>) validateMethod.Invoke(validator, new[] {value}))
+                    yield return error;
+            }
 
             if (value == null)
                 yield break;
@@ -65,6 +66,6 @@ namespace Vostok.Configuration.Binders
             }
         }
 
-        private static string FormatError(string prefix, string error) => prefix + "." + error;
+        private static string FormatError(string prefix, string error) => prefix + ": " + error;
     }
 }
