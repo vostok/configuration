@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
 using Vostok.Configuration.Abstractions.Attributes;
@@ -11,11 +12,19 @@ namespace Vostok.Configuration.Helpers
         [ThreadStatic]
         private static bool IsInSecureScope;
 
+        private static volatile Type[] SecretAttributes = { typeof(SecretAttribute) };
+
         public static bool IsSecret([NotNull] MemberInfo member)
-            => IsInSecureScope || member.GetCustomAttribute<SecretAttribute>() != null;
+            => IsInSecureScope || SecretAttributes.Any(attr => member.GetCustomAttribute(attr) != null);
 
         public static bool IsSecret([NotNull] Type type)
-            => IsInSecureScope || type.GetCustomAttribute<SecretAttribute>() != null;
+            => IsInSecureScope || SecretAttributes.Any(attr => type.GetCustomAttribute(attr) != null);
+
+        public static void RegisterCustomSecretAttribute<TAttribute>()
+            => RegisterCustomSecretAttribute(typeof(TAttribute));
+
+        public static void RegisterCustomSecretAttribute(Type attributeType)
+            => SecretAttributes = SecretAttributes.Concat(new[] {attributeType}).ToArray();
 
         internal static IDisposable StartSecurityScope([NotNull] Type type)
             => IsSecret(type) ? new SecurityScopeToken() : new NoOpScopeToken() as IDisposable;
