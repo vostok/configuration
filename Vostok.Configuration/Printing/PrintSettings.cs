@@ -11,5 +11,10 @@ namespace Vostok.Configuration.Printing
         /// If set to <c>true</c>, <see cref="ConfigurationPrinter"/> will hide values of secret fields and properties.
         /// </summary>
         public bool HideSecretValues { get; set; } = true;
+
+        /// <summary>
+        /// Format to print objects in.
+        /// </summary>
+        public PrintFormat Format = PrintFormat.YAML;
     }
 }

@@ -13,15 +13,17 @@ namespace Vostok.Configuration
             => Print(item, PrintSettings.Default);
 
         /// <summary>
-        /// Pretty-prints given settings object in YAML-like human-readable syntax. Useful for logging purposes.
+        /// Pretty-prints given settings object in YAML-like or JSON-like human-readable syntax. Useful for logging purposes.
         /// </summary>
         [NotNull]
         public static string Print([CanBeNull] object item, [CanBeNull] PrintSettings settings)
         {
             try
             {
-                var token = PrintTokenFactory.Create(item, settings ?? PrintSettings.Default);
-                var context = new PrintContext();
+                settings = settings ?? PrintSettings.Default;
+
+                var token = PrintTokenFactory.Create(item, settings);
+                var context = new PrintContext(settings);
 
                 token.Print(context);
 

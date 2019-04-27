@@ -14,12 +14,12 @@ namespace Vostok.Configuration.Printing
 {
     internal static class PrintTokenFactory
     {
-        private const string NullValue = "<null>";
-        private const string ErrorValue = "<error>";
-        private const string SecretValue = "<secret>";
-        private const string CyclicValue = "<cyclic>";
-        private const string EmptySequenceValue = "[]";
-        private const string EmptyDictionaryValue = "{}";
+        private static readonly ValueToken NullValue = new ValueToken("null", false);
+        private static readonly ValueToken ErrorValue = new ValueToken("<error>", false);
+        private static readonly ValueToken SecretValue = new ValueToken("<secret>", false);
+        private static readonly ValueToken CyclicValue = new ValueToken("<cyclic>", false);
+        private static readonly ValueToken EmptySequenceValue = new ValueToken("[]", false);
+        private static readonly ValueToken EmptyObjectValue = new ValueToken("{}", false);
 
         private static readonly Dictionary<Type, Func<object, string>> CustomFormatters
             = new Dictionary<Type, Func<object, string>>
@@ -35,10 +35,10 @@ namespace Vostok.Configuration.Printing
         private static IPrintToken CreateInternal([CanBeNull] object item, [NotNull] HashSet<object> path, [NotNull] PrintSettings settings)
         {
             if (item == null)
-                return new ValueToken(NullValue);
+                return NullValue;
 
             if (!path.Add(item))
-                return new ValueToken(CyclicValue);
+                return CyclicValue;
 
             try
             {
@@ -60,7 +60,7 @@ namespace Vostok.Configuration.Printing
                         var pairs = DictionaryInspector.EnumerateSimpleDictionary(item);
                         var tokens = pairs.Select(pair => new PropertyToken(pair.Item1, CreateInternal(pair.Item2, path, settings))).ToArray();
                         if (tokens.Length == 0)
-                            return new ValueToken(EmptyDictionaryValue);
+                            return EmptyObjectValue;
 
                         return new ObjectToken(tokens);
                     }
@@ -68,7 +68,7 @@ namespace Vostok.Configuration.Printing
                     if (item is IEnumerable sequence)
                     {
                         if (!sequence.GetEnumerator().MoveNext())
-                            return new ValueToken(EmptySequenceValue);
+                            return EmptySequenceValue;
 
                         var tokens = new List<IPrintToken>();
 
@@ -86,6 +86,9 @@ namespace Vostok.Configuration.Printing
                     foreach (var property in itemType.GetInstanceProperties())
                         fieldsAndProperties.Add(ConstructProperty(property, () => CreateInternal(property.GetValue(item), path, settings), settings));
 
+                    if (fieldsAndProperties.Count == 0)
+                        return EmptyObjectValue;
+
                     return new ObjectToken(fieldsAndProperties);
                 }
             }
@@ -101,7 +104,7 @@ namespace Vostok.Configuration.Printing
 
             if (settings.HideSecretValues && SecurityHelper.IsSecret(member))
             {
-                value = new ValueToken(SecretValue);
+                value = SecretValue;
             }
             else
             {
@@ -111,7 +114,7 @@ namespace Vostok.Configuration.Printing
                 }
                 catch
                 {
-                    value = new ValueToken(ErrorValue);
+                    value = ErrorValue;
                 }
             }
 
