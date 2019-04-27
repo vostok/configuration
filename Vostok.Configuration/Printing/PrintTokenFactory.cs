@@ -7,7 +7,6 @@ using System.Text;
 using JetBrains.Annotations;
 using Vostok.Commons.Collections;
 using Vostok.Commons.Formatting;
-using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Helpers;
 
@@ -45,47 +44,50 @@ namespace Vostok.Configuration.Printing
             {
                 var itemType = item.GetType();
 
-                if (ToStringDetector.HasCustomToString(itemType))
-                    return new ValueToken(item.ToString());
-
-                foreach (var pair in CustomFormatters)
+                using (SecurityHelper.StartSecurityScope(itemType))
                 {
-                    if (pair.Key.IsAssignableFrom(itemType))
-                        return new ValueToken(pair.Value(item));
+                    if (ToStringDetector.HasCustomToString(itemType))
+                        return new ValueToken(item.ToString());
+
+                    foreach (var pair in CustomFormatters)
+                    {
+                        if (pair.Key.IsAssignableFrom(itemType))
+                            return new ValueToken(pair.Value(item));
+                    }
+
+                    if (DictionaryInspector.IsSimpleDictionary(itemType))
+                    {
+                        var pairs = DictionaryInspector.EnumerateSimpleDictionary(item);
+                        var tokens = pairs.Select(pair => new PropertyToken(pair.Item1, CreateInternal(pair.Item2, path))).ToArray();
+                        if (tokens.Length == 0)
+                            return new ValueToken(EmptyDictionaryValue);
+
+                        return new ObjectToken(tokens);
+                    }
+
+                    if (item is IEnumerable sequence)
+                    {
+                        if (!sequence.GetEnumerator().MoveNext())
+                            return new ValueToken(EmptySequenceValue);
+
+                        var tokens = new List<IPrintToken>();
+
+                        foreach (var element in sequence)
+                            tokens.Add(CreateInternal(element, path));
+
+                        return new SequenceToken(tokens);
+                    }
+
+                    var fieldsAndProperties = new List<PropertyToken>();
+
+                    foreach (var field in itemType.GetInstanceFields())
+                        fieldsAndProperties.Add(ConstructProperty(field, () => CreateInternal(field.GetValue(item), path)));
+
+                    foreach (var property in itemType.GetInstanceProperties())
+                        fieldsAndProperties.Add(ConstructProperty(property, () => CreateInternal(property.GetValue(item), path)));
+
+                    return new ObjectToken(fieldsAndProperties);
                 }
-
-                if (DictionaryInspector.IsSimpleDictionary(itemType))
-                {
-                    var pairs = DictionaryInspector.EnumerateSimpleDictionary(item);
-                    var tokens = pairs.Select(pair => new PropertyToken(pair.Item1, CreateInternal(pair.Item2, path))).ToArray();
-                    if (tokens.Length == 0)
-                        return new ValueToken(EmptyDictionaryValue);
-
-                    return new ObjectToken(tokens);
-                }
-
-                if (item is IEnumerable sequence)
-                {
-                    if (!sequence.GetEnumerator().MoveNext())
-                        return new ValueToken(EmptySequenceValue);
-
-                    var tokens = new List<IPrintToken>();
-
-                    foreach (var element in sequence)
-                        tokens.Add(CreateInternal(element, path));
-
-                    return new SequenceToken(tokens);
-                }
-
-                var fieldsAndProperties = new List<PropertyToken>();
-
-                foreach (var field in itemType.GetInstanceFields())
-                    fieldsAndProperties.Add(ConstructProperty(field, () => CreateInternal(field.GetValue(item), path)));
-
-                foreach (var property in itemType.GetInstanceProperties())
-                    fieldsAndProperties.Add(ConstructProperty(property, () => CreateInternal(property.GetValue(item), path)));
-
-                return new ObjectToken(fieldsAndProperties);
             }
             finally
             {
