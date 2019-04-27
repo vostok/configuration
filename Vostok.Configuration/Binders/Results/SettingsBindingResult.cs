@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Vostok.Configuration.Abstractions.SettingsTree;
+using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Binders.Results
 {
@@ -10,7 +11,7 @@ namespace Vostok.Configuration.Binders.Results
             Error<TSettings>($"A(n) {node.GetType().Name} cannot be bound to '{typeof(TSettings)}'");
 
         public static SettingsBindingResult<TSettings> ParsingError<TSettings>(string value) =>
-            Error<TSettings>($"Value '{value}' cannot be parsed as '{typeof(TSettings)}'.");
+            Error<TSettings>($"Value '{(SecurityHelper.IsInSecureScope ? "<secret>" : value)}' cannot be parsed as '{typeof(TSettings)}'.");
 
         public static SettingsBindingResult<TSettings> RequiredPropertyIsNull<TSettings>(string name) =>
             Error<TSettings>($"Required field or property '{name}' must have a non-null value.");

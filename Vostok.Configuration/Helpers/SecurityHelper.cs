@@ -10,9 +10,9 @@ namespace Vostok.Configuration.Helpers
     public static class SecurityHelper
     {
         [ThreadStatic]
-        private static bool IsInSecureScope;
+        internal static bool IsInSecureScope;
 
-        private static volatile Type[] SecretAttributes = { typeof(SecretAttribute) };
+        private static volatile Type[] SecretAttributes = {typeof(SecretAttribute)};
 
         /// <summary>
         /// Returns <c>true</c> if given <see cref="member"/> should be considered a secret setting, or <c>false</c> otherwise.
@@ -46,11 +46,16 @@ namespace Vostok.Configuration.Helpers
 
         private class SecurityScopeToken : IDisposable
         {
+            private readonly bool oldValue;
+
             public SecurityScopeToken()
-                => IsInSecureScope = true;
+            {
+                oldValue = IsInSecureScope;
+                IsInSecureScope = true;
+            } 
 
             public void Dispose()
-                => IsInSecureScope = false;
+                => IsInSecureScope = oldValue;
         }
 
         private class NoOpScopeToken : IDisposable
