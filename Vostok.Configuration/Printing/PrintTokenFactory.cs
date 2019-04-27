@@ -28,11 +28,11 @@ namespace Vostok.Configuration.Printing
             };
 
         [NotNull]
-        public static IPrintToken Create([CanBeNull] object item)
-            => CreateInternal(item, new HashSet<object>(ByReferenceEqualityComparer<object>.Instance));
+        public static IPrintToken Create([CanBeNull] object item, [NotNull] PrintSettings settings)
+            => CreateInternal(item, new HashSet<object>(ByReferenceEqualityComparer<object>.Instance), settings);
 
         [NotNull]
-        private static IPrintToken CreateInternal([CanBeNull] object item, [NotNull] HashSet<object> path)
+        private static IPrintToken CreateInternal([CanBeNull] object item, [NotNull] HashSet<object> path, [NotNull] PrintSettings settings)
         {
             if (item == null)
                 return new ValueToken(NullValue);
@@ -58,7 +58,7 @@ namespace Vostok.Configuration.Printing
                     if (DictionaryInspector.IsSimpleDictionary(itemType))
                     {
                         var pairs = DictionaryInspector.EnumerateSimpleDictionary(item);
-                        var tokens = pairs.Select(pair => new PropertyToken(pair.Item1, CreateInternal(pair.Item2, path))).ToArray();
+                        var tokens = pairs.Select(pair => new PropertyToken(pair.Item1, CreateInternal(pair.Item2, path, settings))).ToArray();
                         if (tokens.Length == 0)
                             return new ValueToken(EmptyDictionaryValue);
 
@@ -73,7 +73,7 @@ namespace Vostok.Configuration.Printing
                         var tokens = new List<IPrintToken>();
 
                         foreach (var element in sequence)
-                            tokens.Add(CreateInternal(element, path));
+                            tokens.Add(CreateInternal(element, path, settings));
 
                         return new SequenceToken(tokens);
                     }
@@ -81,10 +81,10 @@ namespace Vostok.Configuration.Printing
                     var fieldsAndProperties = new List<PropertyToken>();
 
                     foreach (var field in itemType.GetInstanceFields())
-                        fieldsAndProperties.Add(ConstructProperty(field, () => CreateInternal(field.GetValue(item), path)));
+                        fieldsAndProperties.Add(ConstructProperty(field, () => CreateInternal(field.GetValue(item), path, settings), settings));
 
                     foreach (var property in itemType.GetInstanceProperties())
-                        fieldsAndProperties.Add(ConstructProperty(property, () => CreateInternal(property.GetValue(item), path)));
+                        fieldsAndProperties.Add(ConstructProperty(property, () => CreateInternal(property.GetValue(item), path, settings), settings));
 
                     return new ObjectToken(fieldsAndProperties);
                 }
@@ -95,11 +95,15 @@ namespace Vostok.Configuration.Printing
             }
         }
 
-        private static PropertyToken ConstructProperty(MemberInfo member, Func<IPrintToken> getValue)
+        private static PropertyToken ConstructProperty(MemberInfo member, Func<IPrintToken> getValue, PrintSettings settings)
         {
             IPrintToken value;
 
-            if (!SecurityHelper.IsSecret(member))
+            if (settings.HideSecretValues && SecurityHelper.IsSecret(member))
+            {
+                value = new ValueToken(SecretValue);
+            }
+            else
             {
                 try
                 {
@@ -109,10 +113,6 @@ namespace Vostok.Configuration.Printing
                 {
                     value = new ValueToken(ErrorValue);
                 }
-            }
-            else
-            {
-                value = new ValueToken(SecretValue);
             }
 
             return new PropertyToken(member.Name, value);
