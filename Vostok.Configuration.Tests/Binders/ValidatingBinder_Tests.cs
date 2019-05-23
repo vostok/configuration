@@ -22,8 +22,10 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_build_correct_exception_message()
         {
             new Action(() => Validate(new Settings()))
-                .Should().Throw<SettingsValidationException>()
-                .WithMessage($@"Validation of settings of type '{typeof(Settings)}' failed:
+                .Should()
+                .Throw<SettingsValidationException>()
+                .WithMessage(
+                    $@"Validation of settings of type '{typeof(Settings)}' failed:
 	- Value must not be null!
 	- Inner: Value must not be null!
 	- Inner: Inner: Value must not be null!")
@@ -46,7 +48,8 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_throw_if_validator_class_does_not_have_suitable_interface()
         {
             new Action(() => Validate(new SettingsWithBadValidator()))
-                .Should().Throw<SettingsValidationException>()
+                .Should()
+                .Throw<SettingsValidationException>()
                 .Which.ShouldBePrinted();
         }
 
@@ -54,30 +57,40 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_validate_null_values()
         {
             new Action(() => Validate<Settings>(null))
-                .Should().Throw<SettingsValidationException>()
+                .Should()
+                .Throw<SettingsValidationException>()
                 .Which.ShouldBePrinted();
         }
 
         [Test]
         public void Should_validate_nested_types_even_if_enclosing_type_has_no_validator()
         {
-            new Action(() => Validate(new NonValidatedSettings
-                {
-                    Settings = new Settings
-                    {
-                        Value = "value",
-                        Inner = new Settings1
+            new Action(
+                    () => Validate(
+                        new NonValidatedSettings
                         {
-                            Value = "value2",
-                            Inner = new Settings2
+                            Settings = new Settings
                             {
-                                Value = null
+                                Value = "value",
+                                Inner = new Settings1
+                                {
+                                    Value = "value2",
+                                    Inner = new Settings2
+                                    {
+                                        Value = null
+                                    }
+                                }
                             }
-                        }
-                    }
-                }))
-                .Should().Throw<SettingsValidationException>()
+                        }))
+                .Should()
+                .Throw<SettingsValidationException>()
                 .Which.ShouldBePrinted();
+        }
+
+        [Test]
+        public void Should_not_fail_when_encountering_an_exception_arising_from_property_getter()
+        {
+            Validate(new Settings3());
         }
 
         private static void Validate<TSettings>(TSettings settings)
@@ -123,6 +136,14 @@ namespace Vostok.Configuration.Tests.Binders
             public string Value { get; set; }
         }
 
+        public class Settings3
+        {
+            public string Value
+            {
+                get => throw new Exception("Failed, sorry.");
+            }
+        }
+
         public class Validator : ISettingsValidator<Settings>, ISettingsValidator<Settings1>, ISettingsValidator<Settings2>
         {
             public IEnumerable<string> Validate(Settings settings)
@@ -132,7 +153,7 @@ namespace Vostok.Configuration.Tests.Binders
                     yield return "Settings must not be null!";
                     yield break;
                 }
-                
+
                 if (settings.Value == null)
                     yield return $"{nameof(settings.Value)} must not be null!";
             }

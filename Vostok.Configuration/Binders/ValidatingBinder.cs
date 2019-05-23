@@ -61,7 +61,18 @@ namespace Vostok.Configuration.Binders
 
             foreach (var prop in type.GetInstanceProperties())
             {
-                foreach (var error in Validate(prop.PropertyType, prop.GetValue(value)))
+                object propertyValue;
+
+                try
+                {
+                    propertyValue = prop.GetValue(value);
+                }
+                catch
+                {
+                    continue;
+                }
+
+                foreach (var error in Validate(prop.PropertyType, propertyValue))
                     yield return FormatError(prop.Name, error);
             }
         }
