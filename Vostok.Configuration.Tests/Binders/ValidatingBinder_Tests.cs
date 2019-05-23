@@ -88,6 +88,15 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
+        public void Should_validate_properties_of_base_interfaces()
+        {
+            new Action(() => Validate(Substitute.For<IDerived>()))
+                .Should()
+                .Throw<SettingsValidationException>()
+                .Which.ShouldBePrinted();
+        }
+
+        [Test]
         public void Should_not_fail_when_encountering_an_exception_arising_from_property_getter()
         {
             Validate(new Settings3());
@@ -142,6 +151,15 @@ namespace Vostok.Configuration.Tests.Binders
             {
                 get => throw new Exception("Failed, sorry.");
             }
+        }
+
+        public interface IBase
+        {
+            Settings Settings { get; }
+        }
+
+        public interface IDerived : IBase
+        {
         }
 
         public class Validator : ISettingsValidator<Settings>, ISettingsValidator<Settings1>, ISettingsValidator<Settings2>

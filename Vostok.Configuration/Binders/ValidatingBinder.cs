@@ -59,7 +59,12 @@ namespace Vostok.Configuration.Binders
                     yield return FormatError(field.Name, error);
             }
 
-            foreach (var prop in type.GetInstanceProperties())
+            var properties = type.GetInstanceProperties();
+
+            if (type.IsInterface)
+                properties = properties.Concat(type.GetInterfaces().SelectMany(iface => iface.GetInstanceProperties()));
+
+            foreach (var prop in properties)
             {
                 object propertyValue;
 
