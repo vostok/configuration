@@ -1,3 +1,7 @@
+## 0.1.5 (23-05-2019):
+
+* Fixed https://github.com/vostok/configuration/issues/17
+
 ## 0.1.4 (27-04-2019):
 
 * Fixed https://github.com/vostok/configuration/issues/13
