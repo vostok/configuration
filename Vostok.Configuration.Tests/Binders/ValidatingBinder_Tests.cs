@@ -41,7 +41,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_pass_validation_if_there_is_no_errors()
         {
-            Validate(new Settings {Value = "x", Inner = new Settings1 {Value = "y", Inner = new Settings2 {Value = "z"}}});
+            Validate(new Settings { Value = "x", Inner = new Settings1 { Value = "y", Inner = new Settings2 { Value = "z" } } });
         }
 
         [Test]
@@ -102,6 +102,12 @@ namespace Vostok.Configuration.Tests.Binders
             Validate(new Settings3());
         }
 
+        [Test]
+        public void Should_not_fail_when_validate_datetime()
+        {
+            Validate(new Settings4());
+        }
+
         private static void Validate<TSettings>(TSettings settings)
         {
             var binder = Substitute.For<ISettingsBinder>();
@@ -151,6 +157,11 @@ namespace Vostok.Configuration.Tests.Binders
             {
                 get => throw new Exception("Failed, sorry.");
             }
+        }
+
+        public class Settings4
+        {
+            public DateTime Value { get; }
         }
 
         public interface IBase
