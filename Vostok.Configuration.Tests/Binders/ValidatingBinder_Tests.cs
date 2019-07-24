@@ -102,6 +102,37 @@ namespace Vostok.Configuration.Tests.Binders
             Validate(new Settings3());
         }
 
+        [Test]
+        public void Should_not_fail_when_validate_datetime()
+        {
+            Validate(new Settings4());
+        }
+
+        [Test]
+        public void Should_validate_sibling_properties_of_same_type()
+        {
+            new Action(() => Validate(new Settings5()))
+               .Should()
+               .Throw<SettingsValidationException>()
+               .WithMessage(
+                   $@"Validation of settings of type '{typeof(Settings5)}' failed:
+	- Sibling1: Value must not be null!
+	- Sibling2: Value must not be null!")
+               .Which.ShouldBePrinted();
+        }
+
+        [Test]
+        public void Should_not_validate_nested_properties_of_enclosing_type()
+        {
+            new Action(() => Validate(new Settings6()))
+               .Should()
+               .Throw<SettingsValidationException>()
+               .WithMessage(
+                   $@"Validation of settings of type '{typeof(Settings6)}' failed:
+	- Value must not be null!")
+               .Which.ShouldBePrinted();
+        }
+
         private static void Validate<TSettings>(TSettings settings)
         {
             var binder = Substitute.For<ISettingsBinder>();
@@ -153,6 +184,30 @@ namespace Vostok.Configuration.Tests.Binders
             }
         }
 
+        public class Settings4
+        {
+            public DateTime Value { get; }
+        }
+
+        public class Settings5
+        {
+            public Settings2 Sibling1 { get; set; } = new Settings2();
+            public Settings2 Sibling2 { get; set; } = new Settings2();
+        }
+
+        [ValidateBy(typeof(Validator))]
+        public class Settings6
+        {
+            public string Value { get; }
+            public Settings6 EnclosingTypeProp
+            {
+                get
+                {
+                    return new Settings6();
+                }
+            }
+        }
+
         public interface IBase
         {
             Settings Settings { get; }
@@ -183,6 +238,12 @@ namespace Vostok.Configuration.Tests.Binders
             }
 
             public IEnumerable<string> Validate(Settings2 settings)
+            {
+                if (settings.Value == null)
+                    yield return $"{nameof(settings.Value)} must not be null!";
+            }
+
+            public IEnumerable<string> Validate(Settings6 settings)
             {
                 if (settings.Value == null)
                     yield return $"{nameof(settings.Value)} must not be null!";
