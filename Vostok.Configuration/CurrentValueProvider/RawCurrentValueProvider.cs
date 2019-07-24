@@ -9,7 +9,7 @@ namespace Vostok.Configuration.CurrentValueProvider
         private readonly Lazy<IObservable<(T, Exception)>> observable;
         private readonly Action<Exception> errorCallback;
 
-        private volatile TaskCompletionSource<T> resultSource = new TaskCompletionSource<T>();
+        private volatile TaskCompletionSource<T> resultSource = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
         private volatile IDisposable innerSubscription;
 
         public RawCurrentValueProvider(Func<IObservable<(T, Exception)>> observableProvider, Action<Exception> errorCallback)
@@ -37,7 +37,7 @@ namespace Vostok.Configuration.CurrentValueProvider
 
         private static TaskCompletionSource<T> NewCompletedSource(T value)
         {
-            var newSource = new TaskCompletionSource<T>();
+            var newSource = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
             newSource.TrySetResult(value);
             return newSource;
         }
