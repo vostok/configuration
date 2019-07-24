@@ -50,11 +50,11 @@ namespace Vostok.Configuration.Binders
             if (attribute != null)
             {
                 var validator = Activator.CreateInstance(attribute.ValidatorType);
-                var validateMethod = validator.GetType().GetMethod(nameof(ISettingsValidator<object>.Validate), new[] { type });
+                var validateMethod = validator.GetType().GetMethod(nameof(ISettingsValidator<object>.Validate), new[] {type});
                 if (validateMethod == null)
                     throw new SettingsValidationException($"Type '{validator.GetType()}' specified as validator for settings of type '{type}' does not contain a suitable {nameof(ISettingsValidator<object>.Validate)} method.");
 
-                foreach (var error in (IEnumerable<string>)validateMethod.Invoke(validator, new[] { value }))
+                foreach (var error in (IEnumerable<string>) validateMethod.Invoke(validator, new[] {value}))
                     yield return error;
             }
 

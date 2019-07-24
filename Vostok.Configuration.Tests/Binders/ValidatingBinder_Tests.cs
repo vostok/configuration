@@ -41,7 +41,7 @@ namespace Vostok.Configuration.Tests.Binders
         [Test]
         public void Should_pass_validation_if_there_is_no_errors()
         {
-            Validate(new Settings { Value = "x", Inner = new Settings1 { Value = "y", Inner = new Settings2 { Value = "z" } } });
+            Validate(new Settings {Value = "x", Inner = new Settings1 {Value = "y", Inner = new Settings2 {Value = "z"}}});
         }
 
         [Test]
