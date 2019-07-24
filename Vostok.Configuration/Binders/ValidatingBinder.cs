@@ -29,15 +29,20 @@ namespace Vostok.Configuration.Binders
         {
             var type = typeof(TSettings);
 
-            var errors = Validate(type, value).ToList();
+            var errors = Validate(type, value, new HashSet<Type>()).ToList();
             if (errors.Any())
                 throw new SettingsValidationException(
                     $"Validation of settings of type '{typeof(TSettings)}' failed:{Environment.NewLine}" +
                     string.Join(Environment.NewLine, errors.Select(e => "\t- " + e)));
         }
 
-        private static IEnumerable<string> Validate(Type type, object value)
+        private static IEnumerable<string> Validate(Type type, object value, HashSet<Type> visitedTypes)
         {
+            if (visitedTypes.Contains(type))
+                yield break;
+
+            visitedTypes.Add(type);
+
             var attribute = type.GetCustomAttribute<ValidateByAttribute>();
             if (attribute != null)
             {
@@ -55,7 +60,7 @@ namespace Vostok.Configuration.Binders
 
             foreach (var field in type.GetInstanceFields())
             {
-                foreach (var error in Validate(field.FieldType, field.GetValue(value)))
+                foreach (var error in Validate(field.FieldType, field.GetValue(value), visitedTypes))
                     yield return FormatError(field.Name, error);
             }
 
@@ -77,9 +82,11 @@ namespace Vostok.Configuration.Binders
                     continue;
                 }
 
-                foreach (var error in Validate(prop.PropertyType, propertyValue))
+                foreach (var error in Validate(prop.PropertyType, propertyValue, visitedTypes))
                     yield return FormatError(prop.Name, error);
             }
+
+            visitedTypes.Remove(type);
         }
 
         private static string FormatError(string prefix, string error) => prefix + ": " + error;
