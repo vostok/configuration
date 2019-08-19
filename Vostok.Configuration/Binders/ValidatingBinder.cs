@@ -38,10 +38,8 @@ namespace Vostok.Configuration.Binders
 
         private static IEnumerable<string> Validate(Type type, object value, HashSet<Type> visitedTypes)
         {
-            if (visitedTypes.Contains(type))
+            if (!visitedTypes.Add(type))
                 yield break;
-
-            visitedTypes.Add(type);
 
             var attribute = type.GetCustomAttribute<ValidateByAttribute>();
             if (attribute != null)
