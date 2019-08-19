@@ -1,3 +1,7 @@
+## 0.1.6 (19-08-2019):
+
+* Fixed a failure occuring when validating types with nested properties of the same type, such as `DateTime`.
+
 ## 0.1.5 (23-05-2019):
 
 * Fixed https://github.com/vostok/configuration/issues/17
