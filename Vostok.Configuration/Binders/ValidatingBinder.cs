@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Extensions;
+using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Binders
 {
@@ -41,7 +41,7 @@ namespace Vostok.Configuration.Binders
             if (!visitedTypes.Add(type))
                 yield break;
 
-            var attribute = type.GetCustomAttribute<ValidateByAttribute>();
+            var attribute = AttributeHelper.Get<ValidateByAttribute>(type);
             if (attribute != null)
             {
                 var validator = Activator.CreateInstance(attribute.ValidatorType);

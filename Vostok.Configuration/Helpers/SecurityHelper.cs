@@ -18,13 +18,13 @@ namespace Vostok.Configuration.Helpers
         /// Returns <c>true</c> if given <see cref="member"/> should be considered a secret setting, or <c>false</c> otherwise.
         /// </summary>
         public static bool IsSecret([NotNull] MemberInfo member)
-            => IsInSecureScope || SecretAttributes.Any(attr => member.GetCustomAttribute(attr) != null);
+            => IsInSecureScope || SecretAttributes.Any(attr => AttributeHelper.Has(member, attr));
 
         /// <summary>
         /// Returns <c>true</c> if all members of given <see cref="type"/> should be considered secret settings, or <c>false</c> otherwise.
         /// </summary>
         public static bool IsSecret([NotNull] Type type)
-            => IsInSecureScope || SecretAttributes.Any(attr => type.GetCustomAttribute(attr) != null);
+            => IsInSecureScope || SecretAttributes.Any(attr => AttributeHelper.Has(type, attr));
 
         /// <summary>
         /// Registers an attribute of given <typeparamref name="TAttribute"/> type to function similarly to built-in <see cref="SecretAttribute"/>.

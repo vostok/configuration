@@ -41,9 +41,9 @@ namespace Vostok.Configuration.Binders
         private static bool IsRequired(MemberInfo member, bool requiredByDefault)
         {
             if (requiredByDefault)
-                return member.GetCustomAttribute<OptionalAttribute>() == null;
+                return !AttributeHelper.Has<OptionalAttribute>(member);
 
-            return member.GetCustomAttribute<RequiredAttribute>() != null;
+            return AttributeHelper.Has<RequiredAttribute>(member);
         }
 
         private static bool ShouldSkipMemberOfAbstractType(ISafeSettingsBinder<object> binder, Type type)
@@ -61,7 +61,7 @@ namespace Vostok.Configuration.Binders
 
             using (SecurityHelper.StartSecurityScope(type))
             {
-                var requiredByDefault = type.GetCustomAttribute<RequiredByDefaultAttribute>() != null;
+                var requiredByDefault = AttributeHelper.Has<RequiredByDefaultAttribute>(type);
 
                 var errors = new List<SettingsBindingError>();
 
