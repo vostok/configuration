@@ -122,6 +122,22 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
+        public void Should_validate_sibling_properties_of_same_type_even_when_encountering_null_values()
+        {
+            new Action(() => Validate(new Settings5
+                {
+                    Sibling1 = null,
+                }))
+                .Should()
+                .Throw<SettingsValidationException>()
+                .WithMessage(
+                    $@"Validation of settings of type '{typeof(Settings5)}' failed:
+	- Sibling1: Value must not be null!
+	- Sibling2: Value must not be null!")
+                .Which.ShouldBePrinted();
+        }
+
+        [Test]
         public void Should_not_validate_nested_properties_of_enclosing_type()
         {
             new Action(() => Validate(new Settings6()))
@@ -239,7 +255,7 @@ namespace Vostok.Configuration.Tests.Binders
 
             public IEnumerable<string> Validate(Settings2 settings)
             {
-                if (settings.Value == null)
+                if (settings?.Value == null)
                     yield return $"{nameof(settings.Value)} must not be null!";
             }
 

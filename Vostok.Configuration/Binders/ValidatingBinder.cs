@@ -53,35 +53,35 @@ namespace Vostok.Configuration.Binders
                     yield return error;
             }
 
-            if (value == null)
-                yield break;
-
-            foreach (var field in type.GetInstanceFields())
+            if (value != null)
             {
-                foreach (var error in Validate(field.FieldType, field.GetValue(value), visitedTypes))
-                    yield return FormatError(field.Name, error);
-            }
-
-            var properties = type.GetInstanceProperties();
-
-            if (type.IsInterface)
-                properties = properties.Concat(type.GetInterfaces().SelectMany(iface => iface.GetInstanceProperties()));
-
-            foreach (var prop in properties)
-            {
-                object propertyValue;
-
-                try
+                foreach (var field in type.GetInstanceFields())
                 {
-                    propertyValue = prop.GetValue(value);
-                }
-                catch
-                {
-                    continue;
+                    foreach (var error in Validate(field.FieldType, field.GetValue(value), visitedTypes))
+                        yield return FormatError(field.Name, error);
                 }
 
-                foreach (var error in Validate(prop.PropertyType, propertyValue, visitedTypes))
-                    yield return FormatError(prop.Name, error);
+                var properties = type.GetInstanceProperties();
+
+                if (type.IsInterface)
+                    properties = properties.Concat(type.GetInterfaces().SelectMany(iface => iface.GetInstanceProperties()));
+
+                foreach (var prop in properties)
+                {
+                    object propertyValue;
+
+                    try
+                    {
+                        propertyValue = prop.GetValue(value);
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+
+                    foreach (var error in Validate(prop.PropertyType, propertyValue, visitedTypes))
+                        yield return FormatError(prop.Name, error);
+                }
             }
 
             visitedTypes.Remove(type);
