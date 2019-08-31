@@ -3,6 +3,7 @@ using System.Reflection;
 using SimpleInjector;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
+using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Binders.Extensions
 {
@@ -12,7 +13,7 @@ namespace Vostok.Configuration.Binders.Extensions
         {
             settingsBinder = null;
 
-            var attribute = member.GetCustomAttribute<BindByAttribute>();
+            var attribute = AttributeHelper.Get<BindByAttribute>(member);
             if (attribute == null)
                 return false;
 
