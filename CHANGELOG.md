@@ -1,3 +1,7 @@
+## 0.1.7 (31-08-2019):
+
+* Performance optimizations in binders producing up to 2x speed-up.
+
 ## 0.1.6 (19-08-2019):
 
 * Fixed a failure occuring when validating types with nested properties of the same type, such as `DateTime`.
