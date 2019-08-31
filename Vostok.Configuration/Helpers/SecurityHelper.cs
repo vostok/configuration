@@ -39,10 +39,10 @@ namespace Vostok.Configuration.Helpers
             => SecretAttributes = SecretAttributes.Concat(new[] {attributeType}).ToArray();
 
         internal static IDisposable StartSecurityScope([NotNull] Type type)
-            => IsSecret(type) ? new SecurityScopeToken() : new NoOpScopeToken() as IDisposable;
+            => IsSecret(type) ? new SecurityScopeToken() : NoOpScopeToken.Instance as IDisposable;
 
         internal static IDisposable StartSecurityScope([NotNull] MemberInfo member)
-            => IsSecret(member) ? new SecurityScopeToken() : new NoOpScopeToken() as IDisposable;
+            => IsSecret(member) ? new SecurityScopeToken() : NoOpScopeToken.Instance as IDisposable;
 
         private class SecurityScopeToken : IDisposable
         {
@@ -60,6 +60,8 @@ namespace Vostok.Configuration.Helpers
 
         private class NoOpScopeToken : IDisposable
         {
+            public static readonly NoOpScopeToken Instance = new NoOpScopeToken();
+
             public void Dispose()
             {
             }
