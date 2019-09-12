@@ -7,7 +7,7 @@ using System.Text;
 using JetBrains.Annotations;
 using Vostok.Commons.Collections;
 using Vostok.Commons.Formatting;
-using Vostok.Configuration.Extensions;
+using Vostok.Commons.Helpers.Extensions;
 using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Printing

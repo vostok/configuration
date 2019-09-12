@@ -3,11 +3,11 @@ using System.Collections.Concurrent;
 using System.Threading;
 using SimpleInjector;
 using Vostok.Commons.Collections;
+using Vostok.Commons.Helpers.Extensions;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders.Collection;
 using Vostok.Configuration.Binders.Extensions;
-using Vostok.Configuration.Extensions;
 using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Binders
