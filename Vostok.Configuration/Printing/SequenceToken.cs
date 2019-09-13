@@ -54,7 +54,8 @@ namespace Vostok.Configuration.Printing
             {
                 for (var index = 0; index < elements.Count; index++)
                 {
-                    context.Indent();
+                    if (elements[index] is ValueToken)
+                        context.Indent();
 
                     elements[index].Print(context);
 
