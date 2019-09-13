@@ -1,3 +1,9 @@
+## 0.1.8 (13-09-2019):
+
+* Fixed SequenceToken indentation.
+* ConfigurationPrinter: added support for GUID as dictionary key.
+
+
 ## 0.1.7 (31-08-2019):
 
 * Performance optimizations in binders producing up to 2x speed-up.
