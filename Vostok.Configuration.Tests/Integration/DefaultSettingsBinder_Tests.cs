@@ -229,12 +229,51 @@ namespace Vostok.Configuration.Tests.Integration
             binder.Bind<MyClass9>(settings).InterfaceProperty.Should().NotBeNull();
         }
 
+        [Test]
+        public void Should_propagate_default_value_of_missing_property()
+        {
+            var settings = new ObjectNode(null as string);
+
+            var myClass = binder.Bind<MyClass10>(settings);
+
+            myClass.Should().NotBeNull();
+            myClass.SomeSetting.SomeNumber.Should().Be(42);
+            myClass.SomeSetting.SomeString.Should().Be("42");
+        }
+
+        [Test]
+        public void Should_propagate_default_value_of_missing_property_and_fill_object_after_that()
+        {
+            var settings = Object(Object("SomeSetting", ("SomeNumber", "7")));
+
+            var myClass = binder.Bind<MyClass10>(settings);
+
+            myClass.Should().NotBeNull();
+            myClass.SomeSetting.SomeNumber.Should().Be(7);
+            myClass.SomeSetting.SomeString.Should().Be("42");
+        }
+
         private class MyClass9
         {
             public Abstract AbstractField;
             public Abstract AbstractProperty { get; set; }
             public IInterface InterfaceField;
             public IInterface InterfaceProperty { get; set; }
+        }
+
+        class MyClass10
+        {
+            public MyClass10Item SomeSetting { get; set; } = new MyClass10Item
+            {
+                SomeString = "42",
+                SomeNumber = 42
+            };
+        }
+
+        class MyClass10Item
+        {
+            public string SomeString { get; set; }
+            public int SomeNumber { get; set; }
         }
 
         private abstract class Abstract {}
