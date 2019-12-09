@@ -1,8 +1,11 @@
+## 0.1.9 (09.12.2019):
+
+* ConfigurationProvider: added new `Default` property for library developers to enable reuse of a shared static provider instance.
+
 ## 0.1.8 (13-09-2019):
 
 * Fixed SequenceToken indentation.
 * ConfigurationPrinter: added support for GUID as dictionary key.
-
 
 ## 0.1.7 (31-08-2019):
 

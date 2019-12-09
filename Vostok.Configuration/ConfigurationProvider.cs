@@ -82,6 +82,20 @@ namespace Vostok.Configuration
                 });
         }
 
+        /// <summary>
+        /// <para>Returns a static shared instance of <see cref="ConfigurationProvider"/>.</para>
+        /// <para>It's intended to be used by library developers to avoid lifetime management of private <see cref="ConfigurationProvider"/> objects and prevent resource leaks.</para>
+        /// <para>The instance returned by this property can be substituted with <see cref="TrySetDefault"/> method.</para>
+        /// </summary>
+        [NotNull]
+        public static ConfigurationProvider Default => DefaultConfigurationProvider.Get();
+
+        /// <summary>
+        /// Replaces the instance returned by <see cref="Default"/> property with given <paramref name="provider"/>.
+        /// </summary>
+        public static bool TrySetDefault([NotNull] ConfigurationProvider provider, bool canOverwrite = false)
+            => DefaultConfigurationProvider.TryConfigure(provider, canOverwrite);
+
         /// <inheritdoc />
         public TSettings Get<TSettings>()
         {
