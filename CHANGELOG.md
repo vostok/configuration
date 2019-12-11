@@ -1,3 +1,7 @@
+## 0.1.10 (11.12.2019)
+
+* ConfigurationProvider: added a non-generic overload of `SetupSourceFor` method.
+
 ## 0.1.9 (09.12.2019):
 
 * ConfigurationProvider: added new `Default` property for library developers to enable reuse of a shared static provider instance.

@@ -148,11 +148,15 @@ namespace Vostok.Configuration
 
         /// <inheritdoc />
         public void SetupSourceFor<TSettings>(IConfigurationSource source)
+            => SetupSourceFor(typeof(TSettings), source);
+
+        /// <inheritdoc cref="SetupSourceFor{TSettings}"/>
+        public void SetupSourceFor(Type settingsType, IConfigurationSource source)
         {
             if (setupDisabled)
                 throw new InvalidOperationException($"Cannot set up source after {nameof(Get)}() or {nameof(Observe)}() was called.");
 
-            typeSources[typeof(TSettings)] = source;
+            typeSources[settingsType] = source;
         }
 
         /// <inheritdoc />
