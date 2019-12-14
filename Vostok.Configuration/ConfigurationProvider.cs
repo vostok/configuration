@@ -155,8 +155,14 @@ namespace Vostok.Configuration
             while (true)
             {
                 var alreadyConfigured = typeSources.TryGetValue(settingsType, out var result);
-                if (alreadyConfigured && result.used)
-                    throw new InvalidOperationException($"Cannot set up source for type '{settingsType.Name}' after {nameof(Get)}() or {nameof(Observe)}() was called.");
+                if (alreadyConfigured)
+                {
+                    if (ReferenceEquals(source, result.source))
+                        return;
+
+                    if (result.used)
+                        throw new InvalidOperationException($"Cannot set up source for type '{settingsType.Name}' after {nameof(Get)}() or {nameof(Observe)}() was called.");
+                }
 
                 var reconfigured = alreadyConfigured
                     ? typeSources.TryUpdate(settingsType, (source, false), result)

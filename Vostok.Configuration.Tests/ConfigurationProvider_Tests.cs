@@ -363,6 +363,16 @@ namespace Vostok.Configuration.Tests
             provider.Observe<object>();
         }
 
+        [Test]
+        public void SetupSourceFor_should_succeed_with_same_source_by_ref_even_after_Get_had_been_called()
+        {
+            provider.SetupSourceFor<object>(source);
+
+            provider.Get<object>();
+
+            provider.SetupSourceFor<object>(source);
+        }
+
         private T Get<T>(bool customSource)
         {
             return customSource

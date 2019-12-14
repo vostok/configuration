@@ -1,3 +1,7 @@
+## 0.1.12 (14.12.2019):
+
+* ConfigurationProvider: SetupSourceFor no longer fails even after Get or Observe if called with same source (by reference).
+
 ## 0.1.11 (14.12.2019):
 
 * Added SecretBinder — a binder that treats all models as if they were marked with a SecretAttribute.
