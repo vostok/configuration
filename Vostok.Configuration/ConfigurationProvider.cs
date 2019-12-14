@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using JetBrains.Annotations;
-using Vostok.Commons.Threading;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
@@ -21,8 +20,9 @@ namespace Vostok.Configuration
     [PublicAPI]
     public class ConfigurationProvider : IConfigurationProvider, IDisposable
     {
-        private readonly ConcurrentDictionary<Type, IConfigurationSource> typeSources = new ConcurrentDictionary<Type, IConfigurationSource>();
-        private readonly AtomicBoolean setupDisabled = new AtomicBoolean(false);
+        private readonly ConcurrentDictionary<Type, (IConfigurationSource source, bool used)> typeSources
+            = new ConcurrentDictionary<Type, (IConfigurationSource source, bool used)>();
+
         private readonly Action<Exception> errorCallback;
         private readonly Action<object, IConfigurationSource> settingsCallback;
         private readonly IObservableBinder observableBinder;
@@ -100,7 +100,6 @@ namespace Vostok.Configuration
         public TSettings Get<TSettings>()
         {
             EnsureSourceExists<TSettings>(out var source);
-            DisableSetupSource();
 
             var cacheItem = sourceDataCache.GetPersistentCacheItem<TSettings>(source);
             if (cacheItem.CurrentValueProvider == null)
@@ -153,10 +152,19 @@ namespace Vostok.Configuration
         /// <inheritdoc cref="SetupSourceFor{TSettings}"/>
         public void SetupSourceFor(Type settingsType, IConfigurationSource source)
         {
-            if (setupDisabled)
-                throw new InvalidOperationException($"Cannot set up source after {nameof(Get)}() or {nameof(Observe)}() was called.");
+            while (true)
+            {
+                var alreadyConfigured = typeSources.TryGetValue(settingsType, out var result);
+                if (alreadyConfigured && result.used)
+                    throw new InvalidOperationException($"Cannot set up source for type '{settingsType.Name}' after {nameof(Get)}() or {nameof(Observe)}() was called.");
 
-            typeSources[settingsType] = source;
+                var reconfigured = alreadyConfigured
+                    ? typeSources.TryUpdate(settingsType, (source, false), result)
+                    : typeSources.TryAdd(settingsType, (source, false));
+
+                if (reconfigured)
+                    return;
+            }
         }
 
         /// <inheritdoc />
@@ -169,7 +177,6 @@ namespace Vostok.Configuration
         internal IObservable<(TSettings settings, Exception error)> ObserveWithErrors<TSettings>()
         {
             EnsureSourceExists<TSettings>(out var source);
-            DisableSetupSource();
 
             return observableBinder
                 .SelectBound(PushAndResubscribeOnErrors(source).ObserveOn(scheduler), () => sourceDataCache.GetPersistentCacheItem<TSettings>(source))
@@ -186,25 +193,26 @@ namespace Vostok.Configuration
                 .Do(newValue => OnSettingsInstance(source, newValue));
         }
 
-        private void DisableSetupSource()
-        {
-            if (setupDisabled)
-                return;
-
-            setupDisabled.Value = true;
-        }
-
         private void EnsureSourceExists<TSettings>(out IConfigurationSource source)
             => EnsureSourceExists(typeof(TSettings), out source);
 
         private void EnsureSourceExists(Type type, out IConfigurationSource source)
         {
-            if (!typeSources.TryGetValue(type, out source))
-                throw new ArgumentException($"There is no preconfigured source for settings of type '{type}'. Use '{nameof(SetupSourceFor)}' method to configure it.");
+            while (true)
+            {
+                if (!typeSources.TryGetValue(type, out var result))
+                    throw new ArgumentException($"There is no preconfigured source for settings of type '{type}'. Use '{nameof(SetupSourceFor)}' method to configure it.");
+
+                if (!result.used && !typeSources.TryUpdate(type, (result.source, true), result))
+                    continue;
+
+                source = result.source;
+                return;
+            }
         }
 
         private bool IsConfiguredFor<TSettings>(IConfigurationSource source)
-            => typeSources.TryGetValue(typeof(TSettings), out var preconfiguredSource) && ReferenceEquals(source, preconfiguredSource);
+            => typeSources.TryGetValue(typeof(TSettings), out var result) && ReferenceEquals(source, result.source);
 
         private IObservable<(ISettingsNode, Exception)> PushAndResubscribeOnErrors(IConfigurationSource source)
             => HealingObservable.PushAndResubscribeOnErrors(source.Observe, sourceRetryCooldown);

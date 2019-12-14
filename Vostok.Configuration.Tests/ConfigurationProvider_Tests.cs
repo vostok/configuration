@@ -323,14 +323,46 @@ namespace Vostok.Configuration.Tests
         }
 
         [Test]
-        public void SetupSourceFor_should_not_throw_when_Get_or_Observe_methods_was_not_called()
+        public void SetupSourceFor_should_not_throw_when_Get_or_Observe_methods_was_not_called_at_all()
         {
             provider.SetupSourceFor<object>(source);
 
             var newSource = Substitute.For<IConfigurationSource>();
             new Action(() => provider.SetupSourceFor<object>(newSource)).Should().NotThrow();
         }
-        
+
+        [Test]
+        public void SetupSourceFor_should_not_throw_when_Get_method_was_called_for_another_type()
+        {
+            provider.SetupSourceFor<string>(source);
+            provider.Get<string>(source);
+
+            var newSource = Substitute.For<IConfigurationSource>();
+            new Action(() => provider.SetupSourceFor<object>(newSource)).Should().NotThrow();
+        }
+
+        [Test]
+        public void SetupSourceFor_should_not_throw_when_Observe_method_was_called_for_another_type()
+        {
+            provider.SetupSourceFor<string>(source);
+            provider.Observe<string>(source);
+
+            var newSource = Substitute.For<IConfigurationSource>();
+            new Action(() => provider.SetupSourceFor<object>(newSource)).Should().NotThrow();
+        }
+
+        [Test]
+        public void SetupSourceFor_should_allow_to_reconfigure_source_for_the_type_before_calling_Get_or_Observe()
+        {
+            var source2 = Substitute.For<IConfigurationSource>();
+
+            provider.SetupSourceFor<object>(source);
+            provider.SetupSourceFor<object>(source2);
+
+            provider.Get<object>();
+            provider.Observe<object>();
+        }
+
         private T Get<T>(bool customSource)
         {
             return customSource
