@@ -38,6 +38,9 @@ namespace Vostok.Configuration.Helpers
         public static void RegisterCustomSecretAttribute(Type attributeType)
             => SecretAttributes = SecretAttributes.Concat(new[] {attributeType}).ToArray();
 
+        internal static IDisposable StartSecurityScope()
+            => new SecurityScopeToken();
+
         internal static IDisposable StartSecurityScope([NotNull] Type type)
             => IsSecret(type) ? new SecurityScopeToken() : NoOpScopeToken.Instance as IDisposable;
 
