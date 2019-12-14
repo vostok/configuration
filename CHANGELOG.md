@@ -1,3 +1,8 @@
+## 0.1.11 (14.12.2019):
+
+* Added SecretBinder — a binder that treats all models as if they were marked with a SecretAttribute.
+* ConfigurationProvider now allows to set up sources for yet unused types even if other types have been already used.
+
 ## 0.1.10 (11.12.2019)
 
 * ConfigurationProvider: added a non-generic overload of `SetupSourceFor` method.
