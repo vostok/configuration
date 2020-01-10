@@ -102,11 +102,12 @@ namespace Vostok.Configuration.Binders
                 if (ShouldSkipMemberOfAbstractType(binder, type))
                     return SettingsBindingResult.Success(defaultValue);
 
-                var memberNameAliases = AttributeHelper.Select<AliasAttribute>(member).Select(a => a.Value).ToArray();
+                var names = new List<string> {member.Name};
 
-                var values = memberNameAliases
-                    .Select(alias => settings?[alias])
-                    .Concat(new[] {settings?[member.Name]})
+                names.AddRange(AttributeHelper.Select<AliasAttribute>(member).Select(a => a.Value));
+
+                var values = names
+                    .Select(name => settings?[name])
                     .Where(s => s != null)
                     .ToArray();
 
