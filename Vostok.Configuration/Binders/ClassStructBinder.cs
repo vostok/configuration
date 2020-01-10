@@ -104,7 +104,7 @@ namespace Vostok.Configuration.Binders
 
                 var memberNameAliases = AttributeHelper.Select<AliasAttribute>(member).Select(a => a.Value).ToArray();
 
-                var value = settings?[member.Name] ?? memberNameAliases.Select(alias => settings?[alias]).FirstOrDefault();
+                var value = settings?[member.Name] ?? memberNameAliases.Select(alias => settings?[alias]).FirstOrDefault(s => s != null);
                 if (!value.IsNullOrMissing(binder))
                     return binder.Bind(value);
 
