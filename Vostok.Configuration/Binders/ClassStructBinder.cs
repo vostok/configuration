@@ -102,7 +102,9 @@ namespace Vostok.Configuration.Binders
                 if (ShouldSkipMemberOfAbstractType(binder, type))
                     return SettingsBindingResult.Success(defaultValue);
 
-                var value = settings?[member.Name];
+                var memberNameAliases = AttributeHelper.Select<AliasAttribute>(member).Select(a => a.Value).ToArray();
+
+                var value = settings?[member.Name] ?? memberNameAliases.Select(alias => settings?[alias]).FirstOrDefault();
                 if (!value.IsNullOrMissing(binder))
                     return binder.Bind(value);
 
