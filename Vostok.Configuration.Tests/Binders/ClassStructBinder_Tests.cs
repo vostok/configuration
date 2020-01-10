@@ -325,11 +325,15 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Will_bind_only_one_value_by_several_matching_aliases()
+        public void Should_not_allow_ambiguity_if_there_are_several_matching_aliases()
         {
             var settings = Object(Value("property.name.1", "true"), Value(nameof(MyClass9.PropertyWithAlias), "true"));
 
-            CreateBinder<MyClass9>().Bind(settings).Value.PropertyWithAlias.Should().BeTrue();
+            var settingsBindingResult = CreateBinder<MyClass9>().Bind(settings);
+
+            settingsBindingResult
+                .Invoking(r => _ = r.Value)
+                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
 
         private class MyClass1

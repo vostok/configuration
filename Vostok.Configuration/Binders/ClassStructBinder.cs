@@ -104,7 +104,16 @@ namespace Vostok.Configuration.Binders
 
                 var memberNameAliases = AttributeHelper.Select<AliasAttribute>(member).Select(a => a.Value).ToArray();
 
-                var value = settings?[member.Name] ?? memberNameAliases.Select(alias => settings?[alias]).FirstOrDefault(s => s != null);
+                var values = memberNameAliases
+                    .Select(alias => settings?[alias])
+                    .Concat(new[] {settings?[member.Name]})
+                    .Where(s => s != null)
+                    .ToArray();
+
+                if (values.Length > 1)
+                    return SettingsBindingResult.AmbiguousSettingValues<object>(member.Name, values);
+
+                var value = values.SingleOrDefault();
                 if (!value.IsNullOrMissing(binder))
                     return binder.Bind(value);
 
