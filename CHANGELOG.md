@@ -1,3 +1,7 @@
+## 0.1.13 (10.01.2020):
+
+* Added support for aliases that allow to provide alternative keys for field and properties instead of their names in the model.
+
 ## 0.1.12 (14.12.2019):
 
 * ConfigurationProvider: SetupSourceFor no longer fails even after Get or Observe if called with same source (by reference).
