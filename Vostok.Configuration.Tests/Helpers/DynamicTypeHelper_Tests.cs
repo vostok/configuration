@@ -16,7 +16,7 @@ namespace Vostok.Configuration.Tests.Helpers
             var implType = DynamicTypesHelper.ImplementType(typeof(IInterfaceWithMethod));
 
             var instance = (IInterfaceWithMethod)Activator.CreateInstance(implType);
-            ((Action)instance.DoSomething).Should().Throw<NotImplementedException>();
+            ((Action)instance.DoSomethind).Should().Throw<NotImplementedException>();
         }
 
         [Test]
@@ -60,7 +60,7 @@ namespace Vostok.Configuration.Tests.Helpers
 
     public interface IInterfaceWithMethod
     {
-        void DoSomething();
+        void DoSomethind();
     }
 
     internal interface IInternalInterface

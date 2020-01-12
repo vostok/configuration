@@ -165,7 +165,7 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_report_error_if_required_property_is_not_set()
         {
             var settings = Object(("Field1", "true"));
-
+            
             new Func<MyClass2>(() => CreateBinder<MyClass2>().Bind(settings).Value)
                 .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
@@ -183,7 +183,7 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_report_error_if_required_by_default_property_is_not_set()
         {
             var settings = Object(("Field1", "true"));
-
+            
             new Func<MyClass3>(() => CreateBinder<MyClass3>().Bind(settings).Value)
                 .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
@@ -265,7 +265,7 @@ namespace Vostok.Configuration.Tests.Binders
             CreateBinder<MyClass4>().Bind(Value(null)).Value.Field1.Should().BeTrue();
             CreateBinder<MyClass4>().Bind(Value(null)).Value.Property1.Should().BeTrue();
         }
-
+        
         [Test]
         public void Should_return_error_if_node_is_missing_and_some_fields_are_required()
         {
@@ -314,28 +314,6 @@ namespace Vostok.Configuration.Tests.Binders
             CreateBinder<MyClass8>().Bind(settings).Value.PropertyWithBinder.Should().Be("MyString");
         }
 
-        [TestCase("property.name.1")]
-        [TestCase("42_property_name")]
-        [TestCase("$prop")]
-        public void Should_bind_by_alias_if_some_were_set(string alias)
-        {
-            var settings = Object(Value(alias, "true"));
-
-            CreateBinder<MyClass9>().Bind(settings).Value.PropertyWithAlias.Should().BeTrue();
-        }
-
-        [Test]
-        public void Should_not_allow_ambiguity_if_there_are_several_matching_aliases()
-        {
-            var settings = Object(Value("property.name.1", "true"), Value(nameof(MyClass9.PropertyWithAlias), "true"));
-
-            var settingsBindingResult = CreateBinder<MyClass9>().Bind(settings);
-
-            settingsBindingResult
-                .Invoking(r => _ = r.Value)
-                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
-        }
-
         private class MyClass1
         {
             public bool Field1;
@@ -356,7 +334,7 @@ namespace Vostok.Configuration.Tests.Binders
             public string this[string index] => throw new NotSupportedException();
             public bool ComputedProperty => false;
         }
-
+        
         private class MyClass2
         {
             [Required]
@@ -385,23 +363,23 @@ namespace Vostok.Configuration.Tests.Binders
 
             public bool Field1;
         }
-
+        
         private class MyClass6
         {
             public bool Field1 = true;
             public Inner Field2 = new Inner();
             public bool Property1 { get; set; } = true;
-
+            
             public class Inner
             {
                 public bool Field;
             }
         }
-
+        
         private class MyClass7
         {
             public bool Property1 { get; set; }
-
+            
             [Required]
             public bool Property2 { get; set; }
         }
@@ -410,17 +388,9 @@ namespace Vostok.Configuration.Tests.Binders
         {
             [BindBy(typeof(MyStringBinder))]
             public string FieldWithBinder;
-
+            
             [BindBy(typeof(MyStringBinder))]
             public string PropertyWithBinder { get; }
-        }
-
-        private class MyClass9
-        {
-            [Alias("property.name.1")]
-            [Alias("42_property_name")]
-            [Alias("$prop")]
-            public bool PropertyWithAlias { get; }
         }
 
         private struct MyStruct
@@ -428,7 +398,7 @@ namespace Vostok.Configuration.Tests.Binders
             public bool Property1 { get; set; }
             public bool Property2 { get; set; }
         }
-
+        
         public class MyStringBinder : ISettingsBinder<string>
         {
             public string Bind(ISettingsNode rawSettings) => "My" + rawSettings.Value;
@@ -441,7 +411,7 @@ namespace Vostok.Configuration.Tests.Binders
 
             return obj == null ? null : (field?.GetValue(obj) as bool? ?? property?.GetValue(obj) as bool?);
         }
-
+        
         private ClassStructBinder<T> CreateBinder<T>() => new ClassStructBinder<T>(provider);
     }
 }
