@@ -102,7 +102,19 @@ namespace Vostok.Configuration.Binders
                 if (ShouldSkipMemberOfAbstractType(binder, type))
                     return SettingsBindingResult.Success(defaultValue);
 
-                var value = settings?[member.Name];
+                var names = new List<string> {member.Name};
+
+                names.AddRange(AttributeHelper.Select<AliasAttribute>(member).Select(a => a.Value));
+
+                var values = names
+                    .Select(name => settings?[name])
+                    .Where(s => s != null)
+                    .ToArray();
+
+                if (values.Length > 1)
+                    return SettingsBindingResult.AmbiguousSettingValues<object>(member.Name, values);
+
+                var value = values.SingleOrDefault();
                 if (!value.IsNullOrMissing(binder))
                     return binder.Bind(value);
 

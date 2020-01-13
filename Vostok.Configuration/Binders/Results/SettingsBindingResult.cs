@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Helpers;
 
@@ -21,6 +22,13 @@ namespace Vostok.Configuration.Binders.Results
 
         public static SettingsBindingResult<TSettings> BinderNotFound<TSettings>(Type type) =>
             Error<TSettings>($"Could not find suitable binder for type '{type}'.");
+
+        public static SettingsBindingResult<TSettings> AmbiguousSettingValues<TSettings>(string memberName, ISettingsNode[] ambiguousSettings)
+        {
+            var settingNames = ambiguousSettings.Select(s => s.Name);
+
+            return Error<TSettings>($"Ambiguous setting values found for field or property '{memberName}' (including aliases): {string.Join(", ", settingNames)}");
+        }
 
         public static SettingsBindingResult<TSettings> Error<TSettings>(string error) =>
             new SettingsBindingResult<TSettings>(default, new[] {SettingsBindingError.Message(error)});
