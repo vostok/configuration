@@ -107,6 +107,7 @@ namespace Vostok.Configuration.Binders
                 names.AddRange(AttributeHelper.Select<AliasAttribute>(member).Select(a => a.Value));
 
                 var values = names
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
                     .Select(name => settings?[name])
                     .Where(s => s != null)
                     .ToArray();

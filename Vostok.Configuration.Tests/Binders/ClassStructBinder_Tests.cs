@@ -325,6 +325,13 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
+        public void Should_select_distinct_alias_names_without_case_sensitivity()
+        {
+            CreateBinder<MyClass10>().Bind(Object(Value("alias", "true"))).Value.PropertyWithAlias.Should().BeTrue();
+            CreateBinder<MyClass10>().Bind(Object(Value("propertywithalias", "true"))).Value.PropertyWithAlias.Should().BeTrue();
+        }
+
+        [Test]
         public void Should_not_allow_ambiguity_if_there_are_several_matching_aliases()
         {
             var settings = Object(Value("property.name.1", "true"), Value(nameof(MyClass9.PropertyWithAlias), "true"));
@@ -420,6 +427,13 @@ namespace Vostok.Configuration.Tests.Binders
             [Alias("property.name.1")]
             [Alias("42_property_name")]
             [Alias("$prop")]
+            public bool PropertyWithAlias { get; }
+        }
+
+        private class MyClass10
+        {
+            [Alias("alias")]
+            [Alias("propertywithalias")]
             public bool PropertyWithAlias { get; }
         }
 

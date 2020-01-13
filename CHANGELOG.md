@@ -1,3 +1,7 @@
+## 0.1.14 (13.01.202):
+
+* ClassStructBinder now tolerates aliases with duplicate names (comparison is case-insensitive).
+
 ## 0.1.13 (10.01.2020):
 
 * Added support for aliases that allow to provide alternative keys for field and properties instead of their names in the model.
