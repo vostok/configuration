@@ -259,6 +259,12 @@ namespace Vostok.Configuration.Tests.Binders
                 .Throw<InvalidOperationException>();
         }
 
+        [Test]
+        public void Should_select_ConstructorBinder()
+        {
+            provider.CreateFor<MyClass3>().Should().BeOfType<ConstructorBinder<MyClass3>>();
+        }
+
         public class MyClass
         {
             public static bool TryParse(string s, out MyClass v)
@@ -275,6 +281,13 @@ namespace Vostok.Configuration.Tests.Binders
         public class MyClass2<T>
         {
 
+        }
+
+        public class MyClass3
+        {
+            public MyClass3(string value)
+            {
+            }
         }
 
         public struct MyStruct
