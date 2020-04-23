@@ -10,11 +10,13 @@ namespace Vostok.Configuration.Parsers
 {
     internal static class ParseMethodFinder
     {
+        private const int CacheCapacity = 1000;
+        
         private static readonly RecyclingBoundedCache<Type, MethodInfo> parseMethods 
-            = new RecyclingBoundedCache<Type, MethodInfo>(100);
+            = new RecyclingBoundedCache<Type, MethodInfo>(CacheCapacity);
 
         private static readonly RecyclingBoundedCache<Type, MethodInfo> tryParseMethods
-            = new RecyclingBoundedCache<Type, MethodInfo>(100);
+            = new RecyclingBoundedCache<Type, MethodInfo>(CacheCapacity);
 
         public static bool HasAnyKindOfParseMethod([NotNull] Type type)
             => (FindTryParseMethod(type) ?? FindParseMethod(type)) != null;
