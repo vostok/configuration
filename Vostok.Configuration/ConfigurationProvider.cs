@@ -183,7 +183,7 @@ namespace Vostok.Configuration
 
         /// <summary>
         /// <para>Attempts to set associate given <paramref name="source"/> with type <paramref name="settingsType"/>.</para>
-        /// <para>Returns <c>true</c> on success or <c>false</c> if a source has already been configured for this type.</para>
+        /// <para>Returns <c>true</c> on success or <c>false</c> if another source has already been configured for this type.</para>
         /// <para>See <see cref="SetupSourceFor"/> for mor details.</para>
         /// </summary>
         public bool TrySetupSourceFor([NotNull] Type settingsType, [NotNull] IConfigurationSource source)

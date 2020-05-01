@@ -1,3 +1,7 @@
+## 0.1.16 (01.05.2020):
+
+* ConfigurationProvider: added HasSourceFor and TrySetupSourceFor methods.
+
 ## 0.1.15 (01.05.2020):
 
 * Default binder is now capable to bind classes with a single one-argument constructor.
