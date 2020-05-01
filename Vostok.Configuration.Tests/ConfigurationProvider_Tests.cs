@@ -373,6 +373,46 @@ namespace Vostok.Configuration.Tests
             provider.SetupSourceFor<object>(source);
         }
 
+        [Test]
+        public void HasSourceFor_should_return_false_when_there_is_no_source_set_up()
+        {
+            provider.HasSourceFor<object>().Should().BeFalse();
+        }
+
+        [Test]
+        public void HasSourceFor_should_return_true_when_there_is_a_source_set_up()
+        {
+            provider.SetupSourceFor<object>(source);
+
+            provider.HasSourceFor<object>().Should().BeTrue();
+
+            provider.Get<object>();
+
+            provider.HasSourceFor<object>().Should().BeTrue();
+        }
+
+        [Test]
+        public void TrySetupSourceFor_should_succeed_when_there_is_no_source_yet()
+        {
+            provider.TrySetupSourceFor<object>(source).Should().BeTrue();
+        }
+
+        [Test]
+        public void TrySetupSourceFor_should_succeed_when_the_same_source_is_already_configured()
+        {
+            provider.TrySetupSourceFor<object>(source).Should().BeTrue();
+            provider.TrySetupSourceFor<object>(source).Should().BeTrue();
+            provider.TrySetupSourceFor<object>(source).Should().BeTrue();
+        }
+
+        [Test]
+        public void TrySetupSourceFor_should_fail_when_another_source_is_already_configured()
+        {
+            provider.SetupSourceFor<object>(Substitute.For<IConfigurationSource>());
+
+            provider.TrySetupSourceFor<object>(source).Should().BeFalse();
+        }
+
         private T Get<T>(bool customSource)
         {
             return customSource

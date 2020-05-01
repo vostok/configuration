@@ -187,7 +187,16 @@ namespace Vostok.Configuration
         /// <para>See <see cref="SetupSourceFor"/> for mor details.</para>
         /// </summary>
         public bool TrySetupSourceFor([NotNull] Type settingsType, [NotNull] IConfigurationSource source)
-            => typeSources.TryAdd(settingsType, (source, false));
+        {
+            while (true)
+            {
+                if (typeSources.TryGetValue(settingsType, out var result))
+                    return ReferenceEquals(source, result.source);
+
+                if (typeSources.TryAdd(settingsType, (source, false)))
+                    return true;
+            }
+        }
 
         /// <summary>
         /// Returns whether there is a source configured for <typeparamref name="TSettings"/>.
