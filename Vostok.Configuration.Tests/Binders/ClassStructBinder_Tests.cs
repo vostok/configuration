@@ -123,7 +123,7 @@ namespace Vostok.Configuration.Tests.Binders
         }
 
         [Test]
-        public void Should_ignore_consts()
+        public void Should_ignore_constants()
         {
             var settings = Object(("Const", "true"));
 
@@ -132,6 +132,7 @@ namespace Vostok.Configuration.Tests.Binders
             myClass.Should().NotBeNull();
             MyClass1.Const.Should().BeFalse();
         }
+
         [Test]
         public void Should_ignore_computed_properties()
         {

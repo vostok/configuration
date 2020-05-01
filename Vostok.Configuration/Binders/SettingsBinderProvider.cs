@@ -65,6 +65,10 @@ namespace Vostok.Configuration.Binders
                         c => !c.Handled && c.ServiceType.GetGenericArguments()[0].IsInterface);
                     container.RegisterConditional(
                         typeof(ISafeSettingsBinder<>),
+                        typeof(ConstructorBinder<>),
+                        c => !c.Handled && ConstructorBinder<object>.CanBeUsedFor(c.ServiceType.GetGenericArguments()[0]));
+                    container.RegisterConditional(
+                        typeof(ISafeSettingsBinder<>),
                         typeof(ClassStructBinder<>),
                         c => !c.Handled);
                     container.RegisterConditional(
