@@ -173,6 +173,32 @@ namespace Vostok.Configuration
             }
         }
 
+        /// <summary>
+        /// <para>Attempts to set associate given <paramref name="source"/> with type <typeparamref name="TSettings"/>.</para>
+        /// <para>Returns <c>true</c> on success or <c>false</c> if a source has already been configured for this type.</para>
+        /// <para>See <see cref="SetupSourceFor"/> for mor details.</para>
+        /// </summary>
+        public bool TrySetupSourceFor<TSettings>([NotNull] IConfigurationSource source)
+            => TrySetupSourceFor(typeof(TSettings), source);
+
+        /// <summary>
+        /// <para>Attempts to set associate given <paramref name="source"/> with type <paramref name="settingsType"/>.</para>
+        /// <para>Returns <c>true</c> on success or <c>false</c> if a source has already been configured for this type.</para>
+        /// <para>See <see cref="SetupSourceFor"/> for mor details.</para>
+        /// </summary>
+        public bool TrySetupSourceFor([NotNull] Type settingsType, [NotNull] IConfigurationSource source)
+            => typeSources.TryAdd(settingsType, (source, false));
+
+        /// <summary>
+        /// Returns whether there is a source configured for <typeparamref name="TSettings"/>.
+        /// </summary>
+        public bool HasSourceFor<TSettings>() => HasSourceFor(typeof(TSettings));
+
+        /// <summary>
+        /// Returns whether there is a source configured for <paramref name="settingsType"/>.
+        /// </summary>
+        public bool HasSourceFor([NotNull] Type settingsType) => typeSources.ContainsKey(settingsType);
+
         /// <inheritdoc />
         public void Dispose()
         {
