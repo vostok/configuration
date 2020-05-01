@@ -1,3 +1,7 @@
+## 0.1.15 (01.05.2020):
+
+* Default binder is now capable to bind classes with a single one-argument constructor.
+
 ## 0.1.14 (13.01.202):
 
 * ClassStructBinder now tolerates aliases with duplicate names (comparison is case-insensitive).
