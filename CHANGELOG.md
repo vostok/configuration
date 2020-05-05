@@ -1,3 +1,7 @@
+## 0.1.17 (05.05.2020):
+
+* Fixed https://github.com/vostok/configuration/issues/21
+
 ## 0.1.16 (01.05.2020):
 
 * ConfigurationProvider: added HasSourceFor and TrySetupSourceFor methods.
