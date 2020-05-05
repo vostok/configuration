@@ -229,6 +229,28 @@ namespace Vostok.Configuration.Tests.Integration
             binder.Bind<MyClass9>(settings).InterfaceProperty.Should().NotBeNull();
         }
 
+        [Test]
+        public void Should_not_lose_instantiated_defaults_in_nested_classes()
+        {
+            var settings = Object(
+                Object("nested1", ("A", "3")),
+                Object("nested2", ("A", "4")),
+                Array("nested3", Object(("A", "5"))));
+
+            var model = binder.Bind<OuterConfig>(settings);
+
+            model.Nested1.A.Should().Be(3);
+            model.Nested1.B.Should().Be(2);
+
+            model.Nested2.A.Should().Be(4);
+            model.Nested2.B.Should().Be(0);
+
+            var arrayElement = model.Nested3.Should().ContainSingle().Which;
+
+            arrayElement.A.Should().Be(5);
+            arrayElement.B.Should().Be(0);
+        }
+
         private class MyClass9
         {
             public Abstract AbstractField;
@@ -324,6 +346,25 @@ namespace Vostok.Configuration.Tests.Integration
         private class MyConfig
         {
             public MyList<int> MyList;
-    }
+        }
+
+        private class OuterConfig
+        {
+            public NestedConfig Nested1 { get; } = new NestedConfig
+            {
+                A = 1,
+                B = 2
+            };
+
+            public NestedConfig Nested2 { get; }
+
+            public NestedConfig[] Nested3 = {};
+        }
+
+        private class NestedConfig
+        {
+            public int A { get; set; }
+            public int B { get; set; }
+        }
     }
 }

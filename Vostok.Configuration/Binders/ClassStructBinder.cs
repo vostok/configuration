@@ -58,7 +58,7 @@ namespace Vostok.Configuration.Binders
         private SettingsBindingResult<T> BindInternal(ISettingsNode settings)
         {
             var type = typeof(T);
-            var instance = Activator.CreateInstance(type);
+            var instance = ClassStructBinderSeed.Get(settings, type) ?? Activator.CreateInstance(type);
 
             using (SecurityHelper.StartSecurityScope(type))
             {
@@ -117,7 +117,10 @@ namespace Vostok.Configuration.Binders
 
                 var value = values.SingleOrDefault();
                 if (!value.IsNullOrMissing(binder))
-                    return binder.Bind(value);
+                {
+                    using (ClassStructBinderSeed.Use(value, defaultValue))
+                        return binder.Bind(value);
+                }
 
                 if (isRequired)
                     return SettingsBindingResult.RequiredPropertyIsNull<object>(member.Name);
