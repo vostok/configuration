@@ -23,7 +23,10 @@ namespace Vostok.Configuration
                 settings = settings ?? PrintSettings.Default;
 
                 var token = PrintTokenFactory.Create(item, settings);
+
                 var context = new PrintContext(settings);
+                if (settings.InitialIndent)
+                    context.IncreaseDepth();
 
                 token.Print(context);
 
