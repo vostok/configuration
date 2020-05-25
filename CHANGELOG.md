@@ -1,3 +1,7 @@
+## 0.1.18 (25.05.2020):
+
+* Added `InitialIndent` print setting for beautiful logging.
+
 ## 0.1.17 (05.05.2020):
 
 * Fixed https://github.com/vostok/configuration/issues/21
