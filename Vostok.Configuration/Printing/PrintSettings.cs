@@ -16,5 +16,10 @@ namespace Vostok.Configuration.Printing
         /// Format to print objects in.
         /// </summary>
         public PrintFormat Format = PrintFormat.YAML;
+
+        /// <summary>
+        /// If set to <c>true</c> initial indent will be applied.
+        /// </summary>
+        public bool InitialIndent { get; set; }
     }
 }
