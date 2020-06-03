@@ -9,7 +9,7 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <PropertyGroup>
-    <VersionPrefix>0.1.19</VersionPrefix>
+    <VersionPrefix>0.1.20</VersionPrefix>
   </PropertyGroup>
   <PropertyGroup>
     <Title>Vostok.Configuration</Title>
@@ -22,7 +22,6 @@
     <PackageReleaseNotes>https://github.com/vostok/configuration/blob/master/CHANGELOG.md</PackageReleaseNotes>
     <RepositoryUrl>https://github.com/vostok/configuration</RepositoryUrl>
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Include="..\..\vostok.commons.formatting\Vostok.Commons.Formatting\CustomFormatters.cs" Link="Commons\CustomFormatters.cs" />
     <Compile Include="..\..\vostok.commons.helpers\Vostok.Commons.Helpers\Disposable\ActionDisposable.cs" Link="Commons\ActionDisposable.cs" />
@@ -35,13 +34,11 @@
     <Compile Include="..\..\vostok.commons.collections\Vostok.Commons.Collections\RecyclingBoundedCache.cs" Link="Commons\RecyclingBoundedCache.cs" />
     <Compile Include="..\..\vostok.commons.collections\Vostok.Commons.Collections\ByReferenceEqualityComparer.cs" Link="Commons\ByReferenceEqualityComparer.cs" />
   </ItemGroup>
-
   <ItemGroup>
     <Reference Include="Vostok.Configuration.Abstractions">
       <HintPath>..\..\vostok.configuration.abstractions\Vostok.Configuration.Abstractions\bin\Release\netstandard2.0\Vostok.Configuration.Abstractions.dll</HintPath>
     </Reference>
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="System.Reactive" Version="4.1.2" PrivateAssets="all" />
     <PackageReference Include="System.Reactive.Core" Version="4.1.2" PrivateAssets="all" />
@@ -49,7 +46,6 @@
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" PrivateAssets="all" />
     <PackageReference Include="SimpleInjector" Version="4.4.3" PrivateAssets="all" />
   </ItemGroup>
-
   <Target Name="RepackAssemblies" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
     <PropertyGroup>
       <ILRepackExecutable>dotnet "$(MSBuildThisFileDirectory)../../vostok.devtools.ilrepack.bin/netcoreapp2.1/ILRepack.Core.dll"</ILRepackExecutable>
@@ -61,6 +57,6 @@
       <MergeAssemblies Include="$(BinPath)System*.dll" />
     </ItemGroup>
     <Exec WorkingDirectory="$(BinPath)" Command="$(ILRepackExecutable) /internalize /renameInternalized /out:$(ResultAssembly) $(ResultAssembly) @(MergeAssemblies->'%(RelativeDir)%(FileName)%(Extension)', ' ')" />
-    <Delete Files="@(MergeAssemblies)"/>
+    <Delete Files="@(MergeAssemblies)" />
   </Target>
 </Project>
