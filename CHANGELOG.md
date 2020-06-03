@@ -1,3 +1,7 @@
+## 0.1.19 (03.06.2020):
+
+* ConfigurationPrinter no longer sorts property names alphabetically.
+
 ## 0.1.18 (25.05.2020):
 
 * Added `InitialIndent` print setting for beautiful logging.

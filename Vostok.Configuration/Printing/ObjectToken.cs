@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace Vostok.Configuration.Printing
@@ -10,7 +9,7 @@ namespace Vostok.Configuration.Printing
 
         public ObjectToken(IEnumerable<PropertyToken> properties)
         {
-            this.properties = properties.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase).ToArray();
+            this.properties = properties.ToArray();
         }
 
         public void Print(IPrintContext context)
