@@ -28,6 +28,7 @@
     <Compile Include="..\..\vostok.commons.helpers\Vostok.Commons.Helpers\Disposable\EmptyDisposable.cs" Link="Commons\EmptyDisposable.cs" />
     <Compile Include="..\..\vostok.commons.helpers\Vostok.Commons.Helpers\Extensions\TypeExtensions.cs" Link="Commons\TypeExtensions.cs" />
     <Compile Include="..\..\vostok.commons.helpers\Vostok.Commons.Helpers\NumericTypeParser.cs" Link="Commons\NumericTypeParser.cs" />
+    <Compile Include="..\..\vostok.commons.helpers\Vostok.Commons.Helpers\Rx\RxHacker.cs" Link="Commons\RxHacker.cs" />
     <Compile Include="..\..\vostok.commons.threading\Vostok.Commons.Threading\AtomicBoolean.cs" Link="Commons\AtomicBoolean.cs" />
     <Compile Include="..\..\vostok.commons.formatting\Vostok.Commons.Formatting\ToStringDetector.cs" Link="Commons\ToStringDetector.cs" />
     <Compile Include="..\..\vostok.commons.formatting\Vostok.Commons.Formatting\DictionaryInspector.cs" Link="Commons\DictionaryInspector.cs" />
