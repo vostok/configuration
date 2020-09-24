@@ -1,6 +1,6 @@
 ﻿using System;
 using JetBrains.Annotations;
-using Vostok.Configuration.Helpers;
+using Vostok.Commons.Helpers.Rx;
 
 namespace Vostok.Configuration.Extensions.Observable
 {
