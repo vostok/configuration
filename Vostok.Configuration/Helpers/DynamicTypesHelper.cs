@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -80,9 +81,9 @@ namespace Vostok.Configuration.Helpers
         private static TypeBuilder StartType(Type baseType, string suffix)
         {
             var builder = ObtainModuleBuilder(baseType);
-
+            var genericSuffix = GetGenericArgsSuffix(baseType);
             var typeBuilder = builder.DefineType(
-                $"{baseType.Namespace}.{baseType.Name}<{suffix}>",
+                $"{baseType.Namespace}.{baseType.Name}<{suffix}>{genericSuffix}",
                 DefaultTypeAttributes,
                 baseType.IsInterface ? null : baseType,
                 baseType.IsInterface ? new[] {baseType} : Type.EmptyTypes);
@@ -91,6 +92,16 @@ namespace Vostok.Configuration.Helpers
                 typeBuilder.SetCustomAttribute(CreateCustomAttributeBuilder(attribute));
 
             return typeBuilder;
+        }
+
+        private static string GetGenericArgsSuffix(Type baseType)
+        {
+            if (!baseType.IsGenericType)
+                return string.Empty;
+
+            IStructuralEquatable genericArguments = baseType.GetGenericArguments();
+            var hashCode = genericArguments.GetHashCode(EqualityComparer<Type>.Default);
+            return $"<Generics{hashCode}>";
         }
 
         private static CustomAttributeBuilder CreateCustomAttributeBuilder(CustomAttributeData attribute)
