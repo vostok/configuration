@@ -28,6 +28,16 @@ namespace Vostok.Configuration.Tests.Helpers
         }
 
         [Test]
+        public void Helper_should_implement_generic_interface_with_different_types_multiple_times()
+        {
+            var implType1 = DynamicTypesHelper.ImplementType(typeof(IGenericInterface<bool, int>));
+            var implType2 = DynamicTypesHelper.ImplementType(typeof(IGenericInterface<int, bool>));
+
+            implType1.GetInterfaces().Should().Contain(typeof(IGenericInterface<bool, int>));
+            implType2.GetInterfaces().Should().Contain(typeof(IGenericInterface<int, bool>));
+        }
+
+        [Test]
         public void Helper_should_add_attributes_to_type()
         {
             var implType = DynamicTypesHelper.ImplementType(typeof(ICustomInterface));
@@ -64,6 +74,10 @@ namespace Vostok.Configuration.Tests.Helpers
     }
 
     internal interface IInternalInterface
+    {
+    }
+
+    public interface IGenericInterface<T1, T2>
     {
     }
 
