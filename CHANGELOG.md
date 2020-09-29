@@ -1,3 +1,7 @@
+## 0.1.20 (29.09.2020):
+
+* Fixed "Duplicate type name within an assembly" error arising when DynamicTypesHelper tries to implement the same generic interface with different type arguments.
+
 ## 0.1.19 (03.06.2020):
 
 * ConfigurationPrinter no longer sorts property names alphabetically.
