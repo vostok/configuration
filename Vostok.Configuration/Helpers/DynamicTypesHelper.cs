@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -106,7 +107,7 @@ namespace Vostok.Configuration.Helpers
 
         private static CustomAttributeBuilder CreateCustomAttributeBuilder(CustomAttributeData attribute)
         {
-            var ctorArgs = attribute.ConstructorArguments.Select(a => a.Value).ToArray();
+            var ctorArgs = attribute.ConstructorArguments.Select(GetActualValue).ToArray();
             if (attribute.NamedArguments == null || !attribute.NamedArguments.Any())
                 return new CustomAttributeBuilder(attribute.Constructor, ctorArgs);
 
@@ -120,12 +121,12 @@ namespace Vostok.Configuration.Helpers
                 if (argument.IsField)
                 {
                     fieldInfos.Add((FieldInfo)argument.MemberInfo);
-                    fieldValues.Add(argument.TypedValue.Value);
+                    fieldValues.Add(GetActualValue(argument.TypedValue));
                 }
                 else
                 {
                     propInfos.Add((PropertyInfo)argument.MemberInfo);
-                    propValues.Add(argument.TypedValue.Value);
+                    propValues.Add(GetActualValue(argument.TypedValue));
                 }
             }
 
@@ -136,6 +137,24 @@ namespace Vostok.Configuration.Helpers
                 propValues.ToArray(),
                 fieldInfos.ToArray(),
                 fieldValues.ToArray());
+        }
+
+        private static object GetActualValue(CustomAttributeTypedArgument argument)
+        {
+            if (argument.ArgumentType.IsEnum)
+                return Enum.ToObject(argument.ArgumentType, argument.Value);
+
+            if (!argument.ArgumentType.IsArray)
+                return argument.Value;
+
+            // should keep type of array: int[], string[], etc.
+            var i = 0;
+            var argumentValue = (ReadOnlyCollection<CustomAttributeTypedArgument>)argument.Value;
+            var actualValue = (Array)Activator.CreateInstance(argument.ArgumentType, argumentValue.Count);
+            foreach (var o in argumentValue.Select(GetActualValue))
+                actualValue.SetValue(o, i++);
+
+            return actualValue;
         }
 
         private static ModuleBuilder ObtainModuleBuilder(Type type)
