@@ -66,6 +66,21 @@ namespace Vostok.Configuration.Tests.Helpers
             info.GetMethod.GetCustomAttribute<CustomAttribute>().Should().NotBeNull();
             info.SetMethod.GetCustomAttribute<CustomAttribute>().Should().NotBeNull();
         }
+
+        [Test]
+        public void Helper_should_add_attributes_with_array_arguments()
+        {
+            var expectation = new CustomAttribute(new[] {typeof(bool), typeof(AttributeTargets)}, true, AttributeTargets.All)
+            {
+                Strings = new[] {"asd", "xyz"},
+                Numbers = new[] {1, 2, 3, 4, 5}
+            };
+
+            var implType = DynamicTypesHelper.ImplementType(typeof(ITestArrayInAttribute));
+
+            var attribute = implType.GetCustomAttribute<CustomAttribute>();
+            attribute.Should().BeEquivalentTo(expectation);
+        }
     }
 
     public interface IInterfaceWithMethod
@@ -95,13 +110,23 @@ namespace Vostok.Configuration.Tests.Helpers
         }
     }
 
+    [Custom(new[] {typeof(bool), typeof(AttributeTargets)}, true, AttributeTargets.All, Strings = new[] {"asd", "xyz"}, Numbers = new[] {1, 2, 3, 4, 5})]
+    public interface ITestArrayInAttribute
+    {
+    }
+
     [AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
     public class CustomAttribute : Attribute
     {
         public string Name;
         public int Number { get; set; }
         public Type Type { get; }
+        public string[] Strings { get; set; }
+        public int[] Numbers { get; set; }
+        public object[] Data { get; }
 
         public CustomAttribute(Type type = null) => Type = type;
+
+        public CustomAttribute(params object[] data) => Data = data;
     }
 }
