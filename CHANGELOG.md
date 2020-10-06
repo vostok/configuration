@@ -1,3 +1,8 @@
+## 0.1.21 (06.10.2020):
+
+* DynamicTypesHelper: handle arrays in custom attributes when implementing interfaces.
+* TimeSpanParser, DateTimeParser and DateTimeOffsetParser are public now.
+
 ## 0.1.20 (29.09.2020):
 
 * Fixed "Duplicate type name within an assembly" error arising when DynamicTypesHelper tries to implement the same generic interface with different type arguments.
