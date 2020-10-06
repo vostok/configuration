@@ -1,9 +1,11 @@
 ﻿using System;
+using JetBrains.Annotations;
 using Vostok.Commons.Helpers;
 
 namespace Vostok.Configuration.Parsers
 {
-    internal static class TimeSpanParser
+    [PublicAPI]
+    public static class TimeSpanParser
     {
         private const string MilliSeconds1 = "ms";
         private const string MilliSeconds2 = "msec";

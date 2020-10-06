@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Globalization;
+using JetBrains.Annotations;
 
 namespace Vostok.Configuration.Parsers
 {
-    internal static class DateTimeOffsetParser
+    [PublicAPI]
+    public static class DateTimeOffsetParser
     {
         private static CultureInfo usCulture;
         private static CultureInfo ruCulture;
