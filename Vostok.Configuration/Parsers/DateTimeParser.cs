@@ -1,8 +1,10 @@
 ﻿using System;
+using JetBrains.Annotations;
 
 namespace Vostok.Configuration.Parsers
 {
-    internal static class DateTimeParser
+    [PublicAPI]
+    public static class DateTimeParser
     {
         public static bool TryParse(string input, out DateTime result)
         {
