@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Vostok.Configuration.Abstractions.SettingsTree;
@@ -22,7 +23,7 @@ namespace Vostok.Configuration.Binders.Collection
                 return SettingsBindingResult.Success(CreateCollection(Enumerable.Empty<TValue>()));
 
             if (settings is ValueNode && typeof(TValue) == typeof(byte))
-                return BindBase64ByteArray(settings);
+                return BindByteArray(settings);
 
             settings = settings.WrapIfNeeded();
 
@@ -32,12 +33,17 @@ namespace Vostok.Configuration.Binders.Collection
             return SettingsBindingResult.Catch(() => BindInternal(settings));
         }
 
-        private SettingsBindingResult<TCollection> BindBase64ByteArray(ISettingsNode settings)
+        private SettingsBindingResult<TCollection> BindByteArray(ISettingsNode settings)
         {
-            if (ByteArrayParser.TryParse(settings.Value, out var result))
-                return SettingsBindingResult.Success(CreateCollection(result.Cast<TValue>()));
-
-            return SettingsBindingResult.Error<TCollection>("Failed to parse base64 string.");
+            try
+            {
+                var bytes = Convert.FromBase64String(settings.Value ?? string.Empty);
+                return SettingsBindingResult.Success(CreateCollection(bytes.Cast<TValue>()));
+            }
+            catch (Exception e)
+            {
+                return SettingsBindingResult.Error<TCollection>("Failed to parse base64 string. " + e);
+            }
         }
 
         protected abstract TCollection CreateCollection(IEnumerable<TValue> elements);
