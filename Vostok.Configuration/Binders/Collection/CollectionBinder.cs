@@ -22,8 +22,8 @@ namespace Vostok.Configuration.Binders.Collection
             if (settings.IsNullOrMissing())
                 return SettingsBindingResult.Success(CreateCollection(Enumerable.Empty<TValue>()));
 
-            if (settings is ValueNode && typeof(TValue) == typeof(byte))
-                return BindByteArray(settings);
+            if (settings is ValueNode valueNode && typeof(TValue) == typeof(byte))
+                return BindByteArray(valueNode);
 
             settings = settings.WrapIfNeeded();
 
@@ -33,7 +33,7 @@ namespace Vostok.Configuration.Binders.Collection
             return SettingsBindingResult.Catch(() => BindInternal(settings));
         }
 
-        private SettingsBindingResult<TCollection> BindByteArray(ISettingsNode settings)
+        private SettingsBindingResult<TCollection> BindByteArray(ValueNode settings)
         {
             try
             {
