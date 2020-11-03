@@ -24,6 +24,7 @@ namespace Vostok.Configuration.Binders.Extensions
                 .WithParserFor<int>(int.TryParse)
                 .WithParserFor<long>(long.TryParse)
                 .WithParserFor<byte>(byte.TryParse)
+                .WithParserFor<byte[]>(BytesArrayParser.TryParse)
                 .WithParserFor<ushort>(ushort.TryParse)
                 .WithParserFor<uint>(uint.TryParse)
                 .WithParserFor<ulong>(ulong.TryParse)
