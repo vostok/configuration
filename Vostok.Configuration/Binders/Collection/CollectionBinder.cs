@@ -40,9 +40,9 @@ namespace Vostok.Configuration.Binders.Collection
                 var bytes = Convert.FromBase64String(settings.Value ?? string.Empty);
                 return SettingsBindingResult.Success(CreateCollection(bytes.Cast<TValue>()));
             }
-            catch (Exception e)
+            catch
             {
-                return SettingsBindingResult.Error<TCollection>("Failed to parse base64 string. " + e);
+                return SettingsBindingResult.ParsingError<TCollection>(settings.Value);
             }
         }
 
