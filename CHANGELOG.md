@@ -1,3 +1,7 @@
+## 0.1.22 (05.11.2020):
+
+Support parsing base64 string to byte array.
+
 ## 0.1.21 (06.10.2020):
 
 * DynamicTypesHelper: handle arrays in custom attributes when implementing interfaces.
@@ -41,7 +45,7 @@
 
 ## 0.1.11 (14.12.2019):
 
-* Added SecretBinder — a binder that treats all models as if they were marked with a SecretAttribute.
+* Added SecretBinder â€” a binder that treats all models as if they were marked with a SecretAttribute.
 * ConfigurationProvider now allows to set up sources for yet unused types even if other types have been already used.
 
 ## 0.1.10 (11.12.2019)
