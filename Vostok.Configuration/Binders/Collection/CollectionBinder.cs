@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders.Extensions;
 using Vostok.Configuration.Binders.Results;
 using Vostok.Configuration.Extensions;
+using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Binders.Collection
 {
@@ -20,12 +22,28 @@ namespace Vostok.Configuration.Binders.Collection
             if (settings.IsNullOrMissing())
                 return SettingsBindingResult.Success(CreateCollection(Enumerable.Empty<TValue>()));
 
+            if (settings is ValueNode valueNode && typeof(TValue) == typeof(byte))
+                return BindByteArray(valueNode);
+
             settings = settings.WrapIfNeeded();
 
             if (!(settings is ArrayNode) && !(settings is ObjectNode))
                 return SettingsBindingResult.NodeTypeMismatch<TCollection>(settings);
 
             return SettingsBindingResult.Catch(() => BindInternal(settings));
+        }
+
+        private SettingsBindingResult<TCollection> BindByteArray(ValueNode settings)
+        {
+            try
+            {
+                var bytes = Convert.FromBase64String(settings.Value ?? string.Empty);
+                return SettingsBindingResult.Success(CreateCollection(bytes.Cast<TValue>()));
+            }
+            catch
+            {
+                return SettingsBindingResult.ParsingError<TCollection>(settings.Value);
+            }
         }
 
         protected abstract TCollection CreateCollection(IEnumerable<TValue> elements);

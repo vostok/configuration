@@ -41,6 +41,14 @@ namespace Vostok.Configuration.Tests.Integration
             binder.Bind<int?>(tree).Should().Be(expectedValue);
         }
 
+        [Test]
+        public void Should_bind_base64_to_byte_array()
+        {
+            var tree = Value("CgsM/w==");
+
+            binder.Bind<byte[]>(tree).Should().BeEquivalentTo(new byte[] {10, 11, 12, 255}, o => o.WithStrictOrdering());
+        }
+
         // TODO(krait): Setup cases for other tests for naked type handling.
 
         [Test]
