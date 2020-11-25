@@ -1,3 +1,7 @@
+## 0.1.23 (25.11.2020):
+
+Fixed https://github.com/vostok/configuration/issues/32
+
 ## 0.1.22 (05.11.2020):
 
 Support parsing base64 string to byte array.
