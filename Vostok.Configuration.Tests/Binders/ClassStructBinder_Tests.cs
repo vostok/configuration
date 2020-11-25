@@ -344,6 +344,16 @@ namespace Vostok.Configuration.Tests.Binders
                 .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
         }
 
+        [Test]
+        public void Should_support_classes_with_private_parameterless_constructors()
+        {
+            var settings = Object(Value("k", "v"));
+
+            var bindingResult = CreateBinder<MyClass11>().Bind(settings);
+
+            bindingResult.Value.Flag.Should().BeTrue();
+        }
+
         private class MyClass1
         {
             public bool Field1;
@@ -436,6 +446,18 @@ namespace Vostok.Configuration.Tests.Binders
             [Alias("alias")]
             [Alias("propertywithalias")]
             public bool PropertyWithAlias { get; }
+        }
+
+        private class MyClass11
+        {
+            private MyClass11()
+            {
+            }
+
+            public MyClass11(bool flag)
+                => Flag = flag;
+
+            public bool Flag = true;
         }
 
         private struct MyStruct

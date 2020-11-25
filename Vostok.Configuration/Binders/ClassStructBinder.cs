@@ -58,7 +58,7 @@ namespace Vostok.Configuration.Binders
         private SettingsBindingResult<T> BindInternal(ISettingsNode settings)
         {
             var type = typeof(T);
-            var instance = ClassStructBinderSeed.Get(settings, type) ?? Activator.CreateInstance(type);
+            var instance = ClassStructBinderSeed.Get(settings, type) ?? Activator.CreateInstance(type, true);
 
             using (SecurityHelper.StartSecurityScope(type))
             {
