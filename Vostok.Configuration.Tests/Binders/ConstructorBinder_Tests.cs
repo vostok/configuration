@@ -44,21 +44,32 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_throw_if_type_has_no_appropriate_constructor()
         {
             new Func<MyClass2>(() => new ConstructorBinder<MyClass2>(provider).Bind(settings).Value)
-                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
+                .Should()
+                .Throw<SettingsBindingException>()
+                .Which.ShouldBePrinted();
         }
 
         [Test]
         public void Should_throw_if_type_has_no_appropriate_constructor_with_matched_type()
         {
             new Func<MyClass3>(() => new ConstructorBinder<MyClass3>(provider).Bind(settings).Value)
-                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
+                .Should()
+                .Throw<SettingsBindingException>()
+                .Which.ShouldBePrinted();
         }
 
         [Test]
         public void Should_throw_if_type_has_multiple_appropriate_constructors()
         {
             new Func<MyClass4>(() => new ConstructorBinder<MyClass4>(provider).Bind(settings).Value)
-                .Should().Throw<SettingsBindingException>().Which.ShouldBePrinted();
+                .Should()
+                .Throw<SettingsBindingException>()
+                .Which.ShouldBePrinted();
+
+            new Func<MyClass5>(() => new ConstructorBinder<MyClass5>(provider).Bind(settings).Value)
+                .Should()
+                .Throw<SettingsBindingException>()
+                .Which.ShouldBePrinted();
         }
 
         private class MyClass
@@ -69,7 +80,7 @@ namespace Vostok.Configuration.Tests.Binders
             {
                 this.value = value;
             }
-            
+
             public bool GetValue() => value;
         }
 
@@ -91,6 +102,17 @@ namespace Vostok.Configuration.Tests.Binders
             }
 
             public MyClass4(string value)
+            {
+            }
+        }
+
+        private class MyClass5
+        {
+            public MyClass5(int value)
+            {
+            }
+
+            private MyClass5(string value)
             {
             }
         }

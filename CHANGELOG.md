@@ -1,3 +1,7 @@
+## 0.1.24 (26.11.2020):
+
+Search private constructors in ConstructorBinder.
+
 ## 0.1.23 (25.11.2020):
 
 Fixed https://github.com/vostok/configuration/issues/32
