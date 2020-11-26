@@ -9,10 +9,10 @@ namespace Vostok.Configuration.Helpers
     {
         private const int CacheCapacity = 1000;
 
-        private static readonly RecyclingBoundedCache<Type, ConstructorInfo[]> Constructors = 
+        private static readonly RecyclingBoundedCache<Type, ConstructorInfo[]> Constructors =
             new RecyclingBoundedCache<Type, ConstructorInfo[]>(CacheCapacity);
 
         public static IReadOnlyList<ConstructorInfo> GetConstructors(Type type) =>
-            Constructors.Obtain(type, t => t.GetConstructors(BindingFlags.Public | BindingFlags.Instance));
+            Constructors.Obtain(type, t => t.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance));
     }
 }
