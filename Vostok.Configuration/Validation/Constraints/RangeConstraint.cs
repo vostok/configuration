@@ -1,6 +1,7 @@
 using System;
 using System.Linq.Expressions;
 using JetBrains.Annotations;
+using Vostok.Commons.Time;
 
 namespace Vostok.Configuration.Validation.Constraints
 {
@@ -30,8 +31,8 @@ namespace Vostok.Configuration.Validation.Constraints
 
         private static string FormatBoundary(object boundary)
         {
-            if (boundary is TimeSpan)
-                return TimespanFormatter.Format((TimeSpan) boundary);
+            if (boundary is TimeSpan span)
+                return  span.ToPrettyString();
 
             return boundary.ToString();
         }
