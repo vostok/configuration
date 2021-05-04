@@ -1,3 +1,7 @@
+## 0.1.25 (04.05.2021):
+
+Added constraint validator implementation based on user-provided expressions.
+
 ## 0.1.24 (26.11.2020):
 
 Search private constructors in ConstructorBinder.
