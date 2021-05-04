@@ -1,4 +1,4 @@
-## 0.1.25 (04.05.2021):
+## 0.1.26 (04.05.2021):
 
 Added constraint validator implementation based on user-provided expressions.
 
