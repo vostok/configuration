@@ -1,20 +1,19 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
+using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Validation.Constraints;
 
 namespace Vostok.Configuration.Validation
 {
     [PublicAPI]
-    public static class ConstraintsValidator
+    public abstract class ConstraintsValidator<TSettings> : ISettingsValidator<TSettings>
     {
-        /// <summary>
-        /// Returns error messages only for violated constraints.
-        /// </summary>
-        public static IEnumerable<string> GetViolatedConstraintsErrors<TSettings>(TSettings settings, IEnumerable<Constraint<TSettings>> constraints)
-        {
-            foreach (var constraint in constraints)
-                if (!constraint.Check(settings))
-                    yield return constraint.GetErrorMessage();
-        }
+        public IEnumerable<string> Validate(TSettings settings)
+            => GetConstraints()
+                .Where(constraint => !constraint.Check(settings))
+                .Select(constraint => constraint.GetErrorMessage());
+
+        protected abstract IEnumerable<Constraint<TSettings>> GetConstraints();
     }
 }
