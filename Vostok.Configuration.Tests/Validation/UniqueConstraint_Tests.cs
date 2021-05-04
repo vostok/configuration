@@ -7,6 +7,9 @@ namespace Vostok.Configuration.Tests.Validation
     [TestFixture]
     internal class UniqueConstraint_Tests
     {
+        private UniqueConstraint<TestConfig, string> constraint;
+        private TestConfig config;
+
         [SetUp]
         public void TestSetup()
         {
@@ -28,13 +31,10 @@ namespace Vostok.Configuration.Tests.Validation
             constraint.ShouldFailOn(config);
         }
 
-        private UniqueConstraint<TestConfig, string> constraint;
-        private TestConfig config;
-
         private class TestConfig
         {
-            public string Field1 = "a";
-            public string Field2 = "b";
+            public readonly string Field1 = "a";
+            public readonly string Field2 = "b";
             public string Field3 = "c";
         }
     }

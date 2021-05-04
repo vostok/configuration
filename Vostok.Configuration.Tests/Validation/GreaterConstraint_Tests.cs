@@ -6,6 +6,9 @@ namespace Vostok.Configuration.Tests.Validation
     [TestFixture]
     internal class GreaterConstraint_Tests
     {
+        private GreaterConstraint<TestConfig, int> constraint;
+        private TestConfig config;
+
         [SetUp]
         public void TestSetup()
         {
@@ -34,9 +37,6 @@ namespace Vostok.Configuration.Tests.Validation
 
             constraint.ShouldFailOn(config);
         }
-
-        private GreaterConstraint<TestConfig, int> constraint;
-        private TestConfig config;
 
         private class TestConfig
         {
