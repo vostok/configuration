@@ -6,6 +6,9 @@ namespace Vostok.Configuration.Tests.Validation
     [TestFixture]
     internal class NotNullConstraint_Tests
     {
+        private NotNullConstraint<TestConfig> constraint;
+        private TestConfig config;
+
         [SetUp]
         public void TestSetup()
         {
@@ -26,9 +29,6 @@ namespace Vostok.Configuration.Tests.Validation
 
             constraint.ShouldFailOn(config);
         }
-
-        private NotNullConstraint<TestConfig> constraint;
-        private TestConfig config;
 
         private class TestConfig
         {

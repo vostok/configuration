@@ -27,7 +27,7 @@ namespace Vostok.Configuration.Tests.Validation
         [TestCase(10, 0, 10, false)]
         public void Should_fail_when_value_lies_outside_of_range(int value, int from, int to, bool inclusive)
         {
-            var config = new TestConfig { Field = value };
+            var config = new TestConfig {Field = value};
             var constraint = new RangeConstraint<TestConfig, int>(c => c.Field, from, to, inclusive);
 
             constraint.ShouldFailOn(config);

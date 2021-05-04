@@ -10,7 +10,7 @@ namespace Vostok.Configuration.Validation.Constraints
         where TField : IComparable<TField>
     {
         public RangeConstraint(Expression<Func<T, TField>> fieldSelector, TField from, TField to, bool inclusive = true)
-            : base (ConstraintExpressionCombiner.Combine(fieldSelector, CreateExpression(from, to, inclusive)), CreateErrorMessage(fieldSelector, from, to, inclusive))
+            : base(ConstraintExpressionCombiner.Combine(fieldSelector, CreateExpression(from, to, inclusive)), CreateErrorMessage(fieldSelector, from, to, inclusive))
         {
         }
 
@@ -25,14 +25,14 @@ namespace Vostok.Configuration.Validation.Constraints
         private static string CreateErrorMessage(Expression<Func<T, TField>> fieldSelector, TField from, TField to, bool inclusive)
         {
             return inclusive
-                ? $"Value of field '{fieldSelector}' is out of allowed range [{FormatBoundary(@from)}; {FormatBoundary(to)}]."
-                : $"Value of field '{fieldSelector}' is out of allowed range ({FormatBoundary(@from)}; {FormatBoundary(to)}).";
+                ? $"Value of field '{fieldSelector}' is out of allowed range [{FormatBoundary(from)}; {FormatBoundary(to)}]."
+                : $"Value of field '{fieldSelector}' is out of allowed range ({FormatBoundary(from)}; {FormatBoundary(to)}).";
         }
 
         private static string FormatBoundary(object boundary)
         {
             if (boundary is TimeSpan span)
-                return  span.ToPrettyString();
+                return span.ToPrettyString();
 
             return boundary.ToString();
         }

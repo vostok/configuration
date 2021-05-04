@@ -7,11 +7,11 @@ namespace Vostok.Configuration.Validation.Constraints
     [PublicAPI]
     public class NotNullConstraint<T> : Constraint<T>
     {
+        private static readonly Expression<Func<object, bool>> expression = value => value != null;
+
         public NotNullConstraint(Expression<Func<T, object>> fieldSelector)
-            : base (ConstraintExpressionCombiner.Combine(fieldSelector, expression))
+            : base(ConstraintExpressionCombiner.Combine(fieldSelector, expression))
         {
         }
-
-        private static readonly Expression<Func<object, bool>> expression = value => value != null;
     }
 }

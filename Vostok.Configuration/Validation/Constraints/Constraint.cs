@@ -7,6 +7,9 @@ namespace Vostok.Configuration.Validation.Constraints
     [PublicAPI]
     public class Constraint<T>
     {
+        private readonly Expression<Func<T, bool>> rule;
+        private readonly string errorMessage;
+
         public Constraint(Expression<Func<T, bool>> rule, string errorMessage = "")
         {
             this.rule = rule;
@@ -18,12 +21,9 @@ namespace Vostok.Configuration.Validation.Constraints
             return rule.Compile()(item);
         }
 
-		public string GetErrorMessage()
-		{
-			return $"Constraint violated: '{(string.IsNullOrEmpty(errorMessage) ? rule.ToString() : errorMessage)}'.";
-		}
-
-        private readonly Expression<Func<T, bool>> rule;
-        private readonly string errorMessage;
+        public string GetErrorMessage()
+        {
+            return $"Constraint violated: '{(string.IsNullOrEmpty(errorMessage) ? rule.ToString() : errorMessage)}'.";
+        }
     }
 }
