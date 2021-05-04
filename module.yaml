@@ -10,13 +10,14 @@ notests *default:
       - module vostok.configuration.abstractions
 
   deps:
-    - vostok.devtools
-    - vostok.devtools.ilrepack.bin
-    - vostok.configuration.abstractions
+    - vostok.commons.collections/src
+    - vostok.commons.formatting/src
     - vostok.commons.helpers/src
     - vostok.commons.threading/src
-    - vostok.commons.formatting/src
-    - vostok.commons.collections/src
+    - vostok.commons.time/src
+    - vostok.configuration.abstractions
+    - vostok.devtools
+    - vostok.devtools.ilrepack.bin
 
 full-build > notests:
   deps:
