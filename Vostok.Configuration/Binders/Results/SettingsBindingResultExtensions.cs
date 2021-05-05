@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -10,6 +11,9 @@ namespace Vostok.Configuration.Binders.Results
 
         public static IEnumerable<SettingsBindingError> ForIndex<T>(this IEnumerable<SettingsBindingError> errors, T index) =>
             errors.Select(e => SettingsBindingError.Index(index?.ToString() ?? "<null>", e));
+
+        public static SettingsBindingResult<TTarget> Convert<TSource, TTarget>(this SettingsBindingResult<TSource> result, Func<TSource, TTarget> converter) =>
+            result.Errors.Any() ? SettingsBindingResult.Errors<TTarget>(result.Errors) : SettingsBindingResult.Success<TTarget>(converter(result.Value));
 
         public static SettingsBindingResult<TTarget> Convert<TSource, TTarget>(this SettingsBindingResult<TSource> result)
             where TSource : TTarget =>

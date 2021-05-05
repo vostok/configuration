@@ -1,3 +1,7 @@
+## 0.1.27 (05.05.2021):
+
+Added support for ConcurrentDictionary to DictionaryBinder.
+
 ## 0.1.26 (04.05.2021):
 
 Added constraint validator implementation based on user-provided expressions.
