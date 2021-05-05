@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using FluentAssertions;
 using NSubstitute;
@@ -202,6 +203,12 @@ namespace Vostok.Configuration.Tests.Binders
         public void Should_select_DictionaryBinder_for_IReadOnlyDictionary()
         {
             provider.CreateFor<IReadOnlyDictionary<string, int>>().Should().BeOfType<DictionaryBinder<string, int>>();
+        }
+
+        [Test]
+        public void Should_select_DictionaryBinder_for_ConcurrentDictionary()
+        {
+            provider.CreateFor<ConcurrentDictionary<string, int>>().Should().BeOfType<DictionaryBinder<string, int>>();
         }
 
         [Test]

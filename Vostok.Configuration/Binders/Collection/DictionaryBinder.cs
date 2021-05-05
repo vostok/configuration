@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders.Extensions;
@@ -10,7 +11,8 @@ namespace Vostok.Configuration.Binders.Collection
     internal class DictionaryBinder<TKey, TValue> :
         ISafeSettingsBinder<Dictionary<TKey, TValue>>,
         ISafeSettingsBinder<IDictionary<TKey, TValue>>,
-        ISafeSettingsBinder<IReadOnlyDictionary<TKey, TValue>>
+        ISafeSettingsBinder<IReadOnlyDictionary<TKey, TValue>>,
+        ISafeSettingsBinder<ConcurrentDictionary<TKey, TValue>>
     {
         private readonly ISafeSettingsBinder<TKey> keyBinder;
         private readonly ISafeSettingsBinder<TValue> valueBinder;
@@ -65,5 +67,8 @@ namespace Vostok.Configuration.Binders.Collection
 
         SettingsBindingResult<IReadOnlyDictionary<TKey, TValue>> ISafeSettingsBinder<IReadOnlyDictionary<TKey, TValue>>.Bind(ISettingsNode settings) =>
             Bind(settings).Convert<Dictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>>();
+
+        SettingsBindingResult<ConcurrentDictionary<TKey, TValue>> ISafeSettingsBinder<ConcurrentDictionary<TKey, TValue>>.Bind(ISettingsNode settings) =>
+            Bind(settings).Convert(result => new ConcurrentDictionary<TKey, TValue>(result));
     }
 }
