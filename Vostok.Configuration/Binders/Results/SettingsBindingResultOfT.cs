@@ -18,15 +18,20 @@ namespace Vostok.Configuration.Binders.Results
         {
             get
             {
-                if (Errors.Any())
-                    throw new SettingsBindingException(
-                        $"Failed to bind settings to type '{typeof(TSettings)}':{Environment.NewLine}" +
-                        string.Join(Environment.NewLine, Errors.Select(e => "\t- " + e)));
+                EnsureSuccess();
 
                 return value;
             }
         }
 
         public IList<SettingsBindingError> Errors { get; }
+
+        public void EnsureSuccess()
+        {
+            if (Errors.Any())
+                throw new SettingsBindingException(
+                    $"Failed to bind settings to type '{typeof(TSettings)}':{Environment.NewLine}" +
+                    string.Join(Environment.NewLine, Errors.Select(e => "\t- " + e)));
+        }
     }
 }
