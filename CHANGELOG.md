@@ -1,3 +1,7 @@
+## 0.1.28 (07.05.2021):
+
+Implemented https://github.com/vostok/configuration/issues/31
+
 ## 0.1.27 (05.05.2021):
 
 Added support for ConcurrentDictionary to DictionaryBinder.
