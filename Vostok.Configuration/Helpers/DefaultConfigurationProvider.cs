@@ -36,6 +36,6 @@ namespace Vostok.Configuration.Helpers
         }
 
         private static ConfigurationProvider Create()
-            => new ConfigurationProvider(new ConfigurationProviderSettings { MaxSourceCacheSize = 500 });
+            => new ConfigurationProvider();
     }
 }

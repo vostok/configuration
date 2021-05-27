@@ -1,3 +1,7 @@
+## 0.1.29 (27.05.2021):
+
+Change default MaxSourceCacheSize setting value to 500.
+
 ## 0.1.28 (07.05.2021):
 
 Implemented https://github.com/vostok/configuration/issues/31
