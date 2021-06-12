@@ -6,7 +6,6 @@ using SimpleInjector;
 using Vostok.Commons.Collections;
 using Vostok.Commons.Helpers.Extensions;
 using Vostok.Configuration.Abstractions;
-using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders.Collection;
 using Vostok.Configuration.Binders.Extensions;
