@@ -9,6 +9,7 @@ using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.Attributes;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders.Collection;
+using Vostok.Configuration.Binders.Extensions;
 using Vostok.Configuration.Helpers;
 using Vostok.Configuration.Parsers;
 
@@ -38,8 +39,14 @@ namespace Vostok.Configuration.Binders
 
                     container.RegisterConditional(
                         typeof(ISettingsBinder<>),
-                        context => AttributeHelper.Get<BindByAttribute>(context.ServiceType.GetGenericArguments()[0])?.BinderType,
-                        c => !c.Handled && AttributeHelper.Get<BindByAttribute>(c.ServiceType.GetGenericArguments()[0]) != null);
+                        c =>
+                        {
+                            if (c.ServiceType.GetGenericArguments()[0].TryGetBindByAttribute(out var attr))
+                                return attr.BinderType;
+
+                            throw new Exception("How could this happen? There is no doubt it's a bug in SimpleInjector implementation...");
+                        },
+                        c => !c.Handled && c.ServiceType.GetGenericArguments()[0].TryGetBindByAttribute(out _));
 
                     container.RegisterConditional(
                         typeof(ISafeSettingsBinder<>),
@@ -69,7 +76,7 @@ namespace Vostok.Configuration.Binders
                         typeof(SafeBinderWrapper<>),
                         c => !c.Handled &&
                              !(c.Consumer?.ImplementationType?.IsClosedTypeOf(typeof(UnsafeBinderWrapper<>)) ?? false) &&
-                             (AttributeHelper.Get<BindByAttribute>(c.ServiceType.GetGenericArguments()[0]) != null ||
+                             (c.ServiceType.GetGenericArguments()[0].TryGetBindByAttribute(out _) ||
                              builtPredicates.Any(p => p(c))));
 
                     container.RegisterConditional(

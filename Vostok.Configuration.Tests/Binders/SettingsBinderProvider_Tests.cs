@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Reflection;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
@@ -255,6 +256,23 @@ namespace Vostok.Configuration.Tests.Binders
         {
             var wrapper = provider.CreateFor<ClassWithCustomBinder>();
             ((SafeBinderWrapper<ClassWithCustomBinder>)wrapper).Binder.Should().BeOfType<CustomBinder>();
+        }
+
+        [Test]
+        public void Should_select_binder_specified_in_BindBy_attribute_in_composition_with_other_binders()
+        {
+            object GetFieldValueUsingReflection(Type type, string fieldName, object obj)
+            {
+                var field = type.GetField(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                return field?.GetValue(obj);
+            }
+            
+            
+            var listBinder = provider.CreateFor<ClassWithCustomBinder[]>();
+            listBinder.Should().BeOfType<ReadOnlyListBinder<ClassWithCustomBinder>>();
+            var wrapper = (SafeBinderWrapper<ClassWithCustomBinder>) 
+                GetFieldValueUsingReflection(typeof(CollectionBinder<ClassWithCustomBinder[], ClassWithCustomBinder>), "elementBinder", listBinder);
+            wrapper.Binder.Should().BeOfType<CustomBinder>();
         }
 
         [Test]
