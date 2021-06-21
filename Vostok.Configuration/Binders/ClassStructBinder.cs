@@ -64,7 +64,7 @@ namespace Vostok.Configuration.Binders
             if (instance == null)
             {
                 if (CanBeCreatedUsingActivator(type))
-                    instance = Activator.CreateInstance(type);
+                    instance = Activator.CreateInstance(type, true);
                 else if (AttributeHelper.Has<OmitConstructorAttribute>(type))
                     instance = FormatterServices.GetUninitializedObject(type);
                 else
