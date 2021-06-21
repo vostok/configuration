@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using SimpleInjector;
 using Vostok.Commons.Helpers.Extensions;
 using Vostok.Configuration.Abstractions.Attributes;
@@ -58,7 +59,17 @@ namespace Vostok.Configuration.Binders
         private SettingsBindingResult<T> BindInternal(ISettingsNode settings)
         {
             var type = typeof(T);
-            var instance = ClassStructBinderSeed.Get(settings, type) ?? Activator.CreateInstance(type, true);
+            var instance = ClassStructBinderSeed.Get(settings, type);
+
+            if (instance == null)
+            {
+                if (CanBeCreatedUsingActivator(type))
+                    instance = Activator.CreateInstance(type);
+                else if (true)
+                    instance = FormatterServices.GetUninitializedObject(type);
+                else
+                    throw new MissingMethodException($"No parameterless constructor was found during binding of {type}");
+            }
 
             using (SecurityHelper.StartSecurityScope(type))
             {
@@ -128,5 +139,7 @@ namespace Vostok.Configuration.Binders
                 return SettingsBindingResult.Success(value.IsMissing() ? defaultValue : null);
             }
         }
+
+        private static bool CanBeCreatedUsingActivator(Type type) => type.IsValueType || ConstructorsHelper.GetConstructors(type).Any(x => x.GetParameters().Length == 0);
     }
 }
