@@ -65,10 +65,10 @@ namespace Vostok.Configuration.Binders
             {
                 if (CanBeCreatedUsingActivator(type))
                     instance = Activator.CreateInstance(type);
-                else if (true)
+                else if (AttributeHelper.Has<OmitConstructorAttribute>(type))
                     instance = FormatterServices.GetUninitializedObject(type);
                 else
-                    throw new MissingMethodException($"No parameterless constructor was found during binding of {type}");
+                    throw new MissingMethodException($"No parameterless constructor was found during binding of {type} and omit constructor attribute is not specified.");
             }
 
             using (SecurityHelper.StartSecurityScope(type))
