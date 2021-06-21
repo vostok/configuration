@@ -39,14 +39,14 @@ namespace Vostok.Configuration.Printing
 
                 using (SecurityHelper.StartSecurityScope(itemType))
                 {
+                    if (settings.HideSecretValues && SecurityHelper.IsSecret(itemType))
+                        return SecretValue;
+
                     if (ToStringDetector.HasCustomToString(itemType))
                         return new ValueToken(item.ToString());
 
                     if (CustomFormatters.TryFormat(item, out var customFormatting))
                         return new ValueToken(customFormatting);
-                    
-                    if (settings.HideSecretValues && SecurityHelper.IsSecret(itemType))
-                        return SecretValue;
 
                     if (DictionaryInspector.IsSimpleDictionary(itemType))
                     {
