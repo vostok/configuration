@@ -44,12 +44,12 @@ namespace Vostok.Configuration.Printing
 
                     if (CustomFormatters.TryFormat(item, out var customFormatting))
                         return new ValueToken(customFormatting);
+                    
+                    if (settings.HideSecretValues && SecurityHelper.IsSecret(itemType))
+                        return SecretValue;
 
                     if (DictionaryInspector.IsSimpleDictionary(itemType))
                     {
-                        if (settings.HideSecretValues && SecurityHelper.IsSecret(itemType))
-                            return SecretValue;
-
                         var pairs = DictionaryInspector.EnumerateSimpleDictionary(item);
                         var tokens = pairs.Select(pair => new PropertyToken(pair.Item1, CreateInternal(pair.Item2, path, settings))).ToArray();
                         if (tokens.Length == 0)
@@ -60,9 +60,6 @@ namespace Vostok.Configuration.Printing
 
                     if (item is IEnumerable sequence)
                     {
-                        if (settings.HideSecretValues && SecurityHelper.IsSecret(itemType))
-                            return SecretValue;
-
                         if (!sequence.GetEnumerator().MoveNext())
                             return EmptySequenceValue;
 
