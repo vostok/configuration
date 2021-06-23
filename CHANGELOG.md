@@ -1,3 +1,10 @@
+## 0.1.30 (23.06.2021):
+
+Fixed bug with `Secret` attribute on classes.
+Fixed bug with `BindByAttribute` and composite binders.
+Fixed bug with multiple custom generic binders defined for one generic class.
+Added support for `OmitConstructorsAttribute`.
+
 ## 0.1.29 (27.05.2021):
 
 Change default MaxSourceCacheSize setting value to 500.
