@@ -45,7 +45,7 @@ namespace Vostok.Configuration.Printing
                     if (CustomFormatters.TryFormat(item, out var customFormatting))
                         return new ValueToken(customFormatting);
 
-                    var isSecretType = settings.HideSecretValues && SecurityHelper.IsSecret(itemType);
+                    var isSecretType = SecurityHelper.IsSecret(itemType);
 
                     if (DictionaryInspector.IsSimpleDictionary(itemType))
                     {
