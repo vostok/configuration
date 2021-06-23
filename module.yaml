@@ -7,7 +7,7 @@ notests *default:
 
   install:
       - Vostok.Configuration/bin/Release/netstandard2.0/Vostok.Configuration.dll
-      - module vostok.configuration.abstractions@GetUninitializedObject
+      - module vostok.configuration.abstractions
 
   deps:
     - vostok.commons.collections/src
@@ -15,7 +15,7 @@ notests *default:
     - vostok.commons.helpers/src
     - vostok.commons.threading/src
     - vostok.commons.time/src
-    - vostok.configuration.abstractions@GetUninitializedObject
+    - vostok.configuration.abstractions
     - vostok.devtools
     - vostok.devtools.ilrepack.bin
 
