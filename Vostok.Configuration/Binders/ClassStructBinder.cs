@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization;
 using SimpleInjector;
 using Vostok.Commons.Helpers.Extensions;
 using Vostok.Configuration.Abstractions.Attributes;
@@ -17,9 +16,17 @@ namespace Vostok.Configuration.Binders
     internal class ClassStructBinder<T> : ISafeSettingsBinder<T>, INullValuePolicy
     {
         private readonly ISettingsBinderProvider binderProvider;
+        private readonly Func<Type, ISettingsNode, object> instanceFactory = (type, settings) =>
+            ClassStructBinderSeed.Get(settings, type) ?? Activator.CreateInstance(type, true);
 
         public ClassStructBinder(ISettingsBinderProvider binderProvider) =>
             this.binderProvider = binderProvider;
+
+        internal ClassStructBinder(ISettingsBinderProvider binderProvider, Func<Type, ISettingsNode, object> instanceFactory)
+        {
+            this.binderProvider = binderProvider;
+            this.instanceFactory = instanceFactory;
+        }
 
         public SettingsBindingResult<T> Bind(ISettingsNode settings)
         {
@@ -59,17 +66,7 @@ namespace Vostok.Configuration.Binders
         private SettingsBindingResult<T> BindInternal(ISettingsNode settings)
         {
             var type = typeof(T);
-            var instance = ClassStructBinderSeed.Get(settings, type);
-
-            if (instance == null)
-            {
-                if (CanBeCreatedUsingActivator(type))
-                    instance = Activator.CreateInstance(type, true);
-                else if (AttributeHelper.Has<OmitConstructorAttribute>(type))
-                    instance = FormatterServices.GetUninitializedObject(type);
-                else
-                    throw new MissingMethodException($"No parameterless constructor was found during binding of {type} and omit constructor attribute is not specified.");
-            }
+            var instance = instanceFactory(type, settings);
 
             using (SecurityHelper.StartSecurityScope(type))
             {
@@ -139,7 +136,5 @@ namespace Vostok.Configuration.Binders
                 return SettingsBindingResult.Success(value.IsMissing() ? defaultValue : null);
             }
         }
-
-        private static bool CanBeCreatedUsingActivator(Type type) => type.IsValueType || ConstructorsHelper.GetConstructors(type).Any(x => x.GetParameters().Length == 0);
     }
 }
