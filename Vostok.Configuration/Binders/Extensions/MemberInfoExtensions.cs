@@ -33,6 +33,8 @@ namespace Vostok.Configuration.Binders.Extensions
             return true;
         }
 
+        public static bool TryGetBindByAttribute(this Type type, out BindByAttribute attribute) => (attribute = AttributeHelper.Get<BindByAttribute>(type)) != null;
+
         private static Type GetMemberType(MemberInfo member)
         {
             switch (member)
