@@ -39,24 +39,28 @@ namespace Vostok.Configuration.Printing
 
                 using (SecurityHelper.StartSecurityScope(itemType))
                 {
-                    if (settings.HideSecretValues && SecurityHelper.IsSecret(itemType))
-                        return SecretValue;
-
                     if (ToStringDetector.HasCustomToString(itemType))
                         return new ValueToken(item.ToString());
 
                     if (CustomFormatters.TryFormat(item, out var customFormatting))
                         return new ValueToken(customFormatting);
 
+                    var isSecretType = settings.HideSecretValues && SecurityHelper.IsSecret(itemType);
+
                     if (DictionaryInspector.IsSimpleDictionary(itemType))
                     {
                         var pairs = DictionaryInspector.EnumerateSimpleDictionary(item);
-                        var tokens = pairs.Select(pair => new PropertyToken(pair.Item1, CreateInternal(pair.Item2, path, settings))).ToArray();
+                        var tokens = pairs
+                           .Select(pair => ConstructPropertyToken(isSecretType, () => CreateInternal(pair.Item2, path, settings), pair.Item1, settings))
+                           .ToArray();
                         if (tokens.Length == 0)
                             return EmptyObjectValue;
 
                         return new ObjectToken(tokens);
                     }
+
+                    if (isSecretType)
+                        return SecretValue;
 
                     if (item is IEnumerable sequence)
                     {
@@ -91,11 +95,14 @@ namespace Vostok.Configuration.Printing
             }
         }
 
-        private static PropertyToken ConstructProperty(MemberInfo member, Func<IPrintToken> getValue, PrintSettings settings)
+        private static PropertyToken ConstructProperty(MemberInfo member, Func<IPrintToken> getValue, PrintSettings settings) => 
+            ConstructPropertyToken(SecurityHelper.IsSecret(member), getValue, member.Name, settings);
+
+        private static PropertyToken ConstructPropertyToken(bool shouldHide, Func<IPrintToken> valueProvider, string propertyName, PrintSettings settings)
         {
             IPrintToken value;
 
-            if (settings.HideSecretValues && SecurityHelper.IsSecret(member))
+            if (settings.HideSecretValues && shouldHide)
             {
                 value = SecretValue;
             }
@@ -103,7 +110,7 @@ namespace Vostok.Configuration.Printing
             {
                 try
                 {
-                    value = getValue();
+                    value = valueProvider();
                 }
                 catch
                 {
@@ -111,7 +118,7 @@ namespace Vostok.Configuration.Printing
                 }
             }
 
-            return new PropertyToken(member.Name, value);
+            return new PropertyToken(propertyName, value);
         }
     }
 }
