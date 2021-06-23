@@ -46,6 +46,11 @@ namespace Vostok.Configuration.Binders
                             throw new Exception("How could this happen? There is no doubt it's a bug in SimpleInjector implementation...");
                         },
                         c => !c.Handled && c.ServiceType.GetGenericArguments()[0].TryGetBindByAttribute(out _));
+                    
+                    container.RegisterConditional(
+                        typeof(ISafeSettingsBinder<>),
+                        typeof(UninitializedClassStructBinder<>),
+                        c => !c.Handled && UninitializedClassStructBinder<object>.CanBeUsedFor(c.ServiceType.GetGenericArguments()[0]));
 
                     container.RegisterConditional(
                         typeof(ISafeSettingsBinder<>),
