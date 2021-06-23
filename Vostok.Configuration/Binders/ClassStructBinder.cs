@@ -16,9 +16,17 @@ namespace Vostok.Configuration.Binders
     internal class ClassStructBinder<T> : ISafeSettingsBinder<T>, INullValuePolicy
     {
         private readonly ISettingsBinderProvider binderProvider;
+        private readonly Func<Type, ISettingsNode, object> instanceFactory = (type, settings) =>
+            ClassStructBinderSeed.Get(settings, type) ?? Activator.CreateInstance(type, true);
 
         public ClassStructBinder(ISettingsBinderProvider binderProvider) =>
             this.binderProvider = binderProvider;
+
+        internal ClassStructBinder(ISettingsBinderProvider binderProvider, Func<Type, ISettingsNode, object> instanceFactory)
+        {
+            this.binderProvider = binderProvider;
+            this.instanceFactory = instanceFactory;
+        }
 
         public SettingsBindingResult<T> Bind(ISettingsNode settings)
         {
@@ -58,7 +66,7 @@ namespace Vostok.Configuration.Binders
         private SettingsBindingResult<T> BindInternal(ISettingsNode settings)
         {
             var type = typeof(T);
-            var instance = ClassStructBinderSeed.Get(settings, type) ?? Activator.CreateInstance(type, true);
+            var instance = instanceFactory(type, settings);
 
             using (SecurityHelper.StartSecurityScope(type))
             {

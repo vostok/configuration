@@ -274,6 +274,63 @@ namespace Vostok.Configuration.Tests.Integration
             arrayElement.B.Should().Be(0);
         }
 
+        [Test]
+        public void Should_not_bind_object_without_binders_and_parameterless_constructors()
+        {
+            var settings = Object(("FirstValue", "5"));
+
+            Action binding = () => binder.Bind<ConfigWithoutConstructor>(settings);
+
+            binding.Should().Throw<Exception>();
+        }
+
+        [Test]
+        public void Should_bind_object_uninitialized_without_binders_and_parameterless_constructors_with_OmitConstructors()
+        {
+            var settings = Object(("FirstValue", "5"));
+
+            Func<ConfigOmitConstructors> binding = () => binder.Bind<ConfigOmitConstructors>(settings);
+
+            binding.Should().NotThrow();
+
+            var result = binding();
+
+            result.FirstValue.Should().Be(5);
+            result.SecondValue.Should().Be(0);
+        }
+        
+        [Test]
+        public void Should_bind_object_uninitialized_without_binders_with_OmitConstructors_when_parameterless_constructor_exists()
+        {
+            var settings = Object(("FirstValue", "5"));
+
+            Func<ConfigOmitConstructorsWithConstructor> binding = () => binder.Bind<ConfigOmitConstructorsWithConstructor>(settings);
+
+            binding.Should().NotThrow();
+
+            var result = binding();
+
+            result.FirstValue.Should().Be(5);
+            result.SecondValue.Should().Be(0);
+        }
+        
+        [Test]
+        public void Should_bind_object_with_custom_binder_with_OmitConstructors_when_parameterless_constructor_exists()
+        {
+            var settings = Object(Object("ConfigOmitConstructorsWithConstructor", Value("FirstValue", "5")));
+
+            Func<ComplexConfigWithParameterlessConfigInside> binding = () => binder.Bind<ComplexConfigWithParameterlessConfigInside>(settings);
+
+            binding.Should().NotThrow();
+
+            var result = binding();
+
+            result.ConfigOmitConstructorsWithConstructor.FirstValue.Should().Be(5);
+            result.ConfigOmitConstructorsWithConstructor.SecondValue.Should().Be(28);
+        }
+        
+        
+
         private class MyClass9
         {
             public Abstract AbstractField;
@@ -396,6 +453,60 @@ namespace Vostok.Configuration.Tests.Integration
         {
             public int A { get; set; }
             public int B { get; set; }
+        }
+
+        private class ConfigWithoutConstructor
+        {
+            public int FirstValue { get; set; }
+            public int SecondValue { get; set; } = 10;
+
+            public ConfigWithoutConstructor(int firstFirstValue, int secondValue = 15)
+            {
+                FirstValue = firstFirstValue;
+                SecondValue = secondValue;
+            }
+        }
+        
+        [OmitConstructors]
+        private class ConfigOmitConstructors
+        {
+            public int FirstValue { get; set; }
+            public int SecondValue { get; set; } = 10;
+
+            public ConfigOmitConstructors(int firstFirstValue, int secondValue = 15)
+            {
+                FirstValue = firstFirstValue;
+                SecondValue = secondValue;
+            }
+        }
+
+        [OmitConstructors]
+        private class ConfigOmitConstructorsWithConstructor
+        {
+            public int FirstValue { get; set; }
+            public int SecondValue { get; set; } = 10;
+            
+            public ConfigOmitConstructorsWithConstructor(){}
+
+            public ConfigOmitConstructorsWithConstructor(int firstFirstValue, int secondValue = 15)
+            {
+                FirstValue = firstFirstValue;
+                SecondValue = secondValue;
+            }
+        }
+
+        private class ComplexConfigWithParameterlessConfigInside
+        {
+            [BindBy(typeof(BinderForConfigOmitConstructors))]
+            public ConfigOmitConstructorsWithConstructor ConfigOmitConstructorsWithConstructor;
+        }
+        
+        private class BinderForConfigOmitConstructors : ISettingsBinder<ConfigOmitConstructorsWithConstructor>
+        {
+            public ConfigOmitConstructorsWithConstructor Bind(ISettingsNode rawSettings)
+            {
+                return new ConfigOmitConstructorsWithConstructor {FirstValue = int.Parse(rawSettings["FirstValue"].Value), SecondValue = 28};
+            }
         }
     }
 }
