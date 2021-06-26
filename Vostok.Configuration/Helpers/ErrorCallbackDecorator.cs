@@ -6,19 +6,26 @@ namespace Vostok.Configuration.Helpers
 {
     internal class ErrorCallbackDecorator
     {
-        private readonly Action<Exception> callback;
-        private Exception lastError;
+        private static readonly TimeSpan DefaultCooldown = TimeSpan.FromSeconds(10);
 
-        public ErrorCallbackDecorator([CanBeNull] Action<Exception> callback)
+        private readonly Action<Exception> callback;
+        private readonly TimeSpan cooldown;
+
+        private volatile Tuple<Exception, DateTimeOffset> lastError;
+
+        public ErrorCallbackDecorator([CanBeNull] Action<Exception> callback, TimeSpan? cooldown = null)
         {
             this.callback = callback;
+            this.cooldown = cooldown ?? DefaultCooldown;
         }
 
         public void Invoke(Exception error)
         {
             try
             {
-                if (ExceptionEqualityComparer.Equals(error, Interlocked.Exchange(ref lastError, error)))
+                var newLastError = Tuple.Create(error, DateTimeOffset.UtcNow);
+                var oldLastError = Interlocked.Exchange(ref lastError, newLastError);
+                if (oldLastError != null && ExceptionEqualityComparer.Equals(error, oldLastError.Item1) && newLastError.Item2 - oldLastError.Item2 < cooldown)
                     return;
 
                 callback?.Invoke(error);
