@@ -55,5 +55,24 @@ namespace Vostok.Configuration.Tests.Helpers
             callback.Received(1).Invoke(error1);
             callback.Received(1).Invoke(error2);
         }
+
+        [Test]
+        public void Should_allow_duplicate_calls_after_a_cooldown()
+        {
+            var callback = Substitute.For<Action<Exception>>();
+
+            var decorator = new ErrorCallbackDecorator(callback, TimeSpan.Zero);
+
+            var error1 = new Exception("1");
+            var error2 = new Exception("2");
+
+            decorator.Invoke(error1);
+            decorator.Invoke(error1);
+            decorator.Invoke(error2);
+            decorator.Invoke(error2);
+
+            callback.Received(2).Invoke(error1);
+            callback.Received(2).Invoke(error2);
+        }
     }
 }
