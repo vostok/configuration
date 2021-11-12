@@ -1,3 +1,7 @@
+## 0.1.32 (12.11.2021):
+
+Improved performance by removing a closure
+
 ## 0.1.31 (26.06.2021):
 
 ErrorCallbackDecorator: introduced a cooldown on exception deduplication (https://github.com/vostok/configuration/issues/43).
