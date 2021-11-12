@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
+using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using Vostok.Commons.Helpers.Rx;
 using Vostok.Configuration.Abstractions;
@@ -126,6 +127,14 @@ namespace Vostok.Configuration
             if (cacheItem.CurrentValueProvider != null)
                 return cacheItem.CurrentValueProvider.Get();
 
+            return InitializeCacheItem(source, cacheItem);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private TSettings InitializeCacheItem<TSettings>(IConfigurationSource source, SourceCacheItem<TSettings> cacheItem)
+        {
+            // NOTE (tsup, 12.11.2021): Do not inline this method because it prevents from creating unnecessary lambda closures
+            // in case item exists in cache.
             var currentValueProvider = currentValueProviderFactory.Create(() => ObserveWithErrors<TSettings>(source), errorCallback);
             var result = currentValueProvider.Get();
             if (!cacheItem.TrySetCurrentValueProvider(currentValueProvider))
