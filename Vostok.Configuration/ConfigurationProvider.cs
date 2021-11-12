@@ -126,6 +126,13 @@ namespace Vostok.Configuration
             if (cacheItem.CurrentValueProvider != null)
                 return cacheItem.CurrentValueProvider.Get();
 
+            return InitializeCacheItem(source, cacheItem);
+        }
+
+        private TSettings InitializeCacheItem<TSettings>(IConfigurationSource source, SourceCacheItem<TSettings> cacheItem)
+        {
+            // NOTE (tsup, 12.11.2021): Do not inline this method because it prevents from creating unnecessary lambda closures
+            // in case item exists in cache.
             var currentValueProvider = currentValueProviderFactory.Create(() => ObserveWithErrors<TSettings>(source), errorCallback);
             var result = currentValueProvider.Get();
             if (!cacheItem.TrySetCurrentValueProvider(currentValueProvider))
