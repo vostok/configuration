@@ -56,6 +56,23 @@ namespace Vostok.Configuration.Tests.Helpers
         }
 
         [Test]
+        public void Helper_should_not_filter_inherited_by_default()
+        {
+            AttributeHelper
+                .Get<ExampleAttribute>(typeof(WithAttributesChild))
+                .Should().NotBeNull()
+                .And.BeOfType<ExampleAttribute>();
+        }
+
+        [Test]
+        public void Helper_should_filter_inherited_if_specified()
+        {
+            AttributeHelper
+                .Get<ExampleAttribute>(typeof(WithAttributesChild), false)
+                .Should().BeNull();
+        }
+
+        [Test]
         public void Helper_should_give_all_on_select_for_type_if_attributes_were_set()
         {
             AttributeHelper
@@ -121,6 +138,11 @@ namespace Vostok.Configuration.Tests.Helpers
                 .Should().BeTrue();
         }
 
+        private class WithAttributesChild : WithAttributes
+        {
+            
+        }
+        
         private class WithoutAttributes
         {
             public object Property { get; }

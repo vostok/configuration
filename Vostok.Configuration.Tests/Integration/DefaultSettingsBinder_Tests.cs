@@ -328,8 +328,24 @@ namespace Vostok.Configuration.Tests.Integration
             result.ConfigOmitConstructorsWithConstructor.FirstValue.Should().Be(5);
             result.ConfigOmitConstructorsWithConstructor.SecondValue.Should().Be(28);
         }
-        
-        
+
+        [Test]
+        public void Should_bind_with_type_switching()
+        {
+            var settings1 = Object(("Type", "1"), ("A", "5"));
+            var settings2 = Object(("Type", "2"), ("A", "hello"));
+            
+            Func<ISettingsNode, BaseSettings> binding = n => binder.Bind<BaseSettings>(n);
+
+            var result1 = binding(settings1);
+            var result2 = binding(settings2);
+
+            result1.GetType().Should().Be(typeof(SettingsVariant1));
+            (result1 as SettingsVariant1).A.Should().Be(5);
+            
+            result2.GetType().Should().Be(typeof(SettingsVariant2));
+            (result2 as SettingsVariant2).A.Should().Be("hello");
+        }
 
         private class MyClass9
         {
@@ -507,6 +523,37 @@ namespace Vostok.Configuration.Tests.Integration
             {
                 return new ConfigOmitConstructorsWithConstructor {FirstValue = int.Parse(rawSettings["FirstValue"].Value), SecondValue = 28};
             }
+        }
+        
+        [BindBy(typeof(BaseSettingsBinder))]
+        private class BaseSettings 
+        {
+            public string Type {get; set;}
+        }
+
+        private class BaseSettingsBinder : ISettingsBinder<BaseSettings>
+        {
+            public static DefaultSettingsBinder DefaultSettingsBinder = new DefaultSettingsBinder();
+            
+            public BaseSettings Bind(ISettingsNode rawSettings)
+            {
+                switch (rawSettings.Children.FirstOrDefault(c => c.Name == nameof(BaseSettings.Type))?.Value)
+                {
+                    case "1": return DefaultSettingsBinder.Bind<SettingsVariant1>(rawSettings);
+                    case "2": return DefaultSettingsBinder.Bind<SettingsVariant2>(rawSettings);
+                    default: throw new ArgumentException();
+                }
+            }
+        }
+
+        private class SettingsVariant1 : BaseSettings
+        {
+            public int A { get; set; }
+        }
+
+        private class SettingsVariant2 : BaseSettings
+        {
+            public string A { get; set; }
         }
     }
 }
