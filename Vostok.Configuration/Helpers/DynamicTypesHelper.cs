@@ -6,7 +6,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using Vostok.Configuration.Binders.Extensions;
+using PropertyInfoExtensions = Vostok.Configuration.Binders.Extensions.PropertyInfoExtensions;
 
 namespace Vostok.Configuration.Helpers
 {

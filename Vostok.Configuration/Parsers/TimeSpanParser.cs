@@ -39,14 +39,6 @@ namespace Vostok.Configuration.Parsers
 
             bool TryParse(string unit, out double res) => NumericTypeParser<double>.TryParse(PrepareInput(input, unit), out res);
 
-            bool TryGet(FromValue method, string unit, out TimeSpan res)
-            {
-                if (!input.Contains(unit)) return false;
-                if (!TryParse(unit, out var val)) return false;
-                res = method(val);
-                return true;
-            }
-
             return
                 TryGet(TimeSpan.FromMilliseconds, MilliSeconds4, out result) ||
                 TryGet(TimeSpan.FromMilliseconds, MilliSeconds3, out result) ||
@@ -66,6 +58,15 @@ namespace Vostok.Configuration.Parsers
                 TryGet(TimeSpan.FromMinutes, Minutes1, out result) ||
                 TryGet(TimeSpan.FromHours, Hours1, out result) ||
                 TryGet(TimeSpan.FromDays, Days1, out result);
+
+            bool TryGet(FromValue method, string unit, out TimeSpan res)
+            {
+                res = default;
+                if (!input.Contains(unit)) return false;
+                if (!TryParse(unit, out var val)) return false;
+                res = method(val);
+                return true;
+            }
         }
 
         private static string PrepareInput(string input, string unit) =>
