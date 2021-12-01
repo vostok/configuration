@@ -335,16 +335,11 @@ namespace Vostok.Configuration.Tests.Integration
             var settings1 = Object(("Type", "1"), ("A", "5"));
             var settings2 = Object(("Type", "2"), ("A", "hello"));
             
-            Func<ISettingsNode, BaseSettings> binding = n => binder.Bind<BaseSettings>(n);
+            var result1 = binder.Bind<BaseSettings>(settings1);
+            var result2 = binder.Bind<BaseSettings>(settings2);
 
-            var result1 = binding(settings1);
-            var result2 = binding(settings2);
-
-            result1.GetType().Should().Be(typeof(SettingsVariant1));
-            (result1 as SettingsVariant1).A.Should().Be(5);
-            
-            result2.GetType().Should().Be(typeof(SettingsVariant2));
-            (result2 as SettingsVariant2).A.Should().Be("hello");
+            result1.Should().BeOfType<SettingsVariant1>().Which.A.Should().Be(5);
+            result2.Should().BeOfType<SettingsVariant2>().Which.A.Should().Be("hello");
         }
 
         private class MyClass9
