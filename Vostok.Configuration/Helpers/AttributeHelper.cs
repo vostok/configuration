@@ -39,7 +39,7 @@ namespace Vostok.Configuration.Helpers
 
         public static bool Has<TAttribute>(Type type, bool inherit = true)
             where TAttribute : Attribute
-            => Has(type, typeof(TAttribute));
+            => Has(type, typeof(TAttribute), inherit);
 
         public static bool Has<TAttribute>(MemberInfo member)
             where TAttribute : Attribute
