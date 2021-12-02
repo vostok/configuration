@@ -8,7 +8,7 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <PropertyGroup>
-    <VersionPrefix>0.1.33</VersionPrefix>
+    <VersionPrefix>0.1.34</VersionPrefix>
   </PropertyGroup>
   <PropertyGroup>
     <Title>Vostok.Configuration</Title>
