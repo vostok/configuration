@@ -53,7 +53,7 @@ namespace Vostok.Configuration.Helpers
 
         [NotNull, ItemCanBeNull]
         private static IEnumerable<Attribute> GetAttributes(Type type, Type attributeType, bool inherit)
-            => TypeCache.Obtain((type, attributeType, inherit), tuple => tuple.type.GetCustomAttributes(tuple.attributeType, inherit).Cast<Attribute>());
+            => TypeCache.Obtain((type, attributeType, inherit), tuple => tuple.type.GetCustomAttributes(tuple.attributeType, inherit).OfType<Attribute>());
 
         [NotNull, ItemCanBeNull]
         private static IEnumerable<Attribute> GetAttributes(MemberInfo member, Type attributeType)
