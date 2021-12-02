@@ -257,6 +257,13 @@ namespace Vostok.Configuration.Tests.Binders
             var wrapper = provider.CreateFor<ClassWithCustomBinder>();
             ((SafeBinderWrapper<ClassWithCustomBinder>)wrapper).Binder.Should().BeOfType<CustomBinder>();
         }
+        
+        [Test]
+        public void Should_not_select_binder_specified_in_BindBy_attribute_of_parent_class()
+        {
+            var wrapper = provider.CreateFor<ClassWithCustomBinderChild>();
+            wrapper.Should().BeOfType<ClassStructBinder<ClassWithCustomBinderChild>>();
+        }
 
         [Test]
         public void Should_select_binder_specified_in_BindBy_attribute_in_composition_with_other_binders()
@@ -349,6 +356,11 @@ namespace Vostok.Configuration.Tests.Binders
                 throw new NotImplementedException();
         }
 
+        public class ClassWithCustomBinderChild : ClassWithCustomBinder
+        {
+            
+        }
+        
         [BindBy(typeof(CustomBinder))]
         public class ClassWithCustomBinder
         {
