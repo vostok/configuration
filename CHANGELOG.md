@@ -1,6 +1,10 @@
+## 0.1.33 (02.12.2021):
+
+Disabled inheritance for BindByAttribute.
+
 ## 0.1.32 (12.11.2021):
 
-Improved performance by removing a closure
+Improved performance by removing a closure.
 
 ## 0.1.31 (26.06.2021):
 
