@@ -313,7 +313,7 @@ namespace Vostok.Configuration.Tests.Integration
             result.FirstValue.Should().Be(5);
             result.SecondValue.Should().Be(0);
         }
-        
+
         [Test]
         public void Should_bind_object_with_custom_binder_with_OmitConstructors_when_parameterless_constructor_exists()
         {
@@ -330,6 +330,19 @@ namespace Vostok.Configuration.Tests.Integration
         }
 
         [Test]
+        public void Should_bind_non_generic()
+        {
+            var settings1 = Object(("Type", "1"), ("A", "5"));
+            var settings2 = Object(("Type", "2"), ("A", "hello"));
+
+            var result1 = binder.Bind(typeof(SettingsVariant1), settings1);
+            var result2 = binder.Bind(typeof(SettingsVariant2), settings2);
+
+            result1.Should().BeOfType<SettingsVariant1>().Which.A.Should().Be(5);
+            result2.Should().BeOfType<SettingsVariant2>().Which.A.Should().Be("hello");
+        }
+
+        [Test]
         public void Should_bind_with_type_switching()
         {
             var settings1 = Object(("Type", "1"), ("A", "5"));
@@ -337,6 +350,19 @@ namespace Vostok.Configuration.Tests.Integration
             
             var result1 = binder.Bind<BaseSettings>(settings1);
             var result2 = binder.Bind<BaseSettings>(settings2);
+
+            result1.Should().BeOfType<SettingsVariant1>().Which.A.Should().Be(5);
+            result2.Should().BeOfType<SettingsVariant2>().Which.A.Should().Be("hello");
+        }
+
+        [Test]
+        public void Should_bind_with_type_switching_non_generic()
+        {
+            var settings1 = Object(("Type", "1"), ("A", "5"));
+            var settings2 = Object(("Type", "2"), ("A", "hello"));
+
+            var result1 = binder.Bind(typeof(BaseSettings), settings1);
+            var result2 = binder.Bind(typeof(BaseSettings), settings2);
 
             result1.Should().BeOfType<SettingsVariant1>().Which.A.Should().Be(5);
             result2.Should().BeOfType<SettingsVariant2>().Which.A.Should().Be("hello");
