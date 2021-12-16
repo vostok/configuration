@@ -28,11 +28,9 @@ namespace Vostok.Configuration.Binders
             this.binderProvider = binderProvider.WithDefaultParsers();
 
         /// <inheritdoc />
-        public TSettings Bind<TSettings>(ISettingsNode settings)
-        {
-            var binder = binderProvider.CreateFor<TSettings>();
-            return binder.Bind(settings).Value;
-        }
+        public TSettings Bind<TSettings>(ISettingsNode settings) => binderProvider.CreateFor<TSettings>().Bind(settings).Value;
+
+        public object Bind(Type tSettings, ISettingsNode settings) => binderProvider.CreateFor(tSettings).Bind(settings).Value;
 
         /// <summary>
         /// Adds a new simple type <typeparamref name="T"/> with the given parser.
