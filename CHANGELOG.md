@@ -1,3 +1,7 @@
+## 0.1.36 (16-12-2021):
+
+Added non-generic `Bind` version to `DefaultSettingsBinder`
+
 ## 0.1.35 (06-12-2021):
 
 Added `net6.0` target.
