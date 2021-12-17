@@ -168,6 +168,22 @@ namespace Vostok.Configuration.Tests
 
             result.Should().Be(@"""!!! asdf""");
         }
+
+#if NET6_0
+        [Test]
+        public void Should_not_use_ToString_for_records()
+        {
+            var settings = new MyRecord("asdf", "qwer", 42);
+
+            var result = PrintAndParse(settings, false);
+
+            result.Should().Be(@"{
+   ""A"": ""asdf"",
+   ""B"": <secret>,
+   ""C"": ""42""
+}");
+        }
+#endif
         
         private static string PrintAndParse<T>(T settings, bool parse = true)
         {
@@ -277,5 +293,9 @@ namespace Vostok.Configuration.Tests
             A,
             B
         }
+
+#if NET6_0
+        record MyRecord(string A, [property: Secret] string B, int C);
+#endif
     }
 }

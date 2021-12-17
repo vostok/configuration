@@ -2,9 +2,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\..\vostok.devtools\library-common-props\Test-Project.props" />
   <Import Project="..\..\vostok.devtools\git-commit-to-assembly-title\Vostok.Tools.GitCommit2AssemblyTitle.props" />
-  <PropertyGroup>
-    <LangVersion>7.2</LangVersion>
-  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="5.6.0" />
     <PackageReference Include="Microsoft.Build.Utilities.Core" Version="15.9.20" />
