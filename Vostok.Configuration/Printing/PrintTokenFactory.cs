@@ -8,6 +8,7 @@ using Vostok.Commons.Collections;
 using Vostok.Commons.Formatting;
 using Vostok.Commons.Helpers.Extensions;
 using Vostok.Configuration.Helpers;
+using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Printing
 {
@@ -41,11 +42,11 @@ namespace Vostok.Configuration.Printing
                 {
                     var isSecretType = settings.HideSecretValues && SecurityHelper.IsSecret(itemType);
 
-                    if (ToStringDetector.HasCustomToString(itemType) && !isSecretType)
-                        return new ValueToken(item.ToString());
-
-                    if (CustomFormatters.TryFormat(item, out var customFormatting) && !isSecretType)
+                    if (!isSecretType && CustomFormatters.TryFormat(item, out var customFormatting))
                         return new ValueToken(customFormatting);
+                    
+                    if (!isSecretType && ShouldUseToString(itemType))
+                        return new ValueToken(item.ToString());
 
                     if (DictionaryInspector.IsSimpleDictionary(itemType))
                     {
@@ -94,6 +95,9 @@ namespace Vostok.Configuration.Printing
                 path.Remove(item);
             }
         }
+
+        private static bool ShouldUseToString(Type itemType) =>
+            /*ParseMethodFinder.HasAnyKindOfParseMethod(itemType) &&*/ ToStringDetector.HasCustomToString(itemType);
 
         private static PropertyToken ConstructProperty(MemberInfo member, Func<IPrintToken> getValue, PrintSettings settings) => 
             ConstructPropertyToken(SecurityHelper.IsSecret(member), getValue, member.Name, settings);

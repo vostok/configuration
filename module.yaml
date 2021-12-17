@@ -21,6 +21,8 @@ notests *default:
 
 full-build > notests:
   deps:
+    - vostok.configuration.sources.json
+    - vostok.configuration.sources
     - -vostok.devtools
     - vostok.devtools@with-net6.0
     - vostok.commons.testing/src
