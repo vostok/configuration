@@ -45,8 +45,8 @@ namespace Vostok.Configuration.Printing
                     if (!isSecretType && CustomFormatters.TryFormat(item, out var customFormatting))
                         return new ValueToken(customFormatting);
                     
-                    if (!isSecretType && ShouldUseCustomToString(itemType))
-                        return new ValueToken(item.ToString());
+                    if (!isSecretType && ToStringHelper.TryUseCustomToString(item, itemType, out var asString))
+                        return new ValueToken(asString);
 
                     if (DictionaryInspector.IsSimpleDictionary(itemType))
                     {
@@ -95,9 +95,6 @@ namespace Vostok.Configuration.Printing
                 path.Remove(item);
             }
         }
-
-        private static bool ShouldUseCustomToString(Type itemType) =>
-            ParseMethodFinder.HasAnyKindOfParseMethod(itemType) && ToStringDetector.HasCustomToString(itemType);
 
         private static PropertyToken ConstructProperty(MemberInfo member, Func<IPrintToken> getValue, PrintSettings settings) => 
             ConstructPropertyToken(SecurityHelper.IsSecret(member), getValue, member.Name, settings);
