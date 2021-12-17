@@ -263,7 +263,7 @@ namespace Vostok.Configuration.Tests
             public DateTimeOffset O { get; set; } = DateTimeOffset.Parse("2018-03-14 15:09:26.535");
             public DateTimeOffset O2 { get; set; } = DateTimeOffset.Parse("2018-03-14 15:09:26 +03:30");
             public IPAddress I { get; set; } = IPAddress.Parse("2001:0db8:11a3:09d7:1f34:8a2e:07a0:765d");
-            public IPEndPoint I3 { get; set; } = new IPEndPoint(100500, 80);
+            public IPEndPoint I3 { get; set; } = new IPEndPoint(IPAddress.Parse("192.168.1.10"), 80);
             public DataSize D3 { get; set; } = DataSize.FromBytes(45);
             public DataRate D4 { get; set; } = DataRate.FromBytesPerSecond(46);
             public Encoding E { get; set; } = Encoding.UTF32;
