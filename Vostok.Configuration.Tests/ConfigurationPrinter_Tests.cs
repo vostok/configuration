@@ -35,7 +35,7 @@ namespace Vostok.Configuration.Tests
             var result = PrintAndParse(settings);
 
             result.Should()
-                .Be(
+                .Be(Normalize(
                     @"{
    ""Item"": 
    {
@@ -61,7 +61,7 @@ namespace Vostok.Configuration.Tests
          ""Num"": ""4""
       }
    ]
-}");
+}"));
         }
 
         [Test]
@@ -72,11 +72,11 @@ namespace Vostok.Configuration.Tests
             var result = PrintAndParse(settings);
 
             result.Should()
-                .Be(
+                .Be(Normalize(
                     @"{
    ""Item"": null,
    ""Array"": null
-}");
+}"));
         }
         
         [Test]
@@ -95,12 +95,12 @@ namespace Vostok.Configuration.Tests
             var result = PrintAndParse(settings, false);
 
             result.Should()
-                .Be(
+                .Be(Normalize(
                     @"{
    ""Class5"": <secret>,
    ""Public4"": ""p444"",
    ""Secret4"": <secret>
-}");
+}"));
         }
 
         [Test]
@@ -110,7 +110,7 @@ namespace Vostok.Configuration.Tests
 
             var result = PrintAndParse(settings);
 
-            result.Should().Be(@"{
+            result.Should().Be(Normalize(@"{
    ""S0"": null,
    ""S1"": """",
    ""S2"": ""asdf"",
@@ -140,7 +140,7 @@ namespace Vostok.Configuration.Tests
    ""E2"": ""B"",
    ""I4"": ""47"",
    ""I5"": null
-}");
+}"));
         }
         
         [Test]
@@ -177,11 +177,11 @@ namespace Vostok.Configuration.Tests
 
             var result = PrintAndParse(settings, false);
 
-            result.Should().Be(@"{
+            result.Should().Be(Normalize(@"{
    ""A"": ""asdf"",
    ""B"": <secret>,
    ""C"": ""42""
-}");
+}"));
         }
 #endif
         
@@ -200,6 +200,9 @@ namespace Vostok.Configuration.Tests
 
             return result;
         }
+
+        private static string Normalize(string s) =>
+            s.Replace("\r\n", "\n").Replace("\n", Environment.NewLine);
         
         internal class MyClass1
         {
