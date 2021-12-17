@@ -45,7 +45,7 @@ namespace Vostok.Configuration.Printing
                     if (!isSecretType && CustomFormatters.TryFormat(item, out var customFormatting))
                         return new ValueToken(customFormatting);
                     
-                    if (!isSecretType && ToStringHelper.TryUseCustomToString(item, itemType, out var asString))
+                    if (!isSecretType && ParseMethodFinder.HasAnyKindOfParseMethod(itemType) && ToStringDetector.TryInvokeCustomToString(itemType, item, out var asString))
                         return new ValueToken(asString);
 
                     if (DictionaryInspector.IsSimpleDictionary(itemType))
