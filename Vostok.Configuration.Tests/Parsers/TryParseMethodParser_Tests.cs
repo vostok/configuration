@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using NUnit.Framework;
+using Vostok.Commons.Formatting;
 using Vostok.Configuration.Parsers;
 
 namespace Vostok.Configuration.Tests.Parsers
