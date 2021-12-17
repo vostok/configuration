@@ -124,13 +124,13 @@ namespace Vostok.Configuration.Tests
    ""I2"": ""38"",
    ""L1"": ""39"",
    ""L2"": ""40"",
-   ""F"": ""41,5"",
-   ""D"": ""42,5"",
-   ""D2"": ""43,5"",
+   ""F"": ""41.5"",
+   ""D"": ""42.5"",
+   ""D2"": ""43.5"",
    ""G"": ""bd9cbd49-4c5c-4cbb-9b2b-1062c07b29c2"",
    ""U"": ""https://github.com/vostok?q=asdf&type=all&language=&sort="",
    ""T"": ""00:00:44.5000000"",
-   ""O"": ""2018-03-14T15:09:26.5350000+05:00"",
+   ""O"": ""2018-03-14T15:09:26.5350000+00:00"",
    ""O2"": ""2018-03-14T15:09:26.0000000+03:30"",
    ""I"": ""2001:db8:11a3:9d7:1f34:8a2e:7a0:765d"",
    ""I3"": ""192.168.1.10:80"",
@@ -279,7 +279,7 @@ namespace Vostok.Configuration.Tests
             public Guid G { get; set; } = new Guid("bd9cbd49-4c5c-4cbb-9b2b-1062c07b29c2");
             public Uri U { get; set; } = new Uri("https://github.com/vostok?q=asdf&type=all&language=&sort=");
             public TimeSpan T { get; set; } = 44.5.Seconds();
-            public DateTimeOffset O { get; set; } = DateTimeOffset.Parse("2018-03-14 15:09:26.535");
+            public DateTimeOffset O { get; set; } = DateTimeOffset.Parse("2018-03-14 15:09:26.535  +00:00");
             public DateTimeOffset O2 { get; set; } = DateTimeOffset.Parse("2018-03-14 15:09:26 +03:30");
             public IPAddress I { get; set; } = IPAddress.Parse("2001:0db8:11a3:09d7:1f34:8a2e:07a0:765d");
             public IPEndPoint I3 { get; set; } = new IPEndPoint(IPAddress.Parse("192.168.1.10"), 80);
