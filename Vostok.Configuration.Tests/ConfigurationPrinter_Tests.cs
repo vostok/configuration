@@ -182,6 +182,20 @@ namespace Vostok.Configuration.Tests
    ""B"": <secret>,
    ""C"": ""42""
 }"));
+        }        
+
+        [Test]
+        public void Should_not_use_ToString_for_record_structs()
+        {
+            var settings = new MyRecordStruct("asdf", "qwer", 42);
+
+            var result = PrintAndParse(settings, false);
+
+            result.Should().Be(Normalize(@"{
+   ""A"": ""asdf"",
+   ""B"": <secret>,
+   ""C"": ""42""
+}"));
         }
 #endif
         
@@ -299,6 +313,8 @@ namespace Vostok.Configuration.Tests
 
 #if NET6_0
         record MyRecord(string A, [property: Secret] string B, int C);
+
+        record struct MyRecordStruct(string A, [property: Secret] string B, int C);
 #endif
     }
 }
