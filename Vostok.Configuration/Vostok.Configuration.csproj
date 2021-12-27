@@ -30,6 +30,7 @@
     <Compile Include="..\..\vostok.commons.threading\Vostok.Commons.Threading\AtomicBoolean.cs" Link="Commons\AtomicBoolean.cs" />
     <Compile Include="..\..\vostok.commons.formatting\Vostok.Commons.Formatting\ToStringDetector.cs" Link="Commons\ToStringDetector.cs" />
     <Compile Include="..\..\vostok.commons.formatting\Vostok.Commons.Formatting\DictionaryInspector.cs" Link="Commons\DictionaryInspector.cs" />
+    <Compile Include="..\..\vostok.commons.formatting\Vostok.Commons.Formatting\ParseMethodFinder.cs" Link="Commons\ParseMethodFinder.cs" />
     <Compile Include="..\..\vostok.commons.collections\Vostok.Commons.Collections\RecyclingBoundedCache.cs" Link="Commons\RecyclingBoundedCache.cs" />
     <Compile Include="..\..\vostok.commons.collections\Vostok.Commons.Collections\ByReferenceEqualityComparer.cs" Link="Commons\ByReferenceEqualityComparer.cs" />
     <Compile Include="..\..\vostok.commons.time\Vostok.Commons.Time\TimeSpanFormatting.cs" Link="Commons\TimeSpanFormatting.cs" />

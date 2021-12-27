@@ -41,11 +41,11 @@ namespace Vostok.Configuration.Printing
                 {
                     var isSecretType = settings.HideSecretValues && SecurityHelper.IsSecret(itemType);
 
-                    if (ToStringDetector.HasCustomToString(itemType) && !isSecretType)
-                        return new ValueToken(item.ToString());
-
-                    if (CustomFormatters.TryFormat(item, out var customFormatting) && !isSecretType)
+                    if (!isSecretType && CustomFormatters.TryFormat(item, out var customFormatting))
                         return new ValueToken(customFormatting);
+                    
+                    if (!isSecretType && ParseMethodFinder.HasAnyKindOfParseMethod(itemType) && ToStringDetector.TryInvokeCustomToString(itemType, item, out var asString))
+                        return new ValueToken(asString);
 
                     if (DictionaryInspector.IsSimpleDictionary(itemType))
                     {
