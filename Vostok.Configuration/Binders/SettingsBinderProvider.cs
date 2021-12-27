@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using SimpleInjector;
 using Vostok.Commons.Collections;
+using Vostok.Commons.Formatting;
 using Vostok.Commons.Helpers.Extensions;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
