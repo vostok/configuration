@@ -1,3 +1,7 @@
+## 0.1.37 (27-12-2021):
+
+Use `ToString` method only when `Parse`/`TryParse` is available.
+
 ## 0.1.36 (16-12-2021):
 
 Added non-generic `Bind` version to `DefaultSettingsBinder`
