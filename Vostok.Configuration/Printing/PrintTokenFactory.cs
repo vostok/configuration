@@ -41,7 +41,7 @@ namespace Vostok.Configuration.Printing
                 {
                     var isSecretType = settings.HideSecretValues && SecurityHelper.IsSecret(itemType);
 
-                    if (!isSecretType && CustomFormattersExtended.TryFormat(item, out var customFormatting))
+                    if (!isSecretType && CustomFormatters.TryFormat(item, out var customFormatting))
                         return new ValueToken(customFormatting);
                     
                     if (!isSecretType && ParseMethodFinder.HasAnyKindOfParseMethod(itemType) && ToStringDetector.TryInvokeCustomToString(itemType, item, out var asString))
