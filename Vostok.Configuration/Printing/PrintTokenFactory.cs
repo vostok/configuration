@@ -47,7 +47,7 @@ namespace Vostok.Configuration.Printing
 
                     var isNode = typeof(ISettingsNode).IsAssignableFrom(itemType);
                     if (!isSecretType && (isNode || ParseMethodFinder.HasAnyKindOfParseMethod(itemType)) && ToStringDetector.TryInvokeCustomToString(itemType, item, out var asString))
-                        return new ValueToken(asString, !isNode); // NOTE (tsup, 26.01.22): We want to print ISettingsNode without quotes for deserializing
+                        return new ValueToken(asString, !(isNode && settings.Format == PrintFormat.JSON)); // NOTE (tsup, 26.01.22): We want to print ISettingsNode without quotes for deserializing
 
                     if (DictionaryInspector.IsSimpleDictionary(itemType))
                     {
