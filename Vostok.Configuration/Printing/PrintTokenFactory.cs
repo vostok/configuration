@@ -44,9 +44,10 @@ namespace Vostok.Configuration.Printing
 
                     if (!isSecretType && CustomFormatters.TryFormat(item, out var customFormatting))
                         return new ValueToken(customFormatting);
-                    
-                    if (!isSecretType && (ParseMethodFinder.HasAnyKindOfParseMethod(itemType) || itemType.IsInstanceOfType(typeof(ISettingsNode))) && ToStringDetector.TryInvokeCustomToString(itemType, item, out var asString))
-                        return new ValueToken(asString);
+
+                    var isNode = typeof(ISettingsNode).IsAssignableFrom(itemType);
+                    if (!isSecretType && (isNode || ParseMethodFinder.HasAnyKindOfParseMethod(itemType)) && ToStringDetector.TryInvokeCustomToString(itemType, item, out var asString))
+                        return new ValueToken(asString, !isNode); // NOTE (tsup, 26.01.22): We want to print ISettingsNode without quotes for deserializing
 
                     if (DictionaryInspector.IsSimpleDictionary(itemType))
                     {
