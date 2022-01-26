@@ -7,7 +7,6 @@ using JetBrains.Annotations;
 using Vostok.Commons.Collections;
 using Vostok.Commons.Formatting;
 using Vostok.Commons.Helpers.Extensions;
-using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Printing
@@ -44,10 +43,9 @@ namespace Vostok.Configuration.Printing
 
                     if (!isSecretType && CustomFormatters.TryFormat(item, out var customFormatting))
                         return new ValueToken(customFormatting);
-
-                    var isNode = typeof(ISettingsNode).IsAssignableFrom(itemType);
-                    if (!isSecretType && (isNode || ParseMethodFinder.HasAnyKindOfParseMethod(itemType)) && ToStringDetector.TryInvokeCustomToString(itemType, item, out var asString))
-                        return new ValueToken(asString, !(isNode && settings.Format == PrintFormat.JSON)); // NOTE (tsup, 26.01.22): We want to print ISettingsNode without quotes for deserializing
+                    
+                    if (!isSecretType && ParseMethodFinder.HasAnyKindOfParseMethod(itemType) && ToStringDetector.TryInvokeCustomToString(itemType, item, out var asString))
+                        return new ValueToken(asString);
 
                     if (DictionaryInspector.IsSimpleDictionary(itemType))
                     {

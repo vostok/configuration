@@ -7,7 +7,6 @@ using FluentAssertions;
 using FluentAssertions.Extensions;
 using NUnit.Framework;
 using Vostok.Configuration.Abstractions.Attributes;
-using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Primitives;
 using Vostok.Configuration.Printing;
 using Vostok.Configuration.Sources.Json;
@@ -160,31 +159,14 @@ namespace Vostok.Configuration.Tests
         [Test]
         public void Should_not_use_ToString_without_Parse()
         {
-            var settings = new MyClass7
+            var settings = new MyClass6
             {
                 Str = "asdf"
             };
 
             var result = PrintAndParse(settings);
 
-            result.Should().NotBe(@"""!!! asdf""");
-        }
-
-        [Test]
-        public void Should_use_ToString_without_Parse_on_ISettingsNode()
-        {
-            var settings = new ObjectNode(new List<ISettingsNode>
-            {
-                new ValueNode("First", "true"),
-                new ValueNode("Second", "false")
-            });
-
-            var result = PrintAndParse(settings, false);
-
-            result.Should().Be(Normalize(@"{
-   ""First"": ""true"",
-   ""Second"": ""false""
-}"));
+            result.Should().Be(@"""!!! asdf""");
         }
 
 #if NET6_0
