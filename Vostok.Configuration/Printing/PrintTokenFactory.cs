@@ -7,6 +7,7 @@ using JetBrains.Annotations;
 using Vostok.Commons.Collections;
 using Vostok.Commons.Formatting;
 using Vostok.Commons.Helpers.Extensions;
+using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Printing
@@ -41,10 +42,11 @@ namespace Vostok.Configuration.Printing
                 {
                     var isSecretType = settings.HideSecretValues && SecurityHelper.IsSecret(itemType);
 
-                    if (!isSecretType && CustomFormattersExtended.TryFormat(item, out var customFormatting))
+                    if (!isSecretType && CustomFormatters.TryFormat(item, out var customFormatting))
                         return new ValueToken(customFormatting);
-                    
-                    if (!isSecretType && ParseMethodFinder.HasAnyKindOfParseMethod(itemType) && ToStringDetector.TryInvokeCustomToString(itemType, item, out var asString))
+
+                    var isNode = typeof(ISettingsNode).IsAssignableFrom(itemType);
+                    if (!isSecretType && (ParseMethodFinder.HasAnyKindOfParseMethod(itemType) || isNode) && ToStringDetector.TryInvokeCustomToString(itemType, item, out var asString))
                         return new ValueToken(asString);
 
                     if (DictionaryInspector.IsSimpleDictionary(itemType))

@@ -11,7 +11,7 @@ notests *default:
 
   deps:
     - vostok.commons.collections/src
-    - vostok.commons.formatting/src@ExplicitFormatting
+    - vostok.commons.formatting/src
     - vostok.commons.helpers/src
     - vostok.commons.threading/src
     - vostok.commons.time/src
