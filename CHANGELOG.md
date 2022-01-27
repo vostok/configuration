@@ -1,3 +1,7 @@
+## 0.1.38 (27-01-2022):
+
+Use `ToString` on `ISettingsNode` instances with `ConfigurationPrinter`.
+
 ## 0.1.37 (27-12-2021):
 
 Use `ToString` method only when `Parse`/`TryParse` is available.
