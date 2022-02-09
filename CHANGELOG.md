@@ -1,3 +1,7 @@
+## 0.1.39 (09-02-2022):
+
+Wrap `<error>`, `<secret>`, `<cyclic>` into quotes.
+
 ## 0.1.38 (27-01-2022):
 
 Use `ToString` on `ISettingsNode` instances with `ConfigurationPrinter`.

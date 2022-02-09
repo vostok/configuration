@@ -97,9 +97,9 @@ namespace Vostok.Configuration.Tests
             result.Should()
                 .Be(Normalize(
                     @"{
-   ""Class5"": <secret>,
+   ""Class5"": ""<secret>"",
    ""Public4"": ""p444"",
-   ""Secret4"": <secret>
+   ""Secret4"": ""<secret>""
 }"));
         }
 
@@ -196,7 +196,7 @@ namespace Vostok.Configuration.Tests
 
             result.Should().Be(Normalize(@"{
    ""A"": ""asdf"",
-   ""B"": <secret>,
+   ""B"": ""<secret>"",
    ""C"": ""42""
 }"));
         }        
@@ -210,7 +210,7 @@ namespace Vostok.Configuration.Tests
 
             result.Should().Be(Normalize(@"{
    ""A"": ""asdf"",
-   ""B"": <secret>,
+   ""B"": ""<secret>"",
    ""C"": ""42""
 }"));
         }
