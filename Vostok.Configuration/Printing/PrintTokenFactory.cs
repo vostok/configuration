@@ -15,9 +15,9 @@ namespace Vostok.Configuration.Printing
     internal static class PrintTokenFactory
     {
         private static readonly ValueToken NullValue = new ValueToken("null", false);
-        private static readonly ValueToken ErrorValue = new ValueToken("<error>", false);
-        private static readonly ValueToken SecretValue = new ValueToken("<secret>", false);
-        private static readonly ValueToken CyclicValue = new ValueToken("<cyclic>", false);
+        private static readonly ValueToken ErrorValue = new ValueToken("\"<error>\"", false);
+        private static readonly ValueToken SecretValue = new ValueToken("\"<secret>\"", false);
+        private static readonly ValueToken CyclicValue = new ValueToken("\"<cyclic>\"", false);
         private static readonly ValueToken EmptySequenceValue = new ValueToken("[]", false);
         private static readonly ValueToken EmptyObjectValue = new ValueToken("{}", false);
 
