@@ -5,6 +5,7 @@ using System.Reactive.Linq;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using Vostok.Commons.Helpers.Rx;
+using Vostok.Commons.Threading;
 using Vostok.Configuration.Abstractions;
 using Vostok.Configuration.Abstractions.SettingsTree;
 using Vostok.Configuration.Binders;
@@ -31,6 +32,7 @@ namespace Vostok.Configuration
         private readonly ISourceDataCache sourceDataCache;
         private readonly ICurrentValueProviderFactory currentValueProviderFactory;
         private readonly TimeSpan sourceRetryCooldown;
+        private readonly AtomicBoolean disposed = false;
 
         private readonly EventLoopScheduler baseScheduler;
         private readonly IScheduler scheduler;
@@ -113,6 +115,9 @@ namespace Vostok.Configuration
         /// <inheritdoc />
         public TSettings Get<TSettings>(IConfigurationSource source)
         {
+            if (disposed)
+                throw new ObjectDisposedException("ConfigurationProvider was already disposed!");
+
             if (IsConfiguredFor<TSettings>(source))
                 return Get<TSettings>();
 
@@ -221,8 +226,11 @@ namespace Vostok.Configuration
         /// <inheritdoc />
         public void Dispose()
         {
-            baseScheduler.Dispose();
-            sourceDataCache.Dispose();
+            if (disposed.TrySetTrue())
+            {
+                baseScheduler.Dispose();
+                sourceDataCache.Dispose();
+            }
         }
 
         internal IObservable<(TSettings settings, Exception error)> ObserveWithErrors<TSettings>()
