@@ -36,16 +36,14 @@
     <Compile Include="..\..\vostok.commons.time\Vostok.Commons.Time\TimeSpanFormatting.cs" Link="Commons\TimeSpanFormatting.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Vostok.Configuration.Abstractions">
-      <HintPath>..\..\vostok.configuration.abstractions\Vostok.Configuration.Abstractions\bin\Release\$(ReferencesFramework)\Vostok.Configuration.Abstractions.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="System.Reactive" Version="4.1.2" PrivateAssets="all" />
     <PackageReference Include="System.Reactive.Core" Version="4.1.2" PrivateAssets="all" />
     <PackageReference Include="System.Reactive.Linq" Version="4.1.2" PrivateAssets="all" />
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" PrivateAssets="all" />
     <PackageReference Include="SimpleInjector" Version="4.4.3" PrivateAssets="all" />
+    <PackageReference Include="Vostok.Configuration.Abstractions">
+      <Version>0.1.15</Version>
+    </PackageReference>
   </ItemGroup>
   <Target Name="RepackAssemblies" AfterTargets="Build" Condition="'$(Configuration)' == 'Release' And '$(TargetFramework)' != ''">
     <PropertyGroup>
