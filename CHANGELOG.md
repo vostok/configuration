@@ -1,3 +1,7 @@
+## 0.1.40 (11-03-2022):
+
+Format bytes array to base64 string.
+
 ## 0.1.39 (09-02-2022):
 
 Wrap `<error>`, `<secret>`, `<cyclic>` into quotes.
