@@ -186,7 +186,7 @@ namespace Vostok.Configuration.Tests
 }"""));
         }
 
-#if NET6_0
+#if NET6_0_OR_GREATER
         [Test]
         public void Should_not_use_ToString_for_records()
         {
@@ -328,7 +328,7 @@ namespace Vostok.Configuration.Tests
             B
         }
 
-#if NET6_0
+#if NET6_0_OR_GREATER
         record MyRecord(string A, [property: Secret] string B, int C);
 
         record struct MyRecordStruct(string A, [property: Secret] string B, int C);
