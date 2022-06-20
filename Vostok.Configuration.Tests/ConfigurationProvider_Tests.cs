@@ -49,8 +49,8 @@ namespace Vostok.Configuration.Tests
             
             currentValueProvider = Substitute.For<ICurrentValueProvider<object>>();
             currentValueProvider.Get().Returns(settings);
-            currentValueProviderFactory.Create<object>(default).ReturnsForAnyArgs(currentValueProvider);
-            currentValueProviderFactory.WhenForAnyArgs(f => f.Create<object>(default))
+            currentValueProviderFactory.Create<object>(default, default).ReturnsForAnyArgs(currentValueProvider);
+            currentValueProviderFactory.WhenForAnyArgs(f => f.Create<object>(default, default))
                 .Do(callInfo => callInfo.ArgAt<Func<IObservable<(object, Exception)>>>(0).Invoke());
             
         }
@@ -83,8 +83,8 @@ namespace Vostok.Configuration.Tests
 
             Get<int>(customSource);
 
-            currentValueProviderFactory.ReceivedWithAnyArgs(1).Create<object>(default);
-            currentValueProviderFactory.ReceivedWithAnyArgs(1).Create<int>(default);
+            currentValueProviderFactory.ReceivedWithAnyArgs(1).Create<object>(default, default);
+            currentValueProviderFactory.ReceivedWithAnyArgs(1).Create<int>(default, default);
         }
 
         [Test]

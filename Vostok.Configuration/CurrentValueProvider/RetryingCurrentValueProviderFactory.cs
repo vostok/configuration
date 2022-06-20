@@ -1,4 +1,5 @@
 using System;
+using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.CurrentValueProvider
 {
@@ -13,7 +14,7 @@ namespace Vostok.Configuration.CurrentValueProvider
             this.errorCallback = errorCallback;
         }
 
-        public ICurrentValueProvider<T> Create<T>(Func<IObservable<(T, Exception)>> observableProvider)
-            => new RetryingCurrentValueProvider<T>(observableProvider, retryCooldown, errorCallback);
+        public ICurrentValueProvider<T> Create<T>(Func<IObservable<(T, Exception)>> observableProvider, HealthTracker healthTracker)
+            => new RetryingCurrentValueProvider<T>(observableProvider, retryCooldown, errorCallback, healthTracker);
     }
 }

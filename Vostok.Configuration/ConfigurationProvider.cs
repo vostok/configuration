@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Runtime.CompilerServices;
@@ -105,7 +106,7 @@ namespace Vostok.Configuration
 
             var cacheItem = sourceDataCache.GetPersistentCacheItem<TSettings>(source);
             if (cacheItem.CurrentValueProvider == null)
-                cacheItem.TrySetCurrentValueProvider(currentValueProviderFactory.Create(ObserveWithErrors<TSettings>));
+                cacheItem.TrySetCurrentValueProvider(currentValueProviderFactory.Create(ObserveWithErrors<TSettings>, CreateHealthTracker<TSettings>(source)));
 
             return cacheItem.CurrentValueProvider.Get();
         }
@@ -135,7 +136,7 @@ namespace Vostok.Configuration
         {
             // NOTE (tsup, 12.11.2021): Do not inline this method because it prevents from creating unnecessary lambda closures
             // in case item exists in cache.
-            var currentValueProvider = currentValueProviderFactory.Create(() => ObserveWithErrors<TSettings>(source));
+            var currentValueProvider = currentValueProviderFactory.Create(() => ObserveWithErrors<TSettings>(source), CreateHealthTracker<TSettings>(source));
             var result = currentValueProvider.Get();
             if (!cacheItem.TrySetCurrentValueProvider(currentValueProvider))
                 currentValueProvider.Dispose();
@@ -218,6 +219,10 @@ namespace Vostok.Configuration
         /// </summary>
         public bool HasSourceFor([NotNull] Type settingsType) => typeSources.ContainsKey(settingsType);
 
+        [CanBeNull]
+        public string GetHealthStatus() =>
+            sourceDataCache.GetAll().Select(i => i.HealthTracker?.GetError()).FirstOrDefault(e => e != null);
+        
         /// <inheritdoc />
         public void Dispose()
         {
@@ -275,5 +280,8 @@ namespace Vostok.Configuration
 
             settingsCallback(newValue.settings, source);
         }
+
+        private HealthTracker CreateHealthTracker<TSettings>(IConfigurationSource source) =>
+            new HealthTracker(typeof(TSettings).ToString(), source.ToString());
     }
 }
