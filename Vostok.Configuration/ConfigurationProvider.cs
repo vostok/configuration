@@ -56,9 +56,10 @@ namespace Vostok.Configuration
                 settings.SettingsCallback,
                 new ObservableBinder(new CachingBinder(new ValidatingBinder(settings.Binder ?? new DefaultSettingsBinder()))),
                 new SourceDataCache(settings.MaxSourceCacheSize),
-                new RetryingCurrentValueProviderFactory(settings.ValueRetryCooldown, settings.ErrorCallback),
+                null,
                 settings.SourceRetryCooldown)
         {
+            currentValueProviderFactory = new RetryingCurrentValueProviderFactory(settings.ValueRetryCooldown, errorCallback);
         }
 
         internal ConfigurationProvider(
