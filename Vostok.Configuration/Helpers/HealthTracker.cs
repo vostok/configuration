@@ -21,11 +21,12 @@ internal class HealthTracker
     }
 
     [CanBeNull]
-    public string GetError()
+    public ConfigurationHealthCheckResult GetHealthCheckResult()
     {
         var error = lastError;
+        
         return error == null 
-            ? null 
-            : $"Failed to obtain settings of type {settingsType} from {settingsSource} source: {error}.";
+            ? ConfigurationHealthCheckResult.Successful 
+            : new ConfigurationHealthCheckResult($"Failed to obtain settings of type {settingsType} from {settingsSource} source: {error}.");
     }
 }

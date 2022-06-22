@@ -120,7 +120,7 @@ namespace Vostok.Configuration.Tests.Integration
             });
 
             provider.SetupSourceFor<string>(source);
-            Console.WriteLine($"HealthStatus: {provider.GetHealthStatus() ?? "<null>"}");
+            Console.WriteLine($"HealthCheckResult: {provider.GetHealthCheckResult()}");
 
             source.PushNewConfiguration(new ValueNode("value1"));
             AssertionAssertions.ShouldPassIn(() =>
@@ -128,7 +128,7 @@ namespace Vostok.Configuration.Tests.Integration
                     provider.Get<string>().Should().Be("value1");
                 },
                 5.Seconds());
-            Console.WriteLine($"HealthStatus: {provider.GetHealthStatus() ?? "<null>"}");
+            Console.WriteLine($"HealthCheckResult: {provider.GetHealthCheckResult()}");
 
             var error1 = new Exception("error1");
             source.PushNewConfiguration(null, error1);
@@ -136,14 +136,14 @@ namespace Vostok.Configuration.Tests.Integration
             {
                 error.Should().Be(error1);
             }, 5.Seconds());
-            Console.WriteLine($"HealthStatus: {provider.GetHealthStatus() ?? "<null>"}");
+            Console.WriteLine($"HealthCheckResult: {provider.GetHealthCheckResult()}");
 
             source.PushNewConfiguration(new ValueNode("value2"));
             AssertionAssertions.ShouldPassIn(() =>
             {
                 provider.Get<string>().Should().Be("value2");    
             }, 5.Seconds());
-            Console.WriteLine($"HealthStatus: {provider.GetHealthStatus() ?? "<null>"}");
+            Console.WriteLine($"HealthCheckResult: {provider.GetHealthCheckResult()}");
 
             var error2 = new Exception("error2");
             source.PushNewConfiguration(null, error2);
@@ -151,7 +151,7 @@ namespace Vostok.Configuration.Tests.Integration
             {
                 error.Should().Be(error2);
             }, 5.Seconds());
-            Console.WriteLine($"HealthStatus: {provider.GetHealthStatus() ?? "<null>"}");
+            Console.WriteLine($"HealthCheckResult: {provider.GetHealthCheckResult()}");
         }
 
         [Test]

@@ -131,19 +131,6 @@ namespace Vostok.Configuration
             return InitializeCacheItem(source, cacheItem);
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private TSettings InitializeCacheItem<TSettings>(IConfigurationSource source, SourceCacheItem<TSettings> cacheItem)
-        {
-            // NOTE (tsup, 12.11.2021): Do not inline this method because it prevents from creating unnecessary lambda closures
-            // in case item exists in cache.
-            var currentValueProvider = currentValueProviderFactory.Create(() => ObserveWithErrors<TSettings>(source), CreateHealthTracker<TSettings>(source));
-            var result = currentValueProvider.Get();
-            if (!cacheItem.TrySetCurrentValueProvider(currentValueProvider))
-                currentValueProvider.Dispose();
-
-            return result;
-        }
-
         /// <inheritdoc />
         public IObservable<TSettings> Observe<TSettings>()
         {
@@ -220,9 +207,11 @@ namespace Vostok.Configuration
         public bool HasSourceFor([NotNull] Type settingsType) => typeSources.ContainsKey(settingsType);
 
         [CanBeNull]
-        public string GetHealthStatus() =>
-            sourceDataCache.GetAll().Select(i => i.HealthTracker?.GetError()).FirstOrDefault(e => e != null);
-        
+        public ConfigurationHealthCheckResult GetHealthCheckResult() =>
+            sourceDataCache.GetAll()
+                .Select(i => i.HealthTracker?.GetHealthCheckResult())
+                .FirstOrDefault(e => e?.Error != null) ?? ConfigurationHealthCheckResult.Successful;
+
         /// <inheritdoc />
         public void Dispose()
         {
@@ -247,6 +236,19 @@ namespace Vostok.Configuration
             return observableBinder
                 .SelectBound(PushAndResubscribeOnErrors(source).ObserveOn(scheduler), () => sourceDataCache.GetLimitedCacheItem<TSettings>(source))
                 .Do(newValue => OnSettingsInstance(source, newValue));
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private TSettings InitializeCacheItem<TSettings>(IConfigurationSource source, SourceCacheItem<TSettings> cacheItem)
+        {
+            // NOTE (tsup, 12.11.2021): Do not inline this method because it prevents from creating unnecessary lambda closures
+            // in case item exists in cache.
+            var currentValueProvider = currentValueProviderFactory.Create(() => ObserveWithErrors<TSettings>(source), CreateHealthTracker<TSettings>(source));
+            var result = currentValueProvider.Get();
+            if (!cacheItem.TrySetCurrentValueProvider(currentValueProvider))
+                currentValueProvider.Dispose();
+
+            return result;
         }
 
         private void EnsureSourceExists<TSettings>(out IConfigurationSource source)
