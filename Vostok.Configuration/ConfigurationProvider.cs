@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Runtime.CompilerServices;
@@ -55,9 +56,10 @@ namespace Vostok.Configuration
                 settings.SettingsCallback,
                 new ObservableBinder(new CachingBinder(new ValidatingBinder(settings.Binder ?? new DefaultSettingsBinder()))),
                 new SourceDataCache(settings.MaxSourceCacheSize),
-                new RetryingCurrentValueProviderFactory(settings.ValueRetryCooldown),
+                null,
                 settings.SourceRetryCooldown)
         {
+            currentValueProviderFactory = new RetryingCurrentValueProviderFactory(settings.ValueRetryCooldown, errorCallback);
         }
 
         internal ConfigurationProvider(
@@ -105,7 +107,7 @@ namespace Vostok.Configuration
 
             var cacheItem = sourceDataCache.GetPersistentCacheItem<TSettings>(source);
             if (cacheItem.CurrentValueProvider == null)
-                cacheItem.TrySetCurrentValueProvider(currentValueProviderFactory.Create(ObserveWithErrors<TSettings>, errorCallback));
+                cacheItem.TrySetCurrentValueProvider(currentValueProviderFactory.Create(ObserveWithErrors<TSettings>, CreateHealthTracker<TSettings>(source)));
 
             return cacheItem.CurrentValueProvider.Get();
         }
@@ -128,19 +130,6 @@ namespace Vostok.Configuration
                 return cacheItem.CurrentValueProvider.Get();
 
             return InitializeCacheItem(source, cacheItem);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private TSettings InitializeCacheItem<TSettings>(IConfigurationSource source, SourceCacheItem<TSettings> cacheItem)
-        {
-            // NOTE (tsup, 12.11.2021): Do not inline this method because it prevents from creating unnecessary lambda closures
-            // in case item exists in cache.
-            var currentValueProvider = currentValueProviderFactory.Create(() => ObserveWithErrors<TSettings>(source), errorCallback);
-            var result = currentValueProvider.Get();
-            if (!cacheItem.TrySetCurrentValueProvider(currentValueProvider))
-                currentValueProvider.Dispose();
-
-            return result;
         }
 
         /// <inheritdoc />
@@ -218,6 +207,12 @@ namespace Vostok.Configuration
         /// </summary>
         public bool HasSourceFor([NotNull] Type settingsType) => typeSources.ContainsKey(settingsType);
 
+        [CanBeNull]
+        public ConfigurationHealthCheckResult GetHealthCheckResult() =>
+            sourceDataCache.GetAll()
+                .Select(i => i.HealthTracker?.GetHealthCheckResult())
+                .FirstOrDefault(e => e?.Error != null) ?? ConfigurationHealthCheckResult.Successful;
+
         /// <inheritdoc />
         public void Dispose()
         {
@@ -242,6 +237,19 @@ namespace Vostok.Configuration
             return observableBinder
                 .SelectBound(PushAndResubscribeOnErrors(source).ObserveOn(scheduler), () => sourceDataCache.GetLimitedCacheItem<TSettings>(source))
                 .Do(newValue => OnSettingsInstance(source, newValue));
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private TSettings InitializeCacheItem<TSettings>(IConfigurationSource source, SourceCacheItem<TSettings> cacheItem)
+        {
+            // NOTE (tsup, 12.11.2021): Do not inline this method because it prevents from creating unnecessary lambda closures
+            // in case item exists in cache.
+            var currentValueProvider = currentValueProviderFactory.Create(() => ObserveWithErrors<TSettings>(source), CreateHealthTracker<TSettings>(source));
+            var result = currentValueProvider.Get();
+            if (!cacheItem.TrySetCurrentValueProvider(currentValueProvider))
+                currentValueProvider.Dispose();
+
+            return result;
         }
 
         private void EnsureSourceExists<TSettings>(out IConfigurationSource source)
@@ -275,5 +283,8 @@ namespace Vostok.Configuration
 
             settingsCallback(newValue.settings, source);
         }
+
+        private HealthTracker CreateHealthTracker<TSettings>(IConfigurationSource source) =>
+            new HealthTracker(typeof(TSettings).ToString(), source.ToString());
     }
 }

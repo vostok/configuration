@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using Vostok.Configuration.Abstractions;
+using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Cache
 {
@@ -8,5 +10,7 @@ namespace Vostok.Configuration.Cache
         SourceCacheItem<TSettings> GetLimitedCacheItem<TSettings>(IConfigurationSource source);
 
         SourceCacheItem<TSettings> GetPersistentCacheItem<TSettings>(IConfigurationSource source);
+
+        IEnumerable<SourceCacheItem> GetAll();
     }
 }

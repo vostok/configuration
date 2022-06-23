@@ -7,6 +7,7 @@ using FluentAssertions.Extensions;
 using NSubstitute;
 using NUnit.Framework;
 using Vostok.Configuration.CurrentValueProvider;
+using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.Tests.CurrentValueProvider
 {
@@ -22,7 +23,7 @@ namespace Vostok.Configuration.Tests.CurrentValueProvider
         public void SetUp()
         {
             errorCallback = Substitute.For<Action<Exception>>();
-            provider = new RawCurrentValueProvider<object>(() => subject, errorCallback);
+            provider = new RawCurrentValueProvider<object>(() => subject, errorCallback, new HealthTracker("type", "source"));
             subject = new ReplaySubject<(object, Exception)>(1);
             value = new object();
         }

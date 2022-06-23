@@ -104,6 +104,55 @@ namespace Vostok.Configuration.Tests.Integration
 
             callback.Received(1).Invoke("value", source);
         }
+        
+        [Test]
+        public void Get_with_preconfigured_source_should_invoke_error_callback()
+        {
+            Exception error = null;
+
+            provider = new ConfigurationProvider(new ConfigurationProviderSettings
+            {
+                ErrorCallback = e =>
+                {
+                    Console.WriteLine($"ErrorCallback({e.Message})");
+                    error = e;
+                }
+            });
+
+            provider.SetupSourceFor<string>(source);
+            Console.WriteLine($"HealthCheckResult: {provider.GetHealthCheckResult()}");
+
+            source.PushNewConfiguration(new ValueNode("value1"));
+            AssertionAssertions.ShouldPassIn(() =>
+                {
+                    provider.Get<string>().Should().Be("value1");
+                },
+                5.Seconds());
+            Console.WriteLine($"HealthCheckResult: {provider.GetHealthCheckResult()}");
+
+            var error1 = new Exception("error1");
+            source.PushNewConfiguration(null, error1);
+            AssertionAssertions.ShouldPassIn(() =>
+            {
+                error.Should().Be(error1);
+            }, 5.Seconds());
+            Console.WriteLine($"HealthCheckResult: {provider.GetHealthCheckResult()}");
+
+            source.PushNewConfiguration(new ValueNode("value2"));
+            AssertionAssertions.ShouldPassIn(() =>
+            {
+                provider.Get<string>().Should().Be("value2");    
+            }, 5.Seconds());
+            Console.WriteLine($"HealthCheckResult: {provider.GetHealthCheckResult()}");
+
+            var error2 = new Exception("error2");
+            source.PushNewConfiguration(null, error2);
+            AssertionAssertions.ShouldPassIn(() =>
+            {
+                error.Should().Be(error2);
+            }, 5.Seconds());
+            Console.WriteLine($"HealthCheckResult: {provider.GetHealthCheckResult()}");
+        }
 
         [Test]
         public void Get_with_external_source_should_invoke_settings_callback()
