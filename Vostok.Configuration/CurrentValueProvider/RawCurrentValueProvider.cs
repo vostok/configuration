@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Vostok.Configuration.Helpers;
 
 namespace Vostok.Configuration.CurrentValueProvider
 {
@@ -12,9 +13,10 @@ namespace Vostok.Configuration.CurrentValueProvider
         private volatile TaskCompletionSource<T> resultSource = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
         private volatile IDisposable innerSubscription;
 
-        public RawCurrentValueProvider(Func<IObservable<(T, Exception)>> observableProvider, Action<Exception> errorCallback)
+        public RawCurrentValueProvider(Func<IObservable<(T, Exception)>> observableProvider, Action<Exception> errorCallback, HealthTracker healthTracker)
         {
             this.errorCallback = errorCallback;
+            HealthTracker = healthTracker;
 
             observable = new Lazy<IObservable<(T, Exception)>>(observableProvider, LazyThreadSafetyMode.ExecutionAndPublication);
         }
@@ -28,6 +30,8 @@ namespace Vostok.Configuration.CurrentValueProvider
 
             return resultSource.Task.GetAwaiter().GetResult();
         }
+
+        public HealthTracker HealthTracker { get; }
 
         public void Dispose()
         {
@@ -44,6 +48,8 @@ namespace Vostok.Configuration.CurrentValueProvider
 
         private void OnError(Exception error)
         {
+            HealthTracker.OnNext(error);
+            
             if (resultSource.TrySetException(error))
             {
                 Dispose();
@@ -53,6 +59,8 @@ namespace Vostok.Configuration.CurrentValueProvider
 
         private void OnNextValue((T settings, Exception error) value)
         {
+            HealthTracker.OnNext(value.error);
+            
             if (value.error != null)
             {
                 OnError(value.error);
