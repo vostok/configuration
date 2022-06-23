@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 
 namespace Vostok.Configuration.Helpers;
 
+[PublicAPI]
 public class ConfigurationHealthCheckResult
 {
     public static readonly ConfigurationHealthCheckResult Successful = new ConfigurationHealthCheckResult(null);
