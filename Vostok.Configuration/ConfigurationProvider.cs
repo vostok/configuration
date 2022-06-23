@@ -207,7 +207,7 @@ namespace Vostok.Configuration
         /// </summary>
         public bool HasSourceFor([NotNull] Type settingsType) => typeSources.ContainsKey(settingsType);
 
-        [CanBeNull]
+        [NotNull]
         public ConfigurationHealthCheckResult GetHealthCheckResult() =>
             sourceDataCache.GetAll()
                 .Select(i => i.HealthTracker?.GetHealthCheckResult())
