@@ -1,3 +1,7 @@
+## 0.1.41 (11-03-2022):
+
+Add health check mechanism.
+
 ## 0.1.40 (11-03-2022):
 
 Format bytes array to base64 string.
