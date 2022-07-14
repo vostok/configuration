@@ -1,0 +1,242 @@
+abstract Vostok.Configuration.Validation.ConstraintsValidator<TSettings>.GetConstraints() -> System.Collections.Generic.IEnumerable<Vostok.Configuration.Validation.Constraints.Constraint<TSettings>>
+override Vostok.Configuration.Helpers.ConfigurationHealthCheckResult.ToString() -> string
+override Vostok.Configuration.Primitives.DataRate.Equals(object obj) -> bool
+override Vostok.Configuration.Primitives.DataRate.GetHashCode() -> int
+override Vostok.Configuration.Primitives.DataRate.ToString() -> string
+override Vostok.Configuration.Primitives.DataSize.Equals(object obj) -> bool
+override Vostok.Configuration.Primitives.DataSize.GetHashCode() -> int
+override Vostok.Configuration.Primitives.DataSize.ToString() -> string
+static readonly Vostok.Configuration.Helpers.ConfigurationHealthCheckResult.Successful -> Vostok.Configuration.Helpers.ConfigurationHealthCheckResult
+static Vostok.Configuration.ConfigurationPrinter.Print(object item) -> string
+static Vostok.Configuration.ConfigurationPrinter.Print(object item, Vostok.Configuration.Printing.PrintSettings settings) -> string
+static Vostok.Configuration.ConfigurationProvider.Default.get -> Vostok.Configuration.ConfigurationProvider
+static Vostok.Configuration.ConfigurationProvider.TrySetDefault(Vostok.Configuration.ConfigurationProvider provider, bool canOverwrite = false) -> bool
+static Vostok.Configuration.Extensions.IConfigurationProviderExtensions.CreateHot<TConfig>(this Vostok.Configuration.Abstractions.IConfigurationProvider provider) -> TConfig
+static Vostok.Configuration.Extensions.IConfigurationProviderExtensions.CreateHot<TConfig>(this Vostok.Configuration.Abstractions.IConfigurationProvider provider, out System.IDisposable subscription) -> TConfig
+static Vostok.Configuration.Extensions.IConfigurationProviderExtensions.CreateHot<TConfig>(this Vostok.Configuration.Abstractions.IConfigurationProvider provider, Vostok.Configuration.Abstractions.IConfigurationSource source) -> TConfig
+static Vostok.Configuration.Extensions.IConfigurationProviderExtensions.CreateHot<TConfig>(this Vostok.Configuration.Abstractions.IConfigurationProvider provider, Vostok.Configuration.Abstractions.IConfigurationSource source, out System.IDisposable subscription) -> TConfig
+static Vostok.Configuration.Extensions.IConfigurationSourceExtensions.ApplyTo<TSettings>(this Vostok.Configuration.Abstractions.IConfigurationSource source, TSettings settings) -> void
+static Vostok.Configuration.Extensions.IConfigurationSourceExtensions.Get(this Vostok.Configuration.Abstractions.IConfigurationSource source) -> Vostok.Configuration.Abstractions.SettingsTree.ISettingsNode
+static Vostok.Configuration.Extensions.Observable.ObservableExtensions.DistinctUntilChanged<TSource, TKey>(this System.IObservable<TSource> source, System.Func<TSource, TKey> keySelector) -> System.IObservable<TSource>
+static Vostok.Configuration.Extensions.Observable.ObservableExtensions.DistinctUntilChanged<TSource>(this System.IObservable<TSource> source) -> System.IObservable<TSource>
+static Vostok.Configuration.Extensions.Observable.ObservableExtensions.Do<TSource>(this System.IObservable<TSource> source, System.Action<TSource> action) -> System.IObservable<TSource>
+static Vostok.Configuration.Extensions.Observable.ObservableExtensions.Do<TSource>(this System.IObservable<TSource> source, System.Action<TSource> action, System.Action<System.Exception> onError) -> System.IObservable<TSource>
+static Vostok.Configuration.Extensions.Observable.ObservableExtensions.Select<TSource, TResult>(this System.IObservable<TSource> source, System.Func<TSource, TResult> selector) -> System.IObservable<TResult>
+static Vostok.Configuration.Extensions.Observable.ObservableExtensions.Where<TSource>(this System.IObservable<TSource> source, System.Func<TSource, bool> predicate) -> System.IObservable<TSource>
+static Vostok.Configuration.Helpers.SecurityHelper.IsSecret(System.Reflection.MemberInfo member) -> bool
+static Vostok.Configuration.Helpers.SecurityHelper.IsSecret(System.Type type) -> bool
+static Vostok.Configuration.Helpers.SecurityHelper.RegisterCustomSecretAttribute(System.Type attributeType) -> void
+static Vostok.Configuration.Helpers.SecurityHelper.RegisterCustomSecretAttribute<TAttribute>() -> void
+static Vostok.Configuration.Parsers.DateTimeOffsetParser.TryParse(string input, out System.DateTimeOffset result) -> bool
+static Vostok.Configuration.Parsers.DateTimeParser.TryParse(string input, out System.DateTime result) -> bool
+static Vostok.Configuration.Parsers.TimeSpanParser.TryParse(string input, out System.TimeSpan result) -> bool
+static Vostok.Configuration.Primitives.DataRate.FromBytesPerSecond(long bytes) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRate.FromGigabytesPerSecond(double gigabytes) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRate.FromKilobytesPerSecond(double kilobytes) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRate.FromMegabytesPerSecond(double megabytes) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRate.FromPetabytesPerSecond(double petabytes) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRate.FromTerabytesPerSecond(double terabytes) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRate.operator !=(Vostok.Configuration.Primitives.DataRate left, Vostok.Configuration.Primitives.DataRate right) -> bool
+static Vostok.Configuration.Primitives.DataRate.operator *(System.TimeSpan time, Vostok.Configuration.Primitives.DataRate speed) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataRate.operator *(Vostok.Configuration.Primitives.DataRate speed, double multiplier) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRate.operator *(Vostok.Configuration.Primitives.DataRate speed, int multiplier) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRate.operator *(Vostok.Configuration.Primitives.DataRate speed, long multiplier) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRate.operator *(Vostok.Configuration.Primitives.DataRate speed, System.TimeSpan time) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataRate.operator +(Vostok.Configuration.Primitives.DataRate speed1, Vostok.Configuration.Primitives.DataRate speed2) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRate.operator -(Vostok.Configuration.Primitives.DataRate speed1, Vostok.Configuration.Primitives.DataRate speed2) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRate.operator /(Vostok.Configuration.Primitives.DataRate speed, double divider) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRate.operator /(Vostok.Configuration.Primitives.DataRate speed, int divider) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRate.operator /(Vostok.Configuration.Primitives.DataRate speed, long divider) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRate.operator ==(Vostok.Configuration.Primitives.DataRate left, Vostok.Configuration.Primitives.DataRate right) -> bool
+static Vostok.Configuration.Primitives.DataRate.Parse(string input) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRate.TryParse(string input, out Vostok.Configuration.Primitives.DataRate result) -> bool
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.BytesPerSecond(this int value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.BytesPerSecond(this long value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.BytesPerSecond(this ushort value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.GigabytesPerSecond(this double value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.GigabytesPerSecond(this int value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.GigabytesPerSecond(this long value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.GigabytesPerSecond(this ushort value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.KilobytesPerSecond(this double value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.KilobytesPerSecond(this int value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.KilobytesPerSecond(this long value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.KilobytesPerSecond(this ushort value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.MegabytesPerSecond(this double value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.MegabytesPerSecond(this int value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.MegabytesPerSecond(this long value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.MegabytesPerSecond(this ushort value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.PetabytesPerSecond(this double value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.PetabytesPerSecond(this int value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.PetabytesPerSecond(this long value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.PetabytesPerSecond(this ushort value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.TerabytesPerSecond(this double value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.TerabytesPerSecond(this int value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.TerabytesPerSecond(this long value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataRateConversionExtensions.TerabytesPerSecond(this ushort value) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataSize.explicit operator long(Vostok.Configuration.Primitives.DataSize size) -> long
+static Vostok.Configuration.Primitives.DataSize.FromBytes(long bytes) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.FromGigabytes(double gigabytes) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.FromKilobytes(double kilobytes) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.FromMegabytes(double megabytes) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.FromPetabytes(double petabytes) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.FromTerabytes(double terabytes) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.operator !=(Vostok.Configuration.Primitives.DataSize left, Vostok.Configuration.Primitives.DataSize right) -> bool
+static Vostok.Configuration.Primitives.DataSize.operator *(double multiplier, Vostok.Configuration.Primitives.DataSize size) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.operator *(int multiplier, Vostok.Configuration.Primitives.DataSize size) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.operator *(long multiplier, Vostok.Configuration.Primitives.DataSize size) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.operator *(Vostok.Configuration.Primitives.DataSize size, double multiplier) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.operator *(Vostok.Configuration.Primitives.DataSize size, int multiplier) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.operator *(Vostok.Configuration.Primitives.DataSize size, long multiplier) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.operator +(Vostok.Configuration.Primitives.DataSize size1, Vostok.Configuration.Primitives.DataSize size2) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.operator -(Vostok.Configuration.Primitives.DataSize size) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.operator -(Vostok.Configuration.Primitives.DataSize size1, Vostok.Configuration.Primitives.DataSize size2) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.operator /(Vostok.Configuration.Primitives.DataSize size, double divider) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.operator /(Vostok.Configuration.Primitives.DataSize size, int divider) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.operator /(Vostok.Configuration.Primitives.DataSize size, long divider) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.operator /(Vostok.Configuration.Primitives.DataSize size, System.TimeSpan time) -> Vostok.Configuration.Primitives.DataRate
+static Vostok.Configuration.Primitives.DataSize.operator /(Vostok.Configuration.Primitives.DataSize size, Vostok.Configuration.Primitives.DataRate speed) -> System.TimeSpan
+static Vostok.Configuration.Primitives.DataSize.operator <(Vostok.Configuration.Primitives.DataSize size1, Vostok.Configuration.Primitives.DataSize size2) -> bool
+static Vostok.Configuration.Primitives.DataSize.operator <=(Vostok.Configuration.Primitives.DataSize size1, Vostok.Configuration.Primitives.DataSize size2) -> bool
+static Vostok.Configuration.Primitives.DataSize.operator ==(Vostok.Configuration.Primitives.DataSize left, Vostok.Configuration.Primitives.DataSize right) -> bool
+static Vostok.Configuration.Primitives.DataSize.operator >(Vostok.Configuration.Primitives.DataSize size1, Vostok.Configuration.Primitives.DataSize size2) -> bool
+static Vostok.Configuration.Primitives.DataSize.operator >=(Vostok.Configuration.Primitives.DataSize size1, Vostok.Configuration.Primitives.DataSize size2) -> bool
+static Vostok.Configuration.Primitives.DataSize.Parse(string input) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSize.TryParse(string input, out Vostok.Configuration.Primitives.DataSize result) -> bool
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Bytes(this int value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Bytes(this long value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Bytes(this ushort value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Gigabytes(this double value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Gigabytes(this int value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Gigabytes(this long value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Gigabytes(this ushort value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Kilobytes(this double value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Kilobytes(this int value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Kilobytes(this long value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Kilobytes(this ushort value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Megabytes(this double value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Megabytes(this int value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Megabytes(this long value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Megabytes(this ushort value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Petabytes(this double value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Petabytes(this int value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Petabytes(this long value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Petabytes(this ushort value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Terabytes(this double value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Terabytes(this int value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Terabytes(this long value) -> Vostok.Configuration.Primitives.DataSize
+static Vostok.Configuration.Primitives.DataSizeConversionExtensions.Terabytes(this ushort value) -> Vostok.Configuration.Primitives.DataSize
+Vostok.Configuration.Binders.DefaultSettingsBinder
+Vostok.Configuration.Binders.DefaultSettingsBinder.Bind(System.Type tSettings, Vostok.Configuration.Abstractions.SettingsTree.ISettingsNode settings) -> object
+Vostok.Configuration.Binders.DefaultSettingsBinder.Bind<TSettings>(Vostok.Configuration.Abstractions.SettingsTree.ISettingsNode settings) -> TSettings
+Vostok.Configuration.Binders.DefaultSettingsBinder.DefaultSettingsBinder() -> void
+Vostok.Configuration.Binders.DefaultSettingsBinder.WithCustomBinder(System.Type binderType, System.Predicate<System.Type> condition) -> Vostok.Configuration.Binders.DefaultSettingsBinder
+Vostok.Configuration.Binders.DefaultSettingsBinder.WithCustomBinder<TValue>(Vostok.Configuration.Abstractions.ISettingsBinder<TValue> binder) -> Vostok.Configuration.Binders.DefaultSettingsBinder
+Vostok.Configuration.Binders.DefaultSettingsBinder.WithParserFor<T>(Vostok.Configuration.Parsers.TryParse<T> parser) -> Vostok.Configuration.Binders.DefaultSettingsBinder
+Vostok.Configuration.Binders.ISettingsBinder
+Vostok.Configuration.Binders.ISettingsBinder.Bind<TSettings>(Vostok.Configuration.Abstractions.SettingsTree.ISettingsNode rawSettings) -> TSettings
+Vostok.Configuration.Binders.SecretBinder
+Vostok.Configuration.Binders.SecretBinder.Bind<TSettings>(Vostok.Configuration.Abstractions.SettingsTree.ISettingsNode rawSettings) -> TSettings
+Vostok.Configuration.Binders.SecretBinder.SecretBinder(Vostok.Configuration.Binders.ISettingsBinder baseBinder) -> void
+Vostok.Configuration.Binders.SettingsValidationException
+Vostok.Configuration.Binders.SettingsValidationException.SettingsValidationException(string message) -> void
+Vostok.Configuration.ConfigurationPrinter
+Vostok.Configuration.ConfigurationProvider
+Vostok.Configuration.ConfigurationProvider.ConfigurationProvider() -> void
+Vostok.Configuration.ConfigurationProvider.ConfigurationProvider(Vostok.Configuration.ConfigurationProviderSettings settings) -> void
+Vostok.Configuration.ConfigurationProvider.Dispose() -> void
+Vostok.Configuration.ConfigurationProvider.Get<TSettings>() -> TSettings
+Vostok.Configuration.ConfigurationProvider.Get<TSettings>(Vostok.Configuration.Abstractions.IConfigurationSource source) -> TSettings
+Vostok.Configuration.ConfigurationProvider.GetHealthCheckResult() -> Vostok.Configuration.Helpers.ConfigurationHealthCheckResult
+Vostok.Configuration.ConfigurationProvider.HasSourceFor(System.Type settingsType) -> bool
+Vostok.Configuration.ConfigurationProvider.HasSourceFor<TSettings>() -> bool
+Vostok.Configuration.ConfigurationProvider.Observe<TSettings>() -> System.IObservable<TSettings>
+Vostok.Configuration.ConfigurationProvider.Observe<TSettings>(Vostok.Configuration.Abstractions.IConfigurationSource source) -> System.IObservable<TSettings>
+Vostok.Configuration.ConfigurationProvider.SetupSourceFor(System.Type settingsType, Vostok.Configuration.Abstractions.IConfigurationSource source) -> void
+Vostok.Configuration.ConfigurationProvider.SetupSourceFor<TSettings>(Vostok.Configuration.Abstractions.IConfigurationSource source) -> void
+Vostok.Configuration.ConfigurationProvider.TrySetupSourceFor(System.Type settingsType, Vostok.Configuration.Abstractions.IConfigurationSource source) -> bool
+Vostok.Configuration.ConfigurationProvider.TrySetupSourceFor<TSettings>(Vostok.Configuration.Abstractions.IConfigurationSource source) -> bool
+Vostok.Configuration.ConfigurationProviderSettings
+Vostok.Configuration.ConfigurationProviderSettings.Binder.get -> Vostok.Configuration.Binders.ISettingsBinder
+Vostok.Configuration.ConfigurationProviderSettings.Binder.set -> void
+Vostok.Configuration.ConfigurationProviderSettings.ConfigurationProviderSettings() -> void
+Vostok.Configuration.ConfigurationProviderSettings.ErrorCallback.get -> System.Action<System.Exception>
+Vostok.Configuration.ConfigurationProviderSettings.ErrorCallback.set -> void
+Vostok.Configuration.ConfigurationProviderSettings.MaxSourceCacheSize.get -> int
+Vostok.Configuration.ConfigurationProviderSettings.MaxSourceCacheSize.set -> void
+Vostok.Configuration.ConfigurationProviderSettings.SettingsCallback.get -> System.Action<object, Vostok.Configuration.Abstractions.IConfigurationSource>
+Vostok.Configuration.ConfigurationProviderSettings.SettingsCallback.set -> void
+Vostok.Configuration.ConfigurationProviderSettings.SourceRetryCooldown -> System.TimeSpan
+Vostok.Configuration.ConfigurationProviderSettings.ValueRetryCooldown -> System.TimeSpan
+Vostok.Configuration.Extensions.IConfigurationProviderExtensions
+Vostok.Configuration.Extensions.IConfigurationSourceExtensions
+Vostok.Configuration.Extensions.Observable.ObservableExtensions
+Vostok.Configuration.Helpers.ConfigurationHealthCheckResult
+Vostok.Configuration.Helpers.ConfigurationHealthCheckResult.ConfigurationHealthCheckResult(string error) -> void
+Vostok.Configuration.Helpers.ConfigurationHealthCheckResult.Error.get -> string
+Vostok.Configuration.Helpers.SecurityHelper
+Vostok.Configuration.Parsers.DateTimeOffsetParser
+Vostok.Configuration.Parsers.DateTimeParser
+Vostok.Configuration.Parsers.TimeSpanParser
+Vostok.Configuration.Parsers.TryParse<T>
+Vostok.Configuration.Primitives.DataRate
+Vostok.Configuration.Primitives.DataRate.BytesPerSecond.get -> long
+Vostok.Configuration.Primitives.DataRate.CompareTo(Vostok.Configuration.Primitives.DataRate other) -> int
+Vostok.Configuration.Primitives.DataRate.DataRate() -> void
+Vostok.Configuration.Primitives.DataRate.DataRate(long bytesPerSecond) -> void
+Vostok.Configuration.Primitives.DataRate.Equals(Vostok.Configuration.Primitives.DataRate other) -> bool
+Vostok.Configuration.Primitives.DataRate.GigabytesPerSecond.get -> double
+Vostok.Configuration.Primitives.DataRate.KilobytesPerSecond.get -> double
+Vostok.Configuration.Primitives.DataRate.MegabytesPerSecond.get -> double
+Vostok.Configuration.Primitives.DataRate.PetabytesPerSecond.get -> double
+Vostok.Configuration.Primitives.DataRate.TerabytesPerSecond.get -> double
+Vostok.Configuration.Primitives.DataRate.ToString(bool shortFormat) -> string
+Vostok.Configuration.Primitives.DataRateConversionExtensions
+Vostok.Configuration.Primitives.DataSize
+Vostok.Configuration.Primitives.DataSize.Bytes.get -> long
+Vostok.Configuration.Primitives.DataSize.CompareTo(Vostok.Configuration.Primitives.DataSize other) -> int
+Vostok.Configuration.Primitives.DataSize.DataSize() -> void
+Vostok.Configuration.Primitives.DataSize.DataSize(long bytes) -> void
+Vostok.Configuration.Primitives.DataSize.Equals(Vostok.Configuration.Primitives.DataSize other) -> bool
+Vostok.Configuration.Primitives.DataSize.ToString(bool shortFormat) -> string
+Vostok.Configuration.Primitives.DataSize.TotalGigabytes.get -> double
+Vostok.Configuration.Primitives.DataSize.TotalKilobytes.get -> double
+Vostok.Configuration.Primitives.DataSize.TotalMegabytes.get -> double
+Vostok.Configuration.Primitives.DataSize.TotalPetabytes.get -> double
+Vostok.Configuration.Primitives.DataSize.TotalTerabytes.get -> double
+Vostok.Configuration.Primitives.DataSizeConversionExtensions
+Vostok.Configuration.Printing.PrintFormat
+Vostok.Configuration.Printing.PrintFormat.JSON = 1 -> Vostok.Configuration.Printing.PrintFormat
+Vostok.Configuration.Printing.PrintFormat.YAML = 0 -> Vostok.Configuration.Printing.PrintFormat
+Vostok.Configuration.Printing.PrintSettings
+Vostok.Configuration.Printing.PrintSettings.Format -> Vostok.Configuration.Printing.PrintFormat
+Vostok.Configuration.Printing.PrintSettings.HideSecretValues.get -> bool
+Vostok.Configuration.Printing.PrintSettings.HideSecretValues.set -> void
+Vostok.Configuration.Printing.PrintSettings.InitialIndent.get -> bool
+Vostok.Configuration.Printing.PrintSettings.InitialIndent.set -> void
+Vostok.Configuration.Printing.PrintSettings.PrintSettings() -> void
+Vostok.Configuration.Validation.Constraints.Constraint<T>
+Vostok.Configuration.Validation.Constraints.Constraint<T>.Check(T item) -> bool
+Vostok.Configuration.Validation.Constraints.Constraint<T>.Constraint(System.Linq.Expressions.Expression<System.Func<T, bool>> rule, string errorMessage = "") -> void
+Vostok.Configuration.Validation.Constraints.Constraint<T>.GetErrorMessage() -> string
+Vostok.Configuration.Validation.Constraints.GreaterConstraint<T, TField>
+Vostok.Configuration.Validation.Constraints.GreaterConstraint<T, TField>.GreaterConstraint(System.Linq.Expressions.Expression<System.Func<T, TField>> leftSelector, System.Linq.Expressions.Expression<System.Func<T, TField>> rightSelector) -> void
+Vostok.Configuration.Validation.Constraints.GreaterOrEqualConstraint<T, TField>
+Vostok.Configuration.Validation.Constraints.GreaterOrEqualConstraint<T, TField>.GreaterOrEqualConstraint(System.Linq.Expressions.Expression<System.Func<T, TField>> leftSelector, System.Linq.Expressions.Expression<System.Func<T, TField>> rightSelector) -> void
+Vostok.Configuration.Validation.Constraints.LessConstraint<T, TField>
+Vostok.Configuration.Validation.Constraints.LessConstraint<T, TField>.LessConstraint(System.Linq.Expressions.Expression<System.Func<T, TField>> leftSelector, System.Linq.Expressions.Expression<System.Func<T, TField>> rightSelector) -> void
+Vostok.Configuration.Validation.Constraints.LessOrEqualConstraint<T, TField>
+Vostok.Configuration.Validation.Constraints.LessOrEqualConstraint<T, TField>.LessOrEqualConstraint(System.Linq.Expressions.Expression<System.Func<T, TField>> leftSelector, System.Linq.Expressions.Expression<System.Func<T, TField>> rightSelector) -> void
+Vostok.Configuration.Validation.Constraints.NotNullConstraint<T>
+Vostok.Configuration.Validation.Constraints.NotNullConstraint<T>.NotNullConstraint(System.Linq.Expressions.Expression<System.Func<T, object>> fieldSelector) -> void
+Vostok.Configuration.Validation.Constraints.NotNullOrEmptyConstraint<T>
+Vostok.Configuration.Validation.Constraints.NotNullOrEmptyConstraint<T>.NotNullOrEmptyConstraint(System.Linq.Expressions.Expression<System.Func<T, string>> fieldSelector) -> void
+Vostok.Configuration.Validation.Constraints.NotNullOrWhitespaceConstraint<T>
+Vostok.Configuration.Validation.Constraints.NotNullOrWhitespaceConstraint<T>.NotNullOrWhitespaceConstraint(System.Linq.Expressions.Expression<System.Func<T, string>> fieldSelector) -> void
+Vostok.Configuration.Validation.Constraints.RangeConstraint<T, TField>
+Vostok.Configuration.Validation.Constraints.RangeConstraint<T, TField>.RangeConstraint(System.Linq.Expressions.Expression<System.Func<T, TField>> fieldSelector, TField from, TField to, bool inclusive = true) -> void
+Vostok.Configuration.Validation.Constraints.UniqueConstraint<T, TField>
+Vostok.Configuration.Validation.Constraints.UniqueConstraint<T, TField>.UniqueConstraint(params System.Linq.Expressions.Expression<System.Func<T, TField>>[] selectors) -> void
+Vostok.Configuration.Validation.Constraints.UniqueConstraint<T, TField>.UniqueConstraint(System.Collections.Generic.IEqualityComparer<TField> comparer, params System.Linq.Expressions.Expression<System.Func<T, TField>>[] selectors) -> void
+Vostok.Configuration.Validation.ConstraintsValidator<TSettings>
+Vostok.Configuration.Validation.ConstraintsValidator<TSettings>.ConstraintsValidator() -> void
+Vostok.Configuration.Validation.ConstraintsValidator<TSettings>.Validate(TSettings settings) -> System.Collections.Generic.IEnumerable<string>
