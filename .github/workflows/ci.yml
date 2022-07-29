@@ -4,14 +4,14 @@ on: [push, workflow_dispatch]
 
 jobs:
   build:
-    uses: vostok/github.ci/.github/workflows/build.yml@master
+    uses: vostok/github.ci/.github/workflows/build.yml@macos
 
   test:
     needs: build
-    uses: vostok/github.ci/.github/workflows/test.yml@master
+    uses: vostok/github.ci/.github/workflows/test.yml@macos
 
   publish:
     needs: test
-    uses: vostok/github.ci/.github/workflows/publish.yml@master
+    uses: vostok/github.ci/.github/workflows/publish.yml@macos
     secrets: 
       token: ${{ secrets.NUGET_TOKEN }}
