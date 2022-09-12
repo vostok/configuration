@@ -1,15 +1,14 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 namespace Vostok.Configuration.Printing
 {
     internal class ObjectToken : IPrintToken
     {
-        private readonly PropertyToken[] properties;
+        private readonly IReadOnlyList<PropertyToken> properties;
 
-        public ObjectToken(IEnumerable<PropertyToken> properties)
+        public ObjectToken(IReadOnlyList<PropertyToken> properties)
         {
-            this.properties = properties.ToArray();
+            this.properties = properties;
         }
 
         public void Print(IPrintContext context)
@@ -28,13 +27,13 @@ namespace Vostok.Configuration.Printing
 
         private void PrintYaml(IPrintContext context)
         {
-            for (var index = 0; index < properties.Length; index++)
+            for (var index = 0; index < properties.Count; index++)
             {
                 context.Indent();
 
                 properties[index].Print(context);
 
-                if (index < properties.Length - 1)
+                if (index < properties.Count - 1)
                     context.WriteLine();
             }
         }
@@ -47,13 +46,13 @@ namespace Vostok.Configuration.Printing
 
             using (context.IncreaseDepth())
             {
-                for (var index = 0; index < properties.Length; index++)
+                for (var index = 0; index < properties.Count; index++)
                 {
                     context.Indent();
 
                     properties[index].Print(context);
 
-                    if (index < properties.Length - 1)
+                    if (index < properties.Count - 1)
                         context.Write(',');
 
                     context.WriteLine();
