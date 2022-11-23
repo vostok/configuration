@@ -9,7 +9,7 @@ namespace Vostok.Configuration.Primitives
     /// </summary>
     [PublicAPI]
     [Serializable]
-    public struct DataSize : IEquatable<DataSize>, IComparable<DataSize>
+    public struct DataSize : IEquatable<DataSize>, IComparable<DataSize>, IComparable
     {
         /// <summary>
         /// Creates a new instance of <see cref="DataSize"/> class.
@@ -187,6 +187,10 @@ namespace Vostok.Configuration.Primitives
         /// <inheritdoc />
         public int CompareTo(DataSize other) =>
             Bytes.CompareTo(other.Bytes);
+
+        /// <inheritdoc />
+        public int CompareTo(object obj) =>
+            obj is DataSize dataSize ? CompareTo(dataSize) : 1;
 
         public static bool operator>(DataSize size1, DataSize size2) =>
             size1.Bytes > size2.Bytes;
