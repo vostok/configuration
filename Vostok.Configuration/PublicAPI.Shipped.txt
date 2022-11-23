@@ -194,6 +194,7 @@ Vostok.Configuration.Primitives.DataRateConversionExtensions
 Vostok.Configuration.Primitives.DataSize
 Vostok.Configuration.Primitives.DataSize.Bytes.get -> long
 Vostok.Configuration.Primitives.DataSize.CompareTo(Vostok.Configuration.Primitives.DataSize other) -> int
+Vostok.Configuration.Primitives.DataSize.CompareTo(object obj) -> int
 Vostok.Configuration.Primitives.DataSize.DataSize() -> void
 Vostok.Configuration.Primitives.DataSize.DataSize(long bytes) -> void
 Vostok.Configuration.Primitives.DataSize.Equals(Vostok.Configuration.Primitives.DataSize other) -> bool
