@@ -181,6 +181,7 @@ Vostok.Configuration.Parsers.TryParse<T>
 Vostok.Configuration.Primitives.DataRate
 Vostok.Configuration.Primitives.DataRate.BytesPerSecond.get -> long
 Vostok.Configuration.Primitives.DataRate.CompareTo(Vostok.Configuration.Primitives.DataRate other) -> int
+Vostok.Configuration.Primitives.DataRate.CompareTo(object obj) -> int
 Vostok.Configuration.Primitives.DataRate.DataRate() -> void
 Vostok.Configuration.Primitives.DataRate.DataRate(long bytesPerSecond) -> void
 Vostok.Configuration.Primitives.DataRate.Equals(Vostok.Configuration.Primitives.DataRate other) -> bool
@@ -194,6 +195,7 @@ Vostok.Configuration.Primitives.DataRateConversionExtensions
 Vostok.Configuration.Primitives.DataSize
 Vostok.Configuration.Primitives.DataSize.Bytes.get -> long
 Vostok.Configuration.Primitives.DataSize.CompareTo(Vostok.Configuration.Primitives.DataSize other) -> int
+Vostok.Configuration.Primitives.DataSize.CompareTo(object obj) -> int
 Vostok.Configuration.Primitives.DataSize.DataSize() -> void
 Vostok.Configuration.Primitives.DataSize.DataSize(long bytes) -> void
 Vostok.Configuration.Primitives.DataSize.Equals(Vostok.Configuration.Primitives.DataSize other) -> bool
