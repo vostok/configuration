@@ -1,3 +1,7 @@
+## 0.1.43 (24-11-2022):
+
+Implemented `IComparable` interface for `DataRate` and `DataSize`.
+
 ## 0.1.42 (11-03-2022):
 
 Add health check mechanism.
