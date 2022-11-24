@@ -162,6 +162,21 @@ namespace Vostok.Configuration.Tests.Primitives
             new DataRate(val1).CompareTo(new DataRate(val2)).Should().Be(res);
         }
 
+        [Test]
+        public void CompareTo_object_should_work_correctly()
+        {
+            var val1 = new DataRate(10);
+            var val2 = (object)null;
+            var val3 = new object();
+            var val4 = (DataRate?)new DataRate(100);
+            var val5 = (DataRate?)null;
+
+            val1.CompareTo(val2).Should().Be(1);
+            val1.CompareTo(val3).Should().Be(1);
+            val1.CompareTo(val4).Should().Be(-1);
+            val1.CompareTo(val5).Should().Be(1);
+        }
+
         [TestCase(10, 10, true)]
         [TestCase(10, 20, false)]
         public void Equals_should_work_correctly(int val1, int val2, bool res)

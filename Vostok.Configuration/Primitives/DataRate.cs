@@ -9,7 +9,7 @@ namespace Vostok.Configuration.Primitives
     /// </summary>
     [PublicAPI]
     [Serializable]
-    public struct DataRate : IEquatable<DataRate>, IComparable<DataRate>
+    public struct DataRate : IEquatable<DataRate>, IComparable<DataRate>, IComparable
     {
         /// <summary>
         /// Creates a new instance of <see cref="DataRate"/> class.
@@ -173,6 +173,10 @@ namespace Vostok.Configuration.Primitives
         /// <inheritdoc />
         public int CompareTo(DataRate other) =>
             BytesPerSecond.CompareTo(other.BytesPerSecond);
+
+        /// <inheritdoc />
+        public int CompareTo(object obj) =>
+            obj is DataRate dataRate ? CompareTo(dataRate) : 1;
 
         #endregion
     }
