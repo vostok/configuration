@@ -47,7 +47,7 @@ namespace Vostok.Configuration.Binders.Results
             }
             catch (Exception error)
             {
-                return Error<TSettings>($"{error.GetType().FullName}: {error.Message}");
+                return Error<TSettings>(error.ToString());
             }
         }
     }
