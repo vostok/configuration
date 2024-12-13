@@ -1,3 +1,7 @@
+## 0.1.44 (13-12-2024): 
+
+Bump NuGet deps versions
+
 ## 0.1.43 (24-11-2022):
 
 Implemented `IComparable` interface for `DataRate` and `DataSize`.
