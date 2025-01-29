@@ -8,6 +8,22 @@ notests *default:
   install:
       - Vostok.Configuration/bin/Release/netstandard2.0/Vostok.Configuration.dll
       - module vostok.configuration.abstractions
+      - groups:
+          - target-framework: "netstandard2.0"
+            libraries:
+              - Vostok.Configuration/bin/Release/netstandard2.0/Vostok.Configuration.dll
+            modules:
+              - name: vostok.configuration.abstractions
+          - target-framework: "net6.0"
+            libraries:
+              - Vostok.Configuration/bin/Release/net6.0/Vostok.Configuration.dll
+            modules:
+              - name: vostok.configuration.abstractions
+          - target-framework: "net8.0"
+            libraries:
+              - Vostok.Configuration/bin/Release/net8.0/Vostok.Configuration.dll
+            modules:
+              - name: vostok.configuration.abstractions
 
   deps:
     - vostok.commons.collections/src
@@ -26,7 +42,29 @@ full-build > notests:
     - -vostok.devtools
     - vostok.devtools@with-net6.0
     - vostok.commons.testing/src
-  
+
+  install:
+      - Vostok.Configuration/bin/Release/netstandard2.0/Vostok.Configuration.dll
+      - module vostok.configuration.abstractions
+      - groups:
+          - target-framework: "netstandard2.0"
+            libraries:
+              - Vostok.Configuration/bin/Release/netstandard2.0/Vostok.Configuration.dll
+            modules:
+              - name: vostok.configuration.abstractions
+          - target-framework: "net6.0"
+            libraries:
+              - Vostok.Configuration/bin/Release/net6.0/Vostok.Configuration.dll
+            modules:
+              - name: vostok.configuration.abstractions
+          - target-framework: "net8.0"
+            libraries:
+              - Vostok.Configuration/bin/Release/net8.0/Vostok.Configuration.dll
+            modules:
+              - name: vostok.configuration.abstractions
+
   build:
     target: Vostok.Configuration.sln
     configuration: Release
+    tool:
+      name: dotnet
